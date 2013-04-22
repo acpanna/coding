@@ -1,0 +1,492 @@
+<HTML
+><HEAD
+><TITLE
+>Kommunikation zwischen Modulen</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="kmod und fortgeschrittene Modularisierung"
+HREF="kerneld.html"><LINK
+REL="PREVIOUS"
+TITLE="kmod und fortgeschrittene Modularisierung"
+HREF="kerneld.html"><LINK
+REL="NEXT"
+TITLE="Versionskontrolle in Modulen"
+HREF="kerver.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="kerneld.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 11. kmod und fortgeschrittene Modularisierung</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="kerver.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN14088"
+>Kommunikation zwischen Modulen</A
+></H1
+><P
+>&#13;
+Sehr spät in der Pre-2.4.0-Entwicklungsserie haben die
+Kernel-Entwickler noch eine neue Schnittstelle hinzugefügt, die
+eine eingeschränkte Kommunikation zwischen Modulen ermöglicht. Diese
+Schnittstelle erlaubt es Modulen, Strings zu registrieren, die auf
+interessante Daten verweisen und dann von anderen Modulen abgefragt
+werden können. Wir schauen uns diese Schnittstelle anhand einer
+Variante unserer Module <SPAN
+CLASS="APPLICATION"
+>master</SPAN
+> und
+<SPAN
+CLASS="APPLICATION"
+>slave</SPAN
+> kurz an.</P
+><P
+>Wir verwenden das gleiche <SPAN
+CLASS="APPLICATION"
+>master</SPAN
+>-Modul,
+führen aber ein neues <SPAN
+CLASS="APPLICATION"
+>slave</SPAN
+>-Modul namens
+<SPAN
+CLASS="APPLICATION"
+>inter</SPAN
+> ein. Alles, was
+<SPAN
+CLASS="APPLICATION"
+>inter</SPAN
+> macht, ist einen String und eine
+Funktion unter dem Namen <TT
+CLASS="LITERAL"
+>ime_string</TT
+>
+verfügbar zu machen (<TT
+CLASS="LITERAL"
+>ime</TT
+> steht dabei für
+"intermodule example"). Das gesamte Modul sieht folgendermaßen aus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+static char *string = "inter says 'Hello World'";
+
+void ime_function(const char *who)
+{
+    printk(KERN_INFO "inter: ime_function called by %s\n", who);
+}
+
+int ime_init(void)
+{
+    inter_module_register("ime_string", THIS_MODULE, string);
+    inter_module_register("ime_function", THIS_MODULE, ime_function);
+    return 0;
+}
+
+void ime_cleanup(void)
+{
+    inter_module_unregister("ime_string");
+    inter_module_unregister("ime_function");
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Dieser Code verwendet die Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>inter_module_register</I
+></SPAN
+>, die
+folgenden Prototyp hat:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;void inter_module_register(const char *string, struct module *module,
+                           const void *data);</PRE
+></TD
+></TR
+></TABLE
+><P
+><TT
+CLASS="LITERAL"
+>string</TT
+> ist der String, den andere Module verwenden,
+um die Daten zu finden; <TT
+CLASS="LITERAL"
+>module</TT
+> ist ein Zeiger auf
+das Modul, dem die Daten gehören; dies wird fast immer
+<TT
+CLASS="LITERAL"
+>THIS_MODULE</TT
+> sein. <TT
+CLASS="LITERAL"
+>data</TT
+>
+ist schließlich ein Zeiger auf die Daten, die bereitgestellt werden
+sollen. Beachten Sie die Verwendung eines
+<TT
+CLASS="LITERAL"
+>const</TT
+>-Zeigers für die Daten; es wird hier
+angenommen, daß er nur zum Lesen exportiert
+wird. <SPAN
+><I
+CLASS="EMPHASIS"
+>inter_module_register</I
+></SPAN
+>
+beschwert sich (über <SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+>), wenn der angegebene
+<TT
+CLASS="LITERAL"
+>string</TT
+> bereits registriert ist.</P
+><P
+>&#13;Wenn die Daten nicht mehr gemeinsam genutzt werden müssen, sollte das
+Modul zum Aufräumen <SPAN
+><I
+CLASS="EMPHASIS"
+>inter_module_unregister</I
+></SPAN
+> aufrufen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;void inter_module_unregister(const char *string);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Es werden zwei Funktionen exportiert, mit denen auf via
+<SPAN
+><I
+CLASS="EMPHASIS"
+>inter_module_register</I
+></SPAN
+> bereitgestellte Daten
+zugegriffen werden kann:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>const void *inter_module_get(const char *string);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion sucht den angegebenen <TT
+CLASS="LITERAL"
+>string</TT
+> und
+gibt den zugehörigen Datenzeiger zurück. Wenn der String nicht
+registriert worden ist, wird <TT
+CLASS="LITERAL"
+>NULL</TT
+> zurückgegeben.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>const void *inter_module_get_request(const char *string, const char *module);</TT
+></DT
+><DD
+><P
+>&#13;
+Diese Funktion verhält sich wie <SPAN
+><I
+CLASS="EMPHASIS"
+>inter_module_get</I
+></SPAN
+>,
+ruft aber zusätzlich <SPAN
+><I
+CLASS="EMPHASIS"
+>request_module</I
+></SPAN
+> mit
+dem angegebenen <TT
+CLASS="LITERAL"
+>module</TT
+>-Namen auf und versucht es
+dann noch einmal.</P
+></DD
+></DL
+></DIV
+><P
+>&#13;
+
+
+Beide Funktionen inkrementieren darüber hinaus auch den
+Verwendungszähler des Moduls, das die Daten registriert hat. Ein mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>inter_module_get</I
+></SPAN
+> oder
+<SPAN
+><I
+CLASS="EMPHASIS"
+>inter_module_get_request</I
+></SPAN
+>
+geholter Zeiger bleibt also gültig, bis der explizit freigegeben
+wird. Zumindest wird das Modul, das den Zeiger erzeugt hat, nicht
+entladen; es kann natürlich immer noch selbst etwas machen, was den
+Zeiger ungültig werden läßt.</P
+><P
+>&#13;Wenn Sie den Zeiger nicht mehr benötigen, müssen Sie ihn freigeben,
+damit der Verwendungszähler des anderen Moduls korrekt dekrementiert
+wird. Ein einfacher Aufruf von</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;void inter_module_put(const char *string);</PRE
+></TD
+></TR
+></TABLE
+><P
+>gibt den Zeiger frei, der danach nicht mehr verwendet werden sollte.</P
+><P
+>In unserem Beispiel-Modul <SPAN
+CLASS="APPLICATION"
+>master</SPAN
+> rufen wir
+<SPAN
+><I
+CLASS="EMPHASIS"
+>inter_module_get_request</I
+></SPAN
+> auf, damit das Modul
+<SPAN
+><I
+CLASS="EMPHASIS"
+>inter</I
+></SPAN
+> geladen wird, und holen uns die zwei
+Zeiger. Der String wird einfach ausgegeben, und der Funktionszeiger wird dazu
+verwendet, einen Funktionsaufruf von <SPAN
+CLASS="APPLICATION"
+>master</SPAN
+>
+nach <SPAN
+CLASS="APPLICATION"
+>inter</SPAN
+> auszuführen. Der zusätzliche
+Code in <SPAN
+CLASS="APPLICATION"
+>master</SPAN
+> sieht folgendermaßen aus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+static const char *ime_string = NULL;
+static void master_test_inter();
+
+void master_test_inter()
+{
+    void (*ime_func)();
+    ime_string = inter_module_get_request("ime_string", "inter");
+    if (ime_string)
+        printk(KERN_INFO "master: got ime_string '%s'\n", ime_string);
+    else
+        printk(KERN_INFO "master: inter_module_get failed");
+    ime_func = inter_module_get("ime_function");
+    if (ime_func) {
+        (*ime_func)("master");
+        inter_module_put("ime_function");
+    }
+}
+
+void master_cleanup_module(void)
+{
+    if (ime_string)
+        inter_module_put("ime_string");
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Beachten Sie, daß die Aufrufe von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>inter_module_put</I
+></SPAN
+> bis zum Abräumen des Moduls
+zurückgestellt werden. Damit bleibt der Verwendungszähler von
+<SPAN
+CLASS="APPLICATION"
+>inter</SPAN
+> (mindestens) 1, bis
+<SPAN
+CLASS="APPLICATION"
+>master</SPAN
+> entladen wird.</P
+><P
+>&#62;
+&#62;
+Es gibt einige weitere wissenswerte Details zur Verwendung der
+Funktionen zur Kommunikation zwischen Modulen. Zunächst einmal stehen
+diese auch in Kerneln zur Verfügung, die nicht für ladbare Module
+konfiguriert worden sind, so daß kein Haufen von
+<TT
+CLASS="LITERAL"
+>#ifdef</TT
+>-Zeilen notwendig ist, um diesen Fall
+abzufangen. Der von diesen Funktionen aufgespannte Namensraum ist
+global; die Namen sollten also sorgfältig gewählt werden, um Konflikte
+zu vermeiden. Schließlich werden gemeinsam genutzte Daten in einer
+einfachen verketteten Liste gespeichert; die Performance wird in
+Mitleidenschaft gezogen, wenn viele Abfragen gestartet oder viele
+Strings gespeichert werden. Diese Funktion ist für eine gelegentliche
+Verwendung gedacht, nicht als allgemeines Verzeichnis-Subsystem.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="kerneld.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="kerver.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>kmod und fortgeschrittene Modularisierung</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="kerneld.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Versionskontrolle in Modulen</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

@@ -1,0 +1,65 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: GDIdemo - Win32 Debug--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating command line "rc.exe /l 0x407 /fo"Debug/Gdidemo.res" /i "C:\Programme\SoftICE\Examples\GDIDemo" /d "_DEBUG" "C:\Programme\SoftICE\Examples\GDIDemo\Gdidemo.rc"" 
+Creating temporary file "C:\DOKUME~1\HEIKOV~1.BIG\LOKALE~1\Temp\RSPA.tmp" with contents
+[
+/nologo /MLd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /Fp"Debug/GDIdemo.pch" /YX /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"C:\Programme\SoftICE\Examples\GDIDemo\Bounce.c"
+"C:\Programme\SoftICE\Examples\GDIDemo\Dialog.c"
+"C:\Programme\SoftICE\Examples\GDIDemo\Draw.c"
+"C:\Programme\SoftICE\Examples\GDIDemo\Gdidemo.c"
+"C:\Programme\SoftICE\Examples\GDIDemo\Init.c"
+"C:\Programme\SoftICE\Examples\GDIDemo\Maze.c"
+"C:\Programme\SoftICE\Examples\GDIDemo\Poly.c"
+"C:\Programme\SoftICE\Examples\GDIDemo\Wininfo.c"
+"C:\Programme\SoftICE\Examples\GDIDemo\Xform.c"
+]
+Creating command line "cl.exe @C:\DOKUME~1\HEIKOV~1.BIG\LOKALE~1\Temp\RSPA.tmp" 
+Creating temporary file "C:\DOKUME~1\HEIKOV~1.BIG\LOKALE~1\Temp\RSPB.tmp" with contents
+[
+kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /incremental:yes /pdb:"Debug/GDIdemo.pdb" /debug /machine:I386 /out:"Debug/GDIdemo.exe" /pdbtype:sept 
+".\Debug\Bounce.obj"
+".\Debug\Dialog.obj"
+".\Debug\Draw.obj"
+".\Debug\Gdidemo.obj"
+".\Debug\Gdidemo.res"
+".\Debug\Init.obj"
+".\Debug\Maze.obj"
+".\Debug\Poly.obj"
+".\Debug\Wininfo.obj"
+".\Debug\Xform.obj"
+]
+Creating command line "link.exe @C:\DOKUME~1\HEIKOV~1.BIG\LOKALE~1\Temp\RSPB.tmp"
+<h3>Output Window</h3>
+Compiling resources...
+Compiling...
+Bounce.c
+Dialog.c
+c:\programme\softice\examples\gdidemo\dialog.c(203) : warning C4028: formal parameter 1 different from declaration
+c:\programme\softice\examples\gdidemo\dialog.c(211) : warning C4133: 'function' : incompatible types - from 'struct HWND__ *' to 'struct HDC__ *'
+c:\programme\softice\examples\gdidemo\dialog.c(213) : warning C4133: 'function' : incompatible types - from 'struct HWND__ *' to 'struct HDC__ *'
+c:\programme\softice\examples\gdidemo\dialog.c(214) : warning C4133: 'function' : incompatible types - from 'struct HWND__ *' to 'struct HDC__ *'
+Draw.c
+Gdidemo.c
+C:\Programme\SoftICE\Examples\GDIDemo\Gdidemo.c(35) : warning C4028: formal parameter 1 different from declaration
+C:\Programme\SoftICE\Examples\GDIDemo\Gdidemo.c(35) : warning C4028: formal parameter 2 different from declaration
+Init.c
+Maze.c
+Poly.c
+Wininfo.c
+Xform.c
+Linking...
+
+
+
+<h3>Results</h3>
+GDIdemo.exe - 0 error(s), 6 warning(s)
+</pre>
+</body>
+</html>

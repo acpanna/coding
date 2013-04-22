@@ -1,0 +1,1130 @@
+<HTML
+><HEAD
+><TITLE
+>Debugging-Techniken</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="PREVIOUS"
+TITLE="Schnellreferenz"
+HREF="x4097.html"><LINK
+REL="NEXT"
+TITLE="Debugging mit Abfragen"
+HREF="x4562.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x4097.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x4562.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="DEBUG"
+>Kapitel 4. Debugging-Techniken</A
+></H1
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Inhalt</B
+></DT
+><DT
+><A
+HREF="debug.html#AEN4249"
+>Debugging mit Ausgaben</A
+></DT
+><DT
+><A
+HREF="x4562.html"
+>Debugging mit Abfragen</A
+></DT
+><DT
+><A
+HREF="x4834.html"
+>Debugging durch Beobachten</A
+></DT
+><DT
+><A
+HREF="debfaults.html"
+>Debuggen von Systemfehlern</A
+></DT
+><DT
+><A
+HREF="x5337.html"
+>Debugger und verwandte Werkzeuge</A
+></DT
+></DL
+></DIV
+><P
+>Eines der vordringlichsten Probleme für jeden, der Kernel-Code
+schreibt, ist das Debugging. Kernel-Code kann nicht einfach in einem
+Debugger ausgeführt oder verfolgt werden, weil es sich bei Kernel-Code um Funktionalitäten handelt, die nicht zu einem spezifischen Prozeß
+gehören. Fehler im Kernel-Code können auch besonders schwer zu
+reproduzieren sein, das ganze System mit sich reißen und dabei
+möglicherweise Beweismittel zerstören, mit denen man das Problem hätte
+aufspüren können.
+
+
+
+&#13;</P
+><P
+>In diesem Kapitel werden Techniken eingeführt, mit denen Sie
+unter solch herausfordernden Umständen Kernel-Code beobachten und
+Fehler verfolgen können.
+&#13;</P
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN4249"
+>Debugging mit Ausgaben</A
+></H1
+><P
+>&#13;
+Die gängigste Debugging-Technik ist die Überwachung des
+Programmablaufs. Anwendungsprogramme machen das, indem an den passenden
+Stellen <SPAN
+><I
+CLASS="EMPHASIS"
+>printf</I
+></SPAN
+> eingefügt wird. Wenn Sie
+Kernel-Code debuggen, können Sie dasselbe mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+> erreichen.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="DEBPRINTK"
+>printk</A
+></H2
+><P
+>&#13;Wir haben die Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+> bereits in
+vorangegangenen Kapiteln verwendet und dabei vereinfachend angenommen,
+daß diese Funktion wie <SPAN
+><I
+CLASS="EMPHASIS"
+>printf</I
+></SPAN
+> arbeitet. Jetzt ist
+es an der Zeit, daß wir auch auf die Unterschiede eingehen.
+&#13;</P
+><P
+>&#13;
+Einer der Unterschiede besteht darin, daß <SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+>
+die Möglichkeit bietet, Meldungen nach ihrer Wichtigkeit oder
+Bedeutung in verschiedene <SPAN
+><I
+CLASS="EMPHASIS"
+>Loglevel</I
+></SPAN
+> einzuteilen. Der Loglevel wird normalerweise mit einem Makro
+angegeben. Beispielsweise ist das Makro
+<TT
+CLASS="LITERAL"
+>KERN_INFO</TT
+>, das wir schon bei einigen
+Ausgaben gesehen haben, einer der möglichen Loglevel einer
+Meldung. Das Loglevel-Makro wird zu einem String expandiert, der dann
+vom Compiler der eigentlichen Meldung vorangestellt wird. Deswegen
+steht auch in den folgenden Beispielen kein Komma zwischen der
+Priorität und dem Format-String. Hier sehen Sie zwei Beispiele für die Verwendung
+von <SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+> &#8212; eine Debugging-Meldung und eine
+kritische Meldung:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+printk(KERN_DEBUG "Hier bin ich: %s:%i\n", _&#8201;_FILE_&#8201;_, _&#8201;_LINE_&#38;&#8201;_);
+printk(KERN_CRIT "Ich bin abgestuerzt bei %p\n", ptr);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Es gibt insgesamt acht Loglevel-Strings, die in der Header-Datei
+<TT
+CLASS="LITERAL"
+>&#60;linux/kernel.h&#62;</TT
+> definiert
+sind:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>KERN_EMERG</TT
+></DT
+><DD
+><P
+>&#13;Wird für Meldungen in Notsituationen verwendet, also normalerweise
+kurz vor einem Absturz.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>KERN_ALERT</TT
+></DT
+><DD
+><P
+>&#13;Eine Situation, die ein unmittelbares Eingreifen erfordert.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>KERN_CRIT</TT
+></DT
+><DD
+><P
+>&#13;Kritische Zustände, oft im Zusammenhang mit schwerwiegendem Hardware-
+oder Software-Versagen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>KERN_ERR</TT
+></DT
+><DD
+><P
+>&#13;Wird zum Melden von Fehlerzuständen verwendet; Gerätetreiber verwenden
+oft <TT
+CLASS="LITERAL"
+>KERN_ERR</TT
+>, um Schwierigkeiten mit der Hardware
+zu melden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>KERN_WARNING</TT
+></DT
+><DD
+><P
+>&#13;Warnungen in problematischen Situationen, die für sich allein
+genommen keine ernsthaften Probleme für das System mit sich bringen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>KERN_NOTICE</TT
+></DT
+><DD
+><P
+>&#13;Situationen, die zwar normal, aber trotzdem beachtenswert sind. Eine
+Reihe von sicherheitsrelevanten Zuständen wird auf diesem Level
+gemeldet.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>KERN_INFO</TT
+></DT
+><DD
+><P
+>&#13;Informationsmeldungen. Viele Treiber geben beim Start Informationen
+über die vorgefundene Hardware auf diesem Level aus.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>KERN_DEBUG</TT
+></DT
+><DD
+><P
+>&#13;Wird für Debug-Meldungen verwendet.</P
+></DD
+></DL
+></DIV
+><P
+>Jedes dieser Makros wird zu einer Zeichenkette &#60; i &#62; mit i zwischen 0 und 7 expandiert. Kleinere Werte bedeuten höhere Prioritäten.&#13;</P
+><P
+>Eine <SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+>-Anweisung ohne explizit
+angegebene Priorität hat den Default
+<TT
+CLASS="LITERAL"
+>DEFAULT_MESSAGE_LOGLEVEL</TT
+>, einen in
+<TT
+CLASS="FILENAME"
+>kernel/printk.c</TT
+> angegebenen Integer-Wert. Der
+Default-Wert ist während der Entwicklung von Linux mehrfach verändert
+worden, so daß wir Ihnen raten, immer einen passenden Loglevel
+anzugeben.
+&#13;</P
+><P
+>Der Kernel gibt die Meldung, basierend auf dem Loglevel, auf der
+aktuellen Textkonsole (einem Terminal im Textmodus, einem seriellen
+Drucker oder einem Paralleldrucker) aus: Wenn die Priorität kleiner als die
+Integer-Variable <TT
+CLASS="LITERAL"
+>console_loglevel</TT
+> ist, wird
+die Meldung angezeigt. Wenn sowohl <SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+>
+als auch <SPAN
+CLASS="APPLICATION"
+>syslogd</SPAN
+> auf dem System laufen,
+werden Kernel-Meldungen unabhängig von
+<TT
+CLASS="LITERAL"
+>console_loglevel</TT
+> an
+<TT
+CLASS="FILENAME"
+>/var/log/messages</TT
+> angehängt (oder
+entsprechend Ihrer <SPAN
+CLASS="APPLICATION"
+>syslogd</SPAN
+>-Konfiguration
+behandelt). Wenn <SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+> nicht läuft,
+erreichen die Meldungen den User-Space nicht, sofern Sie nicht
+<TT
+CLASS="FILENAME"
+>/proc/kmsg</TT
+> lesen.
+
+&#13;</P
+><P
+>&#13;
+Die Variable <TT
+CLASS="LITERAL"
+>console_loglevel</TT
+> wird mit dem Wert
+<TT
+CLASS="LITERAL"
+>DEFAULT_CONSOLE_LOGLEVEL</TT
+>
+initialisiert und kann dann durch den Systemaufruf
+<SPAN
+><I
+CLASS="EMPHASIS"
+>sys_syslog</I
+></SPAN
+> verändert werden. Das kann zum
+Beispiel durch Angabe der Option <SPAN
+><I
+CLASS="EMPHASIS"
+>&#8211;c</I
+></SPAN
+> beim
+Aufruf von <SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+> erfolgen (siehe die
+Man-Page von <SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+>). Beachten Sie, daß Sie
+zum Ändern des aktuellen Wertes zunächst
+<SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+> beenden und
+dann mit der Option <SPAN
+><I
+CLASS="EMPHASIS"
+>&#8211;c</I
+></SPAN
+> neu starten
+müssen. Alternativ dazu können Sie natürlich auch ein Programm
+schreiben, das den Loglevel der Konsole verändert. Sie finden unsere
+Version eines solchen Programms in der Datei
+<TT
+CLASS="FILENAME"
+>miscprogs/setlevel.c</TT
+> in den Quelldateien auf
+dem FTP-Server von O'Reilly. Der neue Level wird als Integer-Wert
+zwischen 1 und 8 angegeben. Bei 1 werden nur Meldungen auf Level 0
+(<TT
+CLASS="LITERAL"
+>KERN_EMERG</TT
+>) auf der Konsole ausgegeben, bei 8
+dagegen alle, auch die Debugging-Meldungen.
+&#13;</P
+><P
+>&#13;Nach einem Kernel-Fehler (siehe Abschnitt &#8220;Debuggen von Systemfehlern&#8221; weiter hinten in diesem Kapitel)
+wollen Sie wahrscheinlich den Loglevel herabsetzen, wenn Sie auf der
+Konsole arbeiten und auf einen Kernel-Fehler stoßen (siehe &#8220;<A
+HREF="debfaults.html"
+>the Section called <I
+>Debuggen von Systemfehlern</I
+></A
+>&#8221; weiter hinten in diesem Kapitel), denn der
+Fehlerbehandlungscode setzt die Variable
+<TT
+CLASS="LITERAL"
+>console_loglevel</TT
+> auf den Maximalwert, worauf alle
+weiteren Meldungen auf der Konsole erscheinen. Wenn Sie Ihre
+Debugging-Meldungen sehen müssen, sollten Sie den Loglevel
+heraufsetzen; dies ist auch nützlich, wenn Sie Kernel-Code entfernt
+entwickeln und die Textkonsole nicht für eine interaktive Sitzung
+verwendet wird.</P
+><P
+>&#13;Ab Version 2.1.31 ist es möglich, den Loglevel der Konsole mit der
+Textdatei <TT
+CLASS="FILENAME"
+>/proc/sys/kernel/printk</TT
+> zu lesen und zu
+ändern. Diese Datei enthält vier Integer-Werte. Die ersten beiden sind
+vielleicht interessant für Sie: der aktuelle Loglevel der Konsole und
+der Default-Level für Meldungen. In neueren Kerneln können Sie
+beispielsweise mit folgendem Befehl alle Kernel-Meldungen auf der
+Konsole erscheinen lassen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+> # <TT
+CLASS="USERINPUT"
+><B
+>echo 8 &#62; /proc/sys/kernel/printk</B
+></TT
+></PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+In 2.0 müssen Sie dagegen das Hilfsprogramm
+<SPAN
+CLASS="APPLICATION"
+>setlevel</SPAN
+> verwenden.</P
+><P
+>Es sollte jetzt auch klar sein, warum in
+<TT
+CLASS="FILENAME"
+>hello.c</TT
+> die
+<TT
+CLASS="LITERAL"
+>&#60;1&#62;</TT
+>-Markierungen standen: Damit wird
+sichergestellt, daß solche Meldungen auf jeden Fall auf der Konsole
+erscheinen.
+
+&#13;</P
+><P
+>&#13;
+Linux ist einigermaßen flexibel, was das Logging auf die Konsole
+angeht, indem es Ihnen gstattet, Meldungen an eine bestimmte virtuelle
+Konsole zu schicken (wenn sich Ihre Konsole auf einem Textbildschirm
+befindet). Per Default ist die <I
+CLASS="FIRSTTERM"
+>Konsole</I
+> das
+aktuelle virtuelle Terminal. Um ein anderes virtuelles Terminal als
+Empfänger von Meldungen auszuwählen, können Sie den Aufruf
+<TT
+CLASS="LITERAL"
+>ioctl(TIOCLINUX)</TT
+> auf einem beliebigen
+Konsolengerät ausführen. Mit dem folgenden Programm
+<SPAN
+CLASS="APPLICATION"
+>setconsole</SPAN
+>, das vom Superuser ausgeführt
+werden muß, kann ausgewählt werden, auf
+welcher Konsole Kernel-Meldungen ausgegeben werden. Sie finden es im
+Verzeichnis <TT
+CLASS="FILENAME"
+>misc-progs</TT
+>.
+
+
+
+&#13;</P
+><P
+>Und so funktioniert das Programm:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+int main(int argc, char **argv)
+{
+    char bytes[2] = {11,0}; /* 11 ist die Befehlsnummer von TIOCLINUX */
+
+    if (argc==2) bytes[1] = atoi(argv[1]); /* die ausgewaehlte Konsole */
+    else {
+        fprintf(stderr, "%s: nur ein Argument angeben\n",argv[0]); exit(1);
+    }
+
+    if (ioctl(STDIN_FILENO, TIOCLINUX, bytes)&#60;0) {    /* stdin verwenden */
+        fprintf(stderr,"%s: ioctl(stdin, TIOCLINUX): %s\n",
+                argv[0], strerror(errno));
+        exit(1);
+    }
+    exit(0);
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+><SPAN
+CLASS="APPLICATION"
+>setconsole</SPAN
+> verwendet den speziellen
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Befehl <TT
+CLASS="LITERAL"
+>TIOCLINUX</TT
+>, der
+Linux-spezifische Funktionen implementiert. Um
+<TT
+CLASS="LITERAL"
+>TIOCLINUX</TT
+> zu verwenden, übergeben Sie einen Zeiger
+auf ein Byte-Feld als Argument. Das erste Byte des Feldes ist eine
+Zahl, die den gewünschten Subbefehl angibt. Die folgenden Bytes sind
+dann wiederum spezifisch für den Subbefehl. In
+<SPAN
+CLASS="APPLICATION"
+>setconsole</SPAN
+> wird der Subbefehl 11 verwendet,
+wobei das nächste Byte (das in <TT
+CLASS="LITERAL"
+>bytes[1]</TT
+>
+steht) die virtuelle Konsole angibt. Die vollständige Beschreibung
+von <TT
+CLASS="LITERAL"
+>TIOCLINUX</TT
+> steht in den Kernel-Quellen in
+<TT
+CLASS="FILENAME"
+>drivers/char/tty_io.c</TT
+>.
+
+&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="DEBPRINTKLOG"
+>Wie Meldungen protokolliert werden</A
+></H2
+><P
+>&#13;
+
+
+
+Die Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+> schreibt Meldungen in einen
+Ring-Puffer der Länge
+<TT
+CLASS="LITERAL"
+>LOG_BUF_LEN</TT
+> (definiert in
+<TT
+CLASS="FILENAME"
+>kernel/printk.c</TT
+>). Dann weckt sie einen
+Prozeß, der auf Meldungen wartet, also einen Prozeß, der im
+Systemaufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>syslog</I
+></SPAN
+> schläft oder
+<TT
+CLASS="FILENAME"
+>/proc/kmsg</TT
+> liest. Diese beiden
+Schnittstellen zum Protokoll-System sind fast äquivalent, beachten Sie
+aber, daß das Lesen aus <TT
+CLASS="FILENAME"
+>/proc/kmsg</TT
+> die Daten aus
+dem Protokoll-Puffer &#8220;verbraucht&#8221;, während der Systemaufruf
+<SPAN
+><I
+CLASS="EMPHASIS"
+>syslog</I
+></SPAN
+> Protokoll-Daten optional auch wieder
+zurückgeben kann, so daß diese auch noch für andere Prozesse zur
+Verfügung stehen. Das Auslesen
+einer <TT
+CLASS="FILENAME"
+>/proc</TT
+>-Datei ist aber einfacher,
+weswegen das auch das Default-Verhalten von
+<SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+> ist.</P
+><P
+>Wenn Sie Kernel-Meldungen direkt von <TT
+CLASS="FILENAME"
+>/proc</TT
+> lesen, dann verhält sich die
+<TT
+CLASS="FILENAME"
+>/proc</TT
+>-Datei nach dem Anhalten von
+<SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+> wie eine FIFO-Datei; der Leser blockiert
+und wartet auf weitere Daten. Natürlich können Sie keine Meldungen auf
+diese Weise lesen, wenn <SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+> oder ein
+anderer Prozess ebenfalls die gleichen Daten liest, weil Sie nie an
+die Reihe kommen.</P
+><P
+>Wenn der Ring-Puffer voll ist, fängt
+<SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+> wieder vorn an und schreibt neue Daten an
+den Anfang des Puffers, wodurch die jeweils ältesten Daten
+überschrieben werden. Der Protokoll-Prozeß verliert also die ältesten
+Daten. Dieses Problem kann im Vergleich mit den Vorteilen eines
+solchen Ring-Puffers vernachlässigt werden. Zum Beispiel kann ein
+System sogar ohne Protokoll-Prozeß laufen, ohne daß unnötig viel
+Speicher verschwendet wird (indem alte Daten überschrieben werden,
+falls keiner sie liest). Ein weiterer Vorteil des Ansatzes von
+Linux ist es, daß <SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+> überall aufgerufen
+werden kann, selbst aus einem Interrupt-Handler. Auch gibt es keine
+Beschränkungen, wie viele Daten ausgegeben werden können. Die einzige
+Gefahr ist der mögliche Verlust einiger Daten.&#13;</P
+><P
+>Wenn der <SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+>-Prozeß läuft, entnimmt er
+die Kernel-Meldungen und gibt sie an
+<SPAN
+CLASS="APPLICATION"
+>syslogd</SPAN
+> weiter, der wiederum
+<TT
+CLASS="FILENAME"
+>/etc/syslog.conf</TT
+> ausliest, um zu
+ermitteln, was er mit den Meldungen machen
+soll. <SPAN
+CLASS="APPLICATION"
+>syslogd</SPAN
+> unterscheidet die Meldungen
+nach einer <I
+CLASS="FIRSTTERM"
+>Quelle</I
+> und einer
+<I
+CLASS="FIRSTTERM"
+>Priorität</I
+>. Die möglichen Werte sowohl für die Quelle
+als auch für die Priorität sind in
+<TT
+CLASS="LITERAL"
+>&#60;sys/syslog.h&#62;</TT
+>
+definiert. Kernel-Meldungen werden unter der Quelle
+<TT
+CLASS="LITERAL"
+>LOG_KERN</TT
+> protokolliert; die Priorität ist
+die bei <SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+> angegebene (beispielsweise wird
+<TT
+CLASS="LITERAL"
+>LOG_ERR</TT
+> für <TT
+CLASS="LITERAL"
+>KERN_ERR</TT
+>-Meldungen
+verwendet). Wenn
+<SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+> nicht läuft, bleiben die Daten im
+Ring-Puffer, bis jemand diesen ausliest oder der Puffer überläuft.&#13;</P
+><P
+>&#13;Wenn Sie es vermeiden wollen, daß Ihr System-Protokoll mit Meldungen
+Ihres Treibers &#8220;zugemüllt&#8221; wird, können Sie entweder bei
+<SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+> die Option
+<SPAN
+><I
+CLASS="EMPHASIS"
+>&#8211;f</I
+></SPAN
+> (<SPAN
+><I
+CLASS="EMPHASIS"
+>file</I
+></SPAN
+>) angeben, um
+die Meldungen in eine bestimmte Datei zu schreiben, oder
+<TT
+CLASS="FILENAME"
+>/etc/syslog.conf</TT
+>  Ihren Bedürfnissen
+entsprechend modifizieren. Eine
+ziemlich rabiate, andere Möglichkeit wäre es,
+<SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+> zu beenden und alle Meldungen auf
+einem unbenutzten virtuellen Terminal auszugeben<A
+NAME="AEN4486"
+HREF="#FTN.AEN4486"
+>[1]</A
+>
+oder aber in einem unbenutzten <SPAN
+CLASS="APPLICATION"
+>xterm</SPAN
+> den
+Befehl <SPAN
+CLASS="APPLICATION"
+>cat /proc/kmsg</SPAN
+> auszuführen.
+&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN4494"
+>Die Meldungen ein- und ausschalten</A
+></H2
+><P
+>&#13;
+
+Am Anfang der Entwicklung eines Treibers kann
+<SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+> ziemlich hilfreich sein, wenn neuer Code
+debuggt und getestet wird. Wenn Sie den Treiber aber offiziell
+freigeben, sollten solche Ausgabeanweisungen entfernt oder
+wenigstens abgeschaltet werden. Möglicherweise werden Sie aber ein
+neues Feature implementieren (oder einen Bug fixen) wollen und
+wenigstens eine der Meldungen wieder
+einschalten wollen, sobald Sie alle entfernt haben. Es gibt mehrere
+Möglichkeiten, beide Probleme zu lösen, das heißt, sowohl global Meldungen ein-
+und ausschalten als auch einzelne Meldungen individuell
+beeinflussen zu können.
+
+&#13;</P
+><P
+>Wir zeigen hier eine Möglichkeit, <SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+>-Aufrufe
+zu schreiben, so daß man diese individuell oder global ein- und
+ausschalten kann; diese Technik beruht auf einem Makro, das zu
+<SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+> (oder <SPAN
+><I
+CLASS="EMPHASIS"
+>printf</I
+></SPAN
+>)
+aufgelöst wird, wenn Sie das wollen:&#13;</P
+><P
+></P
+><UL
+><LI
+STYLE="list-style-type: disc"
+><P
+>Jede Ausgabeanweisung kann durch das Weglassen oder Hinzufügen eines einzelnen
+Buchstabens zum Namen des Makros ein- oder ausgeschaltet werden.</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>Alle Meldungen können durch das Ändern der Variable
+<TT
+CLASS="LITERAL"
+>CFLAGS</TT
+> vor dem Kompilieren auf einmal abgeschaltet
+werden. </P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>Ein und dieselbe Ausgabeanweisung kann sowohl im Kernel-Code als auch
+im User-Space-Code verwendet werden, so daß der Treiber und die
+Testprogramme hinsichtlich der Meldungen gleich behandelt werden
+können.</P
+></LI
+></UL
+>ark=bullet&#62;<P
+>&#13;Das folgende Code-Fragment implementiert diese Funktionen und stammt
+unmittelbar aus der Header-Datei <TT
+CLASS="FILENAME"
+>scull.h</TT
+>:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+#undef PDEBUG             /* vorsichtshalber "undefinieren" */
+#ifdef SCULL_DEBUG
+# ifdef _&#8201;_KERNEL_&#8201;_
+   /* das hier gilt im Kernel-Space, wenn Debugging eingeschaltet ist */
+#  define PDEBUG(fmt, args...) printk(KERN_DEBUG "scull: " fmt, ## args)
+# else
+   /* und das hier im User-Space */
+#  define PDEBUG(fmt, args...) fprintf(stderr, fmt, ## args)
+# endif
+#else
+# define PDEBUG(fmt, args...) /* kein Debugging: nichts machen */
+#endif
+
+#undef PDEBUGG
+#define PDEBUGG(fmt, args...) /* nichts machen, nur ein Platzhalter */</PRE
+></TD
+></TR
+></TABLE
+><P
+>Das Symbol <TT
+CLASS="LITERAL"
+>PDEBUG</TT
+> ist davon abhängig, ob
+<TT
+CLASS="LITERAL"
+>SCULL_DEBUG</TT
+>
+definiert ist oder nicht, und zeigt Informationen in einer Weise an, die zu der Umgebung, in der der Code läuft, paßt: Im Kernel wird der
+Kernel-Aufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+> verwendet, und im User-Space
+der libc-Aufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>fprintf</I
+></SPAN
+>. Das Symbol
+<TT
+CLASS="LITERAL"
+>PDEBUGG</TT
+> macht dagegen gar nichts; man kann damit
+einfach Ausgabeanweisungen &#8220;auskommentieren&#8221;, ohne sie ganz entfernen
+zu müssen.&#13;</P
+><P
+>Um den Prozeß weiter zu vereinfachen, können Sie die folgenden Zeilen
+zu Ihrem <TT
+CLASS="FILENAME"
+>Makefile</TT
+> hinzufügen:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+# Kommentieren Sie die folgende Zeile ein oder aus, um das Debugging
+# ein- oder auszuschalten
+DEBUG = y
+
+#  Debugging-Flag zu CFLAGS hinzufügen oder nicht
+ifeq ($(DEBUG),y)
+  DEBFLAGS = -O -g -DSCULL_DEBUG # "-O" wird fuer die Expansion von
+                                 # Inline-Funktionen gebraucht
+else
+  DEBFLAGS = -O2
+endif
+
+CFLAGS += $(DEBFLAGS)</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die in diesem Abschnitt gezeigten Makros verlassen sich auf eine
+<SPAN
+CLASS="APPLICATION"
+>gcc</SPAN
+>-Erweiterung des ANSI-C-Präprozessors,
+die Makros mit einer variablen Anzahl von Argumenten
+unterstützt. Diese Abhängigkeit vom <SPAN
+CLASS="APPLICATION"
+>gcc</SPAN
+>
+sollte kein Problem sein, weil der Kernel selbst ohnehin massiv von
+Features des <SPAN
+CLASS="APPLICATION"
+>gcc</SPAN
+> abhängt. Die gleichen
+Überlegungen gelten auch für die Abhängigkeit des
+<TT
+CLASS="FILENAME"
+>Makefile</TT
+> von <SPAN
+CLASS="APPLICATION"
+>gmake</SPAN
+>.&#13;</P
+><P
+>&#13;
+
+Wenn Sie sich mit dem C-Präprozessor auskennen, können Sie die
+angegebenen Definitionen noch um das Konzept einer
+<I
+CLASS="FIRSTTERM"
+>Debugging-Ebene</I
+> erweitern. Dabei werden verschiedene
+Ebenen definiert, und jeder Ebene wird ein Integer-Wert (oder eine
+Bitmaske) zugewiesen, um zu bestimmen, wie geschwätzig dieser Wert
+sein soll.&#13;</P
+><P
+>Jeder Treiber hat allerdings eigene Features und
+Überwachungsbedürfnisse. Die Kunst guter Programmierung besteht darin,
+zwischen Flexibilität und Effizienz abzuwägen, und wir können Ihnen
+nicht sagen, was in Ihrem Fall das Beste ist. Denken Sie daran, daß
+Präprozessor-Bedingungen (genau wie konstante Ausdrücke im Code)
+während des Kompilierens ausgeführt werden, so daß Sie neu kompilieren
+müssen, um die Meldungen an- oder abzuschalten. Eine mögliche
+Alternative wäre es, C-Bedingungen zu verwenden, die zur Laufzeit
+ausgeführt werden und die es Ihnen ermöglichen, Meldungen während der
+Programmausführung an- oder abzuschalten. Diese Fähigkeit ist sehr
+angenehm, benötigt aber zusätzliche Verarbeitung zur Laufzeit, was die
+Performance selbst dann beeinflussen kann, wenn die Meldungen
+abgeschaltet sind. Manchmal ist dieser Performance-Verlust
+inakzeptabel.&#13;</P
+><P
+>Wir persönlich sind mit den obigen Makros zufrieden, auch wenn sie uns
+zwingen, das Modul jedesmal neu zu kompilieren und zu laden, wenn wir
+eine Meldung hinzufügen oder entfernen möchten.
+
+
+
+&#13;</P
+></DIV
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN4486"
+HREF="debug.html#AEN4486"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Sie können beispielsweise mit <B
+CLASS="COMMAND"
+>setlevel 8;
+                        setconsole 10</B
+> das Terminal 10 zum Anzeigen von
+                        Meldungen einrichten.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x4097.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x4562.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Schnellreferenz</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Debugging mit Abfragen</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

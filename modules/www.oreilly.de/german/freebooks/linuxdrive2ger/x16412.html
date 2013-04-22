@@ -1,0 +1,555 @@
+<HTML
+><HEAD
+><TITLE
+>Schnellreferenz</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Das Laden von Block-Treibern"
+HREF="lock.html"><LINK
+REL="PREVIOUS"
+TITLE="Abwärtskompatibilität"
+HREF="x16318.html"><LINK
+REL="NEXT"
+TITLE="mmap und DMA"
+HREF="mem.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x16318.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 12. Das Laden von Block-Treibern</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="mem.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN16412"
+>Schnellreferenz</A
+></H1
+><P
+>Die wichtigsten Funktionen und Makros, die beim Schreiben von
+Block-Treibern benutzt werden, sind hier zusammengefaßt. Um Platz
+zu sparen, führen wir allerdings die Felder von <TT
+CLASS="LITERAL"
+>struct
+request</TT
+>, <TT
+CLASS="LITERAL"
+>struct buffer_head</TT
+> und
+<TT
+CLASS="LITERAL"
+>struct genhd</TT
+> nicht auf und
+lassen auch die vordefinierten <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Befehle weg.&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>int register_blkdev(unsigned int major, const char *name, struct block_device_operations *bdops);</TT
+>, <TT
+CLASS="LITERAL"
+>int unregister_blkdev(unsigned int major, const char *name);</TT
+></DT
+><DD
+><P
+>Diese Funktionen übernehmen die Registrierung des Geräts
+in der Initialisierungsfunktion und die Deregistrierung in der
+Aufräumfunktion.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/blkdev.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>blk_init_queue(request_queue_t *queue, request_fn_proc *request);</TT
+>, <TT
+CLASS="LITERAL"
+>blk_cleanup_queue(request_queue_t *queue);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+Die erste Funktion initialisiert eine Warteschlange und etabliert die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion, die zweite wird zum Aufräumen
+verwendet.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>BLK_DEFAULT_QUEUE(major)</TT
+></DT
+><DD
+><P
+>&#13;Dieses Makro gibt die Default-I/O-Anfrage-Warteschlange für eine
+gegebene Major-Nummer zurück.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct blk_dev_struct blk_dev[MAX_BLKDEV];</TT
+></DT
+><DD
+><P
+>Dieses Array wird vom Kernel dazu benutzt, die passende
+Warteschlange für eine bestimmte Anfrage zu finden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int read_ahead[];</TT
+>, <TT
+CLASS="LITERAL"
+>int max_readahead[][];</TT
+></DT
+><DD
+><P
+>read_ahead enthält Vorauslesewerte auf
+Block-Ebene für jede Major-Nummer. Ein Wert von 8 ist
+        für Geräte wie Festplatten sinnvoll; bei langsameren Medien sollte
+        ein größerer Wert gewählt
+werden. <TT
+CLASS="LITERAL"
+>max_readahead</TT
+> enthält
+Vorauslesewerte für alle Major- und Minornummern auf Dateisystem-Ebene
+und wird normalerweise gegenüber dem System-Default nicht
+verändert.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int max_sectors[][];</TT
+></DT
+><DD
+><P
+>&#13;Dieses Array, das per Major- und Minor-Nummer indiziert wird, enthält
+die maximale Anzahl von Sektoren, die in einer einzigen I/O-Anfrage
+zusammengefaßt werden sollten.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int blksize_size[][];</TT
+>, <TT
+CLASS="LITERAL"
+>int blk_size[][];</TT
+>, <TT
+CLASS="LITERAL"
+>int hardsect_size[][];</TT
+></DT
+><DD
+><P
+>Diese zweidimensionalen Arrays werden mit der Major- und
+        Minor-Nummer indiziert. Der Treiber ist dafür zuständig, die zur
+        jeweiligen Major-Nummer gehörende Reihe im Array zu allozieren
+        bzw. zu deallozieren. In den Arrays steht die Größe der Blocks auf
+        dem Gerät (normalerweise 1 KByte), die Größe jedes Minor-Gerätes in
+        KByte (nicht in Blocks) und die Hardware-Sektorengröße in
+        Bytes.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>MAJOR_NR</TT
+>, <TT
+CLASS="LITERAL"
+>DEVICE_NAME</TT
+>, <TT
+CLASS="LITERAL"
+>DEVICE_NR(kdev_t device)</TT
+>, <TT
+CLASS="LITERAL"
+>DEVICE_INTR</TT
+>, <TT
+CLASS="LITERAL"
+>#include &#60;linux/blk.h&#62;</TT
+></DT
+><DD
+><P
+>Diese Makros müssen vom Treiber definiert werden,
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>bevor</I
+></SPAN
+> die Header-Datei
+<TT
+CLASS="LITERAL"
+>&#60;linux/blk.h&#62;</TT
+> eingebunden wird, weil sie in
+dieser Datei verwendet werden. <TT
+CLASS="LITERAL"
+>MAJOR_NR</TT
+> ist
+die Major-Nummer des Geräts, <TT
+CLASS="LITERAL"
+>DEVICE_NAME</TT
+> der
+Name des Geräts, wie er in Fehlermeldungen verwendet wird,
+<TT
+CLASS="LITERAL"
+>DEVICE_NR</TT
+> gibt die Minor-Nummer des
+<SPAN
+><I
+CLASS="EMPHASIS"
+>physikalischen</I
+></SPAN
+> Geräts zurück, auf das die
+Geräte-Nummer verweist, und <TT
+CLASS="LITERAL"
+>DEVICE_INTR</TT
+> ist
+ein selten verwendetes Symbol, das auf die untere Hälfte des
+Interrupt-Handlers des Geräts verweist.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>spinlock_t io_request_lock;</TT
+></DT
+><DD
+><P
+>&#13;Das Spinlock muß gehalten werden, wann immer eine
+I/O-Anfrage-Warteschlange manipuliert wird.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct request *CURRENT</TT
+></DT
+><DD
+><P
+>Dieses Makro zeigt auf die aktuelle Anfrage, wenn die
+Default-Warteschlange verwendet wird. Die
+        Anfrage-Struktur beschreibt einen Datenblock, der übertragen
+        werden soll, und wird von der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion im Treiber benutzt.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>INIT_REQUEST;</TT
+>, <TT
+CLASS="LITERAL"
+>end_request(int status);</TT
+></DT
+><DD
+><P
+>&#13;
+<TT
+CLASS="LITERAL"
+>INIT_REQUEST</TT
+> überprüft die nächste Anfrage in der
+Warteschlange und springt zurück, wenn keine weiteren Anfragen mehr
+auszuführen sind. <SPAN
+><I
+CLASS="EMPHASIS"
+>end_request</I
+></SPAN
+> wird bei der
+Beendigung einer Block-Anfrage aufgerufen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>spinlock_t io_request_lock;</TT
+></DT
+><DD
+><P
+>&#13;Die I/O-Anfrage-Sperre muß zu jedem Zeitpunkt gehalten werden, an dem
+die Anfrage-Warteschlange manipuliert wird.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct request *blkdev_entry_next_request(struct list_head *head);</TT
+>, <TT
+CLASS="LITERAL"
+>struct request *blkdev_next_request(struct request *req);</TT
+>, <TT
+CLASS="LITERAL"
+>struct request *blkdev_prev_request(struct request *req);</TT
+>, <TT
+CLASS="LITERAL"
+>blkdev_dequeue_request(struct request *req);</TT
+>, <TT
+CLASS="LITERAL"
+>blkdev_release_request(struct request *req);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+
+Diverse Funktionen zur Arbeit mit der I/O-Anfrage-Warteschlange.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>blk_queue_headactive(request_queue_t *queue, int active);</TT
+></DT
+><DD
+><P
+>&#13;Gibt an, ob die erste Anfrage in der Warteschlange aktiv vom Treiber
+bearbeitet wird oder nicht.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void blk_queue_make_request(request_queue_t *queue, make_request_fn *func);</TT
+></DT
+><DD
+><P
+>&#13;Stellt eine Funktion bereit, die Block-I/O-Anfragen direkt aus dem
+Kernel heraus bearbeitet.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>end_that_request_first(struct request *req, int status, char *name);</TT
+>, <TT
+CLASS="LITERAL"
+>end_that_request_last(struct request *req);</TT
+></DT
+><DD
+><P
+>&#13;
+Erledigen die erforderlichen Schritte, um eine
+Block-I/O-Anfrage abzuschließen.
+<SPAN
+><I
+CLASS="EMPHASIS"
+>end_that_request_last</I
+></SPAN
+> wird
+nur dann aufgerufen, wenn alle Puffer in der Anfrage verarbeitet
+worden sind, also wenn
+<SPAN
+><I
+CLASS="EMPHASIS"
+>end_that_request_first</I
+></SPAN
+> 0
+zurückgegeben hat.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>bh-&#62;b_end_io(struct buffer_head *bh, int status);</TT
+></DT
+><DD
+><P
+>&#13;
+Meldet die Beendigung der I/O auf dem angegebenen Puffer.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int blk_ioctl(kdev_t dev, unsigned int cmd, unsigned long arg);</TT
+></DT
+><DD
+><P
+>&#13;Eine Hilfsfunktion, die die meisten der
+Standard-<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Befehle von Block-Geräten
+implementiert.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int check_disk_change(kdev_t dev);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion überprüft, ob ein Medienwechsel auf dem angegebenen
+Gerät erfolgt ist, und ruft, sollte das der Fall sein, die Methode
+<SPAN
+><I
+CLASS="EMPHASIS"
+>revalidate</I
+></SPAN
+> des Treibers auf.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include&#60;linux/gendisk.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>struct gendisk;</TT
+>, <TT
+CLASS="LITERAL"
+>struct gendisk *gendisk_head</TT
+></DT
+><DD
+><P
+>Mit der generischen Festplatte kann Linux leicht
+        partitionierbare Geräte unterstützen. Die
+<TT
+CLASS="LITERAL"
+>gendisk</TT
+>-Struktur beschreibt eine generische
+Festplatte; <TT
+CLASS="LITERAL"
+>gendisk_head</TT
+> ist der Anfang
+einer verketteten Liste von Strukturen, die alle Festplatten im System
+beschreibt.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void register_disk(struct gendisk *gd, int drive, unsigned minors, struct block_device_operations *ops, long size);</TT
+></DT
+><DD
+><P
+>&#62;
+
+Diese Funktion liest die Partitionstabelle der Festplatte neu ein und
+ändert <TT
+CLASS="LITERAL"
+>genhd-&#62;part</TT
+>, um die neue Partitionierung
+wiederzugeben.</P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x16318.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="mem.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Abwärtskompatibilität</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="lock.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>mmap und DMA</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

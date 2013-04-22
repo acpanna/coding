@@ -1,0 +1,32 @@
+Bankleitzahl: 78965400
+Kontonummer: 876543
+Kontostand:  123.20
+Ueberziehungskredit: 1000
+Level_der_Kreditwuerdigkeit: -2
+Kuerzel_des_Bearbeiters: m
+letzter_Buchungstag:         20
+letzter_Buchungsmonat:       5
+letztes_Buchungsjahr:        97
+letzte_Buchungsstunde:       20
+
+Bankleitzahl: 98765432
+Kontonummer: 12345
+Kontostand:  12300.20
+Ueberziehungskredit: 5000
+Level_der_Kreditwuerdigkeit: 1
+Kuerzel_des_Bearbeiters: b
+letzter_Buchungstag:         1
+letzter_Buchungsmonat:       4
+letztes_Buchungsjahr:        98
+letzte_Buchungsstunde:       12
+
+Bankleitzahl: 12345000
+Kontonummer: 801020
+Kontostand:  100.20
+Ueberziehungskredit: 0
+Level_der_Kreditwuerdigkeit: -3
+Kuerzel_des_Bearbeiters: f
+letzter_Buchungstag:         1
+letzter_Buchungsmonat:       5
+letztes_Buchungsjahr:        98
+letzte_Buchungsstunde:       9

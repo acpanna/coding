@@ -1,0 +1,747 @@
+<HTML
+><HEAD
+><TITLE
+>Einen Handler implementieren</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Interrupt-Handler"
+HREF="irq.html"><LINK
+REL="PREVIOUS"
+TITLE="Einen Interrupt-Handler installieren"
+HREF="irqinstall.html"><LINK
+REL="NEXT"
+TITLE="Tasklets und untere Hälften"
+HREF="irqbottom.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="irqinstall.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 9. Interrupt-Handler</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="irqbottom.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="IRQHANDLER"
+>Einen Handler implementieren</A
+></H1
+><P
+>&#13;
+Bisher haben Sie gelernt, wie man einen Interrupt-Handler registriert,
+aber nicht, wie man einen schreibt. Es ist auch gar nichts Besonderes
+dabei &#8212; es handelt sich um ganz gewöhnlichen C-Code.&#13;</P
+><P
+>Die einzige Besonderheit besteht darin, daß ein Handler zur
+Interrupt-Zeit läuft und seine Fähigkeiten daher einigen Einschränkungen unterliegen. Diese Einschränkungen sind die gleichen wie bei
+Task-Schlangen. Ein Handler kann keine Daten von und in den User-Space
+transportieren, weil er nicht im Kontext eines Prozesses ausgeführt
+wird. Handler dürfen auch nichts machen, was schlafen könnte (etwa
+<SPAN
+><I
+CLASS="EMPHASIS"
+>sleep_on</I
+></SPAN
+> aufrufen, Speicher mit anderen
+Flags als <TT
+CLASS="LITERAL"
+>GFP_ATOMIC</TT
+> allozieren oder ein
+Semaphor sperren). Weiterhin dürfen Handler auch nicht
+<SPAN
+><I
+CLASS="EMPHASIS"
+>schedule</I
+></SPAN
+> aufrufen.&#13;</P
+><P
+>Die Aufgabe eines Interrupt-Handlers ist es, den Empfang eines
+Interrupts an das Gerät zurückzumelden und Daten zu lesen und zu
+schreiben &#8212; je nach Bedeutung des zu bedienenden Interrupts. Der
+erste Schritt besteht normalerweise darin, ein Bit in der
+Schnittstellenkarte zu löschen; die meisten Hardware-Geräte werden
+keine weiteren Interrupts mehr generieren, bis ihr Bit für
+&#8220;ausstehende Interrupts&#8221; gelöscht worden ist. In manchen
+Geräten ist dieser Schritt nicht notwendig, weil sie kein solches Bit
+haben, aber diese Geräte sind in der Minderheit &#8212; wenn auch der
+Parallel-Port eines davon ist. Aus diesem Grunde muß
+<SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> so ein Bit nicht löschen.&#13;</P
+><P
+>Eine häufige Aufgabe des Interrupt-Handlers besteht darin, schlafende Prozesse aufzuwecken, wenn der
+Interrupt das Ereignis mitteilt, auf das die Prozesse warten &#8212;
+beispielsweise die Ankunft neuer Daten.&#13;</P
+><P
+>Um beim Beispiel des Framegrabbers zu bleiben, könnte ein Prozeß eine
+Folge von Bildern einlesen, indem er kontinuierlich vom Gerät
+liest. Der <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>-Aufruf blockiert vor dem Lesen
+jedes Frames, und der Interrupt-Handler weckt den Prozeß wieder,
+sobald ein neues Signal eintrifft. Dabei wird davon ausgegangen, daß
+der Grabber dem Prozessor einen Interrupt mitteilt, um die erfolgreiche Ankunft
+eines neuen Frame anzukündigen.&#13;</P
+><P
+>Programmierer sollten sorgfältig darauf achten, eine Routine zu
+schreiben, die so schnell wie möglich abläuft, egal ob es sich um
+einen schnellen oder einen langsamen Handler handelt. Wenn eine lange
+Berechnung durchgeführt werden muß, dann ist es am besten, diese
+Berechnung mit einer Task-Schlange oder einem Tasklet für einen
+sichereren Zeitpunkt
+vorzumerken (siehe &#8220;<A
+HREF="flowqueue.html"
+>the Section called <I
+>Task-Schlangen</I
+> in Kapitel 6</A
+>&#8221; in <A
+HREF="flow.html"
+>Kapitel 6</A
+>).&#13;</P
+><P
+>Unser Beispiel-Code in <SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> verwendet
+Interrupts, um <SPAN
+><I
+CLASS="EMPHASIS"
+>do_gettimeofday</I
+></SPAN
+> aufzurufen
+und die aktuelle Uhrzeit in einen seitengroßen Ring-Puffer
+auszugeben. Dann weckt er alle lesenden Prozesse, weil jetzt lesbare Daten vorliegen.&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+void short_interrupt(int irq, void *dev_id, struct pt_regs *regs)
+{
+    struct timeval tv;
+    int written;
+
+    do_gettimeofday(&#38;tv);
+
+    /* Einen 16-Byte-Datensatz schreiben. PAGE_SIZE wird als
+       Vielfaches von 16 angenommen */
+    written = sprintf((char *)short_head,"%08u.%06u\n",
+                      (int)(tv.tv_sec % 100000000), (int)(tv.tv_usec));
+    short_incr_bp(&#38;short_head, written);
+    wake_up_interruptible(&#38;short_queue); /* lesende Prozesse aufwecken */
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Dieser Code ist zwar einfach, stellt aber die typische Aufgabe eines
+Interrupt-Handlers dar. Es ruft wiederum
+<SPAN
+><I
+CLASS="EMPHASIS"
+>short_incr_bp</I
+></SPAN
+> auf, was
+folgendermaßen definiert ist:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+static inline void short_incr_bp(volatile unsigned long *index,
+                                 int delta)
+{
+    unsigned long new = *index + delta;
+    barrier ();  /* Diese beiden nicht zusammenoptimieren */
+    *index = (new &#62;= (short_buffer + PAGE_SIZE)) ? short_buffer : new;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Diese Funktion wurde sorgfältig so geschrieben, daß sie einen Zeiger auf einen
+Ring-Puffer ändert, ohne jemals auf einen falschen Wert zu
+verweisen. Durch Zuweisen des letzten Wertes und Einsetzen einer
+Sperre, die den Compiler am Optimieren hindert, ist es möglich,
+Ring-Puffer-Zeiger ohne Sperren sicher zu manipulieren.</P
+><P
+>Die Gerätedatei, die in diesem Beispiel verwendet wird, um den Puffer zur
+Interrupt-Zeit zu füllen, ist
+<TT
+CLASS="FILENAME"
+>/dev/shortint</TT
+>. Sie ist neben
+<TT
+CLASS="FILENAME"
+>/dev/shortprint</TT
+> die einzige
+Gerätedatei von <SPAN
+CLASS="APPLICATION"
+>short</SPAN
+>, die in <A
+HREF="hard.html"
+>Kapitel 8</A
+> nicht eingeführt
+wurde, da sie nur für die Interrupt-Bearbeitung verwendet
+wird. <TT
+CLASS="FILENAME"
+>/dev/shortint</TT
+> ist speziell darauf
+ausgelegt, Interrupts zu generieren und zu melden. Das Schreiben auf
+das Gerät erzeugt bei jedem zweiten Byte einen Interrupt; beim Lesen
+wird bei jedem Interrupt die Uhrzeit gemeldet.&#13;</P
+><P
+>Wenn Sie die Pins 9 und 10 der parallelen Schnittstelle miteinander
+verbinden, dann können Sie Interrupts erzeugen, indem Sie das
+höchstwertige Bit des parallelen Datenbytes setzen. Das erreichen Sie,
+indem Sie binäre Daten auf <TT
+CLASS="FILENAME"
+>/dev/short0</TT
+>
+oder etwas Beliebiges auf
+<TT
+CLASS="FILENAME"
+>/dev/shortint</TT
+><A
+NAME="AEN11809"
+HREF="#FTN.AEN11809"
+>[1]</A
+> schreiben.&#13;</P
+><P
+>Der folgende Code implementiert <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+> für
+<TT
+CLASS="FILENAME"
+>/dev/shortint</TT
+>:
+
+&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+ssize_t short_i_read (struct file *filp, char *buf, size_t count,
+                      loff_t *f_pos)
+{
+    int count0;
+
+    while (short_head == short_tail) {
+        interruptible_sleep_on(&#38;short_queue);
+        if (signal_pending (current))  /* ein Signal ist eingetroffen */
+          return -ERESTARTSYS; /* FS-Schicht soll es abarbeiten */
+        /* ansonsten in der Schleife bleiben */
+    }
+    /* count0 ist die Anzahl der lesbaren Datenbytes */
+    count0 = short_head - short_tail;
+    if (count0 &#60; 0) /* Umbruch */
+        count0 = short_buffer + PAGE_SIZE - short_tail;
+    if (count0 &#60; count) count = count0;
+
+    if (copy_to_user(buf, (char *)short_tail, count))
+        return -EFAULT;
+    short_incr_bp (&#38;short_tail, count);
+    return count;
+}
+
+ssize_t short_i_write (struct file *filp, const char *buf, size_t count,
+                loff_t *f_pos)
+{
+    int written = 0, odd = *f_pos &#38; 1;
+    unsigned long address = short_base; /* Ausgabe auf den Parallel-Port */
+
+    if (use_mem) {
+        while (written &#60; count)
+            writeb(0xff * ((++written + odd) &#38; 1), address);
+    } else {
+        while (written &#60; count)
+            outb(0xff * ((++written + odd) &#38; 1), address);
+    }
+
+    *f_pos += count;
+    return written;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die andere spezielle Gerätedatei, <TT
+CLASS="FILENAME"
+>/dev/shortprint</TT
+>,
+verwendet den Parallel-Port, um einen Drucker zu anzusprechen; Sie können
+sie verwenden, wenn Sie keinen Draht zwischen den Pins 9 und 10 an
+einen D-25-Stecker löten wollen. Die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>-Implementation von
+<SPAN
+CLASS="APPLICATION"
+>shortprint</SPAN
+> verwendet einen Ring-Puffer, um
+die zu druckenden Daten zu speichern, während die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>-Implementation die gleiche wie oben ist (so
+daß Sie ablesen können, wie lange es für Ihren Drucker dauert, ein
+Zeichen zu verarbeiten).</P
+><P
+>&#62;
+&#62;
+Um den Druckerbetrieb zu unterstützen, mußte der Interrupt-Handler
+gegenüber den gerade gezeigten etwas verändert werden; unter anderem
+wird das nächste Datenbyte an den Drucker geschickt, wenn es ein
+solches gibt.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN11825"
+>Argumente verwenden</A
+></H2
+><P
+>&#13;Obwohl <SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> sich nicht darum kümmert,
+werden doch drei Argumente an jeden Interrupt-Handler übergeben:
+<TT
+CLASS="LITERAL"
+>irq</TT
+>,
+<TT
+CLASS="LITERAL"
+>dev_id</TT
+> und <TT
+CLASS="LITERAL"
+>regs</TT
+>. Wir schauen uns
+diese jetzt im einzelnen an.</P
+><P
+>&#13;
+Die Interrupt-Nummer (<TT
+CLASS="LITERAL"
+>int irq</TT
+>) ist als Information
+nützlich, die man in Ihren Protokollmeldungen ausgeben kann. Obwohl
+dies in Kerneln vor 2.0 wichtig war, als es
+<TT
+CLASS="LITERAL"
+>dev_id</TT
+> noch nicht gab, ist man heute mit
+<TT
+CLASS="LITERAL"
+>dev_id</TT
+> besser bedient.</P
+><P
+>&#13;Das zweite Argument, <TT
+CLASS="LITERAL"
+>void *dev_id</TT
+>, ist eine Art
+Client-Daten-Argument; ein <TT
+CLASS="LITERAL"
+>void *</TT
+>-Argument,
+das an <SPAN
+><I
+CLASS="EMPHASIS"
+>request_irq</I
+></SPAN
+> übergeben wird und dann
+genauso wieder an den Handler weitergereicht wird, wenn der Interrupt
+eintritt.</P
+><P
+>Normalerweise übergeben Sie einen Zeiger auf Ihre Gerätedatenstruktur
+in <TT
+CLASS="LITERAL"
+>dev_id</TT
+>, so daß ein Treiber, der mehrere
+Instanzen des gleichen Geräts verwaltet, keinen zusätzlichen Code im
+Interrupt-Handler benötigt, um herauszufinden, welches Gerät für den
+aktuellen Interrupt zuständig ist. Das Argument wird in einem
+Interrupt-Handler typischerweise so verwendet:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;static void sample_interrupt(int irq, void *dev_id, struct pt_regs
+                             *regs)
+{
+    struct sample_dev *dev = dev_id;
+
+    /* `dev' zeigt jetzt auf das richtige Hardware-Element */
+    /* .... */
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Der typische <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>-Code, der zu diesem Handler
+gehört, sieht folgendermaßen aus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;static void sample_open(struct inode *inode, struct file *filp)
+{
+    struct sample_dev *dev = hwinfo + MINOR(inode-&#62;i_rdev);
+    request_irq(dev-&#62;irq, sample_interrupt,
+    0 /* Flags */, "sample", dev /* dev_id */);
+    /*....*/
+    return 0;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Das letzte Argument, <TT
+CLASS="LITERAL"
+>struct pt_regs *regs</TT
+>,
+wird selten verwendet. Es enthält einen Snapshot des Kontexts des
+Prozessors, bevor dieser in den Interrupt-Code eintrat. Die Register
+können zur Überwachung und zum Debuggen verwendet werden, für normale
+Aufgaben eines Gerätetreibers braucht man sie nicht.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN11861"
+>Interrupts ein- und ausschalten</A
+></H2
+><P
+>&#13;
+
+Wir haben bereits die Funktionen <SPAN
+><I
+CLASS="EMPHASIS"
+>sti</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>cli</I
+></SPAN
+> gesehen, die alle Interrupts ein- und
+ausschalten können.
+Manchmal ist es aber nützlich, wenn ein Treiber das Melden von Interrupts
+nur auf seiner eigenen Leitung ein- und ausschalten kann. Der Kernel
+stellt zu diesem Zweck drei Funktionen bereit, die alle in
+<TT
+CLASS="LITERAL"
+>&#60;asm/irq.h&#62;</TT
+> deklariert sind:
+
+
+
+&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+
+void disable_irq(int irq);
+void disable_irq_nosync(int irq);
+void enable_irq(int irq);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Der Aufruf einer dieser Funktionen aktualisiert die Maske des
+angegebenen IRQs im Programmable Interrupt Controller (PIC), was die
+IRQs über alle Prozessoren hinweg ein- oder ausschaltet. Aufrufe
+dieser Funktionen können geschachtelt werden; wenn
+<SPAN
+><I
+CLASS="EMPHASIS"
+>disable_irq</I
+></SPAN
+> zweimal in Folge aufgerufen
+wird, sind auch zwei Aufrufe von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>enable_irq</I
+></SPAN
+> notwendig, um den IRQ wirklich
+wieder einzuschalten. Es ist möglich, diese Funktionen aus einem
+Interrupt-Handler aufzurufen, aber das Einschalten Ihres eigenen
+IRQs während der Bearbeitung ist normalerweise nicht so besonders gut.</P
+><P
+><SPAN
+><I
+CLASS="EMPHASIS"
+>disable_irq</I
+></SPAN
+> schaltet nicht nur den
+angegebenen Interrupt ab, sondern wartet auch auf eventuell gerade
+ausgeführte
+Interrupt-Handler.
+<SPAN
+><I
+CLASS="EMPHASIS"
+>disable_irq_nosync</I
+></SPAN
+> kehrt dagegen
+sofort zurück und ist daher etwas schneller, kann aber zu Race
+Conditions führen.</P
+><P
+>Aber warum sollte man einen Interrupt abschalten? Bleiben wir beim
+Parallel-Port, und schauen wir uns die Netzwerk-Schnittstelle
+<SPAN
+><I
+CLASS="EMPHASIS"
+>plip</I
+></SPAN
+> an. Ein <SPAN
+><I
+CLASS="EMPHASIS"
+>plip</I
+></SPAN
+>-Gerät
+benutzt den rohen Parallel-Port, um Daten zu transportieren. Da vom
+parallelen Anschluß nur fünf Bits gelesen werden können, werden sie
+als vier Datenbits und als Takt/Handshake-Signal
+interpretiert. Wenn die ersten Bits eines Pakets vom Ausgangspunkt
+(der Schnittstelle, die das Paket schickt) abgeschickt werden, wird die
+Taktleitung auf hohes Potential gelegt, worauf die empfangende
+Schnittstelle den Prozessor unterbricht. Darauf wird der
+<SPAN
+CLASS="APPLICATION"
+>plip</SPAN
+>-Handler aufgerufen, um die neu
+eingetroffenen Daten entgegenzunehmen.&#13;</P
+><P
+>Nachdem das Gerät benachrichtigt worden ist, beginnt die
+Datenübertragung, wobei die Handshake-Leitung verwendet wird, um der
+empfangenen Schnittstelle den Takt der eintreffenden neuen Daten
+mitzuteilen (das ist vielleicht nicht die beste Implementation, aber
+nötig, um mit anderen Pakettreibern, die den Parallel-Port verwenden,
+kompatibel zu sein). Daher schaltet der Treiber den Interrupt ab,
+während er ein Paket empfängt; statt dessen wird eine
+Poll-/Verzögerungsschleife verwendet, um die Daten zu empfangen.&#13;</P
+><P
+>Da die Handshake-Leitung vom Empfänger zum Sender verwendet wird, um
+den Empfang der Daten zu bestätigen, schaltet auch die sendende
+Schnittstelle ihre IRQ-Leitung ab, während Pakete übertragen werden.&#13;</P
+><P
+>Schließlich sollte noch erwähnt werden, daß die SPARC- und
+M68k-Implementationen
+die Symbole <SPAN
+><I
+CLASS="EMPHASIS"
+>disable_irq</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>enable_irq</I
+></SPAN
+> als Zeiger und nicht als
+Funktionen implementieren. Mit diesem Trick kann der Kernel die Zeiger
+zur Boot-Zeit zuweisen, nachdem er ermittelt hat, auf welcher Plattform
+er läuft. Die
+C-Semantik zur Verwendung dieser Funktionen ist aber auf
+allen Linux-Systemen die gleiche, unabhängig davon, ob dieser Trick verwendet
+wird. Damit können einige unangenehme bedingte Ausdrücke vermieden
+werden.
+
+
+&#13;</P
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN11809"
+HREF="irqhandler.html#AEN11809"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Das Gerät <SPAN
+CLASS="APPLICATION"
+>shortint</SPAN
+> macht
+                  das, indem abwechselnd 0x00 und 0xff auf den Parallel-Port
+                  geschrieben werden.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="irqinstall.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="irqbottom.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Einen Interrupt-Handler installieren</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="irq.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Tasklets und untere Hälften</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

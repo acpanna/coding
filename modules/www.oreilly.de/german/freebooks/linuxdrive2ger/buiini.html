@@ -1,0 +1,947 @@
+<HTML
+><HEAD
+><TITLE
+>Initialisierung und Beendigung</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Module erstellen und starten"
+HREF="building.html"><LINK
+REL="PREVIOUS"
+TITLE="Die Symboltabelle des Kernels"
+HREF="x956.html"><LINK
+REL="NEXT"
+TITLE="Ressourcen verwenden"
+HREF="buiresource.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x956.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 2. Module erstellen und starten</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="buiresource.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="BUIINI"
+>Initialisierung und Beendigung</A
+></H1
+><P
+>&#13;
+
+
+
+Wie bereits angedeutet, registriert
+<SPAN
+><I
+CLASS="EMPHASIS"
+>init_module</I
+></SPAN
+> jede vom Modul bereitgestellte
+Fähigkeit. Mit &#8220;Fähigkeit&#8221; meinen wir neue
+Funktionalitäten, seien es ein ganzer Treiber oder eine neue
+Software-Abstraktion, die von einer Applikation verwendet werden kann.&#13;</P
+><P
+>Module können viele verschiedene Fähigkeiten registrieren; für jede
+gibt es eine spezielle Kernel-Funktion. Die an diese Funktionen übergebenen
+Argumente sind normalerweise ein
+Zeiger auf eine Datenstruktur, die die neue Fähigkeit beschreibt, und
+der Name der Fähigkeit. Die Datenstruktur enthält üblicherweise Zeiger
+auf die Modulfunktionen; auf diese Art und Weise werden Funktionen im
+Modul aufgerufen.</P
+><P
+>Die registrierbaren Elemente gehen über die Liste der im vorigen
+Kapitel genannten Gerätetypen hinaus. Dazu gehören serielle
+Schnittstellen, diverse Geräte, <TT
+CLASS="FILENAME"
+>/proc</TT
+>-Dateien,
+ausführbare Domänen und <SPAN
+><I
+CLASS="EMPHASIS"
+>Line Disciplines</I
+></SPAN
+>. Viele dieser Elemente
+gehören nicht direkt zu irgendeiner Hardware, sondern bleiben im
+Bereich der &#8220;Software-Abstraktionen&#8221;. Solche Elemente können
+registriert werden, weil sie sowieso in die Funktionalität des
+Treibers integriert sind (wie etwa <TT
+CLASS="FILENAME"
+>/proc</TT
+>-Dateien
+oder Line Disciplines).</P
+><P
+>Es gibt noch weitere Fähigkeiten, die als Zusatzfunktionen für
+bestimmte Treiber registriert werden, aber deren Verwendung ist so
+spezifisch, daß es sich nicht lohnt, sie hier zu besprechen. Diese
+Fähigkeiten verwenden die oben in &#8220;&#8221; beschriebene Stapelungstechnik. Wenn
+Sie dieses Thema weiter verfolgen wollen, dann sollten Sie in den
+Kernel-Quellen nach <SPAN
+><I
+CLASS="EMPHASIS"
+>EXPORT_SYMBOL</I
+></SPAN
+> suchen und sich die von den verschiedenen Treibern angebotenen
+Einsprungpunkte anschauen. Den meisten Registrierungsfunktionen ist
+<TT
+CLASS="LITERAL"
+>register_</TT
+> vorangestellt, man kann sie also
+auch durch Suchen nach <TT
+CLASS="LITERAL"
+>register_</TT
+> in
+<TT
+CLASS="FILENAME"
+>/proc/ksyms</TT
+> finden.
+&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="BUIERR"
+>Fehlerbehandlung in init_module</A
+></H2
+><P
+>&#13;
+Wenn beim Registrieren von Fähigkeiten ein Fehler auftritt, müssen Sie
+alle bis dahin durchgeführten Registrierungsaktivitäten rückgängig machen. Ein
+Fehler kann beispielsweise auftreten, wenn im System nicht mehr genug
+Speicher vorhanden ist, um Platz für eine neue Datenstruktur zu
+allozieren, oder weil eine angeforderte Ressource bereits von einem
+anderen Treiber verwendet wird. Obwohl das eher unwahrscheinlich ist,
+kann es passieren, und guter Programmcode muß in der Lage sein, damit
+umgehen zu können.&#13;</P
+><P
+>&#13;
+
+Linux verwaltet die registrierten Fähigkeiten nicht pro Modul, so daß
+ein Modul alles selbst rückgängig machen muß, wenn
+<SPAN
+><I
+CLASS="EMPHASIS"
+>init_module</I
+></SPAN
+> an irgendeiner Stelle
+fehlschlägt. Wenn Sie jemals nicht alle registrierten Fähigkeiten
+deregistrieren, gerät der Kernel in einen instabilen Zustand: Sie
+können Ihre Fähigkeiten nicht noch einmal durch erneutes Laden des Moduls
+registrieren, weil sie als <I
+CLASS="FIRSTTERM"
+>besetzt</I
+>
+(<SPAN
+><I
+CLASS="EMPHASIS"
+>busy</I
+></SPAN
+>) gemeldet werden, und Sie
+können sie auch nicht deregistrieren, weil Sie dazu den gleichen
+Zeiger bräuchten, den Sie auch zum Registrieren verwendet haben, und
+normalerweise nicht in der Lage sind, die Adresse
+herauszubekommen. Aus solchen Situationen wieder herauszukommen, ist
+knifflig; oft ist ein Neustart des Systems die einzige Lösung, damit
+Sie eine neuere Version Ihres Moduls laden können.&#13;</P
+><P
+>&#13;Wir würden Ihnen raten, die Fehlerbehandlung mit der
+<TT
+CLASS="LITERAL"
+>goto</TT
+>-Anweisung durchzuführen. Wir hassen es normalerweise,
+<TT
+CLASS="LITERAL"
+>goto</TT
+> zu benutzen, aber in dieser Situation (und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>nur</I
+></SPAN
+> in dieser Situation) ist das nützlich. Im
+Kernel wird <TT
+CLASS="LITERAL"
+>goto</TT
+> oft wie hier gezeigt verwendet, um
+Fehler zu behandeln.&#13;</P
+><P
+>Der folgende Beispielcode (mit fiktiven Funktionen zur Registrierung
+und Deregistrierung) verhält sich sowohl im Erfolgs- als auch im
+Mißerfolgsfall korrekt:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+
+int init_module(void)
+{
+int err;
+
+    /* Registrierung erwartet einen Zeiger und einen Namen */
+    err = register_this(ptr1, "skull");
+    if (err) goto fail_this;
+    err = register_that(ptr2, "skull");
+    if (err) goto fail_that;
+    err = register_those(ptr3, "skull");
+    if (err) goto fail_those;
+
+    return 0; /* Erfolg */
+
+    fail_those: unregister_that(ptr2, "skull");
+    fail_that:  unregister_this(ptr1, "skull");
+    fail_this:  return err; /* Fehler weitermelden */
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Dieser Code versucht, drei (fiktive) Fähigkeiten zu registrieren. Die
+<TT
+CLASS="LITERAL"
+>goto</TT
+>-Anweisung wird dazu verwendet, um im
+Fehlerfall nur die Fähigkeiten zu deregistrieren, die zuvor erfolgreich
+registriert worden sind.</P
+><P
+>Eine andere Möglichkeit, bei der keine haarigen
+<TT
+CLASS="LITERAL"
+>goto</TT
+>-Anweisungen notwendig sind, besteht darin, mitzuverfolgen, was erfolgreich registriert worden ist, und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>cleanup_module</I
+></SPAN
+> bei jedem Fehler aufzurufen. Die
+Aufräumfunktion macht dann nur die Schritte rückgängig, die zuvor
+erfolgreich durchgeführt worden sind. Diese Alternative erfordert aber
+mehr Code und mehr CPU-Zeit, weswegen <TT
+CLASS="LITERAL"
+>goto</TT
+> meistens
+doch noch das beste Werkzeug ist.
+
+
+Der Rückgabewert (<TT
+CLASS="LITERAL"
+>err</TT
+>) von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>init_module</I
+></SPAN
+> ist ein Fehlercode. Im
+Linux-Kernel sind Fehlercodes negative Zahlen, die in
+<TT
+CLASS="LITERAL"
+>&#60;linux/errno.h&#62;</TT
+> definiert sind. Wenn Sie
+eigene Fehlercodes erzeugen wollen, anstatt einfach nur weiterzugeben,
+was Sie von den anderen Funktionen bekommen, sollten Sie
+<TT
+CLASS="LITERAL"
+>&#60;linux/errno.h&#62;</TT
+> einbinden, um symbolische
+Werte wie <TT
+CLASS="LITERAL"
+>-ENODEV</TT
+>, <TT
+CLASS="LITERAL"
+>-ENOMEM</TT
+>
+usw. verwenden zu können. Es ist guter Programmierstil, passende
+Fehlercodes zurückzugeben, denn Benutzerprogramme können diese mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>perror</I
+></SPAN
+> oder ähnlichen Funktionen in
+für Menschen lesbare Strings umwandeln. (Es ist allerdings interessant,
+daß mehrere Versionen von <SPAN
+CLASS="APPLICATION"
+>modutils</SPAN
+> die
+Fehlermeldung &#8220;Device busy&#8221; zurückgegeben haben, unabhängig davon, was
+<SPAN
+><I
+CLASS="EMPHASIS"
+>init_module</I
+></SPAN
+> als Fehler gemeldet hat; dieses
+Problem ist erst in jüngerer Zeit behoben worden.)&#13;</P
+><P
+>&#13;
+Offensichtlich muß <SPAN
+><I
+CLASS="EMPHASIS"
+>cleanup_module</I
+></SPAN
+> alle von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>init_module</I
+></SPAN
+> vorgenommenen Registrierungen
+rückgängig machen; dies geschieht üblicherweise in umgekehrter
+Reihenfolge:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+
+void cleanup_module(void)
+{
+    unregister_those(ptr3, "skull");
+    unregister_that(ptr2, "skull");
+    unregister_this(ptr1, "skull");
+    return;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wenn Ihre Initialisierung und Ihr Aufräumen komplexer ist als hier
+gezeigt, dann kann der <TT
+CLASS="LITERAL"
+>goto</TT
+>-Ansatz schwierig zu
+verwalten sein, weil der gesamte Aufräum-Code in
+<SPAN
+><I
+CLASS="EMPHASIS"
+>init_modules</I
+></SPAN
+> mit eingeschobenen Labels wiederholt
+werden muß. Deswegen ist manchmal ein anderes Code-Layout nützlich.</P
+><P
+>Hierbei minimieren Sie die Duplizierung von Code und halten alles
+sauber, indem Sie <SPAN
+><I
+CLASS="EMPHASIS"
+>cleanup_module</I
+></SPAN
+> immer dann aus
+<SPAN
+><I
+CLASS="EMPHASIS"
+>init_module</I
+></SPAN
+> aufrufen, wenn ein Fehler aufgetreten
+ist. Die Aufräumfunktion muß dann den Zustand jedes Elements
+überprüfen, bevor es seine Registrierung rückgängig macht. In der
+einfachsten Form sieht dieser Code so aus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; struct something *item1;
+ struct somethingelse *item2;
+ int stuff_ok;
+
+ void cleanup_module(void)
+ {
+  if (item1)
+         release_thing(item1);
+  if (item2)
+   release_thing2(item2);
+  if (stuff_ok)
+   unregister_stuff();
+  return;
+ }
+
+ int init_module(void)
+ {
+  int err = -ENOMEM;
+
+  item1 = allocate_thing(arguments);
+  item2 = allocate_thing2(arguments2);
+  if (!item2 || !item2)
+   goto fail;
+  err = register_stuff(item1, item2);
+  if (!err)
+   stuff_ok = 1;
+  else
+   goto fail;
+  return 0; /* success */
+
+  fail:
+  cleanup_module();
+  return err;
+ }</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wie hier gezeigt wird, brauchen Sie manchmal externe Schalter,
+um die erfolgreiche Abarbeitung eines Initialisierungsschrittes zu
+markieren. Das ist von der Semantik der jeweiligen Registrierungs-
+oder Allokationsfunktion abhängig. Egal, ob Sie solche Schalter
+benötigen, skaliert diese Art von Initialisierung besser und ist
+besser als die zuvor gezeigte Technik.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN1193"
+>Verwendungszähler</A
+></H2
+><P
+>&#13;
+
+
+Das System zählt, wie oft jedes Modul verwendet wird, um bestimmen zu
+können, wann ein Modul gefahrlos entfernt werden kann. Das System
+benötigt diese Information, denn ein Modul kann nicht entladen werden,
+wenn es in Benutzung ist. Beispielsweise können Sie nicht einen
+Dateisystemtyp entladen, während noch ein Dateisystem dieses Typs
+gemountet ist, und kein Zeichen-Gerät entfernen, während ein Prozeß ein solches noch benutzt; ansonsten bekommen Sie einen Segmentation Fault oder
+eine Kernel-Panic, wenn wilde Zeiger dereferenziert werden.</P
+><P
+>In modernen Kerneln kann das System automatisch den Verwendungszähler
+mit einem Mechanismus pflegen, den Sie im nächsten Kapitel
+kennenlernen werden. Manchmal müssen Sie das aber trotzdem noch
+manuell machen, etwa bei Code, der auch portabel auf ältere Kernel
+sein soll. Der Verwendungszähler wird von drei Makros verwaltet:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>MOD_INC_USE_COUNT</TT
+></DT
+><DD
+><P
+>Zählt den Zähler für das aktuelle Modul um eins hoch.&#13;</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>MOD_DEC_USE_COUNT&#13;</TT
+></DT
+><DD
+><P
+>Zählt den Zähler um eins herunter.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>MOD_IN_USE</TT
+></DT
+><DD
+><P
+>Ergibt true, wenn der Zähler nicht null ist.&#13;</P
+></DD
+></DL
+></DIV
+><P
+>Diese Makros sind in <TT
+CLASS="LITERAL"
+>&#60;linux/module.h&#62;</TT
+>
+definiert und arbeiten auf internen Datenstrukturen, auf die
+Programmierer nicht direkt zugreifen sollten.
+Übrigens sind die Interna der Modul-Verwaltung während der
+2.1-Entwicklung sehr verändert und für 2.1.18 vollständig neu
+geschrieben worden, die Verwendung dieser Makros hat sich aber nicht
+geändert.&#13;</P
+><P
+>Beachten Sie, daß Sie nicht
+<TT
+CLASS="LITERAL"
+>MOD_IN_USE</TT
+> in
+<TT
+CLASS="LITERAL"
+>cleanup_module</TT
+> überprüfen müssen, da der
+Systemaufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>sys_delete_module</I
+></SPAN
+>
+(definiert in <TT
+CLASS="FILENAME"
+>kernel/module.c</TT
+>) das
+automatisch macht, bevor er die Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>cleanup_module</I
+></SPAN
+> aufruft.</P
+><P
+>Die korrekte Verwaltung des Modul-Verwendungszähler ist für die
+Stabilität des Systems absolut notwendig. Denken Sie daran, daß der
+Kernel zu jeder Zeit versuchen darf, ein Modul zu entladen. Es ist ein
+häufig gemachter Programmierfehler, eine Reihe von Operationen zu
+beginnen (etwa als Antwort auf eine
+<SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>-Anforderung) und den Verwendungszähler am
+Ende heraufzusetzen. Wenn der Kernel das Modul unterwegs entlädt, ist
+das eine Garantie für einsetzendes Chaos. Um solche Probleme zu
+vermeiden, sollten Sie <TT
+CLASS="LITERAL"
+>MOD_INC_USE_COUNT</TT
+> aufrufen,
+<SPAN
+><I
+CLASS="EMPHASIS"
+>bevor</I
+></SPAN
+> Sie irgend etwas anderes im Modul machen.</P
+><P
+>Wenn der Verwendungszähler durcheinander kommt, können Sie ein Modul
+nicht mehr entladen. Das kann während der Entwicklung eines Moduls
+durchaus passieren, denken Sie also daran. Wenn beispielsweise ein
+Prozeß beendet wird, weil Ihr Treiber auf einen NULL-Zeiger
+zugegriffen hat, dann wird der Treiber das Gerät nicht schließen und
+der Verwendungszähler nicht auf 0 zurückgehen können. Eine mögliche
+Lösung für dieses Problem besteht darin, den Verwendungszähler während
+des Debuggens völlig abzustellen, indem Sie sowohl
+<TT
+CLASS="LITERAL"
+>MOD_INC_USE_COUNT</TT
+> als auch
+<TT
+CLASS="LITERAL"
+>MOD_DEC_USE_COUNT</TT
+> auf leere
+Operationen umdefinieren. Sie können auch noch eine andere Methode
+verwenden, um den Zähler auf 0 zu zwingen (wie das geht, erfahren Sie
+in &#8220;<A
+HREF="extra.html#EXIOCTLSW"
+>the Section called <I
+>Das Argument von ioctl benutzen</I
+> in Kapitel 5</A
+>&#8221; in <A
+HREF="extra.html"
+>Kapitel 5</A
+>). In
+einem fertigen Modul sollten aber nie diese Sicherheitsüberprüfungen
+abgeschaltet werden. Beim Debuggen helfen solche brachialen Methoden
+mitunter, Zeit zu sparen, und sind daher akzeptabel.&#13;</P
+><P
+>&#13;Der aktuelle Wert des Verwendungszählers steht im dritten Feld jedes
+Eintrags in <TT
+CLASS="FILENAME"
+>/proc/modules</TT
+>. Diese Datei
+zeigt, welche Module gerade geladen sind, und enthält einen Eintrag pro
+Modul. Die einzelnen Felder sind der Name des Moduls, die Größe des Speichers in Byte, den das Modul verwendet, und der aktuelle Wert des
+Verwendungszählers. Eine typische
+<TT
+CLASS="FILENAME"
+>/proc/modules</TT
+>- Datei kann etwa so aussehen:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>parport_pc    7604 1 (autoclean)
+lp      4800 0 (unused)
+parport     8084 1 [parport_probe parport_pc lp]
+lockd     33256 1 (autoclean)
+sunrpc     56612 1 (autoclean) [lockd]
+ds      6252 1
+i82365     22304 1
+pcmcia_core   41280 0 [ds i82365]</PRE
+></TD
+></TR
+></TABLE
+><P
+>Hier sind mehrere Module zu sehen. Unter anderem sind die
+Parallel-Port-Module gestapelt geladen worden, wie das oben beschrieben
+wurde.
+Der Hinweis <TT
+CLASS="LITERAL"
+>(autoclean)</TT
+> gibt an, daß diese Module
+von <SPAN
+CLASS="APPLICATION"
+>kmod</SPAN
+> oder
+<SPAN
+CLASS="APPLICATION"
+>kerneld</SPAN
+> (siehe <A
+HREF="kerneld.html"
+>Kapitel 11</A
+>)
+verwaltet werden; <TT
+CLASS="LITERAL"
+>(unused)</TT
+> bedeutet eben das: Das
+Modul wird nicht benutzt. Es gibt auch noch andere Markierungen. In
+Linux 2.0 wurde das zweite Feld (die Größe) in Seiten und nicht in
+Bytes angegeben (auf den meisten Plattformen sind 4 KByte eine Seite).
+
+&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN1264"
+>Entladen</A
+></H2
+><P
+>&#13;
+
+Ein Modul wird mit dem Befehl <SPAN
+CLASS="APPLICATION"
+>rmmod</SPAN
+>
+entladen. Das Entladen ist deutlich einfacher als das Laden, weil
+nicht gelinkt werden muß.
+
+Der Befehl ruft den Systemaufruf
+<SPAN
+><I
+CLASS="EMPHASIS"
+>delete_module</I
+></SPAN
+> auf, der wiederum
+<SPAN
+><I
+CLASS="EMPHASIS"
+>cleanup_module</I
+></SPAN
+> im Modul aufruft, wenn der
+Verwendungszähler auf null gefallen ist, oder gibt ansonsten eine
+Fehlermeldung zurück.&#13;</P
+><P
+>Die Implementation von <SPAN
+><I
+CLASS="EMPHASIS"
+>cleanup_modules</I
+></SPAN
+> ist
+dafür zuständig, jedes Element zu deregistrieren, das das Modul vorher
+registriert hat. Nur die exportierten Symbole werden automatisch
+entfernt.
+&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN1281"
+>Explizite Initialisierungs- und Aufräumfunktionen</A
+></H2
+><P
+>&#13;
+
+
+Wie wir bereits gesehen haben, ruft der Kernel
+<SPAN
+><I
+CLASS="EMPHASIS"
+>init_module</I
+></SPAN
+> auf, um ein frisch geladenes Modul zu
+initialisieren, sowie <SPAN
+><I
+CLASS="EMPHASIS"
+>cleanup_module</I
+></SPAN
+> unmittelbar
+vor dem Entfernen des Moduls. In modernen Kerneln haben diese
+Funktionen aber oft andere Namen. Ab Kernel 2.3.13 gibt es eine
+Möglichkeit, die Initialisierungs- und Aufräumroutinen explizit zu
+benennen; dies ist auch der bevorzugte Programmierstil.</P
+><P
+>Schauen wir uns ein Beispiel an. Wenn Ihr Modul seine
+Initialisierungsroutine <SPAN
+><I
+CLASS="EMPHASIS"
+>my_init</I
+></SPAN
+> (anstelle von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>init_module</I
+></SPAN
+>) und die Aufräumroutine
+<SPAN
+><I
+CLASS="EMPHASIS"
+>my_cleanup</I
+></SPAN
+> nennt, dann würden Sie dies mit den
+folgenden zwei Zeilen (normalerweise am Ende der Quelldatei) angeben:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; module_init(my_init);
+ module_exit(my_cleanup);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+
+
+Beachten Sie, daß Ihr Code
+<TT
+CLASS="LITERAL"
+>&#60;linux/init.h&#62;</TT
+> einbinden muß, um
+<SPAN
+><I
+CLASS="EMPHASIS"
+>module_init</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>module_exit</I
+></SPAN
+> verwenden zu können.</P
+><P
+>Der Vorteil dabei besteht darin, daß jede Initialisierungs- und
+Aufräumfunktion im Kernel einen eigenen Namen haben kann, was beim
+Debuggen hilft. Diese Funktionen machen auch denjenigen das Leben leichter,
+die Treiber schreiben, die entweder als Modul arbeiten oder direkt in
+den Kernel eingebaut werden. Die Verwendung von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>module_init</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>module_exit</I
+></SPAN
+>
+ist aber nicht notwendig, wenn Ihre Initialisierungs- und
+Aufräumfunktionen die alten Namen benutzen. Das einzige, was diese
+beiden Makros bei Modulen machen, ist
+<SPAN
+><I
+CLASS="EMPHASIS"
+>init_module</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>cleanup_module</I
+></SPAN
+> als neue Namen für die angegebenen
+Funktionen zu definieren.</P
+><P
+>Wenn Sie sich durch die Kernel-Quellen graben (ab Version 2.2), dann
+werden Sie wahrscheinlich eine etwas andere Form der Deklaration der
+Modul-Initialisierungs- und Aufräumfunktionen vorfinden, die etwa so
+aussieht:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; static int _&#8201;_init my_init(void)
+ {
+  ....
+ }
+
+ static void _&#8201;_exit my_cleanup(void)
+ {
+  ....
+ }</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+Das Attribut <TT
+CLASS="LITERAL"
+>_&#8201;_init</TT
+> sorgt &#8212; wenn es
+wie hier gezeigt verwendet wird &#8212; dafür, daß die
+Initialisierungsfunktion verworfen und der Speicher zurückgewonnen
+wird, nachdem die Initialisierung abgeschlossen ist. Das funktioniert
+aber nur bei eingebauten Treibern und hat keine Wirkung auf
+Module. <TT
+CLASS="LITERAL"
+>_&#8201;_exit</TT
+> sorgt als Gegenstück dafür,
+daß die angegebene Funktion nicht mit aufgenommen wird, wenn der
+Treiber nicht als Modul gebaut wird; auch dies hat in Modulen keine
+Wirkung.</P
+><P
+>&#13;Die Verwendung von <TT
+CLASS="LITERAL"
+>_&#8201;_init</TT
+> (und
+<TT
+CLASS="LITERAL"
+>_&#8201;_initdata</TT
+> bei Datenelementen) kann die
+Menge des vom Kernel verwendeten Speichers reduzieren. Es ist kein
+Problem, die Initialisierungsfunktionen von Modulen mit
+<TT
+CLASS="LITERAL"
+>_&#8201;_init</TT
+> zu markieren; es nützt aber derzeit
+auch nichts. Die Verwaltung der Initialisierungsabschnitte ist für
+Module noch nicht implementiert; möglicherweise kommt das aber in
+Zukunft noch.
+&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x956.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="buiresource.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Die Symboltabelle des Kernels</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="building.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Ressourcen verwenden</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

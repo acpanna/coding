@@ -1,0 +1,293 @@
+<HTML>
+ <HEAD>
+   <TITLE>
+     &Uuml;bungsblatt 06, 14.12.1999
+   </TITLE>
+ </HEAD>
+ <BODY>
+   <H1>
+     &Uuml;bungsblatt 06, 14.12.1999
+   </H1>
+   <H2>
+     Abgabetermin: Mo, 20.12.1999, 23:59 Uhr
+   </H2>
+
+<P>
+<DIV ALIGN="right">
+  <A HREF="mailto:Robert.Baier@uni-bayreuth.de">R. Baier</A> <BR>
+  <A HREF="mailto:hiwi512@btcipmatx1.cip.uni-bayreuth.de">M. Butscher</A> <BR>
+  <A HREF="mailto:hiwi501@btcipmatx1.cip.uni-bayreuth.de">P. Lerner</A>
+  <BR CLEAR="all">
+</DIV>
+</P>
+
+Das &Uuml;bungsblatt besteht aus den Aufgaben <A HREF="#A14">14</A>,
+<A HREF="#A15">15</A> und der Teamaufgabe <A HREF="#A16">16</A>, auf die
+es maximal zwischen 4 und 6 Punkten zu erreichen gibt (vgl. Angabe der Punkte
+unten). <BR>
+Das &Uuml;bungsblatt inkl. aller Sourcecodes, Bilder, HTML-Seiten, ... kann auch
+als
+
+<UL>
+  <LI><A HREF="blatt_06.tar.gz"><TT>gzip</TT>'tes <TT>tar</TT>-Archive</A>
+  </LI>
+  <LI>
+      <A HREF="blatt_06.zip"><TT>ZIP</TT>-Archive</A>
+  </LI>
+</UL>
+heruntergeladen werden. <BR>
+<EM>Beachten Sie die <A HREF="http://www.uni-bayreuth.de/departments/math/~rbaier/lectures/java/uebung/allgemein/hinweise.html">allgemeinen Abgabehinweise</A>!!</EM>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A14">&nbsp;</A>
+
+   <H2>
+     Aufgabe 14 (4 Punkte)
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi501@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Peter Lerner)
+   </H3>
+
+
+<P>
+  Entwerfen und programmieren Sie eine Klasse <TT>BankAnlage</TT>, die
+  folgende Datenelemente
+
+  <UL>
+    <LI>
+      <P>
+        Namen des Kontoinhabers/der Kontoinhaberin
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        Kontostand (der Zins soll bei dieser Anlage nach einem Jahr wieder
+        gutgeschrieben werden und sich also auch verzinsen)
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        Laufzeit in Jahren
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        Zinssatz (soll jedes Jahr gleich sein)
+      </P>
+    </LI>
+  </UL>
+
+  und neben Selbstverst&auml;ndlichem folgende einfache F&auml;higkeiten 
+  haben soll:
+
+  <UL>
+    <LI>
+      <P>
+        Abfrage des j&auml;hrlich ausgezahlten Zinses im <I>x</I>. Jahr
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        Abfrage des Gesamtzinses nach <I>x</I> Jahren
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        Kontostand nach <I>x</I> Jahren
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        Umstellung des Kontos auf Euro
+      </P>
+    </LI>
+  </UL>
+</P>
+
+<P>
+  <B>Abzugeben</B> sind das Java-Sourcefile f&uuml;r den Klassenentwurf und ein
+  Testprogramm sowie der zugeh&ouml;rige Java-Bytecode.
+</P>
+
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A15">&nbsp;</A>
+
+   <H2>
+     Aufgabe 15 (6 Punkte) <BR>
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi501@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Peter Lerner)
+   </H3>
+
+<P>
+  Bearbeiten Sie die folgenden Anweisungen:
+
+  <OL TYPE=a>
+    <LI>
+      <P>
+        Geben Sie alle prinzipiell verschiedenen M&ouml;glichkeiten an, 
+        ein Objekt der Klasse <TT>Button</TT> aus dem Package 
+        <TT>java.awt</TT> neu anzulegen (kurzer Sourcecode).
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        Geben Sie alle prinzipiell verschiedenen M&ouml;glichkeiten an, 
+        die Methode namens <TT>abs()</TT> der Klasse <TT>Math</TT> aus dem 
+        Package <TT>java.lang</TT> aufzurufen (kurzer Sourcecode).
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        Legen Sie ein Objekt der Klasse <TT>BigInteger</TT> aus dem Package
+        <TT>java.math</TT> an und rufen Sie die Methoden <TT>valueOf()</TT>
+        und <TT>min()</TT> auf (kurzer Sourcecode).
+      </P>
+    </LI>
+
+    <LI>
+      (3 Punkte)
+      <P>
+        Begr&uuml;nden Sie detailliert, warum die Anweisungen
+
+        <BLOCKQUOTE>
+          <TT>System.out.println(1.0/3.0);</TT> <BR>
+          <TT>System.out.flush();</TT>
+        </BLOCKQUOTE>
+
+        korrekt sind (bitte auf die Bestandteile <TT>System</TT> und 
+        <TT>System.out</TT> n&auml;her eingehen), die folgenden Anweisungen
+        aber zu Fehlern f&uuml;hren:
+
+        <BLOCKQUOTE>
+          <TT>System.println(1.0/3.0);</TT> <BR>
+          <TT>System.in.println(1.0/3.0);</TT> <BR>
+          <TT>String s = System.in.readLine();</TT> <BR>
+          <TT>int n = Integer.intValue();</TT>
+        </BLOCKQUOTE>
+      </P>
+    </LI>
+  </OL>
+</P>
+
+<P>
+  <B>Abzugeben</B> ist nur die Beantwortung der Fragen, die allerdings ggf.
+  1-2 Zeilen Java-Sourcecode beinhalten sollten.
+</P>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A16">&nbsp;</A>
+
+   <H2>
+     Teamaufgabe 16 (5 Punkte) <BR>
+     (Abgabe von bis zu 2 Leuten gemeinsam m&ouml;glich und erw&uuml;nscht)
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi512@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Michael Butscher)
+   </H3>
+
+<P>
+  Betrachten Sie die Klasse <TT>Komplex</TT> mit ihrer Realisierung
+  in dem <A HREF="Komplex.java">folgenden Java-Sourcefile</A>. Die Klasse
+  <TT>Komplex</TT> beinhaltet zudem eine <TT>main()</TT>-Methode, die
+  Objekte dieser Klasse testweise erzeugt und wieder freigibt.
+</P>
+
+<P>
+  Um den Ablauf der Erzeugung und des automatischen L&ouml;schens von Objekten
+  zu verfolgen, soll in die Klasse noch folgendes eingebaut werden:
+  
+  <UL>
+    <LI>
+      <P>
+        ein objektabh&auml;ngiges <TT>private</TT>-Datenelement namens <TT>id</TT> <BR>
+        Jedes <TT>Komplex</TT>-Objekt soll seine eigene ID-Nummer <TT>id</TT> 
+        automatisch bei der Erzeugung erhalten.
+      </P>
+    </LI>
+    
+    <LI>
+      <P>
+        ein objektunabh&auml;ngiges <TT>private</TT>-Datenelement namens <TT>anzahl</TT> 
+        <BR>
+        Die Anzahl aller momentan vorhandenen <TT>Komplex</TT>-Objekte soll in 
+        <TT>anzahl</TT> gespeichert werden und automatisch bei einer Neuerzeugung eines
+        <TT>Komplex</TT>-Objekts erh&ouml;ht werden (bzw. in der Methode 
+        <TT>finalize()</TT> wieder erniedrigt werden).
+      </P>
+    </LI>
+    
+    <LI>
+      <P>
+        ein objektunabh&auml;ngiges <TT>private</TT>-Datenelement namens <TT>nextID</TT> 
+        <BR>
+        Die zuletzt vergebene ID-Nummer eines <TT>Komplex</TT>-Objektes soll in 
+        <TT>nextID</TT> automatisch gespeichert werden. Ein neu angelegtes 
+        <TT>Komplex</TT>-Objekt erh&auml;lt diese Zahl als n&auml;chste ID. 
+      </P>
+    </LI>
+    
+    <LI>
+      <P>
+        eine objektunabh&auml;ngige <TT>public</TT>-Methode namens <TT>getAnzahl()</TT> 
+        <BR>
+        Diese Methode soll einfach <TT>anzahl</TT> zur&uuml;ckgeben. 
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        eine Ausgabe, welches <TT>Komplex</TT>-Objekt erzeugt wurde (ID!)
+        und welches gel&ouml;scht wurde (Methode <TT>finalize()</TT>!)
+        sowie wieviel <TT>Komplex</TT>-Objekte momentan angelegt sind
+      </P>
+    </LI>
+  </UL>
+</P>
+
+<P>
+  Hinweise:
+  
+  <UL>
+    <LI>
+      <P>
+        Die <TT>finalize()</TT>-Methode braucht man normalerweise nicht, sie wird
+        aber automatisch aufgerufen, bevor der Speicherplatz f&uuml;r ein Objekt
+        freigegeben wird.
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        Die Methode <TT>runFinalizersOnExit()</TT> der Klasse <TT>System</TT> wurde 
+        nur deswegen aufgerufen, damit auch beim Ende des Programms alle Objekte 
+        freigegeben werden und die Reihenfolge der Freigabe offensichtlicher wird.
+        Die Methoden <TT>gc()</TT> und <TT>runFinalization()</TT> sollen ein
+        fr&uuml;hzeitigeres Aufr&auml;umen von nicht mehr gebrauchten Objekten
+        erzwingen. 
+      </P>
+    </LI>
+  </UL>
+</P>
+
+<P>
+  <B>Abzugeben</B> sind der Java-Sourcecode, der Java-Bytecode
+  sowie eine detailliertere Erkl&auml;rung, wann und warum/warum nicht ein Konstruktor
+  von <TT>Komplex</TT> aufgerufen wurde sowie wann und warum die Objekte in der 
+  von der Programmausgabe berichteten Reihenfolge wieder freigegeben werden.
+</P>
+
+ </BODY>
+</HTML>

@@ -1,0 +1,42 @@
+#include <kapp.h>
+#include <kcmdlineargs.h>
+#include <kaboutdata.h>
+#include <klocale.h>
+
+#include "kminiedit.h"
+
+static const char *description = I18N_NOOP("KMiniEdit - A simple editor");
+
+static KCmdLineOptions options[] =  {{"+[arg1]", I18N_NOOP("Load that file or URL"), 0},
+                                     {0, 0, 0}};
+
+int main(int argc, char **argv)
+{
+  KAboutData aboutData("kminiedit", I18N_NOOP("KMiniEdit"), "0.1", description, KAboutData::License_GPL, "(c) 2000, Burkhard Lehner");
+  aboutData.addAuthor("Burkhard Lehner", 0, "Burkhard.Lehner@gmx.de");
+  KCmdLineArgs::init(argc, argv, &aboutData);
+  KCmdLineArgs::addCmdLineOptions(options);
+  KCmdLineArgs *args = KCmdLineArgs::parsedArgs();
+  
+  KApplication a;
+  
+  if (args->count() > 0)
+  {
+    for (int i=0; i<args->count(); i++)
+    {
+      KMiniEdit *window = new KMiniEdit();
+      if (window->loadFile(args->url(i)))
+        window->show();
+      else
+        delete window;
+    }
+  }
+
+  if (!KMainWindow::memberList || KMainWindow::memberList->isEmpty())
+  {
+    KMiniEdit *kminiedit = new KMiniEdit();
+    kminiedit->show();
+  }
+  
+  return a.exec();
+}

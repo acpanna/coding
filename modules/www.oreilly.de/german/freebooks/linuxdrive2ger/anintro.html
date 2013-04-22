@@ -1,0 +1,398 @@
+<HTML
+><HEAD
+><TITLE
+>Eine Einführung in den Linux-Kernel</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="PREVIOUS"
+TITLE="Danksagungen
+"
+HREF="x180.html"><LINK
+REL="NEXT"
+TITLE="Organisation des Kernels"
+HREF="x217.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x180.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x217.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="ANINTRO"
+>Kapitel 1. Eine Einführung in den Linux-Kernel</A
+></H1
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Inhalt</B
+></DT
+><DT
+><A
+HREF="anintro.html#AEN198"
+>Die Rolle des Treiber-Programmierers</A
+></DT
+><DT
+><A
+HREF="x217.html"
+>Organisation des Kernels</A
+></DT
+><DT
+><A
+HREF="anclass.html"
+>Klassen von Geräten und Modulen</A
+></DT
+><DT
+><A
+HREF="x320.html"
+>Sicherheitsfragen</A
+></DT
+><DT
+><A
+HREF="x339.html"
+>Versionsnumerierung</A
+></DT
+><DT
+><A
+HREF="x357.html"
+>Lizenzbedingungen</A
+></DT
+><DT
+><A
+HREF="x385.html"
+>Selbst in der Kernel-Entwicklergemeinde tätig werden</A
+></DT
+><DT
+><A
+HREF="x392.html"
+>Übersicht über dieses Buch</A
+></DT
+></DL
+></DIV
+><P
+>Die Popularität von Linux wächst immer weiter und das Interesse an
+Linux-Gerätetreibern entsprechend ebenfalls. Der größte Teil von Linux
+ist unabhängig von der Hardware, auf der er läuft, und die meisten
+Benutzer müssen sich (glücklicherweise) nicht um Hardware-Fragen
+kümmern. Aber für jedes Stückchen Hardware, das unter Linux laufen
+soll, muß jemand einen Treiber geschrieben haben. Ohne Gerätetreiber
+gibt es kein funktionierendes System.</P
+><P
+>Gerätetreiber nehmen im Linux-Kernel eine spezielle Rolle ein. Sie
+sind klar abgegrenzte &#8220;Blackboxes&#8221;, die ein bestimmtes Stück Hardware
+auf eine wohldefinierte interne Programmierschnittstelle reagieren
+lassen. Sie verbergen die komplexen Details, wie das Gerät
+funktioniert. Die Benutzer-Aktivität findet über einen Satz
+standardisierter Aufrufe statt, die unabhängig vom jeweiligen Treiber sind;
+das Abbilden dieser Aufrufe auf gerätespezifische Operationen, die
+auf der tatsächlichen Hardware arbeiten, ist dann die Aufgabe des
+Gerätetreibers. Diese Programmierschnittstelle ist so aufgebaut, daß
+die Treiber vom Rest des Kernels getrennt entwickelt und bei Bedarf zur
+Laufzeit &#8220;eingestöpselt&#8221; werden. Diese Modularität macht es einfach,
+Linux-Treiber zu schreiben, weswegen es inzwischen Hunderte davon
+gibt.</P
+><P
+>Es gibt eine Reihe von Gründen, sich für das Schreiben von
+Linux-Gerätetreibern zu interessieren. Die Geschwindigkeit, mit der
+neue Hardware verfügbar wird (und wieder veraltet!) stellt sicher, daß
+Treiber-Autoren auf absehbare Zeit gut ausgelastet sein
+werden. Einzelne Benutzer müssen möglicherweise etwas  über Treiber
+wissen, um auf ein bestimmtes für sie interessantes Gerät zugreifen zu
+können. Hardware-Hersteller können die große und stetig wachsende
+Anzahl von Linux-Benutzern in ihre potentielle Zielgruppe aufnehmen,
+wenn sie einen Linux-Treiber für ihre Produkte verfügbar machen. Und
+wegen der Open Source-Eigenschaft des Linux-Systems kann der Quellcode
+des Treibers, wenn der Autor das wünscht, blitzschnell zu Millionen
+von Benutzern gebracht werden.</P
+><P
+>In diesem Buch werden Sie lernen, wie man eigene Gerätetreiber
+schreibt und wie man in den dazugehörigen Teilen des Kernels
+herumhackt. Wir haben dabei einen geräteunabhängigen Ansatz verfolgt;
+die vorgestellten Programmiertechniken und -schnittstellen sind wo
+immer möglich nicht an ein bestimmtes Gerät gebunden. Alle Treiber
+sind anders; als Treiber-Autor müssen Sie Ihr jeweiliges Gerät gut
+kennen. Aber die meisten Prinzipien und grundlegenden Techniken sind für alle Treiber die gleichen. Dieses Buch kann Ihnen nichts über Ihr
+Gerät beibringen, aber es kann Ihnen mit dem Hintergrundwissen helfen,
+das Sie brauchen, um Ihr Gerät zum Laufen zu bringen.</P
+><P
+>Während Sie lernen, Treiber zu schreiben, werden Sie einiges über den
+Linux-Kernel im allgemeinen lernen. Damit verstehen Sie möglicherweise
+auch besser, wie Ihr Rechner funktioniert und warum nicht immer alles
+so schnell geht oder so läuft, wie Sie das erwarten. Wir werden neue
+Konzepte langsam einführen, mit sehr einfachen Treibern anfangen und
+darauf aufbauen. Zu jedem neuen Konzept werden Sie Beispiel-Code
+finden, zu dessen Test man keine spezielle Hardware benötigt.&#13;</P
+><P
+>In diesem Kapitel wird es noch nicht darum gehen, Code zu
+schreiben. Wir werden einige Hintergrundkonzepte über den Linux-Kernel
+einführen, die Ihnen später sehr nützlich sein werden, wenn wir
+anfangen, Code zu schreiben.</P
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN198"
+>Die Rolle des Treiber-Programmierers</A
+></H1
+><P
+>Als Programmierer können Sie selbst Entscheidungen über Ihren Treiber
+treffen und dabei zwischen der Zeit, die Sie zum Programmieren
+benötigen, und der Flexibilität des Ergebnisses abwägen. Obwohl es
+vielleicht merkwürdig klingt, davon zu sprechen, daß ein Treiber
+&#8220;flexibel&#8221; ist, mögen wir dieses Wort, denn es betont, daß
+ein Treiber-Programmierer <SPAN
+><I
+CLASS="EMPHASIS"
+>Mechanismen</I
+></SPAN
+> und keine
+<SPAN
+><I
+CLASS="EMPHASIS"
+>Policies</I
+></SPAN
+> (Strategien) bereitstellt.&#13;</P
+><P
+>Der Unterschied zwischen Mechanismus und Policy ist eine der besten
+Ideen, die hinter dem Design von UNIX stehen. Die meisten Probleme in
+der Programmierung können in der Tat in zwei Teile aufgespalten
+werden: in &#8220;welche Funktionalität zur Verfügung gestellt werden muß&#8221; (der Mechanismus) und
+in &#8220;wie die Funktionalität verwendet werden kann&#8221; (die
+Policy). Wenn diese beiden Bereiche in verschiedenen Teilen des
+Programms oder sogar von verschiedenen Programmen behandelt werden,
+dann ist die Software viel einfacher zu entwickeln und an bestimmte
+Bedürfnisse anzupassen.&#13;</P
+><P
+>Ein Beispiel: Unter UNIX ist die Verwaltung der Bildschirmausgabe
+zwischen dem X-Server, der die Hardware kennt und den
+Benutzerprogrammen eine einheitliche Schnittstelle zur Verfügung stellt, und
+dem Window Manager aufgeteilt, der eine bestimmte Policy
+implementiert, ohne irgend etwas über die Hardware zu wissen. Man kann
+den gleichen Window Manager auf verschiedener Hardware laufen
+lassen, genau wie verschiedene Benutzer verschiedene Konfigurationen
+auf ein- und demselben Arbeitsplatzrechner haben können. Selbst
+vollständig verschiedene Desktop-Umgebungen wie KDE und GNOME können
+auf ein und demselben System existieren. Ein weiteres
+Beispiel ist die Schichtenstruktur der TCP/IP-Netzwerkprotokolle:
+Das Betriebssystem stellt die Socket-Abstraktion bereit, die keine
+Policy beinhaltet. Verschiedene Server sorgen dann für die
+Dienste (und deren zugehörige Policies). Darüber hinaus kann ein
+Server wie <TT
+CLASS="LITERAL"
+>ftpd</TT
+>
+den Mechanismus zur Datenübertragung bereitstellen, während die
+Benutzer den Client verwenden, der ihnen am besten gefällt; es gibt
+sowohl Kommandozeilen- als auch grafische Clients. Außerdem kann jeder
+eine neue Benutzerschnittstelle zur Datenübertragung schreiben.&#13;</P
+><P
+>Auch bei Treibern gibt es diese Rollenaufteilung zwischen
+Mechanismus und Policy. Der
+Floppy-Treiber hat keine Policy &#8212; seine einzige Aufgabe ist es,
+die Diskette als zusammenhängendes Array von Datenblocks zu
+betrachten. Höhere Ebenen des Systems liefern dann die Policies, etwa
+wer auf das Diskettenlaufwerk zugreifen darf, ob direkt auf das
+Laufwerk oder über das Dateisystem zugegriffen wird und ob Benutzer
+Dateisysteme auf dem Laufwerk einhängen dürfen. Weil verschiedene
+Umgebungen auch unterschiedlich auf die Hardware zugreifen müssen, ist
+es wichtig, so Policy-frei wie möglich zu bleiben.&#13;</P
+><P
+>Programmierer, die Treiber <SPAN
+><I
+CLASS="EMPHASIS"
+>schreiben</I
+></SPAN
+>, müssen
+besonders auf dieses fundamentale Konzept achten: Wir müssen
+Kernel-Code schreiben, der auf die Hardware zugreift, aber wir sollten
+dem Benutzer keine bestimmten Policies aufzwingen. Der Treiber sollte
+sich nur mit dem Ansprechen der Hardware beschäftigen und die Frage,
+<SPAN
+><I
+CLASS="EMPHASIS"
+>wie</I
+></SPAN
+> die Hardware benutzt werden kann, der
+Applikation überlassen. Ein Treiber gilt also als
+<I
+CLASS="FIRSTTERM"
+>flexibel</I
+>, wenn er Zugriff auf die Fähigkeiten der
+Hardware bietet, ohne zusätzliche Beschränkungen
+hinzuzufügen. Manchmal muß man aber doch Policy-Entscheidungen
+treffen. Beispielsweise kann ein digitaler I/O-Treiber möglicherweise
+nur Byte-breiten Zugriff auf die Hardware ermöglichen, um den
+zusätzlichen Code zu vermeiden, der für die Verarbeitung
+einzelner Bits notwendig wäre.&#13;</P
+><P
+>Sie können Ihren Treiber auch aus einer anderen Perspektive
+betrachten: Er stellt eine Software-Schicht dar, die zwischen den
+Applikationen und dem eigentlichen Gerät liegt. Diese privilegierte
+Rolle des Treibers erlaubt es dem Treiber-Programmierer zu bestimmen,
+wie das Gerät dargestellt werden sollte: Verschiedene Treiber können
+verschiedene Fähigkeiten bieten, selbst für ein und dasselbe Gerät. Das
+eigentliche Design des Treibers sollte zwischen den verschiedenen
+Überlegungen abwägen. Beispielsweise ist es denkbar, daß ein Gerät
+gleichzeitig von mehreren Programmen benutzt werden soll. Der
+Treiber-Programmierer hat die Freiheit zu bestimmen, wie diese
+Nebenläufigkeit realisiert werden soll. Er könnte eine Abbildung des
+Speichers auf das Gerät unabhängig von den Hardware-Fähigkeiten
+implementieren, eine Bibliothek bereitstellen, um es
+Applikationsprogrammierern zu erleichtern, eigene Policies auf den
+verfügbaren Primitiven aufzubauen, und vieles andere
+mehr. Grundsätzlich müssen Sie abwägen zwischen dem Wunsch, dem
+Benutzer so viele Optionen wie möglich zu bieten, der Zeit, die
+Ihnen zur Programmierung des Treibers zur Verfügung steht, und Ihrem
+Wunsch, den Treiber einfach zu halten, damit sich nicht so viele
+Fehler einschleichen.&#13;</P
+><P
+>Policy-freie Treiber haben eine Reihe typischer Eigenschaften. Dazu
+gehören die Unterstützung sowohl des asynchronen als auch des synchronen
+Betriebs, die Fähigkeit, mehrfach geöffnet werden zu können, die
+Möglichkeit, die Hardware vollständig ausnutzen zu können, und die
+Abwesenheit von Software-Schichten, die &#8220;die Sache vereinfachen&#8221; oder
+Policy-bezogene Operationen bereitstellen. Solche Treiber
+funktionieren nicht nur besser für Endbenutzer, sondern sind auch
+leichter zu schreiben und zu pflegen. Policy-frei zu
+sein ist in der Tat ein ganz gängiges Ziel von Software-Designern.
+&#13;</P
+><P
+>Die meisten Gerätetreiber werden zusammen mit Benutzerprogrammen
+veröffentlicht, die bei der Konfiguration und beim Zugriff auf das
+Zielgerät helfen. Diese Programme reichen von einfachen
+Konfigurationswerkzeugen bis hin zu vollständigen grafischen
+Applikationen. Beispiele dafür sind das Programm
+<SPAN
+CLASS="APPLICATION"
+>tunelp</SPAN
+>, das einstellt, wie der
+Gerätetreiber für Drucker am parallelen Port funktioniert, und das
+grafische Werkzeug <SPAN
+CLASS="APPLICATION"
+>cardctl</SPAN
+>, das zum
+PCMCIA-Treiber-Paket gehört. Normalerweise wird auch eine Client-Bibliothek
+bereitgestellt, die Fähigkeiten implementiert, die nicht Bestandteil
+des Treibers selbst sein müssen.&#13;</P
+><P
+>In diesem Buch geht es hauptsächlich um den Kernel. Deswegen werden wir
+versuchen, uns weder mit Policy-Fragen noch mit Anwendungsprogrammen
+oder Hilfsbibliotheken zu beschäftigen. Manchmal werden wir über
+verschiedene Policies und wie man diese unterstützt, sprechen, aber
+wir behandeln Programme, die das Gerät
+oder die erzwungenen Policies benutzen, nicht sehr detailliert. Sie sollten aber wissen, daß
+Anwenderprogramme ein unverzichtbarer Bestandteil eines Softwarepakets
+sind und daß auch Policy-freie Pakete mit Konfigurationsdateien
+ausgeliefert werden, die dem zugrundeliegenden Mechanismus ein
+Default-Verhalten zuweisen.</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x180.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x217.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Danksagungen</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Organisation des Kernels</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

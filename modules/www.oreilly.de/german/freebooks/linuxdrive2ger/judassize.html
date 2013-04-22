@@ -1,0 +1,324 @@
+<HTML
+><HEAD
+><TITLE
+>Datenelementen eine explizite
+Größe zuweisen</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Überlegte Verwendung von Datentypen"
+HREF="judas.html"><LINK
+REL="PREVIOUS"
+TITLE="Überlegte Verwendung von Datentypen"
+HREF="judas.html"><LINK
+REL="NEXT"
+TITLE="Schnittstellenspezifische Typen"
+HREF="judasif.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="judas.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 10. Überlegte Verwendung von Datentypen</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="judasif.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="JUDASSIZE"
+>Datenelementen eine explizite
+Größe zuweisen</A
+></H1
+><P
+>&#13;
+
+Manchmal ist es im Kernel-Code notwendig, daß Datenelemente eine
+spezifische Größe haben, entweder um zu vordefinierten binären Strukturen zu
+passen<A
+NAME="AEN13309"
+HREF="#FTN.AEN13309"
+>[1]</A
+> oder um Daten in Strukturen durch Einfügen von
+                &#8220;Füllfeldern&#8221; auszurichten (aber lesen Sie
+auch &#8220;Datenausrichtung&#8221; weiter hinten in diesem Kapitel, um
+Informationen über Probleme der Ausrichtung zu bekommen).&#13;</P
+><P
+>Der Kernel stellt zu diesem Zweck die folgenden Datentypen bereit, die
+Sie verwenden können, wenn Sie wissen müssen, wie groß Ihre Daten
+sind. Alle diese Typen werden in
+<TT
+CLASS="LITERAL"
+>&#60;asm/types.h&#62;</TT
+> deklariert, was wiederum
+von <TT
+CLASS="LITERAL"
+>&#60;linux/types.h&#62;</TT
+>
+eingebunden wird:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+u8;   /* vorzeichenloses Byte (8 Bits) */
+u16;  /* vorzeichenloses Wort (16 Bits) */
+u32;  /* vorzeichenloser 32-Bit-Wert */
+u64;  /* vorzeichenloser 64-Bit-Wert */</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Diese Datentypen stehen nur für Kernel-Code zur Verfügung (d.h.
+<TT
+CLASS="LITERAL"
+>__KERNEL__</TT
+> muß
+definiert werden, bevor <TT
+CLASS="LITERAL"
+>&#60;linux/types.h&#62;</TT
+>
+eingebunden wird). Es gibt auch die zugehörigen vorzeichenbehafteten
+Typen, die aber selten benötigt werden. Ersetzen Sie einfach das
+<TT
+CLASS="LITERAL"
+>u</TT
+> im Namen durch <TT
+CLASS="LITERAL"
+>s</TT
+>, wenn Sie
+doch einen benötigen.&#13;</P
+><P
+>&#13;Wenn ein Programm im User-Space diese Typen benötigt, kann es ihren
+Namen einen doppelten Unterstrich voranstellen:
+<TT
+CLASS="LITERAL"
+>__u8</TT
+> und die anderen Typen sind
+unabhängig von
+<TT
+CLASS="LITERAL"
+>__KERNEL__</TT
+>
+definiert. Wenn ein Treiber beispielsweise binäre Strukturen mit einem
+Programm im User-Space über <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+> austauschen
+muß, dann sollten die Header-Dateien die 32-Bit-Felder in den
+Strukturen als <TT
+CLASS="LITERAL"
+>__u32</TT
+> deklarieren.&#13;</P
+><P
+>Man darf nicht vergessen, daß diese Typen Linux-spezifisch sind; ihre
+Verwendung steht einer Portierung auf andere Unix-Systeme im
+Wege. Systeme mit neueren Compilern unterstützen die C99-Standardtypen
+wie <TT
+CLASS="LITERAL"
+>uint8_t</TT
+> und
+<TT
+CLASS="LITERAL"
+>uint32_t</TT
+>; nach Möglichkeit sollten diese Typen
+anstelle der Linux-spezifischen Varianten verwendet werden. Wenn Ihr
+Code aber auch mit 2.0-Kerneln funktionieren muß, dann ist die
+Verwendung dieser Typen nicht möglich (nur ältere Compiler
+funktionieren mit 2.0-Kerneln).&#13;</P
+><P
+>Vielleicht ist Ihnen aufgefallen, daß im Kernel manchmal auch
+konventionelle Typen wie <TT
+CLASS="LITERAL"
+>unsigned int</TT
+> verwendet
+werden, wenn die Größe der Elemente architekturunabhängig ist. Das
+wird hauptsächlich wegen der Rückwärtskompatibilität gemacht. Als
+<TT
+CLASS="LITERAL"
+>u32</TT
+> und verwandte Typen in Version 1.1.67 eingeführt wurden, konnten
+die Entwickler die existierenden Datenstrukturen nicht verändern, weil
+der Compiler jedesmal eine Warnung ausgibt, wenn es eine
+Nichtübereinstimmung zwischen dem Feld einer Struktur und dem
+zugewiesenen Wert gibt.<A
+NAME="AEN13336"
+HREF="#FTN.AEN13336"
+>[2]</A
+>
+Linus hat nicht damit gerechnet, daß das Betriebssystem, das er einmal
+für sich selbst geschrieben hatte, auf andere Plattformen portiert
+werden würde; deswegen haben ältere Strukturen manchmal nur schwache
+Typen.
+
+&#13;</P
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN13309"
+HREF="judassize.html#AEN13309"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Das passiert zum Beispiel beim Lesen von
+                  Partitionstabellen, beim Ausführen von Binärdateien oder
+                  beim Decodieren eines Netzwerk-Paketes.</P
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN13336"
+HREF="judassize.html#AEN13336"
+>[2]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Der Compiler meldet sogar
+                  Typen-Nichtübereinstimmungen, wenn zwei Typen nur
+                  verschiedene Namen für ein- und dasselbe Objekt sind, wie
+                  beispielsweise <TT
+CLASS="LITERAL"
+>unsigned long</TT
+> und
+                  <TT
+CLASS="LITERAL"
+>u32</TT
+> auf PCs.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="judas.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="judasif.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Überlegte Verwendung von Datentypen</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="judas.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Schnittstellenspezifische Typen</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

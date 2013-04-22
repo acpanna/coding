@@ -1,0 +1,24 @@
+1.Tag: Am liebsten tue ich arbeiten.
+1.Tag: Am liebsten tue ich lernen.
+1.Tag: Am liebsten tue ich Spaß haben.
+1.Tag: Am liebsten tue ich schlafen.
+2.Tag: Am liebsten tue ich arbeiten.
+2.Tag: Am liebsten tue ich lernen.
+2.Tag: Am liebsten tue ich Spaß haben.
+2.Tag: Am liebsten tue ich schlafen.
+3.Tag: Am liebsten tue ich arbeiten.
+3.Tag: Am liebsten tue ich lernen.
+3.Tag: Am liebsten tue ich Spaß haben.
+3.Tag: Am liebsten tue ich schlafen.
+4.Tag: Am liebsten tue ich arbeiten.
+4.Tag: Am liebsten tue ich lernen.
+4.Tag: Am liebsten tue ich Spaß haben.
+4.Tag: Am liebsten tue ich schlafen.
+5.Tag: Am liebsten tue ich arbeiten.
+5.Tag: Am liebsten tue ich lernen.
+5.Tag: Am liebsten tue ich Spaß haben.
+5.Tag: Am liebsten tue ich schlafen.
+
+Reihenfolge der Abarbeitung:  1  2  3  4
+
+Priorität   der Abarbeitung:  5  4  3  1

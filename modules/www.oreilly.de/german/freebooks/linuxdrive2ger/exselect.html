@@ -1,0 +1,1302 @@
+<HTML
+><HEAD
+><TITLE
+>poll und select</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Fortgeschrittene Operationen in Zeichen-Treibern"
+HREF="extra.html"><LINK
+REL="PREVIOUS"
+TITLE="Blockierende I/O"
+HREF="exblocking.html"><LINK
+REL="NEXT"
+TITLE="Asynchrone Benachrichtigung"
+HREF="exasync.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="exblocking.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 5. Fortgeschrittene Operationen in Zeichen-Treibern</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="exasync.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="EXSELECT"
+>poll und select</A
+></H1
+><P
+>&#13;
+
+
+
+
+Applikationen, die nicht-blockierende I/O verwenden, benutzen oft auch
+        die Systemaufrufe <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+> und
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>select</I
+></SPAN
+>. Beide haben im wesentlichen die
+        gleiche Funktionalität: Sie erlauben es einem Prozeß zu
+        ermitteln, ob er ohne zu blockieren aus einer oder mehreren
+        offenen Dateien lesen oder in sie schreiben kann. Daher werden
+        sie oft in Applikationen verwendet, die mehrere Eingabe- oder
+        Ausgabe-Streams verwenden müssen und auf keinem davon
+        blockieren dürfen. Die gleiche Funktionalität steht in zwei
+        separaten Funktionen bereit, weil diese fast gleichzeitig von
+        zwei verschiedenen Gruppen implementiert wurden:
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>select</I
+></SPAN
+> wurde in BSD Unix eingeführt,
+        während <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+> die System V-Lösung war.</P
+><P
+>Beide Systemaufrufe brauchen Unterstützung vom
+        Gerätetreiber, um zu funktionieren. In der Version 2.0 des Kernels ahmte die
+        Gerätemethode <SPAN
+><I
+CLASS="EMPHASIS"
+>select</I
+></SPAN
+> nach (und
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+> stand User-Programmen gar nicht zur
+        Verfügung); ab 2.1.23 gab es beide, und die Gerätemethode
+        basierte auf dem neu eingeführten
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+>-Systemaufruf, weil
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+> eine genauere Kontrolle als
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>select</I
+></SPAN
+> ermöglicht.</P
+><P
+>        Implementationen der <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+>-Methode, die
+        sowohl den Systemaufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+> als auch den
+        Systemaufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>select</I
+></SPAN
+> implementieren, haben
+        den folgenden Prototyp:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; unsigned int (*poll) (struct file *, poll_table *);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die Treibermethode wird immer dann aufgerufen, wenn das User
+        Space-Programm die Systemaufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+> oder
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>select</I
+></SPAN
+> verwendet und dabei ein
+        Dateideskriptor benutzt wird, der zum Treiber gehört. Die
+        Gerätemethode muß die folgenden beiden Schritte abdecken:</P
+><P
+></P
+><OL
+TYPE="1"
+><LI
+><P
+>&#13;<SPAN
+><I
+CLASS="EMPHASIS"
+>poll_wait</I
+></SPAN
+> auf einer oder mehreren Warteschlangen
+            aufrufen, die eine Änderung im Poll-Status anzeigen
+            könnten</P
+></LI
+><LI
+><P
+>eine Bitmaske zurückgeben, die die Operationen beschreibt, die
+            unmittelbar ohne Blockieren ausgeführt werden könnten</P
+></LI
+></OL
+><P
+>Beide Operationen sind normalerweise einfach zu implementieren und
+        ähneln sich bei allen Treibern. Sie verlassen sich
+        aber auf Informationen, die nur der Treiber bereitstellen kann,
+        und müssen deswegen von jedem Treiber einzeln unterstützt
+        werden.</P
+><P
+>&#13;
+
+        Die Struktur <TT
+CLASS="LITERAL"
+>poll_table</TT
+>, das zweite Argument
+        der <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+>-Methode, wird im Kernel
+        verwendet, um die Aufrufe <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+> und
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>select</I
+></SPAN
+> zu implementieren. Sie ist in
+<TT
+CLASS="LITERAL"
+>&#60;linux/poll.h&#62;</TT
+>, deklariert; diese Datei muß
+        vom Treiber eingebunden werden. Treiber-Autoren müssen nichts
+        über die Interna wissen und verwenden die Struktur als opaques
+        Objekt. Sie wird an die Treibermethode übergeben, damit jede
+        Ereignisschlange, die den Prozeß aufwecken und den Status der
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+>-Operation ändern könnte, durch
+        einen Aufruf der Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>poll_wait</I
+></SPAN
+> zur
+        Struktur <TT
+CLASS="LITERAL"
+>poll_table</TT
+> hinzugefügt werden
+        kann:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; void poll_wait (struct file *, wait_queue_head_t *, poll_table *);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die zweite Aufgabe der poll-Methode besteht darin, die Bitmaske
+        zurückzugeben, die die Operationen beschreibt, die unmittelbar
+        ausgeführt werden können; auch dies ist einfach. Wenn das
+        Gerät beispielsweise Daten verfügbar hat, dann würde ein
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>-Aufruf ohne Schlafen ausgeführt
+        werden können; die Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+> sollte
+        diesen Zustand bekanntgeben. Mehrere (in
+        <TT
+CLASS="LITERAL"
+>&#60;linux/poll.h&#62;</TT
+> definierte) Flags
+        werden verwendet, um die möglichen Operationen anzuzeigen:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>POLLIN</TT
+></DT
+><DD
+><P
+>&#13;Dieses Bit muß gesetzt sein, wenn vom Gerät ohne zu blockieren gelesen
+              werden kann.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>POLLRDNORM</TT
+></DT
+><DD
+><P
+>&#13;Dieses Bit muß gesetzt werden, wenn &#8220;normale&#8221; Daten zum Lesen
+              vorliegen. Ein lesbares Gerät gibt <TT
+CLASS="LITERAL"
+>(POLLIN |
+                POLLRDNORM)</TT
+> zurück.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>POLLRDBAND</TT
+></DT
+><DD
+><P
+>&#13;Dieses Bit zeigt an, daß Out-of-Band-Daten für das Gerät
+              vorliegen. Dies wird derzeit nur an einer einzigen
+              Stelle (im DECnet-Code) im Linux-Kernel verwendet und
+              trifft normalerweise nicht auf Gerätetreiber zu.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>POLLPRI</TT
+></DT
+><DD
+><P
+>&#13;Daten hoher Priorität (Out-of-Band) können ohne zu blockieren
+              gelesen werden. Dieses Bit läßt
+              <SPAN
+><I
+CLASS="EMPHASIS"
+>select</I
+></SPAN
+> melden, daß eine
+              Ausnahmebedingung an der Datei aufgetreten ist, weil
+              <SPAN
+><I
+CLASS="EMPHASIS"
+>select</I
+></SPAN
+> Out-of-Band-Daten als
+              Ausnahmezustand ansieht.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>POLLHUP</TT
+></DT
+><DD
+><P
+>&#13;Wenn ein Prozeß, der von diesem Gerät liest, auf das Dateiende stößt,
+              muß der Treiber <TT
+CLASS="LITERAL"
+>POLLhUP</TT
+> (auflegen)
+              setzen. Ein Prozeß, der <SPAN
+><I
+CLASS="EMPHASIS"
+>select</I
+></SPAN
+>
+              aufruft, bekommt dann mitgeteilt, daß das Gerät lesbar
+              ist, wie es die
+              <SPAN
+><I
+CLASS="EMPHASIS"
+>select</I
+></SPAN
+>-Funktionalität vorschreibt.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>POLLERR</TT
+></DT
+><DD
+><P
+>&#13;Ein Fehlerzustand ist am Gerät aufgetreten. Wenn
+              <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+> aufgerufen worden ist, wird
+              das Gerät als les- und schreibbar gemeldet, weil sowohl
+              <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> als auch
+              <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+> ohne zu blockieren einen
+              Fehlercode zurückgeben werden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>POLLOUT</TT
+></DT
+><DD
+><P
+>&#13;Dieses Bit ist im Rückgabewert gesetzt, wenn das Gerät ohne zu
+              blockieren beschrieben werden kann.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>POLLWRNORM</TT
+></DT
+><DD
+><P
+>&#13;Dieses Bit hat die gleiche Bedeutung wie <TT
+CLASS="LITERAL"
+>POLLOUT</TT
+>
+              und ist manchmal auch die gleiche Zahl. Ein schreibbares
+              Gerät gibt <TT
+CLASS="LITERAL"
+>(POLLOUT | POLLWRNORM)</TT
+>
+              zurück.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>POLLWRBAND</TT
+></DT
+><DD
+><P
+>&#13;Wie <TT
+CLASS="LITERAL"
+>POLLRDBAND</TT
+> bedeutet dieses Bit, daß Daten mit
+              einer Priorität größer 0 auf das Gerät geschrieben
+              werden können. Nur die Datagramm-Implementation von
+              <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+> verwendet dieses Bit, weil ein
+              Datagramm Out-of-Band-Daten transportieren kann.</P
+></DD
+></DL
+></DIV
+><P
+>Beachten Sie, daß <TT
+CLASS="LITERAL"
+>POLLRDBAND</TT
+> und
+<TT
+CLASS="LITERAL"
+>POLLWRBAND</TT
+> nur bei Dateideskriptoren, die zu
+        Sockets gehören, sinnvoll sind: Gerätetreiber benutzen diese
+        Flags normalerweise nicht.</P
+><P
+>Die Beschreibung von <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+> ist relativ lang, wenn
+        man bedenkt, wie einfach die Funktion in der Praxis zu
+        benutzen ist. Schauen Sie sich als Beispiel die
+        <SPAN
+CLASS="APPLICATION"
+>scullpipe</SPAN
+>-Implementation der
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+>-Methode an:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;unsigned int scull_p_poll(struct file *filp, poll_table *wait)
+{
+  Scull_Pipe *dev = filp-&#62;private_data;
+  unsigned int mask = 0;
+
+  /*
+   * Der Puffer ist ein Ring-Puffer, er gilt als voll, wenn "wp" direkt
+   * hinter "rp" steht. "left" ist 0, wenn der Puffer leer ist, und
+   * "1", wenn er voellig gefuellt ist.
+   */
+  int left = (dev-&#62;rp + dev-&#62;buffersize - dev-&#62;wp) % dev-&#62;buffersize;
+
+  poll_wait(filp, &#38;dev-&#62;inq, wait);
+  poll_wait(filp, &#38;dev-&#62;outq, wait);
+  if (dev-&#62;rp != dev-&#62;wp) mask |= POLLIN | POLLRDNORM; /* lesbar */
+  if (left != 1)     mask |= POLLOUT | POLLWRNORM; /* schreibbar */
+
+  return mask;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Dieser Code fügt einfach die beiden
+        <SPAN
+CLASS="APPLICATION"
+>scullpipe</SPAN
+>-Warteschlangen zur
+        <TT
+CLASS="LITERAL"
+>poll_table</TT
+> hinzu und setzt dann die
+        passenden Maskenbits, wenn Daten gelesen der geschrieben
+        werden können.</P
+><P
+>&#13;Der hier gezeigte <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+>-Code hat noch keine
+        Unterstützung für das Dateiende. Die
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+>-Methode sollte
+        <TT
+CLASS="LITERAL"
+>POLLHUP</TT
+> zurückgeben, wenn das Gerät am Ende
+        der Datei angekommen ist. Wenn der Aufrufer den Systemaufruf
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>select</I
+></SPAN
+> verwendet hat, wird die Datei als
+        lesbar gemeldet; in beiden Fällen weiß die Applikation, daß
+        sie den <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>-Aufruf ausführen kann, ohne
+        ewig warten zu müssen. Die <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>-Methode
+        gibt dann 0 zurück, um das Dateiende zu kennzeichnen.</P
+><P
+>&#13;
+Bei echten FIFOs sieht der Leser beispielsweise ein Dateiende, wenn
+        alle Schreiber die Datei schließen, wohingegen ein Leser von
+        <SPAN
+CLASS="APPLICATION"
+>scullpipe</SPAN
+> nie ein Dateiende
+        sieht. Das Verhalten ist anders, weil ein FIFO als
+        Kommunikationskanal zwischen zwei Prozessen gedacht ist,
+        während <SPAN
+CLASS="APPLICATION"
+>scullpipe</SPAN
+> ein Mülleimer
+        ist, in dem jeder Daten ablegen kann, solange es wenigstens
+        einen Leser gibt. Außerdem ergibt es keinen Sinn, etwas erneut
+        zu implementieren, was es schon im Kernel gibt.</P
+><P
+>Das Implementieren des Dateiendes auf die gleiche Art und Weise wie
+        bei FIFOs würde ein Abfragen von
+        <TT
+CLASS="LITERAL"
+>dev-&#62;nwriters</TT
+> sowohl in der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>- als auch in der
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+>-Methode sowie ein entsprechendes
+        Melden des Dateiendes (wie eben beschrieben), wenn kein Prozeß
+        das Gerät zum Schreiben geöffnet hat, erfordern. Wenn ein
+        Leser aber <SPAN
+><I
+CLASS="EMPHASIS"
+>scullpipe</I
+></SPAN
+> unglücklicherweise
+        vor dem Schreiber geöffnet hat, würde er das Dateiende zu
+        sehen bekommen, bevor er eine Chance hat, auf die Daten zu
+        warten. Dieses Problem kann am besten mit einem blockierenden
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> behoben werden, dessen
+        Implementierung Ihnen als Aufgabe überlassen bleibt.</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN6828"
+>Interaktion mit read und write</A
+></H2
+><P
+>Der Zweck der Systemaufrufe <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>select</I
+></SPAN
+> ist es, im
+voraus zu bestimmen, ob eine I/O-Operation blockieren
+wird. <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>select</I
+></SPAN
+> ergänzen also
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>, sind aber
+auch nützlich, um den Treiber simultan auf mehrere Datenströme warten
+zu lassen (auch wenn wir das in den
+          <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Beispielen nicht ausnutzen).&#13;</P
+><P
+>Damit Anwendungen korrekt arbeiten können, müssen auch diese drei
+Aufrufe korrekt implementiert sein. Auch wenn die folgenden Regeln
+schon mehr oder weniger genannt worden sind, fassen wir sie hier noch
+einmal zusammen.&#13;</P
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN6839"
+>Daten vom Gerät lesen</A
+></H3
+><P
+></P
+><UL
+><LI
+><P
+>&#13;Wenn Daten im Eingabe-Puffer vorliegen, sollte
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> unmittelbar und ohne spürbare Verzögerung
+zurückkehren, selbst wenn weniger Daten als angefordert vorhanden
+sind und der Treiber sicher ist, daß die fehlenden Daten bald ankommen
+werden. Sie können auch jederzeit weniger Daten als angefordert
+zurückgeben, wenn das praktisch für Sie ist (wir haben das in
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> so gemacht), sofern Sie wenigstens
+ein Byte zurückgeben.</P
+></LI
+><LI
+><P
+>Wenn keine Daten im Eingabe-Puffer vorliegen, muß
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> default-mäßig blockieren, bis wenigstens ein
+                Byte anliegt,
+es sei denn, <TT
+CLASS="LITERAL"
+>O_NONBLOCK</TT
+> ist gesetzt. Ein
+nicht-blockierendes <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> kehrt unmittelbar mit
+dem Rückgabewert <TT
+CLASS="LITERAL"
+>-EAGAIN</TT
+> zurück (auch wenn einige
+alte Versionen von System V in diesem Fall 0 zurückgeben). In diesen
+                Fällen muß <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+> melden, daß das
+                Gerät unlesbar ist; zumindest so lange, bis mindestens
+                ein Byte eintrifft. Sobald Daten im Puffer sind, gehen
+              wir auf den vorigen Fall zurück.</P
+></LI
+><LI
+><P
+>Wenn wir am Dateiende angekommen sind, sollte
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> sofort mit dem Rückgabewert 0 zurückkehren,
+unabhängig davon, ob <TT
+CLASS="LITERAL"
+>O_NONBLOCK</TT
+> gesetzt ist
+oder nicht. <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+> sollte in diesem Fall <TT
+CLASS="LITERAL"
+>POLLHUP</TT
+> zurückgeben.</P
+></LI
+></UL
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN6862"
+>Auf das Gerät schreiben</A
+></H3
+><P
+></P
+><UL
+><LI
+><P
+>&#13;Wenn Platz im Ausgabe-Puffer ist, sollte <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>
+verzögerungsfrei zurückkehren. Es kann aber weniger Daten
+entgegennehmen als angefordert, muß jedoch wenigstens ein Byte
+abnehmen. In diesem Fall meldet <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+>, daß das
+Gerät schreibbar ist.</P
+></LI
+><LI
+><P
+>Wenn der Ausgabe-Puffer voll ist, blockiert
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+> default-mäßig, bis wieder Platz geschaffen
+                wurde, es sei
+denn, <TT
+CLASS="LITERAL"
+>O_NONBLOCK</TT
+> ist gesetzt. Ein
+nicht-blockierendes <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+> kehrt unmittelbar mit
+<TT
+CLASS="LITERAL"
+>-EAGAIN</TT
+> zurück (oder wie in älteren System V-Systemen mit
+0). <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+> sollte in diesem Fall melden, daß die
+Datei nicht schreibbar ist. Wenn allerdings das Gerät keine Daten mehr
+annehmen kann, sollte <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>
+<TT
+CLASS="LITERAL"
+>-ENOSPC</TT
+> (&#8220;No space left on
+device&#8221;) zurückgeben, egal ob <TT
+CLASS="LITERAL"
+>O_NONBLOCK</TT
+> gesetzt
+ist oder nicht.&#13;</P
+></LI
+><LI
+><P
+>Ein <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>-Aufruf darf nie auf die
+                Datenübertragung warten müssen, bevor er zurückkehrt,
+                selbst wenn <TT
+CLASS="LITERAL"
+>O_NONBLOCK</TT
+> nicht
+                gesetzt ist. Das liegt daran, daß viele Applikationen
+                <SPAN
+><I
+CLASS="EMPHASIS"
+>select</I
+></SPAN
+> verwenden, um
+                herauszufinden, ob <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>
+                blockieren wird. Wenn das Gerät als schreibbar
+                gemeldet ist, darf der Aufruf auch konsequenterweise
+                nicht blockieren. Wenn das Programm, das das Gerät
+                verwendet, sicherstellen möchte, daß die in den
+                Ausgabe-Puffer gestellten Daten auch wirklich
+                übertragen werden, muß das Gerät eine
+                <SPAN
+><I
+CLASS="EMPHASIS"
+>fsync</I
+></SPAN
+>-Methode bereitstellen. Das
+                sollte beispielsweise bei entnehmbaren Geräten der
+                Fall sein.</P
+></LI
+></UL
+><P
+>Diese Regeln sind zwar im allgemeinen gut verwendbar,
+            aber man sollte nie vergessen, daß jedes Gerät seine
+            Eigenheiten hat und daß die Regeln manchmal etwas flexibel
+          interpretiert werden müssen. Beispielsweise könnten
+            datensatzorientierte Geräte (wie Bandlaufwerke) keine
+            teilweisen Schreiboperationen ausführen.</P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN6890"
+>Ausstehende Ausgaben ausgeben</A
+></H3
+><P
+>&#13;
+
+
+
+Wir haben schon gesehen, daß die <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>-Methode
+nicht alle Bedürfnisse bei der Ausgabe erfüllt. Die Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>fsync</I
+></SPAN
+>, die vom Systemaufruf des gleichen Namens
+aufgerufen wird, füllt diese Lücke. Der Prototyp der Methode lautet:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; int (*fsync) (struct file *file, struct dentry *dentry, int datasync);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Wenn eine Anwendung sichergehen muß, daß die Daten auch wirklich auf
+das Gerät geschrieben worden sind, muß die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>fsync</I
+></SPAN
+>-Methode implementiert werden. Der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>fsync</I
+></SPAN
+>-Aufruf sollte nur zurückkehren, wenn die
+Ausgabe-Puffer vollständig geleert sind, auch wenn das einige Zeit
+benötigt, und zwar egal, ob <TT
+CLASS="LITERAL"
+>O_NONBLOCK</TT
+>
+gesetzt ist oder nicht. Das Argument <TT
+CLASS="LITERAL"
+>datasync</TT
+>, das
+            es nur in 2.4-Kerneln gibt, wird verwendet, um
+            zwischen den Systemaufrufen <SPAN
+><I
+CLASS="EMPHASIS"
+>fsync</I
+></SPAN
+> und
+            <SPAN
+><I
+CLASS="EMPHASIS"
+>fdatasync</I
+></SPAN
+> zu unterscheiden; es ist
+            nur für Dateisystem-Code interessant und kann von Treibern
+            ignoriert werden.&#13;</P
+><P
+>Die Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>fsync</I
+></SPAN
+> hat keine ungewöhnlichen
+Merkmale. Der Aufruf ist nicht zeitkritisch, so daß er in jedem
+Gerätetreiber nach dem Geschmack des Autors implementiert werden
+kann. Meistens haben Zeichen-Treiber einfach einen
+<TT
+CLASS="LITERAL"
+>NULL</TT
+>-Zeiger in ihren
+<TT
+CLASS="LITERAL"
+>fops</TT
+>. Block-Geräte implementieren diese Methode
+dagegen immer durch Aufruf der allgemein verwendbaren Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>vlock_fsync</I
+></SPAN
+>, die alle Blocks des Geräts
+hinausschreibt und wartet, daß diese Operation abgeschlossen ist.&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="EXSELSTRUCT"
+>Die zugrundeliegende Datenstruktur</A
+></H2
+><P
+>&#13;
+
+
+
+Die Implementation der Systemaufrufe <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+> und
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>select</I
+></SPAN
+> ist ziemlich einfach, falls Sie
+          daran interessiert sind, wie das vor sich geht. Immer, wenn eine
+          Benutzer-Applikation eine der beiden Funktionen aufruft,
+          ruft der Kernel die <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+>-Methode aller
+          Dateien auf, die im Systemaufruf referenziert werden, und
+          übergibt allen die gleiche
+          <TT
+CLASS="LITERAL"
+>poll_table</TT
+>. Diese Struktur ist im
+          wesentlichen ein Array von
+          <TT
+CLASS="LITERAL"
+>poll_table_entry</TT
+>-Strukturen, die für
+          einen bestimmten <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+>- oder
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>select</I
+></SPAN
+>-Aufruf alloziert worden
+          sind. Jeder <TT
+CLASS="LITERAL"
+>poll_table_entry</TT
+> enthält den
+          <TT
+CLASS="LITERAL"
+>struct file</TT
+>-Zeiger für das offene Gerät,
+          einen <TT
+CLASS="LITERAL"
+>wait_queue_head_t</TT
+>-Zeiger und einen
+          <TT
+CLASS="LITERAL"
+>wait_queue_t</TT
+>-Eintrag. Wenn ein Treiber
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>poll_wait</I
+></SPAN
+> aufruft, wird einer dieser
+          Einträge mit den vom Treiber gelieferten Informationen
+          gefüllt und der Warteschlangeneintrag wird in die Geräteschlange gestellt. Der Zeiger auf <TT
+CLASS="LITERAL"
+>wait_queue_head_t</TT
+>
+          wird dazu verwendet, die Warteschlange zu verfolgen, in der
+          der aktuelle poll-Tabelleneintrag registriert ist, damit
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>free_wait</I
+></SPAN
+> in der Lage ist, den Eintrag
+          herauszunehmen, bevor die Warteschlange aufgeweckt wird.</P
+><P
+>Wenn keiner der gepollten Treiber anzeigt, daß I/O ohne Blockieren
+          möglich ist, schläft der <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+>-Aufruf
+          einfach, bis eine der (möglicherweise vielen) Warteschlangen
+          aufwacht.</P
+><P
+>Das Interessante an der Implementation von <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+>
+          ist, daß die Dateioperation mit einem
+          <TT
+CLASS="LITERAL"
+>NULL</TT
+>-Zeiger als
+          <TT
+CLASS="LITERAL"
+>poll_table</TT
+>-Argument aufgerufen werden
+          kann. Diese Situation kann aus einer Reihe von Gründen
+          entstehen. Wenn die Applikation, die
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+> aufruft, einen Timeout-Wert von 0
+          angegeben hat (und damit angezeigt hat, daß nicht gewartet
+          werden soll), dann gibt es keinen Grund, die Warteschlangen
+          anzusammeln, und das System tut das entsprechend auch
+          nicht. Der <TT
+CLASS="LITERAL"
+>poll_table</TT
+>-Zeiger wird auch
+          unmittelbar, nachdem einer der gepollten Treiber anzeigt, daß
+          I/O möglich ist, auf <TT
+CLASS="LITERAL"
+>NULL</TT
+> gesetzt. Weil
+          der Kernel an dieser Stelle weiß, daß nicht mehr gewartet
+          werden muß, baut er keine Liste von Warteschlangen mehr auf.</P
+><P
+>Wenn der <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+>-Aufruf beendet wird, wird die
+          <TT
+CLASS="LITERAL"
+>poll_table</TT
+>-Struktur dealloziert, und alle
+          vorher zur poll-Tabelle hinzugefügten Warteschlangen-Einträge
+          (sofern es überhaupt welche gab) werden aus der Tabelle und
+          ihren Warteschlangen entfernt.</P
+><P
+>In Wirklichkeit sind die Dinge noch etwas komplizierter als hier
+          dargestellt, weil die poll-Tabelle kein einfaches Array ist,
+          sondern eine Menge von einer oder mehreren Seiten, die alle
+          ein Array enthalten. Diese zusätzliche Verkomplizierung
+          wurde eingeführt, um die maximale Anzahl von
+          Dateideskriptoren in einem <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+>- oder
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>select</I
+></SPAN
+>-Aufruf (die durch die
+          Seitengröße bestimmt wird) nicht zu gering zu halten.</P
+><P
+>&#62;
+&#62;
+&#62;
+
+
+
+
+Wir haben versucht, die beim Pollen verwendeten Datenstrukturen in
+          <A
+HREF="exselect.html#FIGPOLL"
+>Abbildung 5-2</A
+> darzustellen; die Abbildung ist
+          eine vereinfachte Repräsentation der wirklichen
+          Datenstrukturen, weil die Aufteilung der poll-Tabelle in
+          mehrere Seiten ignoriert wird und der Datei-Zeiger, der in jedem
+          <TT
+CLASS="LITERAL"
+>poll_table_entry</TT
+> steht, nicht
+          vorkommt. Wenn die tatsächliche Implementation Sie interessiert,
+          sollten Sie sich
+<TT
+CLASS="LITERAL"
+>&#60;linux/poll.h&#62;</TT
+> und
+<TT
+CLASS="FILENAME"
+>fs/select.c</TT
+> ansehen.</P
+><DIV
+CLASS="FIGURE"
+><A
+NAME="FIGPOLL"
+></A
+><P
+><B
+>Abbildung 5-2. Die Datenstrukturen von poll</B
+></P
+><P
+><IMG
+SRC="ldr_0502.jpg"></P
+></DIV
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="exblocking.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="exasync.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Blockierende I/O</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="extra.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Asynchrone Benachrichtigung</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

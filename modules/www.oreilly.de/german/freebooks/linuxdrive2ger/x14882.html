@@ -1,0 +1,822 @@
+<HTML
+><HEAD
+><TITLE
+>Anfragen bearbeiten: Eine einfache Einführung</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Das Laden von Block-Treibern"
+HREF="lock.html"><LINK
+REL="PREVIOUS"
+TITLE="Die Header-Datei blk.h"
+HREF="lockblkh.html"><LINK
+REL="NEXT"
+TITLE="Anfragen bearbeiten: Das Ganze noch einmal genauer"
+HREF="x15067.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="lockblkh.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 12. Das Laden von Block-Treibern</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x15067.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN14882"
+>Anfragen bearbeiten: Eine einfache Einführung</A
+></H1
+><P
+>&#13;
+
+
+
+Die wichtigste Funktion in einem Block-Treiber ist die Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>, die die Low-Level-Operationen
+durchführt, die zum Lesen und Schreiben von Daten benötigt werden. In
+diesem Abschnitt beschreiben wir das grundlegende Design der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Prozedur.</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN14902"
+>Die Anfrage-Warteschlange</A
+></H2
+><P
+>Wenn der Kernel eine Datenübertragung vorsieht, stellt er eine Anfrage
+in eine Warteschlange, die so sortiert ist, daß die Performance des
+Systems maximiert wird. Die Warteschlange mit den Anfragen wird dann
+an die <SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion des Treibers übergeben,
+die folgenden Prototyp hat:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;void request_fn(request_queue_t *queue);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die <SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion sollte für jede Anfrage in
+der Warteschlange die folgenden Aufgaben ausführen:</P
+><P
+></P
+><OL
+TYPE="1"
+><LI
+><P
+>&#13;
+Die Zulässigkeit der Anfrage überprüfen. Dieser Test geschieht durch
+das in <TT
+CLASS="FILENAME"
+>blk.h</TT
+> definierte Makro
+<TT
+CLASS="LITERAL"
+>INIT_REQUEST</TT
+>; hier wird nach Problemen
+gesucht, die auf einen Fehler in der
+Anfrage-Warteschlangen-Verarbeitung des Systems hinweisen könnten.</P
+></LI
+><LI
+><P
+>&#13;Die Datenübertragung selbst durchführen. Die Variable
+<TT
+CLASS="LITERAL"
+>CURRENT</TT
+> (eigentlich ein Makro) liefert die Details
+der aktuellen Anfrage. <TT
+CLASS="LITERAL"
+>CURRENT</TT
+> ist ein Zeiger auf
+eine <TT
+CLASS="LITERAL"
+>struct request</TT
+>-Struktur, deren Felder im
+nächsten Abschnitt beschrieben werden.</P
+></LI
+><LI
+><P
+>&#13;Die gerade bearbeitete Anfrage aufräumen. Diese Operation wurd von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>end_request</I
+></SPAN
+> erledigt. Das ist eine statische
+Funktion, deren Code in <TT
+CLASS="FILENAME"
+>blk.h</TT
+>
+steht. <SPAN
+><I
+CLASS="EMPHASIS"
+>end_request</I
+></SPAN
+> kümmert sich um die
+Abarbeitung der Anfrage-Warteschlange und weckt die Prozesse, die auf
+I/O-Operationen warten. Außerdem wird hier die Variable
+<TT
+CLASS="LITERAL"
+>CURRENT</TT
+> auf die nächste noch nicht erledigte
+Anfrage umgesetzt. Der Treiber übergibt der Funktion ein Argument: 1
+im Erfolgsfall und 0 im Fehlerfall. Wenn
+<SPAN
+><I
+CLASS="EMPHASIS"
+>end_request</I
+></SPAN
+> mit dem Argument 0 aufgerufen
+wird, wird via <SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+> eine &#8220;I/O Error&#8221;-Meldung in
+das Systemprotokoll geschrieben.</P
+></LI
+><LI
+><P
+>Zurück zum Anfang springen und die nächste Anfrage bearbeiten.</P
+></LI
+></OL
+><P
+>Anhand dieser Beschreibung kann man eine minimale
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion schreiben, die noch keine Daten
+überträgt:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;void sbull_request(request_queue_t *q)
+{
+    while(1) {
+        INIT_REQUEST;
+        printk("&#60;1&#62;request %p: cmd %i sec %li (nr. %li)\n", CURRENT,
+               CURRENT-&#62;cmd,
+               CURRENT-&#62;sector,
+               CURRENT-&#62;current_nr_sectors);
+        end_request(1); /* erfolgreich */
+    }
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Obwohl dieser Code nichts weiter tut, als Meldungen auszugeben, ermöglicht
+das Ausführen dieser Funktion einen guten Einblick in das
+grundlegende Design der Datenübertragung. Außerdem können Sie hier
+einige der Makros in <TT
+CLASS="LITERAL"
+>&#60;linux/blk.h&#62;</TT
+> in Aktion
+sehen. Beachten Sie zunächst, daß die
+<TT
+CLASS="LITERAL"
+>while</TT
+>-Schleife aussieht, als würde sie nie beendet
+werden. In Wirklichkeit enthält aber das
+<TT
+CLASS="LITERAL"
+>INIT_REQUEST</TT
+>-Makro eine
+<TT
+CLASS="LITERAL"
+>return</TT
+>-Anweisung, die ausgeführt wird, wenn keine
+weiteren Anfragen vorliegen. Die Schleife iteriert also über die
+Warteschlange mit den ausstehenden Anfragen und springt dann aus der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion zurück. Zweitens beschreibt das
+<TT
+CLASS="LITERAL"
+>CURRENT</TT
+>-Makro immer die zu verarbeitende
+Anfrage. Wir schauen uns die Details von <TT
+CLASS="LITERAL"
+>CURRENT</TT
+> im
+nächsten Abschnitt an.</P
+><P
+>Ein Block-Treiber, der die gerade gezeigte
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion verwendet, wird sogar
+funktionieren &#8212; eine kurze Zeit lang. Es ist möglich, ein
+Dateisystem auf dem Gerät anzulegen und darauf zuzugreifen, solange
+die Daten im Buffer-Cache des Systems verbleiben.</P
+><P
+>Diese leere (aber geschwätzige) Funktion kann auch in
+<SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> ausgeführt werden, indem man beim
+Kompilieren das Symbol
+<TT
+CLASS="LITERAL"
+>SBULL_EMPTY_REQUEST</TT
+> angibt. Wenn Sie
+verstehen wollen, wie der Kernel mit verschiedenen Block-Größen umgeht,
+können Sie mit dem Parameter <TT
+CLASS="LITERAL"
+>blksize=</TT
+> auf der
+Kommandozeile von <SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+>
+experimentieren. Die leere <SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion zeigt
+die interne Verarbeitung des Kernels, indem sie die Details jeder
+Anfrage ausgibt.</P
+><P
+>Die <SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion hat eine wichtige
+Einschränkung: Sie muß atomar sein. <SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+> wird
+normalerweise nicht als direkte Reaktion auf Benutzeranfragen
+aufgerufen und läuft nicht im Kontext eines bestimmten Prozesses. Sie
+kann zur Interrupt-Zeit, von Tasklets oder diversen anderen Stellen
+aufgerufen werden. Daher darf sie bei der Bearbeitung ihrer Aufgaben
+nicht schlafen.
+&#62;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN14961"
+>Die eigentliche Datenübertragung durchführen</A
+></H2
+><P
+>&#13;
+
+
+
+Um zu verstehen, wie man eine funktionierende
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion für
+<SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> schreiben kann, müssen wir uns
+anschauen, wie der Kernel eine Anfrage in einer <TT
+CLASS="LITERAL"
+>struct
+request</TT
+>-Struktur beschreibt. Diese Struktur ist in
+<TT
+CLASS="LITERAL"
+>&#60;linux/blkdev.h&#62;</TT
+> definiert. Indem er auf die
+Felder in dieser Struktur zugreift (was üblicherweise über
+<TT
+CLASS="LITERAL"
+>CURRENT</TT
+> geschieht), kann der Treiber alle
+notwendigen Informationen über die Datenübertragung zwischen dem
+Buffer-Cache und dem phyiskalischen Block-Gerät bekommen.<A
+NAME="AEN14984"
+HREF="#FTN.AEN14984"
+>[1]</A
+> <TT
+CLASS="LITERAL"
+>CURRENT</TT
+> ist einfach ein
+Zeiger auf
+<TT
+CLASS="LITERAL"
+>blk_dev[MAJOR_NR].request_queue</TT
+>.
+Die folgenden Felder einer Anfrage enthalten Informationen, die für
+die <SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion nützlich sind:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>kdev_t rq_dev;</TT
+></DT
+><DD
+><P
+>&#13;Das Gerät, auf das von der Anfrage zugegriffen wird. Default-mäßig wird
+für alle von einem Treiber verwalteten Geräte die gleiche
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion verwendet. Eine einzige
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion deckt alle Minor-Nummern ab;
+<SPAN
+><I
+CLASS="EMPHASIS"
+>rq_dev</I
+></SPAN
+> kann dazu verwendet werden, das
+aktuelle Minor-Gerät herauszufinden. Das Makro
+<TT
+CLASS="LITERAL"
+>CURRENT_DEV</TT
+> ist einfach als
+<TT
+CLASS="LITERAL"
+>DEVICE_NR(CURRENT-&#62;rq_dev)</TT
+> definiert.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int cmd;</TT
+></DT
+><DD
+><P
+>Dieses Feld beschreibt die durchzuführende Operation; es ist entweder
+<TT
+CLASS="LITERAL"
+>READ</TT
+> (vom Gerät) oder <TT
+CLASS="LITERAL"
+>WRITE</TT
+> (auf
+das Gerät).</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long sector;</TT
+></DT
+><DD
+><P
+>Die Nummer des ersten in dieser Anfrage zu übertragenden Sektors.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long current_nr_sectors;</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned long nr_sectors;</TT
+></DT
+><DD
+><P
+>&#13;Die Anzahl der in der aktuellen Anfrage zu übertragenden Sektoren. Der
+Treiber sollte <TT
+CLASS="LITERAL"
+>current_nr_sectors</TT
+>
+verwenden und <TT
+CLASS="LITERAL"
+>nr_sectors</TT
+> ignorieren (das
+wird hier nur aus Gründen der Vollständigkeit aufgeführt). In
+"<A
+HREF="x15067.html#LOCKCLUSTER"
+>the Section called <I
+>Cluster-Anfragen</I
+></A
+>&#62;" weiter hinten in diesem Kapitel finden Sie
+nähere Informationen zu <TT
+CLASS="LITERAL"
+>nr_sectors</TT
+>.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>char *buffer;</TT
+></DT
+><DD
+><P
+>Der Bereich im Buffer-Cache, in den die Daten geschrieben
+(<TT
+CLASS="LITERAL"
+>cmd==READ</TT
+>) oder aus dem die Daten gelesen
+(<TT
+CLASS="LITERAL"
+>cmd==WRITE</TT
+>) werden sollen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct buffer_head *bh;</TT
+></DT
+><DD
+><P
+>&#13;Die Struktur, die den ersten Puffer in der Liste für diese Anfrage
+beschreibt. Puffer-Köpfe werden in der Verwaltung des Buffer-Cache
+verwendet; wir schauen sie uns in &#8220;<A
+HREF="x15067.html#LOCKBCACHE"
+>the Section called <I
+>Die request-Struktur und der Buffer-Cache</I
+></A
+>&#62;&#8221; kurz
+genauer an.</P
+></DD
+></DL
+></DIV
+><P
+>Es gibt noch andere Felder in der Struktur, die aber hauptsächlich zur
+internen Verwendung im Kernel gedacht sind; Treiber sollten sie nicht
+verwenden.</P
+><P
+>Die Implementation der funktionierenden
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion im
+<SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+>-Gerät folgt hier. In diesem Code hat
+<TT
+CLASS="LITERAL"
+>Sbull_Dev</TT
+> die gleiche Aufgabe wie
+<TT
+CLASS="LITERAL"
+>Scull_Dev</TT
+>, das in
+"<A
+HREF="charscullmem.html"
+>the Section called <I
+>Die Verwendung von
+Speicher in scull</I
+> in Kapitel 3</A
+>" in <A
+HREF="char.html"
+>Kapitel 3</A
+>&#62; eingeführt wurde.</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+void sbull_request(request_queue_t *q)
+{
+    Sbull_Dev *device;
+    int status;
+
+    while(1) {
+        INIT_REQUEST;  /* springt zurueck, wenn die Warteschlange leer ist */
+
+        /* Welches "Geraet" verwenden wir? */
+        device = sbull_locate_device (CURRENT);
+        if (device == NULL) {
+            end_request(0);
+            continue;
+        }
+
+        /* Uebertragung durchfuehren und aufraeumen. */
+        spin_lock(&#38;device-&#62;lock);
+        status = sbull_transfer(device, CURRENT);
+        spin_unlock(&#38;device-&#62;lock);
+        end_request(status);
+    }
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Diese Code unterscheidet sich nur wenig von der zuvor gezeigten leeren
+Version; er beschränkt sich auf die Verwaltung der
+Anfrage-Warteschlange und delegiert die eigentliche Arbeit an andere
+Funktionen. Die erste davon,
+<SPAN
+><I
+CLASS="EMPHASIS"
+>sbull_locate_device</I
+></SPAN
+>, schaut sich die Geräte-Nummer
+in der Anfrage an und sucht dazu die passende
+<TT
+CLASS="LITERAL"
+>Sbull_Dev</TT
+>-Struktur heraus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+static Sbull_Dev *sbull_locate_device(const struct request *req)
+{
+    int devno;
+    Sbull_Dev *device;
+
+    /* Ueberpruefen, ob die Minor-Nummer gueltig ist */
+    devno = DEVICE_NR(req-&#62;rq_dev);
+    if (devno &#62;= sbull_devs) {
+        static int count = 0;
+        if (count++ &#60; 5) /* die Meldung hoechstens fuenfmal ausgeben */
+            printk(KERN_WARNING "sbull: request for unknown device\n");
+        return NULL;
+    }
+    device = sbull_devices + devno; /* Aus dem Geraete-Array holen */
+    return device;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Das einzige &#8220;Merkwürdige&#8221; an dieser Funktion ist die bedingte
+Anweisung, die die Anzahl der gemeldeten Fehler auf fünf
+beschränkt. Dies soll verhindern, daß die Systemprotokolle mit zu
+vielen Meldungen zugemüllt werden, weil
+<TT
+CLASS="LITERAL"
+>end_request(0)</TT
+> bereits eine &#8220;I/O
+error&#8221;-Meldung ausgibt, wenn die Anfrage fehlschlägt. Der
+<TT
+CLASS="LITERAL"
+>static</TT
+>-Zähler ist eine gängige Möglichkeit, um die
+Anzahl der gemeldeten Fehler zu beschränken, und wird im Kernel
+mehrfach verwendet.</P
+><P
+>Die eigentliche I/O der Anfrage wird von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>sbull_transfer</I
+></SPAN
+> erledigt:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+static int sbull_transfer(Sbull_Dev *device, const struct request *req)
+{
+    int size;
+    u8 *ptr;
+
+    ptr = device-&#62;data + req-&#62;sector * sbull_hardsect;
+    size = req-&#62;current_nr_sectors * sbull_hardsect;
+
+    /* Sicherstellen, daß die Uebertragung in das Geraet paßt. */
+    if (ptr + size &#62; device-&#62;data + sbull_blksize*sbull_size) {
+        static int count = 0;
+        if (count++ &#60; 5)
+            printk(KERN_WARNING "sbull: request past end of device\n");
+        return 0;
+    }
+
+    /* Sieht gut aus, uebertragen. */
+    switch(req-&#62;cmd) {
+        case READ:
+            memcpy(req-&#62;buffer, ptr, size); /* von sbull in den Puffer */
+            return 1;
+        case WRITE:
+            memcpy(ptr, req-&#62;buffer, size); /* aus dem Puffer nach sbull */
+            return 1;
+        default:
+            /* kann nicht vorkommen */
+            return 0;
+    }
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+
+Weil <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> nur eine RAM-Disk ist,
+beschränkt sich die &#8220;Datenübertragung&#8221; auf einen
+<SPAN
+><I
+CLASS="EMPHASIS"
+>memcpy</I
+></SPAN
+>-Aufruf.&#13;</P
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN14984"
+HREF="x14882.html#AEN14984"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Es müssen übrigens nicht alle an einen Block-Treiber
+übergebenen Blocks im Buffer-Cache liegen; das würde aber über den
+Umfang dieses Kapitels hinaus führen.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="lockblkh.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x15067.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Die Header-Datei blk.h</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="lock.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Anfragen bearbeiten: Das Ganze noch einmal genauer</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

@@ -1,0 +1,17 @@
+# robots.txt for http://www.oreilly.de/
+
+User-agent: *
+Disallow: /cgi-bin
+Disallow: /ora-cgi
+Disallow: /stats
+Disallow: /intern
+Disallow: /allgraf
+Disallow: /maps
+Disallow: /hylafax
+Disallow: /accounts
+Disallow: /online-books
+Disallow: /cluboreilly
+Disallow: /ukintern
+Disallow: /kerstins
+Disallow: /manual
+Disallow: /catalogold

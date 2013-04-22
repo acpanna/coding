@@ -1,0 +1,809 @@
+<HTML
+><HEAD
+><TITLE
+>Datei-Operationen</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Zeichen-Treiber"
+HREF="char.html"><LINK
+REL="PREVIOUS"
+TITLE="Major- und Minor-Nummern"
+HREF="charmami.html"><LINK
+REL="NEXT"
+TITLE="Die Struktur file"
+HREF="charfile.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="charmami.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 3. Zeichen-Treiber</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="charfile.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="CHARFOPS"
+>Datei-Operationen</A
+></H1
+><P
+>&#13;
+
+In den nächsten Abschnitten schauen wir uns die verschiedenen
+Operationen an, die ein Treiber auf den von ihm verwalteten Geräten
+ausführen kann. Ein offenes Gerät wird intern über eine
+<TT
+CLASS="LITERAL"
+>file</TT
+>-Struktur identifiziert, und der Kernel benutzt
+die Struktur <TT
+CLASS="LITERAL"
+>file_operations</TT
+>, um auf die
+Funktionen des Treibers zuzugreifen. Diese Struktur, die in
+<TT
+CLASS="LITERAL"
+>&#60;linux/fs.h&#62;</TT
+> definiert wird, ist ein Array
+aus Funktionszeigern. Jede Datei hat ihren eigenen Satz von Funktionen
+(indem ein Feld namens <TT
+CLASS="LITERAL"
+>f_op</TT
+> aufgenommen wird, das
+auf eine <TT
+CLASS="LITERAL"
+>file_operations</TT
+>-Struktur verweist). Die
+Operationen sind vor allem dafür zuständig, die Systemaufrufe zu
+implementieren, und heißen daher <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>,
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> usw. Wir können die Datei als &#8220;Objekt&#8221; und
+die darauf operierenden Funktionen als &#8220;Methoden&#8221; ansehen und so die
+Terminologie der objektorientierten Programmierung verwenden, mit der
+Aktionen bezeichnet werden, die von einem Objekt auf sich selbst
+deklariert werden. Hier stoßen wir zum erstenmal auf
+objekt-orientiertes Design im Linux-Kernel. Davon werden wir später
+noch mehr sehen.
+
+&#13;</P
+><P
+>&#13;Per Konvention wird eine <TT
+CLASS="LITERAL"
+>file_operations</TT
+>-Struktur
+oder ein Zeiger darauf <TT
+CLASS="LITERAL"
+>fops</TT
+> (oder so ähnlich)
+genannt; wir haben so einen Zeiger schon als Argument im Aufruf von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>register_chrdev</I
+></SPAN
+> kennengelernt. Jedes Feld der
+Struktur muß auf die Funktion im Treiber verweisen, die die jeweilige
+Operation implementiert, oder auf <TT
+CLASS="LITERAL"
+>NULL</TT
+> bleiben,
+wenn die Aktion nicht unterstützt wird. Was der Kernel genau
+macht, wenn dort ein <TT
+CLASS="LITERAL"
+>NULL</TT
+>-Zeiger steht, ist von
+Funktion zu Funktion unterschiedlich, wie die Liste im nächsten
+Abschnitt zeigen wird.&#13;</P
+><P
+>Die Struktur <TT
+CLASS="LITERAL"
+>file_operations</TT
+> ist langsam
+gewachsen, während neue Funktionalität zum Kernel hinzugefügt
+wurde. Das Hinzufügen neuer Operationen kann natürlich zu
+Portabilitätsproblemen bei Gerätetreibern führen. Instantiierungen der
+Struktur in jedem Treiber erfolgten früher in Standard-C-Syntax, und
+neue Operationen wurden normalerweise am Ende der Struktur
+hinzugefügt. Ein einfaches Neukompilieren der Treiber setzte damit einen
+<TT
+CLASS="LITERAL"
+>NULL</TT
+>-Wert für die neue Operation ein und wählte so
+das Default-Verhalten aus, was man normalerweise genau erreichen
+wollte.</P
+><P
+>Inzwischen sind die Kernel-Entwickler auf ein
+&#8220;Tag&#8221;-Initialisierungsformat übergegangen, das die Initialisierung von
+Strukturfeldern anhand ihres Namens ermöglicht und so die meisten
+Probleme mit geänderten Datenstrukturen vermeidet. Die
+Tag-Initialisierung ist aber kein Standard-C, sondern eine (nützliche)
+Spezialerweiterung des GNU-Compilers. Wir werden uns gleich ein
+Beispiel für eine Tag-Initialisierung einer Struktur anschauen.</P
+><P
+>&#13;Die folgende Liste führt alle Operationen auf, die eine Applikation
+auf einem Gerät ausführen kann.
+Wir haben uns bemüht, die Liste so kurz zu halten, daß sie als
+Referenz verwendet werden kann. Jede Operation ist nur kurz
+zusammengefaßt. Außerdem finden Sie das Default-Verhalten des Kernels,
+wenn ein <TT
+CLASS="LITERAL"
+>NULL</TT
+>-Zeiger verwendet wird. Sie können
+diese Liste beim ersten Lesen überspringen und später darauf
+zurückkommen.&#13;</P
+><P
+>Nachdem eine weitere wichtige Datenstruktur (die
+<TT
+CLASS="LITERAL"
+>file</TT
+>-Struktur) beschrieben worden ist, erklärt der
+Rest des Kapitels die Aufgabe der wichtigsten Operationen, gibt
+Hinweise, weist auf Fallen hin und enthält echte Code-Beispiele. Wir
+werden die komplexeren Operationen in einem späteren Kapitel
+besprechen, denn es fehlen uns jetzt noch Kenntnisse über die
+Speicherverwaltung, über blockierende Operationen und über asynchrone
+Benachrichtigung.</P
+><P
+>Die folgende Liste zeigt, welche Operationen in welcher Reihenfolge in
+der 2.4-Serie des Kernels in <TT
+CLASS="LITERAL"
+>struct file_operations</TT
+>
+stehen. Obwohl es kleinere Unterschiede zwischen 2.4 und früheren
+Kerneln gibt, behandeln wir diese erst weiter hinten in diesem Kapitel
+und beschränken uns hier auf 2.4. Der Rückgabewert der einzelnen
+Operationen ist im Erfolgsfall 0 oder ein negativer Fehlercode, um
+einen Fehler anzuzeigen, wenn nichts anderes angegeben ist.
+&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>loff_t (*llseek) (struct file *, loff_t, int);</TT
+></DT
+><DD
+><P
+>&#13;
+Die Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>llseek</I
+></SPAN
+> wird verwendet, um die aktuelle
+Lese/Schreib-Position in einer Datei zu verändern; die neue
+Position wird als (positiver) Rückgabewert
+zurückgegeben. <TT
+CLASS="LITERAL"
+>loff_t</TT
+> ist ein &#8220;langer Offset&#8221; und
+selbst auf 32-Bit-Plattformen mindestens 64 Bits breit. Fehler
+werden durch einen negativen Rückgabewert gemeldet. Wenn die Funktion
+für diesen Treiber nicht existiert, schlagen Positionierungen relativ
+zum Dateiende fehl, andere Positionierungen funktionieren trotzdem; in
+diesem Fall wird der Positionszeiger in der
+<TT
+CLASS="LITERAL"
+>file</TT
+>-Struktur (beschrieben in <A
+HREF="charfile.html"
+>the Section called <I
+>Die Struktur file</I
+></A
+>) verändert.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>ssize_t (*read) (struct file *, char *,
+size_t, loff_t *);</TT
+></DT
+><DD
+><P
+>&#13;Wird verwendet, um Daten vom Gerät zu lesen. Steht an dieser Position
+ein NULL-Zeiger, dann schlägt der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>-Systemaufruf mit <TT
+CLASS="LITERAL"
+>-EINVAL</TT
+>
+(&#8220;Invalid argument&#8221;) fehl. Ein nicht-negativer
+Rückgabewert gibt die Anzahl der erfolgreich eingelesenen Zeichen
+an (der Rückgabewert ist ein &#8220;vorzeichenbehafteter Größentyp&#8221;,
+normalerweise der native Integer-Typ der Zielplattform).</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>ssize_t (*write) (struct file *, const
+char *, size_t, loff_t * int);</TT
+></DT
+><DD
+><P
+>&#13;Schickt Daten an das Gerät. Wenn diese Funktion nicht existiert, wird
+vom Systemaufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+> <TT
+CLASS="LITERAL"
+>-EINVAL</TT
+>
+zurückgegeben. Wenn der
+Rückgabewert nicht negativ ist, enthält er die Anzahl der erfolgreich
+geschriebenen Bytes.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int (*readdir) (struct file *, void *,</TT
+> filldir_t);</DT
+><DD
+><P
+>&#13;Dieses Feld sollte bei Geräteknoten <TT
+CLASS="LITERAL"
+>NULL</TT
+> sein; es
+wird nur zum Lesen von Verzeichnissen verwendet und ist nur bei
+Dateisystemen sinnvoll.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned int (*poll) (struct file *, struct poll_table_struct *);</TT
+></DT
+><DD
+><P
+>&#13;
+Die Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+> ist das Backend zweier
+Systemaufrufe, <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>select</I
+></SPAN
+>, die dazu verwendet werden,
+um abzufragen, ob ein Gerät lesbar oder beschreibbar ist oder sich in
+einem besonderen Zustand befindet. Beide Systemaufrufe können
+blockieren, bis ein Gerät lesbar oder beschreibbar wird. Wenn ein
+Treiber keine <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+>-Methode definiert, dann wird
+angenommen, daß das Gerät sowohl lesbar als auch beschreibbar ist und sich in keinem
+besonderen Zustand befindet. Der Rückgabewert ist eine
+Bitmaske, die den Zustand des Geräts beschreibt.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int (*ioctl) (struct inode *, struct file *, unsigned int, unsigned long);</TT
+></DT
+><DD
+><P
+>&#13;Der <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Systemaufruf ermöglicht es Programmen,
+gerätespezifische Befehle abzusetzen (wie das Formatieren einer Diskettenspur, wobei es sich ja weder um Lesen noch um Schreiben handelt). Einige weitere <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Aufrufe werden
+vom Kernel erkannt, ohne auf die <TT
+CLASS="LITERAL"
+>fops</TT
+>-Tabelle
+zuzugreifen. Wenn das Gerät keinen Einsprungpunkt für
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+> enthält, gibt der Systemaufruf bei jeder
+nicht vordefinierten Anfrage einen Fehler (<TT
+CLASS="LITERAL"
+>-ENOTTY</TT
+>,
+&#8220;No such ioctl for device&#8221;) zurück. Ein
+nicht-negativer Rückgabewert wird an das aufrufende Programm
+zurückgegeben, um eine erfolgreiche Ausführung mitzuteilen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int (*mmap) (struct file *, struct vm_area_struct *);</TT
+></DT
+><DD
+><P
+>&#13;<SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+> wird verwendet, um eine Abbildung von
+Gerätespeicher auf den Adreßraum des Prozesses anzufordern. Wenn das
+Gerät diese Methode nicht implementiert, gibt der Systemaufruf
+<SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+> <TT
+CLASS="LITERAL"
+>-ENODEV</TT
+> zurück.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int (*open) (struct inode *, struct file *);</TT
+></DT
+><DD
+><P
+>&#13;Obwohl dies immer die erste Operation ist, die auf einer Gerätedatei
+ausgeführt wird, muß ein Treiber nicht unbedingt eine entsprechende
+Methode deklarieren. Wenn dieser Eintrag <TT
+CLASS="LITERAL"
+>NULL</TT
+> ist,
+dann gelingt das Öffnen des Gerätes immer; das wird Ihrem Treiber
+allerdings nicht mitgeteilt.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int (*flush) (struct file *);</TT
+></DT
+><DD
+><P
+>&#13;Die <SPAN
+><I
+CLASS="EMPHASIS"
+>flush</I
+></SPAN
+>-Operation wird aufgerufen, wenn ein
+Prozeß seine Kopie eines Dateideskriptors für ein Gerät schließt; die
+Methode sollte dann alle ausstehenden Operationen auf dem Gerät
+ausführen (und auf deren Beendigung warten). Verwechseln Sie dies
+nicht mit der <SPAN
+><I
+CLASS="EMPHASIS"
+>fsync</I
+></SPAN
+>-Operation, die von
+Anwenderprogrammen angefordert wird. <SPAN
+><I
+CLASS="EMPHASIS"
+>flush</I
+></SPAN
+> wird
+derzeit nur vom NFS-Code (dem Network File System) verwendet. Wenn
+<SPAN
+><I
+CLASS="EMPHASIS"
+>flush</I
+></SPAN
+> <TT
+CLASS="LITERAL"
+>NULL</TT
+> ist, wird die
+Methode einfach nicht aufgerufen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int (*release) (struct inode *, struct file *);</TT
+></DT
+><DD
+><P
+>&#13;Diese Operation wird aufgerufen, wenn die
+<TT
+CLASS="LITERAL"
+>file</TT
+>-Struktur freigegeben wird. Wie
+<SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> kann auch <SPAN
+><I
+CLASS="EMPHASIS"
+>release</I
+></SPAN
+>
+fehlen.<A
+NAME="AEN2766"
+HREF="#FTN.AEN2766"
+>[1]</A
+></P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int (*fsync) (struct inode *, struct dentry *, int);</TT
+></DT
+><DD
+><P
+>&#13;Diese Methode ist das Backend des Systemaufrufs
+<SPAN
+><I
+CLASS="EMPHASIS"
+>fsync</I
+></SPAN
+>, den ein Anwender verwendet, um
+ausstehende Daten herauszuschreiben. Wenn diese Methode vom Treiber
+nicht implementiert wird, gibt dieser <TT
+CLASS="LITERAL"
+>-EINVAL</TT
+>
+zurück.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int (*fasync) (int, struct file *, int);</TT
+></DT
+><DD
+><P
+>&#13;Diese Operation wird benutzt, um dem Gerät eine Änderung seines
+<TT
+CLASS="LITERAL"
+>FASYNC</TT
+>-Schalters mitzuteilen. Die asynchrone
+Benachrichtigung ist ein fortgeschrittenes Thema und wird in <A
+HREF="extra.html"
+>Kapitel 5</A
+>
+behandelt. Wenn der Treiber die asynchrone Benachrichtigung nicht
+unterstützt, kann dieses Feld <TT
+CLASS="LITERAL"
+>NULL</TT
+> sein.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>ssize_t (*readv) (struct file *, const struct iovec *, unsigned long, loff_t *);</TT
+>, <TT
+CLASS="LITERAL"
+>ssize_t (*writev) (struct file *, const struct iovec *, unsigned long, loff_t *);</TT
+></DT
+><DD
+><P
+>&#13;
+Diese beiden Methoden wurden spät im 2.3-Entwicklungszyklus
+hinzugefügt und implementieren sogenannte scatter/gather-Lese- und
+Schreiboperationen. Applikationen müssen von Zeit zu Zeit einzelne
+Lese- oder Schreib-Operationen durchführen, bei denen mehrere
+Speicherbereiche betroffen sind. Diese Systemaufrufe erlauben dies,
+ohne die Daten zusätzlich kopieren zu müssen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct module *owner;</TT
+></DT
+><DD
+><P
+>&#13;Dieses Feld ist keine Methode wie alles andere in der Struktur
+<TT
+CLASS="LITERAL"
+>file_operations</TT
+>. Es handelt sich vielmehr um einen
+Zeiger auf das Modul, dem diese Struktur &#8220;gehört&#8221;. Dies wird vom
+Kernel verwendet, um den Verwendungszähler des Moduls zu pflegen.</P
+></DD
+></DL
+></DIV
+><P
+>Der Gerätetreiber <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> implementiert nur
+die wichtigsten Methoden und verwendet das Tag-Format, um seine
+<TT
+CLASS="LITERAL"
+>file_operations</TT
+>-Struktur zu deklarieren:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+
+struct file_operations scull_fops = {
+ llseek:  scull_llseek,
+ read:  scull_read,
+ write:  scull_write,
+ ioctl:  scull_ioctl,
+ open:  scull_open,
+ release: scull_release,
+};</PRE
+></TD
+></TR
+></TABLE
+><P
+>Diese Deklaration verwendet die Tag-Initialisierungssyntax, die wir
+oben beschrieben haben. Diese Syntax ist vorzuziehen, weil sie Treiber
+portabler in Hinblick auf Änderungen in der Strukturdefinition macht, und
+sie macht den Code auch kompakter und besser lesbar. Die Tag-Initialisierung
+erlaubt das Umstellen von Struktur-Mitgliedern; in manchen Fällen
+konnten maßgebliche Performance-Verbesserungen erreicht werden, indem
+häufig verwendete Struktur-Mitglieder in die gleiche Zeile des
+Hardware-Caches gestellt wurden.</P
+><P
+>Außerdem muß das <TT
+CLASS="LITERAL"
+>owner</TT
+>-Feld der
+<TT
+CLASS="LITERAL"
+>file_operations</TT
+>-Struktur gesetzt werden. Oftmals
+werden Sie dies zusammen mit der restlichen Initialisierung in der
+folgenden Tag-Syntax vorfinden:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; owner: THIS_MODULE,</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+
+Dieser Ansatz funktioniert aber nur auf 2.4-Kerneln. Portabler ist die
+Verwendung des Makros <TT
+CLASS="LITERAL"
+>SET_MODULE_OWNER</TT
+>, das in
+<TT
+CLASS="LITERAL"
+>&#60;linux/module.h&#62;</TT
+> definiert
+ist. <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> führt diese Initialisierung
+folgendermaßen durch:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+ SET_MODULE_OWNER(&#38;scull_fops);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+Dieses Makro funktioniert auf allen Strukturen, die ein
+<TT
+CLASS="LITERAL"
+>owner</TT
+>-Feld haben; wir werden auf dieses Feld noch
+in anderem Zusammenhang zurückkommen.</P
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN2766"
+HREF="charfops.html#AEN2766"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Beachten Sie, daß <SPAN
+><I
+CLASS="EMPHASIS"
+>release</I
+></SPAN
+>
+nicht jedesmal aufgerufen wird, wenn ein Prozeß
+<SPAN
+><I
+CLASS="EMPHASIS"
+>close</I
+></SPAN
+> aufruft. Immer wenn eine
+<TT
+CLASS="LITERAL"
+>file</TT
+>-Struktur gemeinsam genutzt wird (etwa nach
+einem <SPAN
+><I
+CLASS="EMPHASIS"
+>fork</I
+></SPAN
+> oder <SPAN
+><I
+CLASS="EMPHASIS"
+>dup</I
+></SPAN
+>), wird
+<SPAN
+><I
+CLASS="EMPHASIS"
+>release</I
+></SPAN
+> nicht aufgerufen, bis nicht alle Kopien
+geschlossen sind. Wenn Sie ausstehende Daten herausschreiben müssen,
+wenn eine der Kopien geschlossen wird, sollten Sie die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>flush</I
+></SPAN
+>-Methode verwenden.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="charmami.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="charfile.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Major- und Minor-Nummern</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="char.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Die Struktur file</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

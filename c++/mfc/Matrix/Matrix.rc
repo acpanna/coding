@@ -1,0 +1,287 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Deutsch (Deutschland) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
+#ifdef _WIN32
+LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 7, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif //_WIN32\r\n"
+    "#include ""res\\Matrix.rc2""  // Nicht mit Microsoft Visual C++ bearbeitete Ressourcen\r\n"
+    "#include ""l.deu\\afxres.rc""          // Standardkomponenten\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_MATRIX_DIALOG DIALOGEX 0, 0, 320, 234
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_APPWINDOW
+CAPTION "Matrix V2.0, Copyright by Heiko Vogel, 1999"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    PUSHBUTTON      "Eingabe der Matrizen",IDC_EINGABE,49,12,219,14
+    PUSHBUTTON      "Inverse einer Matrix",IDC_INVERS,49,42,219,14
+    PUSHBUTTON      "Adjungierte einer Matrix",IDC_ADJUNG,49,57,219,14
+    PUSHBUTTON      "Transponierte einer Matrix",IDC_TRANS,49,72,219,14
+    PUSHBUTTON      "Skalare Multiplikation einer Matrix",IDC_SKMULT,49,117,
+                    219,14
+    PUSHBUTTON      "Determinante einer Matrix",IDC_DET,49,87,219,14
+    PUSHBUTTON      "Potenzierung einer Matrix",IDC_MATPOT,49,102,219,14
+    PUSHBUTTON      "Addition von Matrizen",IDC_MATADD,49,132,219,14
+    PUSHBUTTON      "Multiplikation von Matrizen",IDC_MATMULT,49,147,219,14
+    PUSHBUTTON      "Laden einer Matrix",IDC_LADEN,49,27,219,14
+    PUSHBUTTON      "Speichern einer Matrix",IDC_SAVE,49,177,219,14
+    PUSHBUTTON      "Ausgabe einer Matrix",IDC_AUSGABE,49,162,219,14
+    PUSHBUTTON      "Programm beenden",IDC_ENDE,49,207,219,14
+    PUSHBUTTON      "Löschen einer Matrix",IDC_LOESCHEN,49,192,219,14
+END
+
+IDD_POTENZ DIALOG DISCARDABLE  0, 0, 159, 60
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Potenzierung einer Matrix"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,55,41,50,14
+    LTEXT           "Bitte geben Sie die gewünschte Potenz ein :",IDC_STATIC,
+                    9,7,140,8
+    EDITTEXT        IDC_EDIT1,67,21,26,14,ES_AUTOHSCROLL
+END
+
+IDD_SKMULT DIALOG DISCARDABLE  0, 0, 155, 63
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Skalare Multiplikation einer Matrix"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,52,44,50,14
+    LTEXT           "Bitte geben Sie den gewünschten Skalar ein :",
+                    IDC_STATIC,5,7,145,8
+    EDITTEXT        IDC_EDIT1,66,22,23,14,ES_AUTOHSCROLL
+END
+
+IDD_EINGABE_DIALOG DIALOG DISCARDABLE  0, 0, 186, 86
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Eingabe der Matrizen"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,28,64,50,14
+    PUSHBUTTON      "Abbrechen",IDCANCEL,108,64,50,14
+    LTEXT           "Name der Matrix :",IDC_STATIC,34,12,56,8
+    LTEXT           "Zeilenanzahl :",IDC_STATIC,45,28,45,8
+    LTEXT           "Spaltenanzahl :",IDC_STATIC,40,44,50,8
+    EDITTEXT        IDC_EDIT1,97,10,55,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT2,97,27,25,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT3,97,43,25,14,ES_AUTOHSCROLL
+END
+
+IDD_AUSWAHL_DIALOG DIALOG DISCARDABLE  0, 0, 209, 89
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Auswahl der Matrix"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,40,67,50,14
+    PUSHBUTTON      "Abbrechen",IDCANCEL,120,67,50,14
+    LTEXT           "Mit welcher Matrix soll die Operation durchgeführt werden :",
+                    IDC_STATIC,12,7,185,8
+    LISTBOX         IDC_LIST_MATRIX,33,20,144,40,LBS_SORT | 
+                    LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+END
+
+IDD_ERGEBNIS_NAME DIALOG DISCARDABLE  0, 0, 210, 69
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Name für die Ergebnismatrix"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,39,48,50,14
+    PUSHBUTTON      "Abbrechen",IDCANCEL,121,48,50,14
+    LTEXT           "Bitte geben Sie einen Namen für die Ergebnismatrix ein :",
+                    IDC_STATIC,16,7,177,8
+    EDITTEXT        IDC_EDIT1,58,24,94,14,ES_AUTOHSCROLL
+END
+
+
+#ifndef _MAC
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040704B0"
+        BEGIN
+            VALUE "CompanyName", "\0"
+            VALUE "FileDescription", "MFC-Anwendung Matrix\0"
+            VALUE "FileVersion", "1, 0, 0, 1\0"
+            VALUE "InternalName", "Matrix\0"
+            VALUE "LegalCopyright", "Copyright (C) 1999\0"
+            VALUE "LegalTrademarks", "\0"
+            VALUE "OriginalFilename", "Matrix.EXE\0"
+            VALUE "ProductName", "Anwendung Matrix\0"
+            VALUE "ProductVersion", "1, 0, 0, 1\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x407, 1200
+    END
+END
+
+#endif    // !_MAC
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_MATRIX_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 6
+        RIGHTMARGIN, 313
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 227
+    END
+
+    IDD_EINGABE_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 179
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 79
+    END
+
+    IDD_AUSWAHL_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 202
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 82
+    END
+
+    IDD_ERGEBNIS_NAME, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 203
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 62
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINFRAME           ICON    DISCARDABLE     "res\\Matrix.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MAINFRAME MENU PRELOAD DISCARDABLE 
+BEGIN
+    POPUP "Menü"
+    BEGIN
+        MENUITEM "Fertig",                      ID_OK
+    END
+END
+
+#endif    // Deutsch (Deutschland) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
+#ifdef _WIN32
+LANGUAGE 7, 1
+#pragma code_page(1252)
+#endif //_WIN32
+#include "res\Matrix.rc2"  // Nicht mit Microsoft Visual C++ bearbeitete Ressourcen
+#include "l.deu\afxres.rc"          // Standardkomponenten
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

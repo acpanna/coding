@@ -1,0 +1,314 @@
+<HTML>
+ <HEAD>
+   <TITLE>
+     &Uuml;bungsblatt 10, 25.01.2000
+   </TITLE>
+ </HEAD>
+ <BODY>
+   <H1>
+     &Uuml;bungsblatt 10, 25.01.2000
+   </H1>
+   <H2>
+     Abgabetermin: Mo, 31.01.2000, 23:59 Uhr
+   </H2>
+
+<P>
+<DIV ALIGN="right">
+  <A HREF="mailto:Robert.Baier@uni-bayreuth.de">R. Baier</A> <BR>
+  <A HREF="mailto:hiwi512@btcipmatx1.cip.uni-bayreuth.de">M. Butscher</A> <BR>
+  <A HREF="mailto:hiwi501@btcipmatx1.cip.uni-bayreuth.de">P. Lerner</A>
+  <BR CLEAR="all">
+</DIV>
+</P>
+
+Das &Uuml;bungsblatt besteht aus der Aufgabe <A HREF="#A24">24</A>,
+<A HREF="#A25">25</A> und der Teamaufgabe <A HREF="#A26">26</A> mit jeweils 4 Punkten. <BR>
+Das &Uuml;bungsblatt inkl. aller Sourcecodes, Bilder, HTML-Seiten, ... kann auch
+als
+
+<UL>
+  <LI><A HREF="blatt_10.tar.gz"><TT>gzip</TT>'tes <TT>tar</TT>-Archive</A>
+  </LI>
+  <LI>
+      <A HREF="blatt_10.zip"><TT>ZIP</TT>-Archive</A>
+  </LI>
+</UL>
+heruntergeladen werden. <BR>
+<EM>Beachten Sie die <A HREF="http://www.uni-bayreuth.de/departments/math/~rbaier/lectures/java/uebung/allgemein/hinweise.html">allgemeinen Abgabehinweise</A>!!</EM>
+
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A24">&nbsp;</A>
+
+   <H2>
+     Aufgabe 24 <BR>
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi501@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Peter Lerner)
+   </H3>
+
+<P>
+  Das folgende <A HREF="EingabeDaten.java">Java-Applet</A> erm&ouml;glicht
+  die Eingabe eines Namens und einer Matrikelnummer. Bei der Best&auml;tigung
+  durch den OK-Button werden die Daten aus den Eingabefeldern auf der
+  Standardausgabe (ggf. auf die Java-Console) ausgegeben. Mit dem
+  L&ouml;schen-Button kann man die eingegebenen Daten wieder l&ouml;schen.
+</P>
+
+<P>
+  Analysieren Sie das Programm und beantworten Sie folgende Fragen zum
+  Programm:
+  
+  <OL TYPE=a>
+    <LI>
+      <P>
+        Welche Interfaces implementiert die Klasse <TT>EingabeDaten</TT>  
+        und durch welche Methoden erreicht Sie das?
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        Warum sind die Eingabefelder unterschiedlich lang?
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        Warum kann man die Methode <TT>setBackground()</TT> in den folgenden
+        Zeilen
+
+        <PRE>
+    labelName.setBackground(Color.yellow);
+    labelMatrikelNr.setBackground(Color.yellow);
+    textName.setBackground(Color.white);
+    textMatrikelNr.setBackground(Color.white);
+    buttonOK.setBackground(Color.green);
+    buttonLoeschen.setBackground(Color.red);
+        </PRE>
+
+        f&uuml;r die Objekte <TT>labelName</TT>, <TT>labelMatrikelNr</TT>, 
+        ..., <TT>buttonLoeschen</TT> aufrufen?
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        Warum funktionieren die Zeilen    
+
+        <PRE>
+    setBackground(Color.gray);
+    setLayout(new GridLayout(3, 2));
+        </PRE>
+
+        in der Methode <TT>init()</TT>?
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        Erkl&auml;ren Sie, warum der Compiler in den beiden Zeilen    
+
+        <PRE>
+    panelOK.add(buttonOK);
+    add(panelOK);
+        </PRE>
+  
+        die Methode <TT>add()</TT> mit dem Argument <TT>buttonOK</TT> 
+        bzw. <TT>panelOK</TT> akzeptiert.
+      </P>
+    </LI>
+    
+    <LI>
+      <P>
+        Erkl&auml;ren Sie den leichten Unterschied beim Aufruf der
+        Methoden <TT>addActionListener()</TT> und
+        <TT>addMouseMotionListener()</TT> in den Zeilen
+
+        <PRE>
+    buttonOK.addActionListener(this);
+    buttonOK.addMouseMotionListener(this);
+        </PRE>
+
+        Warum ist das Argument <TT>this</TT> hier zul&auml;ssig?
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        Wieso akzeptiert der Compiler den Aufruf    
+
+        <PRE>
+    Object quelle = evt.getSource();
+        </PRE>
+
+        in den Methoden <TT>actionPerformed()</TT> und
+        <TT>mouseMoved()</TT>, obwohl in beiden Anweisungen <TT>evt</TT> 
+        ein Objekt einer anderen Klasse ist?
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        Wieso ist der Aufruf der Method <TT>showStatus()</TT> in
+        <TT>mouseMoved()</TT> erlaubt und warum wird die Methode
+        <TT>init()</TT> der Klasse <TT>EingabeDaten</TT> &uuml;berhaupt 
+        aufgerufen?
+      </P>
+    </LI>
+  </OL>
+</P>
+
+<P>
+  <B>Abzugeben</B> ist die ausf&uuml;hrliche Beantwortung der Fragen.
+</P>
+ 
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A25">&nbsp;</A>
+
+   <H2>
+     Aufgabe 25 <BR>
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi501@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Peter Lerner)
+   </H3>
+
+<P>
+  Das folgende <A HREF="BildAnalyse.java">Java-Applet</A> soll ein
+  <A HREF="pinguin.gif">Bild eines Pinguins</A> anzeigen und 
+  in gewissem Umfang die Mouse-Bewegungen &uuml;ber
+  dem Bild bzw. &uuml;ber Teilbereichen analysieren. Die Methoden
+  <TT>init()</TT> und <TT>paint()</TT> m&uuml;ssen nicht modifiziert
+  werden, nur die Ereignisbehandlung muss durch Implementierung der
+  richtigen Interfaces noch hinzugef&uuml;gt werden.
+</P>
+
+<P>
+  Das Bild bzw. die Teilbereiche Nase, linkes bzw. rechtes Auge sind in
+  entsprechenden <TT>Polygon</TT>-Objekten abgespeichert (entkommentieren Sie
+  ggf. die Stelle in <TT>paint()</TT>, die die Rahmen der Teilbereiche 
+  zeichnet). 
+  Die <TT>Polygon</TT>-Objekte
+  erlauben es, festzustellen, ob ein Punkt im Appletbereich zum Inneren
+  des Objekts geh&ouml;rt oder nicht (durch die Methode <TT>contains()</TT>).
+  Es sollen Mouse-Clicks und Mouse-Bewegung (genauer: das &Uuml;berstreichen 
+  von Teilbereichen oder des gesamten Bildes) gez&auml;hlt werden.
+  Die Statistik wird durch Dr&uuml;cken des entsprechenden Buttons auf der
+  Standardausgabe (ggf. auf die Java-Console) ausgegeben. 
+</P>
+
+<P>
+  In dem Java-Applet muss man also folgendes noch realisieren:
+
+  <OL TYPE=a>
+    <LI>
+      <P>
+        Die Klasse <TT>BildAnalyse</TT> muss die Interfaces 
+        <TT>ActionListener</TT>, <TT>MouseListener</TT> und 
+        <TT>MouseMotionListener</TT> implementieren. Dadurch
+        vermeidet man auch die Compilierfehler in der Vorgabe
+        an den Stellen 
+
+        <PRE>
+    auswert.addActionListener(this);
+    addMouseListener(this);
+    addMouseMotionListener(this);
+        </PRE>
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        Eine der Methoden von <TT>MouseListener</TT> wird bei Mouse-Clicks
+        automatisch von Java aufgerufen. Stellen Sie fest, welche und 
+        durchsuchen Sie
+        in dieser Methode alle <TT>Polygon</TT>-Objekte, ob der Mouse-Click
+        innerhalb eines Teilbereichs oder innerhalb des Bildes stattfand
+        (erh&ouml;hen Sie in diesem Fall einfach die entsprechende Komponente
+        des Arrays <TT>clicked</TT>).
+        Die Klasse <TT>MouseEvent</TT> bietet mehrere M&ouml;glichkeiten,
+        die x- und y-Koordinate des Mouse-Clicks festzustellen.
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        Die Methode <TT>mouseMoved()</TT> von <TT>MouseMotionListener</TT>      
+        kann man in &auml;hlicher Weise modifizieren, um festzustellen,
+        ob ein Teilbereich oder das Bild &uuml;berstrichen wurde.
+        Damit man nicht jedesmal, wenn diese Methode (automatisch von Java)
+        aufgerufen wird, die entsprechende Komponente
+        des Arrays <TT>entered</TT> erh&ouml;ht, sollte man sich in der
+        entsprechenden Komponente des Arrays <TT>rahmenEntered</TT> merken,
+        ob man bereits vorher schon innerhalb des zugeh&ouml;rigen 
+        <TT>Polygon</TT>-Objekts war oder nicht.
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        Als letztes modifiziert man die Methode des Interfaces
+        <TT>ActionListener</TT> so, dass die Statistik, die in den
+        Arrays <TT>clicked</TT> und <TT>entered</TT> gespeichert ist,
+        sinnvoll ausgegeben wird.
+      </P>
+    </LI>
+  </OL>
+</P>
+
+<P>
+  <B>Abzugeben</B> ist der Java-Sourcecode und der zugeh&ouml;rige Bytecode
+  des Applets und das HTML-File.
+</P>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A26">&nbsp;</A>
+
+   <H2>
+     Teamaufgabe 26 <BR>
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi512@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Michael Butscher)
+   </H3>
+
+<P>
+  Entwerfen Sie eine Klasse <TT>PC</TT>, die als Datenelemente
+  die Modellbezeichnung und den Prozessornamen des PCs abspeichern soll.
+  Schreiben Sie dazu (in geringem Umfang) Konstruktoren, get-Methoden
+  und eine Ausgabem&ouml;glichkeit.
+</P>
+
+<P>
+  Die Klasse <TT>MultimediaPC</TT> soll von der Klasse <TT>PC</TT> 
+  abgeleitet werden und die beiden Interfaces <TT>NetWork</TT> und
+  <TT>Multimedia</TT> implementieren. Das 1. Interface <TT>NetWork</TT>
+  soll eine get-Methode f&uuml;r die IP-Nummer (z.B. "129.130.16.2")
+  und f&uuml;r den symbolischen IP-Namen (z.B. "myPC.subnetz.uni-bayreuth.de")
+  des Multimedia-PCs vorschreiben. 
+  Das 2. Interface <TT>Multimedia</TT> schreibt eine
+  get-Methode f&uuml;r den Modellnamen und die maximale Aufl&ouml;sung
+  der Kamera des Multimedia-PCs vor. <BR>
+
+  &Uuml;berlegen Sie sich (in geringem Umfang) geeignete Konstruktoren 
+  f&uuml;r die Klasse
+  <TT>MultimediaPC</TT>, eine Ausgabem&ouml;glichkeit und geeignete 
+  Realisierungen der beiden Interfaces.
+</P>
+
+<P>
+  In dem Testprogramm (eine Java-Applikation) soll nur ein Objekt der 
+  Klasse <TT>MultimediaPC</TT>
+  angelegt werden, dieses ausgegeben werden und die Interface-Methoden
+  aufgerufen werden.
+</P>
+
+<P>
+  <B>Abzugeben</B> sind der Java-Sourcecode und der Java-Bytecode
+  f&uuml;r die zwei/drei Klassen und die zwei Interfaces.
+</P>
+
+ </BODY>
+</HTML>

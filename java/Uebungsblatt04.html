@@ -1,0 +1,172 @@
+<HTML>
+ <HEAD>
+   <TITLE>
+     &Uuml;bungsblatt 04, 30.11.1999
+   </TITLE>
+ </HEAD>
+ <BODY>
+   <H1>
+     &Uuml;bungsblatt 04, 30.11.1999
+   </H1>
+   <H2>
+     Abgabetermin: Mo, 06.12.1999, 23:59 Uhr
+   </H2>
+
+<P>
+<DIV ALIGN="right">
+  <A HREF="mailto:Robert.Baier@uni-bayreuth.de">R. Baier</A> <BR>
+  <A HREF="mailto:hiwi512@btcipmatx1.cip.uni-bayreuth.de">M. Butscher</A> <BR>
+  <A HREF="mailto:hiwi501@btcipmatx1.cip.uni-bayreuth.de">P. Lerner</A>
+  <BR CLEAR="all">
+</DIV>
+</P>
+
+Das &Uuml;bungsblatt besteht aus den Aufgaben <A HREF="#A10">10</A> und
+<A HREF="#A11">11</A> sowie der verl&auml;ngerten Teamaufgabe 
+<A HREF="#A09">09</A> von <A HREF="../blatt_03/ueb_03_99.html">Blatt 03</A>, auf die
+es jeweils maximal 4 Punkte zu erreichen gibt. <BR>
+Das &Uuml;bungsblatt inkl. aller Sourcecodes, Bilder, HTML-Seiten, ... kann auch
+als
+
+<UL>
+  <LI><A HREF="blatt_04.tar.gz"><TT>gzip</TT>'tes <TT>tar</TT>-Archive</A>
+  </LI>
+  <LI>
+      <A HREF="blatt_04.zip"><TT>ZIP</TT>-Archive</A>
+  </LI>
+</UL>
+heruntergeladen werden. <BR>
+<EM>Beachten Sie die <A HREF="http://www.uni-bayreuth.de/departments/math/~rbaier/lectures/java/uebung/allgemein/hinweise.html">allgemeinen Abgabehinweise</A>!!</EM>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A10">&nbsp;</A>
+
+   <H2>
+     Aufgabe 10
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi512@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Michael Butscher)
+   </H3>
+
+<P>
+  In dem Java-Appletfile "<A HREF="ParamApplet.java"><TT>ParamApplet.java</TT></A>"
+  sollen vier Parameter <TT>"North"</TT>, <TT>"South"</TT>, <TT>"West"</TT> und 
+  <TT>"East"</TT> mit Titelbeschriftungen sowie eine URL f&uuml;r ein anzuzeigendes 
+  Bild als Parameter &uuml;bergeben werden. Alle vier Parameternamen sollen in ein
+  Array <TT>pos</TT> von String-Objekten abgelegt werden, die Titelbeschriftungen in
+  ein Array <TT>titel</TT> von String-Objekten. Die Parameterwerte f&uuml;r
+  die Titelbeschriftung sowie f&uuml;r den URL-Namen des Bildes sollen mit 
+  <TT>getParameter()</TT> vom HTML-File eingelesen werden. Sollte ein Parameter
+  vergessen worden sein im HTML-File, sollte man einen sinnvollen Defaultwert 
+  als Wert des Parameters vorsehen. 
+  Vergleichen Sie auch die Kommentare in der Vorgabe.
+</P>
+
+<P>  
+  Das Applet ist relativ komplett, nur das Einlesen
+  der Parameter, das Anlegen zweier Arrays von String-Objekten und ein String-Vergleich
+  fehlen. Das Bild wird zentriert angezeigt und oben, unten, links und rechts mit
+  Titelbeschriftungen versehen.
+</P>
+
+<P>
+  <B>Abzugeben</B> sind das Java-Sourcefile, der Java-Bytecode 
+  sowie das zugeh&ouml;rige HTML-File.
+</P>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A11">&nbsp;</A>
+
+   <H2>
+     Aufgabe 11
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi501@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Peter Lerner)
+   </H3>
+
+<P>
+  Im vorliegenden <A HREF="Calcul.java">Java-Quellcode</A> der Java-Applikation geht
+  es um einen primitiven Taschenrechner. Leider werden Fehlersituationen entweder
+  nicht ber&uuml;cksichtigt oder umst&auml;ndlich bei jedem m&ouml;glichen Auftreten
+  einzeln behandelt.
+</P>
+
+<OL TYPE="a">
+  <LI>
+    <P>
+    Bei der Eingabe k&ouml;nnen Ausnahmesituationen entstehen,
+    die durch Exceptions abgefangen werden m&uuml;ssen. Ein Behandeln dieser 
+    Exceptions ist zwingend erforderlich, da sich sonst das Programm nicht
+    &uuml;bersetzen l&auml;&szlig;t. Alle I/O-Exceptions sollen auf einmal
+    zentral in <TT>main()</TT> abgefangen werden und zu einem Abbruch des
+    Programms f&uuml;hren. Orientieren Sie sich an die Vorgabe 
+    "<A HREF="Input.java"><TT>Input.java</TT></A>" f&uuml;r 
+    <A HREF="../blatt_02/ueb_02_99.html#A05">Blatt 02, Aufgabe 05</A>.
+    </P>
+  </LI>
+
+  <LI>
+    <P>
+    Bei der Umwandlung des auf der Tastatur eingegebenen Strings in einen 
+    <TT>int</TT>- bzw.
+    in einen <TT>double</TT>-Wert kann es zu Fehlersituationen kommen, die ein
+    Umwandeln in einen Zahlenwert verhindern (z.B. bei Eingabe von Buchstaben
+    statt Ziffern). Diese treten bei dem Konstruktor der Wrapperklasse 
+    <TT>Integer</TT> bzw. <TT>Double</TT> auf und sollen gemeinsam abgefangen werden
+    (nicht getrennt zweimal abfangen!). Orientieren Sie sich an die Vorgabe 
+    "<A HREF="Input.java"><TT>Input.java</TT></A>" f&uuml;r 
+    <A HREF="../blatt_02/ueb_02_99.html#A05">Blatt 02, Aufgabe 05</A>.
+    </P>
+  </LI>
+
+  <LI>
+    <P>
+    Bei der Division, der Berechnung des Logarithmus
+    und der eigenen Funktion <TT>f_eigen()</TT> (im wesentlichen ist 
+    <TT>f_eigen(x) = 1/x</TT>) kann es zus&auml;tzlich zu vergleichbaren
+    Fehler-/Ausnahmesituationen kommen. <BR>
+    
+    Bei den Operationen 4), 5) und 6) kann als 1. Ausnahme das
+    Ergebnis &#177;Unendlich resultieren. Anstatt bei jeder <TT>case</TT>-Marke
+    einzeln diesen Fehler zu behandeln, soll zentral in der 
+    <TT>do</TT>-<TT>while</TT>-Schleife der Fehler ausgegeben werden und die
+    Variable <TT>erg</TT> unver&auml;ndert bleiben. Erzeugen Sie dabei eine
+    Exception der Klasse <TT>ArithmeticException</TT>, die Sie abfangen. <BR>
+    
+    Als 2. Ausnahme kann das Ergebnis in 4) und 5) nicht definiert sein 
+    (bei 0/0 bzw. bei <TT>log(erg)</TT> mit negativem <TT>erg</TT>). 
+    Dann soll wieder zentral in der
+    <TT>do</TT>-<TT>while</TT>-Schleife der Fehler ausgegeben werden und die
+    Variable <TT>erg</TT> auf 0.0 gesetzt werden. Erzeugen Sie dabei eine
+    Exception der Klasse <TT>IllegalArgumentException</TT>, die Sie abfangen. 
+    </P>
+  </LI>
+</OL>
+
+<P>
+  <B>Abzugeben</B> sind das Java-File und der Java-Bytecode.
+</P>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A09">&nbsp;</A>
+
+   <H2>
+     verl&auml;ngerte Teamaufgabe 09 (Abgabe von bis zu 2 Leuten gemeinsam m&ouml;glich
+     und erw&uuml;nscht)
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi512@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Michael Butscher)
+   </H3>
+
+Vgl. <A HREF="../blatt_03/ueb_03_99.html#A09">Blatt 03, Aufgabe 09</A>.
+
+<P>
+  <B>Abzugeben</B> sind der Java-Sourcecode, der Java-Bytecode
+  sowie die Beantwortung der Fragen.
+</P>
+
+ </BODY>
+</HTML>

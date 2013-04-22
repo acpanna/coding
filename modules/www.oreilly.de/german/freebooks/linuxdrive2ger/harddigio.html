@@ -1,0 +1,618 @@
+<HTML
+><HEAD
+><TITLE
+> Digitale I/O-Ports verwenden</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Hardware-Verwaltung"
+HREF="hard.html"><LINK
+REL="PREVIOUS"
+TITLE="I/O-Ports benutzen"
+HREF="hardports.html"><LINK
+REL="NEXT"
+TITLE="I/O-Speicher verwenden"
+HREF="hardmem.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="hardports.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 8. Hardware-Verwaltung</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="hardmem.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="HARDDIGIO"
+>Digitale I/O-Ports verwenden</A
+></H1
+><P
+>&#13;
+Der Beispiel-Code, mit dem wir zeigen werden, wie man Port-I/O von
+einem Gerät aus durchführt, arbeitet auf allgemeinen digitalen
+I/O-Ports; solche Ports gibt es in den meisten Computersystemen.</P
+><P
+>&#13;
+Ein digitaler I/O-Port ist in den meisten Fällen eine ein Byte breite
+I/O-Position, die entweder in den Speicher oder als Port abgebildet wird. Wenn
+Sie einen Wert an diese Stelle schreiben, wird das elektrische Signal
+an den Ausgabe-Pins entsprechend den geschriebenen Bits geändert. Wenn
+Sie einen Wert aus der Eingabe-Position auslesen, wird das aktuelle
+logische Niveau an den Eingabe-Pins als individuelle Bit-Werte
+zurückgegeben.</P
+><P
+>Die aktuelle Implementation und die Softwareschnittstelle solcher
+I/O-Ports unterscheidet sich von System zu System. Meistens werden
+I/O-Pins von zwei I/O-Positionen gesteuert: Eine erlaubt die Auswahl,
+welche Pins für Eingaben und welche für Ausgaben verwendet werden,
+und eine dient dem eigentlichen Lesen oder Schreiben der
+Daten. Manchmal ist die Sache aber noch einfacher, und die Bits sind
+entweder als Eingabe oder als Ausgabe fest verdrahtet (in diesem Fall
+kann man aber nicht mehr von &#8220;Universal-I/O&#8221; sprechen. So
+ein Fall ist der Parallel-Port, den es in allen PCs gibt. Auf jeden Fall sind die I/O-Pins aber mit dem gleich gezeigten Beispiel-Code
+verwendbar.</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN10601"
+>Grundlagen des Parallel-Ports</A
+></H2
+><P
+>Da wir davon ausgehen, daß die meisten Leser eine x86-Plattform in
+Form eines &#8220;Personal-Computers&#8221; verwenden, lohnt es sich, kurz zu
+beschreiben, wie der PC-Parallel-Port aufgebaut ist. Der Parallel-Port
+ist eine sehr geeignete Peripherie-Schnittstelle, wenn es um
+Beispiel-Code für digitale I/O auf einem PC geht. Die meisten Leser
+werden wahrscheinlich die Spezifikationen des Parallel-Ports vorliegen
+haben, aber wir fassen sie hier trotzdem noch einmal zusammen.</P
+><P
+>Der Parallel-Port besteht in seiner minimalen Konfiguration (wir werden
+hier nicht auf die ECP- und EPP-Modi eingehen) aus drei 8-Bit-Ports. Im PC-Standard fangen die I/O-Ports der ersten parallelen
+Schnittstelle bei <TT
+CLASS="LITERAL"
+>0x378</TT
+> an, die der zweiten
+bei <TT
+CLASS="LITERAL"
+>0x278</TT
+>. Der erste Port ist ein bidirektionales
+Datenregister, das direkt mit den Pins 2 bis 9 der
+physikalischen Schnittstelle selbst verbunden ist. Der zweite Port ist
+ein nur lesbares Statusregister. Wenn der Parallel-Port als
+Druckeranschluß verwendet wird, können aus diesem Register Aspekte des
+Druckerstatus wie etwa <SPAN
+><I
+CLASS="EMPHASIS"
+>online</I
+></SPAN
+>, <SPAN
+><I
+CLASS="EMPHASIS"
+>fehlendes Papier</I
+></SPAN
+>, <SPAN
+><I
+CLASS="EMPHASIS"
+>beschäftigt</I
+></SPAN
+>
+usw. ausgelesen werden. Der dritte Port ist ein nur beschreibbares
+Register, mit dem unter anderem gesteuert wird, ob Interrupts erlaubt
+sind.</P
+><P
+>Die Signalniveaus, die in der parallelen Kommunikation verwendet
+werden, sind die Standard-Transistor-Transistor-Logik-(TTL-)Niveaus:
+0 und 5; die Schwelle liegt bei
+etwa 1,2 Volt; Sie können sich darauf verlassen, daß die Ports
+zumindest die Standard-TTL-LS-Anforderung erfüllen<A
+NAME="AEN10619"
+HREF="#FTN.AEN10619"
+>[1]</A
+>, auch wenn die
+meisten modernen Parallel-Ports sowohl bei der Stromstärke als auch bei
+der Spannung besser sind.
+
+        </P
+><DIV
+CLASS="WARNING"
+><P
+></P
+><TABLE
+CLASS="WARNING"
+BORDER="1"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="CENTER"
+><B
+>Warnung</B
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+><P
+>Der parallele Steckverbinder ist nicht von den internen Schaltkreisen
+des Computers isoliert, was nützlich ist, wenn Sie logische Gatter
+direkt mit dem Port verbinden wollen. Aber Sie müssen darauf achten,
+die Verkabelung korrekt vorzunehmen; es ist leicht, den Parallel-Port
+zu beschädigen, wenn Sie eigene Schaltkreise
+aufstecken (sofern Sie keine Opto-Isolatoren in Ihrem Schaltkreis
+verwenden). Sie können auch Parallel-Ports auf Steckkarten verwenden,
+wenn Sie Angst haben, Ihre Hauptplatine zu beschädigen.</P
+></TD
+></TR
+></TABLE
+></DIV
+><P
+>Die Bit-Spezifikationen sind in <A
+HREF="harddigio.html#HARDPARALLEL"
+>Abbildung 8-1</A
+>
+wiedergegeben. Sie können auf zwölf Ausgabebits und fünf Eingabebits
+zugreifen, von denen einige auf ihrem Signalpfad invertiert
+werden. Das einzige Bit ohne zugeordneten Signal-Pin ist Bit 4 (0x10)
+an Port 2, mit dem Interrupts vom Parallel-Port eingeschaltet
+werden. Wir werden dieses Bit in <A
+HREF="irq.html"
+>Kapitel 9</A
+> verwenden.
+
+            </P
+><DIV
+CLASS="FIGURE"
+><A
+NAME="HARDPARALLEL"
+></A
+><P
+><B
+>Abbildung 8-1. Die Pinbelegung des Parallel-Ports</B
+></P
+><P
+><IMG
+SRC="ldr_0801.jpg"></P
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="HARDSAMPLE"
+>Ein Beispiel-Treiber</A
+></H2
+><P
+>&#13;Der Treiber, den wir hier einführen werden, heißt
+<SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> (Simple Hardware Operations and Raw
+Tests). Er liest und schreibt lediglich auf ein paar 8-Bit-Ports, beginnend bei dem, der beim Laden angegeben wurde. Defaultmäßig verwendet er den Port-Bereich der
+parallelen Schnittstelle des PCs. Jede
+Geräteknoten (mit einer eindeutigen Minor-Nummer) greift auf einen
+anderen Port zu. Der <SPAN
+CLASS="APPLICATION"
+>short</SPAN
+>-Treiber macht
+nichts Nützliches; er kapselt nur zur weiteren Verwendung eine einzige
+Anweisung, die auf einem Port arbeitet. Wenn Sie sich mit Port-I/O
+nicht auskennen, dann können Sie <SPAN
+CLASS="APPLICATION"
+>short</SPAN
+>
+verwenden, um sich damit vertraut zu machen; beispielsweise können Sie
+die Zeit messen, die es dauert, Daten durch einen Port zu
+transportieren, oder andere nette Dinge tun.</P
+><P
+>Damit <SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> auf Ihrem System funktioniert,
+muß der Treiber freien Zugriff auf die zugrundeliegende Hardware (per
+Default die parallele Schnittstelle) haben; deswegen darf kein anderer
+Treiber die Hardware verwenden. Die meisten modernen Distributionen
+richten die Parallel-Port-Treiber als Module ein, die nur bei Bedarf
+geladen werden, so daß es normalerweise nicht zu einem Kampf um die
+I/O-Adressen kommen sollte. Wenn Sie aber die Fehlermeldung &#8220;can't get
+I/O address&#8221; von <SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> bekommen (auf der
+Konsole oder im Systemprotokoll), dann hat sich wahrscheinlich ein
+anderer Treiber den Port geholt. Ein kurzer Blick in
+<TT
+CLASS="FILENAME"
+>/proc/ioports</TT
+> sagt Ihnen normalerweise, welcher
+Treiber da im Wege ist. Das gleiche gilt auch für die anderen
+I/O-Geräte, wenn Sie die parallele Schnittstelle nicht verwenden.</P
+><P
+>&#13;Wir werden ab jetzt der Einfachheit halber immer von &#8220;der parallelen
+Schnittstelle&#8221; sprechen. Sie können aber den Modulparameter
+<TT
+CLASS="LITERAL"
+>base</TT
+> beim Laden setzen, um
+<SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> auf andere I/O-Geräte umzuleiten. Mit
+diesem Feature kann der Beispiel-Code auf jeder Linux-Plattform
+laufen, auf der Sie eine digitale I/O-Schnittstelle haben, auf die via
+<SPAN
+><I
+CLASS="EMPHASIS"
+>outb</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>inb</I
+></SPAN
+> zugegriffen
+werden kann (selbst wenn die eigentliche Hardware auf allen
+Plattformen außer x86 in den Speicher abgebildet wird). Weiter unten,
+in &#8220;<A
+HREF="hardmem.html"
+>the Section called <I
+>I/O-Speicher verwenden</I
+></A
+>&#8221; werden wir Ihnen zeigen, wie man auch
+generische, in den Speicher abgebildete digitale I/O verwenden kann.&#13;</P
+><P
+>Um zu beobachten, was auf der parallelen Schnittstelle passiert (und
+wenn Sie daran interessiert sind, ein wenig mit Hardware zu arbeiten),
+sollten Sie jetzt ein paar LEDs an die Ausgabepins löten. Jede
+LED sollte mit einem 1K&#937; Widerstand, der auf
+den Masseanschluß führt, in Serie geschaltet sein (sofern der Widerstand nicht schon in Ihre LEDs eingebaut ist). Wenn Sie einen Ausgabepin mit einem
+Eingabepin verbinden, können Sie eigene Eingaben erzeugen, die vom
+Eingabeport gelesen werden können.</P
+><P
+>Beachten Sie, daß Sie nicht einfach einen Drucker an den
+Parallelport anschließen und die an
+<SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> geschickten Daten beobachten
+können. Dieser Treiber implementiert einen einfachen Zugriff auf die
+I/O-Ports und führt keinen Handshake durch, den Drucker benötigen, um
+mit den Daten zu arbeiten.</P
+><P
+>Wenn Sie parallele Daten visualisieren wollen, indem Sie LEDs an
+einen D-Stecker löten, würden wir vorschlagen, daß Sie Pin 9 und 10
+zunächst frei lassen, weil wir diese später verbinden werden, um den
+Beispiel-Code aus <A
+HREF="irq.html"
+>Kapitel 9</A
+> auszuprobieren.</P
+><P
+>Was <SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> angeht, so schreibt
+und liest <TT
+CLASS="FILENAME"
+>/dev/short0</TT
+> den 8-Bit-Port an der
+Position <TT
+CLASS="LITERAL"
+>base</TT
+> (0x378 ist der
+Default). <TT
+CLASS="FILENAME"
+>/dev/short1</TT
+> schreibt auf den 8-Bit-Port
+an der Position <TT
+CLASS="LITERAL"
+>base + 1</TT
+> und so weiter bis
+<TT
+CLASS="LITERAL"
+>base + 7</TT
+>.</P
+><P
+>Das von <SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> bereitgestellte Gerät
+<TT
+CLASS="FILENAME"
+>/dev/short0</TT
+> schreibt Daten mit einer
+kurzen Schleife, die Byte für Byte Benutzerdaten mittels
+<SPAN
+><I
+CLASS="EMPHASIS"
+>outb</I
+></SPAN
+> auf den Ausgabe-Port kopiert. Eine
+Speicherbarriere wird verwendet, um sicherzustellen, daß die
+Ausgabeoperation auch wirklich stattfindet und nicht wegoptimiert
+wird:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+while (count--) {
+    outb(*(ptr++), address);
+    wmb();
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Sie können mit dem folgenden Programm Ihre LEDs zum Leuchten bringen:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+
+echo -n "beliebiger String" &#62; /dev/short0</PRE
+></TD
+></TR
+></TABLE
+><P
+>Jede LED überwacht ein einzelnes Bit des Ausgabe-Ports. Denken Sie
+daran, daß nur das letzte Zeichen so lange auf dem Ausgabepin bleibt,
+daß Sie es überhaupt mit den Augen wahrnehmen können. Aus diesem Grund
+ist es ratsam, das automatische Einfügen eines
+Zeilenumbruchs durch die Option <SPAN
+><I
+CLASS="EMPHASIS"
+>&#8211;n</I
+></SPAN
+> von
+<SPAN
+CLASS="APPLICATION"
+>echo</SPAN
+> zu unterdrücken.&#13;</P
+><P
+>Das Lesen wird durch eine ähnliche Funktion erledigt, die um
+<SPAN
+><I
+CLASS="EMPHASIS"
+>inb</I
+></SPAN
+> anstelle von <SPAN
+><I
+CLASS="EMPHASIS"
+>outb</I
+></SPAN
+>
+herumprogrammiert ist. Um &#8220;aussagefähige&#8221; Werte vom
+Parallel-Port zu bekommen, müssen Sie Hardware an die Eingabepins
+anschließen, die Signale erzeugt. Wenn kein Signal vorliegt, lesen Sie
+einen endlosen Strom identischer Bytes. Wenn Sie von einem
+Ausgabe-Port lesen, bekommen Sie höchstwahrscheinlich den letzten auf
+den Port geschriebenen Wert zurück (dies gilt für die parallele
+Schnittstelle und die meisten anderen digitalen I/O-Schaltkreise, die
+allgemein verwendet werden). Diejenigen von Ihnen, die davor
+zurückschrecken, den Lötkolben hervorzuholen, können den aktuellen
+Ausgabewert an Port 0x378 auch mit folgendem Befehl lesen: </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;dd if=/dev/short0 bs=1 count=1 | od -t x1</PRE
+></TD
+></TR
+></TABLE
+><P
+>Um Ein- und Ausgabe vollständig abzuhandeln, gibt es drei Variationen jedes
+<SPAN
+CLASS="APPLICATION"
+>short</SPAN
+>-Gerätes:
+<TT
+CLASS="FILENAME"
+>/dev/short0</TT
+> vollführt die gerade gezeigte
+Schleife, <TT
+CLASS="FILENAME"
+>/dev/short0p</TT
+> benutzt
+<SPAN
+><I
+CLASS="EMPHASIS"
+>outb_p</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>inb_p</I
+></SPAN
+> anstelle der &#8220;schnellen&#8221;
+Funktionen, und <TT
+CLASS="FILENAME"
+>/dev/short0s</TT
+> benutzt die
+String-Anweisungen. Es gibt jeweils acht dieser Geräte,
+<SPAN
+><I
+CLASS="EMPHASIS"
+>short0</I
+></SPAN
+> bis <SPAN
+><I
+CLASS="EMPHASIS"
+>short7</I
+></SPAN
+>. Die
+PC-Schnittstelle hat zwar nur drei Ports, aber Sie brauchen
+möglicherweise mehr, wenn Sie Ihre Tests mit einem anderen Gerät
+durchführen.</P
+><P
+>Der <SPAN
+CLASS="APPLICATION"
+>short</SPAN
+>-Treiber führt nur ein absolutes
+Mindestmaß an Hardware-Steuerung durch, ist aber trotzdem schon ausreichend,
+um vorzuführen, wie I/O-Port-Anweisungen verwendet
+werden. Interessierte Leser können sich den Quellcode der Module
+<SPAN
+CLASS="APPLICATION"
+>parport</SPAN
+> und
+<SPAN
+CLASS="APPLICATION"
+>parport_pc</SPAN
+> anschauen, um zu sehen, wie
+kompliziert dieses Gerät im wirklichen Leben werden kann, wenn es
+darum geht, unterschiedliche Geräte (Drucker, Bandlaufwerke,
+Netzwerkkarten) an der parallelen Schnittstelle unterstützen.
+
+
+
+&#13;</P
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN10619"
+HREF="harddigio.html#AEN10619"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+>Low-Power-Schottky-TTL-Glieder (TTL-LS) nehmen nur ein Fünftel der Leistung eines Standard-TTL-Glieds auf.</TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="hardports.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="hardmem.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>I/O-Ports benutzen</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="hard.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>I/O-Speicher verwenden</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

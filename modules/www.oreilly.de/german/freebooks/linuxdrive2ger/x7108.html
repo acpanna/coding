@@ -1,0 +1,431 @@
+<HTML
+><HEAD
+><TITLE
+>Ein Gerät positionieren</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Fortgeschrittene Operationen in Zeichen-Treibern"
+HREF="extra.html"><LINK
+REL="PREVIOUS"
+TITLE="Asynchrone Benachrichtigung"
+HREF="exasync.html"><LINK
+REL="NEXT"
+TITLE="Zugriffskontrolle auf Gerätedateien"
+HREF="exaccess.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="exasync.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 5. Fortgeschrittene Operationen in Zeichen-Treibern</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="exaccess.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN7108"
+>Ein Gerät positionieren</A
+></H1
+><P
+>&#13;
+Wir haben den schwierigen Teil des Kapitels hinter uns. Wir werden
+jetzt noch schnell auf die Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>llseek</I
+></SPAN
+>
+eingehen, die nützlich und leicht zu implementieren ist.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN7117"
+>Die Implementation von llseek</A
+></H2
+><P
+>&#13;
+
+Die Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>llseek</I
+></SPAN
+> implementiert die
+          Systemaufrufe <SPAN
+><I
+CLASS="EMPHASIS"
+>lseek</I
+></SPAN
+> und
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>llseek</I
+></SPAN
+>.
+Wir haben bereits erwähnt, daß bei fehlender Implementation von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>lseek</I
+></SPAN
+> im Gerätetreiber der Kernel
+Positionierungen vom Dateianfang oder von der aktuellen Position an gerechnet
+selbst durch Modifikation von <TT
+CLASS="LITERAL"
+>filp-&#62;f_pos</TT
+>
+erledigt. Beachten Sie, daß die Methoden
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>
+          kooperieren müssen, damit der Systemaufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>lseek</I
+></SPAN
+> korrekt arbeiten kann. Dazu müssen Sie das Offset-Element aktualisieren, das sie
+          als Argument (normalerweise in Form eines Zeigers auf
+          <TT
+CLASS="LITERAL"
+>filp-&#62;f_pos</TT
+>) bekommen.</P
+><P
+>Wenn die Positionierungsoperation einer physikalischen Operation Ihres
+          Geräts entspricht oder wenn das Suchen vom Dateiende aus,
+          das von der Default-Methode nicht implementiert ist,
+          sinnvoll ist, müssen Sie möglicherweise eine eigene
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>llseek</I
+></SPAN
+>-Methode implementieren. Ein
+          einfaches Beispiel finden Sie im
+          <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Treiber.
+        </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+
+loff_t scull_llseek(struct file *filp, loff_t off, int whence)
+{
+  Scull_Dev *dev = filp-&#62;private_data;
+  loff_t newpos;
+
+  switch(whence) {
+   case 0: /* SEEK_SET */
+    newpos = off;
+    break;
+
+   case 1: /* SEEK_CUR */
+    newpos = filp-&#62;f_pos + off;
+    break;
+
+   case 2: /* SEEK_END */
+    newpos = dev-&#62;size + off;
+    break;
+
+   default: /* kann nicht passieren */
+    return -EINVAL;
+  }
+  if (newpos&#60;0) return -EINVAL;
+  filp-&#62;f_pos = newpos;
+  return newpos;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die einzige gerätespezifische Operation, die wir hier verwenden, ist
+das Abfragen der Dateilänge vom Gerät. Die Implementation von
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> kooperiert wie benötigt, wie in &#8220;<A
+HREF="charrdwr.html"
+>the Section called <I
+>read und write</I
+> in Kapitel 3</A
+>&#8221; in <A
+HREF="char.html"
+>Kapitel 3</A
+> zu sehen
+war.
+&#13;</P
+><P
+>Obwohl die obige Implementation bei <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>,
+wo ein wohldefinierter Datenbereich verwaltet wird, sinnvoll ist,
+haben die meisten Geräte mit einem Datenstrom anstelle eines
+Datenbereichs zu tun (denken Sie nur an serielle Ports oder die
+Tastatur). Dort sind Positionierungen wenig sinnvoll. Wenn dies der
+Fall ist, dann können Sie nicht einfach darauf verzichten,
+<SPAN
+><I
+CLASS="EMPHASIS"
+>llseek</I
+></SPAN
+> zu implementieren, weil die Default-Methode
+ja das Positionieren erlaubt. Statt dessen sollten Sie den folgenden
+Code verwenden:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+int scull_p_lseek (struct file *filp, loff_t off, int whence)
+{
+    return -ESPIPE; /* nicht positionierbar */
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die gezeigte Funktion stammt aus dem
+<SPAN
+><I
+CLASS="EMPHASIS"
+>scullpipe</I
+></SPAN
+>-Gerät, das auch nicht positionierbar
+ist. Der Fehlercode wird zu &#8220;Illegal seek&#8221; (illegales
+Positionieren), auch wenn der symbolische Name &#8220;ist eine
+Pipe&#8221; bedeutet. Weil der Positionszeiger
+<TT
+CLASS="LITERAL"
+>filp-&#62;f_pos</TT
+> für nicht positionierbare
+Geräte keine Bedeutung hat, müssen ihn weder <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>
+noch <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+> bei der Datenübertragung
+aktualisieren. </P
+><P
+>&#13;
+Interessanterweise ist die Geräte-Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>llseek</I
+></SPAN
+>
+          seit dem Hinzufügen von <SPAN
+><I
+CLASS="EMPHASIS"
+>pread</I
+></SPAN
+> und
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>pwrite</I
+></SPAN
+> zur Menge der unterstützten
+          Systemaufrufe nicht mehr die einzige Möglichkeit, mit der
+          ein User-Space-Programm in einer Datei navigieren
+          kann. Eine korrekte Implementation von einem nicht
+          positionierbaren Gerät sollte normale
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>- und
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>-Aufrufe erlauben,
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>pread</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>pwrite</I
+></SPAN
+>
+          aber verbieten. Dies geschieht mit der folgenden Zeile, der
+          ersten in den <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>- und
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>-Methoden von
+          <SPAN
+CLASS="APPLICATION"
+>scullpipe</SPAN
+>, die wir bei der
+          Einführung dieser Methoden nicht besprochen haben:
+
+
+
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; if (f_pos != &#38;filp-&#62;f_pos) return -ESPIPE;</PRE
+></TD
+></TR
+></TABLE
+>
+
+
+&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="exasync.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="exaccess.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Asynchrone Benachrichtigung</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="extra.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Zugriffskontrolle auf Gerätedateien</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

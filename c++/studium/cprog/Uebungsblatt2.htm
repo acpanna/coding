@@ -1,0 +1,146 @@
+<HTML>
+ <HEAD>
+   <TITLE>
+     &Uuml;bungsblatt 02, 18.05.1999
+   </TITLE>
+ </HEAD>
+ <BODY>
+
+  <H1>
+     &Uuml;bungsblatt 02, 18.05.1999
+   </H1>
+   <H2>
+     Abgabetermin: Mo, 24.05.1999, 17<SUP>00</SUP> Uhr
+   </H2>
+
+<DIV ALIGN="right">
+  <A HREF="mailto:Robert.Baier@uni-bayreuth.de">R. Baier</A> <BR>
+  <A HREF="mailto:hiwi511@btcipmatx1.cip.uni-bayreuth.de">M. Kohl</A> <BR>
+  <A HREF="mailto:hiwi502@btcipmatx1.cip.uni-bayreuth.de">B. Seifert</A>
+  <BR CLEAR="all">
+</DIV>
+<P>
+
+Das &Uuml;bungsblatt besteht aus den Aufgaben <A HREF="#A_04">04</A>,
+<A HREF="#A_05">05</A> und <A HREF="#A_06">06</A>.
+Das &Uuml;bungsblatt inkl. aller Sourcecodes, Bilder, HTML-Seiten, ... kann auch
+als
+<UL>
+  <LI><A HREF="blatt_02.tar.gz"><TT>gzip</TT>'tes <TT>tar</TT>-Archive</A>
+  </LI>
+  <LI>
+      <A HREF="blatt_02.zip"><TT>ZIP</TT>-Archive</A>
+  </LI>
+</UL>
+heruntergeladen werden. <BR>
+
+<EM>Beachten Sie die <A HREF="../allgemein/hinweise.html">allgemeinen Abgabehinweise</A>!!</EM>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A_04">&nbsp;</A>
+
+   <H2>
+     Aufgabe 04
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi502@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Bernd Seifert)
+   </H3>
+
+Finden Sie alle Fehler im folgenden C-Programm
+"<A HREF="aufgabe_04.c"><CODE>aufgabe_04.c</CODE></A>":</P>
+
+<PRE>
+include "stdio.h";
+
+main()
+{
+  float fahr, faktor, celsius;
+  int unten=0; oben; schritt;
+  
+  oben = 300;
+  schritt = 20;
+  fahr = unten;
+
+  for (fahr = unten; fahr =&lt; oben; fahr = fahr + step);
+  {
+    // Fahrenheit in Celsius umrechnen
+    faktor = 5 / 9;
+    celsius = (faktor * (fahr - 32);
+    printf("%3.0f %6.1f\n", fahr, celsius);
+  }
+}
+</PRE>
+
+Wenn Ihnen au&szlig;erdem an einigen Stellen Verbesserungen einfallen, 
+kann dies zu Zusatzpunkten f&uuml;hren.
+
+<P>
+Abzugeben ist das verbesserte C-Programm und eine schriftliche Erkl&auml;rung
+zu den Fehlern im vorgegebenen C-Programm.
+
+<HR SIZE=5 WIDTH="100%">
+
+<A NAME="A_05">&nbsp;</A>
+
+   <H2>
+     Aufgabe 05
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi502@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Bernd Seifert)
+   </H3>
+
+Compilieren Sie das folgende C++-Programm
+"<A HREF="aufgabe_05.cpp"><CODE>aufgabe_05.cpp</CODE></A>". Das Programm
+versucht mit Pr&auml;prozessor-Direktiven die Einbindung der richtigen
+Header-Files zu gew&auml;hrleisten (ggf. gem&auml;&szlig; Vorlesung anpassen!). 
+
+<P>
+Starten Sie das Programm und finden Sie eine Erkl&auml;rung der scheinbar
+widerspr&uuml;chlichen Ausgaben.
+
+<P>
+Abzugeben ist die schriftliche Erkl&auml;rung f&uuml;r alle Ausgaben.
+
+<P>
+<HR SIZE=5 WIDTH="100%">
+
+<A NAME="A_06">&nbsp;</A>
+
+   <H2>
+     Aufgabe 06
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi511@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Matthias Kohl)
+   </H3>
+
+Schreiben Sie ein C-/C++-Programm mit einer <TT>for</TT>-Schleife, das die
+Fibonacci-Zahlen f&uuml;r <I>n</I> = 0, 1, ..., 10 berechnet und die Werte 
+ausgibt.<BR>
+Die Fibonacci-Folge wird dabei rekursiv berechnet mit den beiden Startwerten
+
+<BLOCKQUOTE>
+   <I>a</I><SUB><I>0</I></SUB> = 1 <BR>
+   <I>a</I><SUB><I>1</I></SUB> = 1
+</BLOCKQUOTE>
+
+und der Rekursion
+
+<BLOCKQUOTE>
+  <I>a</I><SUB><I>n</I></SUB> = <I>a</I><SUB><I>n-1</I></SUB> 
+     + <I>a</I><SUB><I>n-2</I></SUB>
+</BLOCKQUOTE>
+
+f&uuml;r <I>n</I> &gt;= <I>2</I>. 
+
+<P>
+Wieviele Variablen brauchen Sie mindestens? H&auml;ngt die Zahl von der
+maximalen Iterationszahl <I>n</I> ab?
+
+<P>
+Abzugeben ist das C-/C++-Programm und eine schriftliche Beantwortung der
+Fragen.
+ </BODY>
+</HTML>

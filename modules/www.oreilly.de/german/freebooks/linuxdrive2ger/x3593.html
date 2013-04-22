@@ -1,0 +1,193 @@
+<HTML
+><HEAD
+><TITLE
+>Die neuen Geräte ausprobieren</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Zeichen-Treiber"
+HREF="char.html"><LINK
+REL="PREVIOUS"
+TITLE="read und write"
+HREF="charrdwr.html"><LINK
+REL="NEXT"
+TITLE="Das Device-Dateisystem"
+HREF="chardevfs.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="charrdwr.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 3. Zeichen-Treiber</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="chardevfs.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN3593"
+>Die neuen Geräte ausprobieren</A
+></H1
+><P
+>Wenn Sie die vier gerade beschriebenen Methoden haben, kann der
+Treiber kompiliert und getestet werden; er speichert alle Daten, die
+Sie in ihn schreiben, bis sie mit neuen Daten
+überschrieben werden. Das Gerät arbeitet wie ein Daten-Puffer, dessen
+Länge nur durch die tatsächlich verfügbare RAM-Menge beschränkt
+ist. Sie können <SPAN
+CLASS="APPLICATION"
+>cp</SPAN
+>,
+<SPAN
+CLASS="APPLICATION"
+>dd</SPAN
+> und die Ein-/Ausgabeumleitung verwenden,
+um den Treiber zu testen.&#13;</P
+><P
+>&#13;
+Sie können den Befehl <SPAN
+CLASS="APPLICATION"
+>free</SPAN
+> benutzen, um zu
+sehen, wie die Menge freien Speichers sinkt und wieder ansteigt, wenn
+Daten in <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> geschrieben werden.&#13;</P
+><P
+>Um sich besser daran zu gewöhnen, daß nur jeweils ein Quantum
+geschrieben wird, können Sie <SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+>-Aufrufe an
+passenden Stellen in den Kernel einfügen und beobachten, was passiert,
+wenn eine Applikation große Datenmengen liest oder
+schreibt. Alternativ dazu können Sie auch das Hilfsprogramm
+<SPAN
+CLASS="APPLICATION"
+>strace</SPAN
+> benutzen, um die vom Programm
+durchgeführten Systemaufrufe zu beobachten. Wenn Sie damit
+<SPAN
+CLASS="APPLICATION"
+>cp</SPAN
+> oder auch <SPAN
+CLASS="APPLICATION"
+>ls -l &#62;
+/dev/scull0</SPAN
+> verfolgen, werden Sie die
+aufgeteilten Lese- und Schreib-Anweisungen verfolgen können. Im
+nächsten Kapitel werden wir auf Monitoring- und Debugging-Techniken
+etwas detaillierter eingehen.
+
+&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="charrdwr.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="chardevfs.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>read und write</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="char.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Das Device-Dateisystem</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

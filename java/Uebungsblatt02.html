@@ -1,0 +1,305 @@
+<HTML>
+ <HEAD>
+   <TITLE>
+     &Uuml;bungsblatt 02, 16.11.1999
+   </TITLE>
+ </HEAD>
+ <BODY>
+   <H1>
+     &Uuml;bungsblatt 02, 16.11.1999
+   </H1>
+   <H2>
+     Abgabetermin: Mo, 22.11.1999, 23:59 Uhr
+   </H2>
+
+<P>
+<DIV ALIGN="right">
+  <A HREF="mailto:Robert.Baier@uni-bayreuth.de">R. Baier</A> <BR>
+  <A HREF="mailto:hiwi512@btcipmatx1.cip.uni-bayreuth.de">M. Butscher</A> <BR>
+  <A HREF="mailto:hiwi501@btcipmatx1.cip.uni-bayreuth.de">P. Lerner</A>
+  <BR CLEAR="all">
+</DIV>
+</P>
+
+Das &Uuml;bungsblatt besteht aus den Aufgaben <A HREF="#A04">04</A> und
+<A HREF="#A05">05</A> sowie der Teamaufgabe <A HREF="#A06">06</A>, auf die
+es jeweils maximal 4 Punkte zu erreichen gibt. <BR>
+Das &Uuml;bungsblatt inkl. aller Sourcecodes, Bilder, HTML-Seiten, ... kann auch
+als
+
+<UL>
+  <LI><A HREF="blatt_02.tar.gz"><TT>gzip</TT>'tes <TT>tar</TT>-Archive</A>
+  </LI>
+  <LI>
+      <A HREF="blatt_02.zip"><TT>ZIP</TT>-Archive</A>
+  </LI>
+</UL>
+heruntergeladen werden. <BR>
+<EM>Beachten Sie die <A HREF="http://www.uni-bayreuth.de/departments/math/~rbaier/lectures/java/uebung/allgemein/hinweise.html">allgemeinen Abgabehinweise</A>!!</EM>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A04">&nbsp;</A>
+
+   <H2>
+     Aufgabe 04
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi512@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Michael Butscher)
+   </H3>
+
+  Machen Sie sich mit Unicode-Zeichen vertraut, indem Sie
+  mit <TT>for</TT>-Schleifen alle Unicode-Zeichen zwischen 0 und 255
+  ausgeben. Damit Sie eine bessere Zuordnung zwischen hexadezimalem Code
+  des Unicode-Zeichens und der Ausgabe erreichen, geben Sie pro Zeile
+  immer 16 Zeichen (durch Blanks getrennt) aus. Die Ausgabe sollte in etwa 
+  wie dieses <A HREF="Unicode.txt">Textfile mit einer Beispielausgabe</A>,
+  genauer wie dieses nicht im WWW-Browser anzusehende 
+  <A HREF="Unicode.bin_txt">Bin&auml;rfile mit Steuerzeichen</A>, aussehen.
+
+  <P>
+    Anhand dieser selbsterstellten Tabelle sollte man dann noch die
+    Sonderzeichen in den folgenden 3 Zeilen mit Unicode-Zeichen ausgeben:
+
+    <BLOCKQUOTE>
+       &iexcl;Paco Pe&ntilde;a! Je suis l'&eacute;tranger! <BR>
+       &frac14; + &frac12; = &frac34; &nbsp; , 
+         (&frac12;)&sup2; = &frac14; <BR>
+       &copy; H. R&aring;dstr&ouml;m
+    </BLOCKQUOTE>
+  </P>
+
+<OL TYPE=a>
+  <LI>
+       <P>
+       Schreiben Sie zun&auml;chst eine Java-Applikation, die die 
+       Unicode-Tabelle und die zus&auml;tzlichen 3 Zeilen ausgibt. <BR>
+       Um in der DOS-Box oder der Unix-Shell die richtige Ausgabe zu erzeugen,
+       verwende man die Ausgabeumlenkung, z.B. durch
+
+       <PRE>
+         java Aufg_04a > UnicodeTabelle.txt
+       </PRE>
+
+       und betrachte sich dann in einem Editor (kein DOS-Editor wegen des
+       anderen Zeichensatzes!) die Ausgabe. 
+       U.U. wird der Editor durch Steuerzeichen verwirrt,
+       so dass die Ausgabe ungew&ouml;hnlich aussehen kann.
+       </P>
+  </LI>
+
+  <LI> 
+       <P>
+       Schreiben Sie dann ein Java-Applet, das die 
+       Unicode-Tabelle und die zus&auml;tzlichen 3 Zeilen grafisch ausgibt.
+       <BR>
+       Wie l&ouml;st man das Problem mit dem vertikalen Abstand zwischen
+       den einzelnen Zeilen?
+       </P>
+  </LI>
+</OL>
+
+<P>
+<B>Abzugeben</B> sind in beiden Teilaufgaben das Java-File und der Bytecode 
+sowie in b) auch das HTML-File.
+</P>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A05">&nbsp;</A>
+
+   <H2>
+     Aufgabe 05
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi501@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Peter Lerner)
+   </H3>
+
+<P>
+  Um die &Auml;hnlichkeit zu C zu demonstrieren, schreibe man das folgende
+  C-File "<A HREF="switch.c"><TT>switch.c</TT></A>" in eine Java-Applikation um.
+  Ein Verst&auml;ndnis des C-Files ist f&uuml;r die Aufgabe nicht n&ouml;tig
+  (hilft aber), da im folgenden das C-Programm in seiner Funktion beschrieben
+  wird.
+
+  <P>
+  Es werden Tag, Monat und Jahr eingelesen und ausgegeben, ob
+  der Monat zu Fr&uuml;hling, Sommer, Herbst oder Winter geh&ouml;rt. <BR>
+  Eine Fehlermeldung erscheint, wenn als Tag 0 eingegeben wird (der Tag wird
+  dann auf 1 gesetzt). <BR>
+  F&uuml;r die folgenden besonderen Tagen soll ein Hinweis auf diesen
+  Tag erscheinen:
+
+  <P>
+    <TABLE ALIGN="center" BORDER="1" CELLPADDING="5">
+      <TR>
+        <TH>
+          Datum
+        </TH>
+        <TH>
+          Bedeutung
+        </TH>
+      </TR>
+
+      <TR>
+        <TD ALIGN="center">
+          11.11.
+        </TD>
+        <TD>
+          Faschingsanfang
+        </TD>
+      </TR>
+
+      <TR>
+        <TD ALIGN="center">
+          06.12.
+        </TD>
+        <TD>
+          Nikolaus
+        </TD>
+      </TR>
+
+      <TR>
+        <TD ALIGN="center">
+          24.12.
+        </TD>
+        <TD>
+          Heilig Abend
+        </TD>
+      </TR>
+
+      <TR>
+        <TD ALIGN="center">
+          31.12.
+        </TD>
+        <TD>
+          Silvester
+        </TD>
+      </TR>
+    </TABLE>
+  </P>
+
+  Zudem soll eine zweistellige Jahreseingabe als vierstellige Jahreszahl
+  interpretiert werden gem&auml;&szlig; der folgenden Y2K-Regeln (Microsoft
+  addiert in Excel zu allen Jahresangaben zwischen 30 und 99 die Zahl 1900):
+  </P>
+
+  <OL>
+    <LI>
+      Liegt die zweistellige Jahresangabe zwischen 0 und 29, wird 2000
+      zur Jahresangabe addiert.
+    </LI>
+
+    <LI>
+      Liegt die zweistellige Jahresangabe zwischen 69 und 99, wird 1900
+      zur Jahresangabe addiert.
+    </LI>
+
+    <LI>
+      Ansonsten ist das Verhalten ausdr&uuml;cklich nicht definiert, 
+      und es soll eine Fehlermeldung ausgegeben werden.
+    </LI>
+  </OL>
+</P>
+
+<P>
+Da die Eingabe in Java-Applikationen nicht so einfach ist, verwende man
+die vorgegebenen Routinen und Aufrufe des Java-Files
+"<A HREF="Input.java"><TT>Input.java</TT></A>".
+</P>
+
+<P>
+<B>Abzugeben</B> sind das Java-File und der Java-Bytecode.
+</P>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A06">&nbsp;</A>
+
+   <H2>
+     Teamaufgabe 06 (Abgabe von bis zu 2 Leuten gemeinsam m&ouml;glich
+     und erw&uuml;nscht)
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi501@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Peter Lerner)
+   </H3>
+
+<P>
+  In dieser Aufgabe soll ein C-File in eine Java-Applikation umgeschrieben 
+  werden. Eine Zusammenarbeit mit einer C-Expertin/einem C-Experten sollte 
+  f&uuml;r C-Neulinge angestrebt werden! <BR>
+
+  Das C-File testet einige Operationen mit Standarddatentypen,
+  u.a. auf Overflow-Situationen und auf Division durch 0. <BR>
+
+  Wie reagiert das Java-Programm im Vergleich zum C-Programm auf diese 
+  Situationen? <BR>
+
+  Gibt es Unterschiede bei ganzzahligen und Flie&szlig;kommawerten bei der 
+  Division von 0?
+  
+  <P>
+  Damit das C-Programm leichter zu verstehen ist, gibt es f&uuml;r die
+  beiden CIP-Pools die Executables frei Haus:
+  </P>
+
+  <P>
+    <TABLE ALIGN="center" BORDER="1" CELLPADDING="5">
+      <TR>
+        <TH>
+          Filename
+        </TH>
+        <TH>
+          Bedeutung
+        </TH>
+      </TR>
+
+      <TR>
+        <TD VALIGN="top">
+          "<A HREF="ZahlenTest.c"><TT>ZahlenTest.c</TT></A>"
+        </TD>
+        <TD>
+          C-Sourcefile mit DOS-Umlauten <BR>
+          (Abspeichern, nicht im Browser anschauen, bzw. aus dem
+	  Archiv extrahieren!)
+        </TD>
+      </TR>
+
+      <TR>
+        <TD VALIGN="top">
+          "<A HREF="ZahlenTest.exe"><TT>ZahlenTest.exe</TT></A>"
+        </TD>
+        <TD>
+          Windows 32-Bit-Executable (startet in DOS-Box)
+        </TD>
+      </TR>
+
+      <TR>
+        <TD VALIGN="top">
+          "<A HREF="ZahlenTest_Linux.c"><TT>ZahlenTest_Linux.c</TT></A>"
+        </TD>
+        <TD>
+          C-Sourcefile mit Umlauten f&uuml;r Linux-Versionen 
+        </TD>
+      </TR>
+
+      <TR>
+        <TD VALIGN="top">
+          "<A HREF="ZahlenTest"><TT>ZahlenTest.out</TT></A>"
+        </TD>
+        <TD>
+          Linux-Executable f&uuml;r Intel-Prozessoren <BR>
+          (statisch gelinkt, daher unabh&auml;ngiger von der Linux-Distribution)
+        </TD>
+      </TR>
+    </TABLE>
+  </P>
+</P>
+
+<P>
+<B>Abzugeben</B> sind der Java-Sourcecode und Java-Bytecode
+sowie die Beantwortung der Fragen.
+</P>
+
+ </BODY>
+</HTML>

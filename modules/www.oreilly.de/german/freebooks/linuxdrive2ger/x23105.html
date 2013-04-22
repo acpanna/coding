@@ -1,0 +1,197 @@
+<HTML
+><HEAD
+><TITLE
+>ipc und lib</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Der physikalische Aufbau der Kernel-Quellen"
+HREF="tour.html"><LINK
+REL="PREVIOUS"
+TITLE="Das Verzeichnis net"
+HREF="x23036.html"><LINK
+REL="NEXT"
+TITLE="include und arch"
+HREF="x23127.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x23036.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 16. Der physikalische Aufbau der Kernel-Quellen</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x23127.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN23105"
+>ipc und lib</A
+></H1
+><P
+>&#13;
+Die kleinsten Verzeichnisse im Linux-Quellbaum sind
+<TT
+CLASS="FILENAME"
+>ipc</TT
+> und <TT
+CLASS="FILENAME"
+>lib</TT
+>. Das erste ist
+eine Implementation der Primitive zur System
+V-Interprozeßkommunikation (Semaphore, Message Queues und Shared
+Memory; es wird oft vergessen, aber viele Applikationen benutzen
+das). Das zweite Verzeichnis enthält generische Hilfsfunktionen, die denen der Standard-C-Bibliothek ähneln.</P
+><P
+>&#13;
+Die generischen Bibliotheksfunktionen sind eine sehr kleine Untermenge
+derjenigen, die im User-Space zur Verfügung stehen, decken aber
+unabdingbare Funktionalitäten ab, die man beim Programmieren immer benötigt:
+String-Funktionen (darunter <SPAN
+><I
+CLASS="EMPHASIS"
+>simple_atol</I
+></SPAN
+>
+zum Konvertieren eines Strings in einen <TT
+CLASS="LITERAL"
+>long</TT
+>-Werts
+mit Fehlerprüfung) und
+<TT
+CLASS="LITERAL"
+>&#60;ctype.h&#62;</TT
+>-Funktionen. Die wichtigste Datei in
+diesem Verzeichnis ist <TT
+CLASS="FILENAME"
+>vsprintf.c</TT
+>, sie
+implementiert die Funktion gleichen Namens, die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>sprintf</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+>
+zugrundeliegt. Eine weitere wichtige Datei ist
+<TT
+CLASS="FILENAME"
+>inflate.c</TT
+>, die den Dekomprimiercode von
+<SPAN
+CLASS="APPLICATION"
+>gzip</SPAN
+> enthält.&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x23036.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x23127.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Das Verzeichnis net</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="tour.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>include und arch</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

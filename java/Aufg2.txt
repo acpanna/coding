@@ -1,0 +1,9 @@
+Es gibt Unterschiede zwischen den Abl‰ufen im appletviewer bzw. in Netscape und zwar:
+
+Im Netscape-Browser erscheint z.B. die Meldung
+!!!Achtung ! Priorit‰t konnte nicht ver‰ndert werden !
+Im appletviewer erscheint nichts dergleichen.
+
+Auﬂerdem ist die Bearbeitungsreihenfolge anders,
+w‰hrend sich der appletviewer nach den eingestellten Priorit‰ten richtet,
+scheint der Netscape-Browser die Priorit‰ten zu ignorieren.

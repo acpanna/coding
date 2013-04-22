@@ -1,0 +1,202 @@
+<HTML
+><HEAD
+><TITLE
+>Den Parallel-Port vorbereiten</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Interrupt-Handler"
+HREF="irq.html"><LINK
+REL="PREVIOUS"
+TITLE="Interrupt-Handler"
+HREF="irq.html"><LINK
+REL="NEXT"
+TITLE="Einen Interrupt-Handler installieren"
+HREF="irqinstall.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="irq.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 9. Interrupt-Handler</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="irqinstall.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="INTSETUP"
+>Den Parallel-Port vorbereiten</A
+></H1
+><P
+>&#13;
+
+
+
+Obwohl die parallele Schnittstelle
+einfach ist, kann sie Interrupts auslösen. Diese Fähigkeit wird vom
+Drucker benutzt, um dem <SPAN
+CLASS="APPLICATION"
+>lp</SPAN
+>-Treiber
+mitzuteilen, daß er bereit ist, das nächste Zeichen aus dem Puffer
+entgegenzunehmen.&#13;</P
+><P
+>Wie die meisten Geräte generiert auch der Parallel-Port keine
+Interrupts, solange er nicht
+dazu aufgefordert wird. Der Standard schreibt vor, daß das Setzen von
+Bit 4 im Port 3 (<TT
+CLASS="LITERAL"
+>0x37a</TT
+>, <TT
+CLASS="LITERAL"
+>0x27a</TT
+> oder was auch immer) Interrupts einschaltet. Die einfache
+<SPAN
+><I
+CLASS="EMPHASIS"
+>outb</I
+></SPAN
+>-Anweisung, die dieses Bit setzt, wird von
+<SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> während der Initialisierung des
+Moduls durchgeführt.&#13;</P
+><P
+>Nach dem Einschalten der Interrupts erzeugt die parallele
+Schnittstelle immer dann einen Interrupt, wenn das elektrische Signal an
+Pin 10 (das sogenannte &#8220;ACK&#8221;-Bit) von niedrig auf hoch
+wechselt. Die einfachste Möglichkeit, die Schnittstelle zum Generieren
+von Interrupts zu bringen (abgesehen von der Möglichkeit, einen Drucker
+anzuschließen), besteht darin, die Pins 9 und 10 der parallelen
+Schnittstelle zu verbinden. Ein kurzes Stückchen Draht in den
+passenden Löchern der Parallel-Port-Buchse hinten an Ihrem Computer
+erzeugt eine solche Verbindung. Die Pin-Belegung des Parallel-Ports ist
+in <A
+HREF="harddigio.html#HARDPARALLEL"
+>Abbildung 8-1</A
+> zu sehen.&#13;</P
+><P
+>Pin 9 ist das höchstwertige Bit des parallelen Datenbytes. Wenn Sie
+Binärdaten auf <TT
+CLASS="FILENAME"
+>/dev/short0</TT
+> schreiben,
+erzeugen Sie mehrere Interrupts. Das Schreiben von ASCII-Text auf den
+Port erzeugt jedoch keine Interrupts, da das höchstwertige Bit
+nicht gesetzt wird.</P
+><P
+>Wenn Sie lieber nicht zum Lötkolben greifen möchten, aber einen
+Drucker zur Hand haben, dann können Sie den Beispiel-Interrupt-Handler
+auch mit einem Drucker verwenden, wie später gezeigt wird. Die
+Suchfunktionen, die wir einführen werden, brauchen aber auf jeden Fall
+die Überbrückung zwischen Pin 9 und 10.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="irq.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="irqinstall.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Interrupt-Handler</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="irq.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Einen Interrupt-Handler installieren</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

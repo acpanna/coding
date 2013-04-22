@@ -1,0 +1,4 @@
+#!/bin/sh
+
+#xhost +fuchur
+ssh -p 65535 root@localhost $*

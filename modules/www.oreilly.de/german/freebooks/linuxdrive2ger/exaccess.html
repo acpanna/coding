@@ -1,0 +1,1070 @@
+<HTML
+><HEAD
+><TITLE
+>Zugriffskontrolle auf Gerätedateien</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Fortgeschrittene Operationen in Zeichen-Treibern"
+HREF="extra.html"><LINK
+REL="PREVIOUS"
+TITLE="Ein Gerät positionieren"
+HREF="x7108.html"><LINK
+REL="NEXT"
+TITLE="Abwärtskompatibilität"
+HREF="excompat.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x7108.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 5. Fortgeschrittene Operationen in Zeichen-Treibern</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="excompat.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="EXACCESS"
+>Zugriffskontrolle auf Gerätedateien</A
+></H1
+><P
+>&#13;
+
+Manchmal hängt die Zuverlässigkeit eines Gerätetreibers wesentlich von
+der Zugriffskontrolle ab. Einerseits sollten nicht-autorisierte
+Benutzer auch keinen Zugriff auf das Gerät haben (das wird durch die
+Zugriffs-Bits des Dateisystems erzwungen), andererseits sollte aber
+manchmal auch nur jeweils ein autorisierter Benutzer ein Gerät öffnen
+können.&#13;</P
+><P
+>Das Problem ist ähnlich wie bei der Benutzung von TTYs. In diesem Fall
+ändert der <SPAN
+><I
+CLASS="EMPHASIS"
+>login</I
+></SPAN
+>-Prozeß den Eigentümer der
+Gerätedatei, wenn sich ein Benutzer am System anmeldet, um ein Stören
+oder Ausspionieren des TTY-Datenflusses durch andere Benutzer
+        zu verhindern. Aber es ist natürlich
+unpraktisch, jedesmal beim Öffnen eines Gerätes ein privilegiertes
+Programm starten zu müssen, nur um einen exklusiven Zugriff darauf zu
+gewährleisten.&#13;</P
+><P
+>Der Code, den wir bisher gesehen haben, implementiert keine
+Zugriffskontrolle über die Zugriffs-Bits des Dateisystems hinaus. Wenn
+der Systemaufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> eine Anfrage an den Treiber
+weiterleitet, dann gelingt das auch. Wir werden jetzt einige weitere
+Techniken einführen, mit denen zusätzliche Überprüfungen durchgeführt
+werden können.&#13;</P
+><P
+>Jedes Gerät in diesem Abschnitt verhält sich wie das normale
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Gerät (implementiert also einen
+persistenten Speicherbereich); sie unterscheiden sich von
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> nur in der Zugriffskontrolle, die in
+den Methoden <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>close</I
+></SPAN
+>
+implementiert wird.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN7200"
+>Nur einmal zu öffnende Geräte</A
+></H2
+><P
+>&#13;
+
+Der radikalste Ansatz bei der Zugriffskontrolle besteht darin, ein Gerät
+nur von jeweils einem Prozeß öffnen zu lassen. Wir mögen diese Technik
+nicht, weil sie den Einfallsreichtum des Benutzers bremst. Ein
+Benutzer kann durchaus mehrere Prozesse auf ein und demselben Gerät
+ausführen wollen, so könnte einer der Prozesse Status-Informationen
+lesen, während ein anderer gerade Daten schreibt. In manchen Fällen
+          können Benutzer viel erreichen, indem sie ein paar einfache
+          Programme durch ein Shell-Skript laufen lassen, solange sie
+          gleichzeitig auf das Gerät zugreifen dürfen. Das
+          Implementieren des einmaligen Öffnens ist also mit anderen
+          Worten das Einführen einer Policy, die Ihren Benutzern im
+          Weg sein könnte.</P
+><P
+>Es hat zwar unangenehme Eigenschaften, wenn man nur einem Prozeß erlaubt,
+          ein Gerät zu öffnen, aber das ist auch die einfachste
+          Zugriffskontrolle, die man für einen Gerätetreiber
+          implementieren kann. Deswegen zeigen wir dieses Verfahren hier. Der
+          Quellcode stammt aus einem Gerät namens
+          <SPAN
+CLASS="APPLICATION"
+>scullsingle</SPAN
+>.&#13;</P
+><P
+>&#13;Der <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>-Aufruf verweigert den Zugriff anhand
+eines globalen Integer-Schalters:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+
+int scull_s_open(struct inode *inode, struct file *filp)
+{
+  Scull_Dev *dev = &#38;scull_s_device; /* Geraeteinformation */
+  int num = NUM(inode-&#62;i_rdev);
+
+  if (!filp-&#62;private_data &#38;&#38; num &#62; 0)
+    return -ENODEV; /* kein devfs: nur ein Geraet erlauben */
+  spin_lock(&#38;scull_s_lock);
+  if (scull_s_count) {
+    spin_unlock(&#38;scull_s_lock);
+    return -EBUSY; /* bereits geoeffnet */
+  }
+  scull_s_count++;
+  spin_unlock(&#38;scull_s_lock);
+    /* alles weitere ist aus dem normalen scull-Geraet kopiert */
+
+  if ( (filp-&#62;f_flags &#38; O_ACCMODE) == O_WRONLY)
+    scull_trim(dev);
+  if (!filp-&#62;private_data)
+    filp-&#62;private_data = dev;
+  MOD_INC_USE_COUNT;
+  return 0;     /* Erfolg */
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Der <SPAN
+><I
+CLASS="EMPHASIS"
+>close</I
+></SPAN
+>-Systemaufruf markiert das Gerät
+entsprechend als nicht mehr belegt.&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+int scull_s_release (struct inode *inode, struct file *filp)
+{
+    scull_s_count--; /* Geraet freigeben */
+    MOD_DEC_USE_COUNT;
+    return 0;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Der beste Platz für das Flag
+<TT
+CLASS="LITERAL"
+>scull_s_count</TT
+> (mit dem zugehörigen
+          Spinlock <TT
+CLASS="LITERAL"
+>scull_s_lock</TT
+>, dessen Aufgabe im
+          nächsten Unterabschnitt erläutert wird) ist in der
+Gerätestruktur (hier <TT
+CLASS="LITERAL"
+>Scull_dev</TT
+>), weil er
+konzeptionell zum Gerät gehört.
+Der <SPAN
+CLASS="APPLICATION"
+>scullsingle</SPAN
+>-Treiber verwendet aber doch
+freistehende Variablen für das Flag und das Lock, um die gleiche
+          Gerätestruktur und die gleichen
+Methoden wie das einfache <SPAN
+><I
+CLASS="EMPHASIS"
+>scull</I
+></SPAN
+>-Gerät verwenden
+zu können und um die Code-Duplikation zu minimieren.
+&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN7234"
+>Ein weiterer Abstecher zu den Race Conditions</A
+></H2
+><P
+>&#13;
+Denken Sie noch einmal über die gerade gezeigte Abfrage der Variable
+          <TT
+CLASS="LITERAL"
+>scull_s_count</TT
+> ab. Hier erfolgen zwei
+          separate Aktionen: Zunächst wird der Wert der
+          Variablen abgefragt und das Öffnen verweigert, wenn dieser
+          Wert nicht 0 ist; danach wird die Variable inkrementiert, um
+          das Gerät als belegt zu markieren. Auf einem
+          Einzel-Prozessor-System sind diese Tests sicher, weil kein
+          anderer Prozeß zwischen die beiden Aktionen kommen kann.</P
+><P
+>Sobald Sie aber in die SMP-Welt kommen, tritt ein Problem auf. Wenn
+          zwei Prozesse auf zwei Prozessoren versuchen, das Gerät
+          gleichzeitig zu öffnen, kann es passieren, daß beide den
+          Wert der Variable <TT
+CLASS="LITERAL"
+>scull_s_count</TT
+> abfragen,
+          bevor einer der beiden sie modifiziert. In diesem Szenario
+          wird im günstigsten Fall die Einmal-Öffnen-Semantik des
+          Geräts nicht eingehalten. Im schlimmsten Fall kann
+          ein unerwarteter nebenläufiger Zugriff Datenstrukturen zerstören
+          und Systemabstürze verursachen.</P
+><P
+>&#13;Wir haben hier also mit anderen Worten eine weitere Race
+          Condition. Auch diese könnte sehr ähnlich wie die in <A
+HREF="char.html"
+>Kapitel 3</A
+> beseitigt werden. Die Race Conditions dort wurden durch
+          den Zugriff auf eine Status-Variable in einer potentiell
+          gemeinsam genutzten Datenstruktur verursacht und mit
+          Semaphoren beseitigt. Im allgemeinen können Semaphore aber
+          teuer sein, weil sie den aufrufenden Prozeß schlafen legen
+          können. Sie sind eine schwergewichtige Lösung für das
+          Problem, einfach nur die schnelle Abfrage einer
+          Status-Variable zu schützen.</P
+><P
+>&#13;
+Statt dessen verwendet <SPAN
+CLASS="APPLICATION"
+>scullsingle</SPAN
+> einen
+          anderen Sperrmechanismus namens
+          <I
+CLASS="FIRSTTERM"
+>Spinlock</I
+>. Spinlocks legen nie einen
+          Prozeß schlafen, wenn eine Sperre nicht verfügbar ist. Statt dessen versuchen sie immer und
+          immer wieder aufs neue, an der Sperre vorbeizukommen, bis sie einmal frei wird und dann dem entsprechenden Prozeß gehört. Spinlocks haben damit einen sehr geringen
+          Sperr-Overhead, aber auch das Potential, einen Prozessor
+          sehr lange rotieren zu lassen, wenn jemand auf der Sperre
+          hocken bleibt. Ein weiterer Vorteil von Spinlocks gegenüber
+          Semaphoren besteht darin, daß ihre Implementation leer ist,
+          wenn der Code für ein Einzelprozessor-System kompiliert wird
+          (wo solche SMP-spezifischen Race Conditions nicht auftreten
+          können). Semaphore sind eine allgemeinere Ressource, die
+          auch auf Einzelprozessor-Systemen sinnvoll ist, und werden daher
+          auf solchen Systemen nicht wegoptimiert.
+
+
+
+
+
+
+
+
+
+
+
+
+&#13;</P
+><P
+>Spinlocks können der ideale Mechanismus für kleine kritische
+          Abschnitte sein. Prozesse sollten Spinlocks so kurz wie
+          möglich halten und dürfen nie schlafen gehen, während sie so
+          eine Sperre halten. Daher ist der
+          Haupt-<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Treiber, der Daten
+          mit dem User-Space austauscht und deswegen schlafen gehen
+          kann, nicht für eine Spinlock-Lösung geeignet. Aber
+          Spinlocks funktionieren sehr schön in der Zugriffskontrolle
+          auf <TT
+CLASS="LITERAL"
+>scull_s_single</TT
+> (selbst wenn auch sie
+          nicht die optimale Lösung sind, wie wir in <A
+HREF="irq.html"
+>Kapitel 9</A
+> sehen werden).</P
+><P
+>&#13;
+
+
+Spinlocks werden mit dem Typ <TT
+CLASS="LITERAL"
+>spinlock_t</TT
+> deklariert,
+          der in <TT
+CLASS="LITERAL"
+>&#60;linux/spinlock.h&#62;</TT
+> definiert
+          ist. Vor ihrer Verwendung müssen sie initialisiert werden:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; spin_lock_init(spinlock_t *lock);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Ein Prozeß, der in einen kritischen Abschnitt eintritt, holt sich die
+          Sperre mit <TT
+CLASS="LITERAL"
+>spin_lock</TT
+>:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; spin_lock(spinlock_t *lock);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Die Sperre wird am Ende mit <TT
+CLASS="LITERAL"
+>spin_unlock</TT
+> wieder
+          freigegeben:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; spin_unlock(spinlock_t *lock);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Spinlocks können komplizierter als hier beschrieben sein; darauf gehen
+          wir noch in <A
+HREF="irq.html"
+>Kapitel 9</A
+> ein. Aber der hier gezeigte
+          einfache Fall reicht uns im Moment, und wann immer es in
+          <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> um Zugriffskontrolle geht,
+          werden wir einfache Spinlocks wie hier gezeigt einsetzen.</P
+><P
+>Aufmerksame Leser haben vielleicht bemerkt, daß
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>scull_s_open</I
+></SPAN
+> die
+          <TT
+CLASS="LITERAL"
+>scull_s_lock</TT
+>-Sperre vor dem
+          Inkrementieren des Flags <TT
+CLASS="LITERAL"
+>scull_s_count</TT
+>
+          erwirbt, während <SPAN
+><I
+CLASS="EMPHASIS"
+>scull_s_close</I
+></SPAN
+> keine
+          solche Vorsichtsmaßnahme enthält. Dieser Code ist sicher,
+          weil kein anderer Code den Wert von
+          <TT
+CLASS="LITERAL"
+>scull_s_count</TT
+> verändern wird, wenn dieser
+          kleiner als 0 ist, so daß es hier nicht zu einem Konflikt
+          kommen kann.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN7295"
+>Den Zugriff auf jeweils einen Benutzer gleichzeitig beschränken</A
+></H2
+><P
+>&#13;
+
+
+
+Als nächsten Schritt nach einer systemweiten Sperre können wir einen
+          Benutzer das Gerät in mehreren Prozessen öffnen lassen, aber
+          nur einen einzigen Benutzer auf einmal. Diese Lösung kann man
+          leicht testen, weil der Benutzer von mehreren Prozessen
+          gleichzeitig lesen und schreiben kann, aber davon
+          ausgegangen werden kann, daß der Benutzer selbst einen Teil
+          der Verantwortung für die Erhaltung der Datenintegrität
+          während der gleichzeitigen Zugriffe trägt. Dies geschieht
+          durch zusätzliche Überprüfungen in der Methode
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>; solche Überprüfungen geschehen
+          nach der normalen Überprüfung der Zugriffsrechte und können
+          den Zugriff nur restriktiver machen, als in den Benutzer-
+          und Gruppen-Zugriffsrechten angegeben ist. Dies ist die
+          gleiche Zugangs-Policy wie bei TTYs, bedarf aber keines
+          externen privilegierten Programms.
+        </P
+><P
+>Solche Zugriffs-Policies sind etwas schwieriger zu implementieren
+als das nur einmalige Öffnen. In diesem Fall benötigen wir zwei Daten:
+einen Zähler, der registriert wie oft das Gerät geöffnet wurde, und die Benutzer-ID
+des &#8220;Eigentümers&#8221; des Gerätes. Der beste Platz für solche
+Elemente ist wieder einmal die Gerätestruktur, trotzdem werden in den
+Beispielen aus den gleichen Gründen, die schon bei
+<SPAN
+CLASS="APPLICATION"
+>scullsingle</SPAN
+> angegeben wurden, globale Variablen
+verwendet. Das neue Gerät heißt <SPAN
+CLASS="APPLICATION"
+>sculluid.</SPAN
+>&#13;</P
+><P
+>&#13;Der Systemaufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> gewährt beim ersten Mal den
+Zugriff, merkt sich aber den Eigentümer des Geräts. Damit kann ein
+Benutzer ein Gerät mehrfach öffnen, womit dann auch kooperierende
+Prozesse gleichzeitig auf dem Gerät arbeiten dürfen. Gleichzeitig kann
+          aber solange kein anderer
+Benutzer das Gerät öffnen, was eine Beeinflussung von außen
+verhindert. Weil diese  Version der Funktion fast identisch mit der
+letzten ist, zeigen wir hier nur den relevanten Teil:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+
+ spin_lock(&#38;scull_u_lock);
+ if (scull_u_count &#38;&#38;
+   (scull_u_owner != current-&#62;uid) &#38;&#38; /* Benutzer darf */
+   (scull_u_owner != current-&#62;euid) &#38;&#38; /* wer su benutzt, darf */
+         !capable(CAP_DAC_OVERRIDE)) { /* root darf immer */
+     spin_unlock(&#38;scull_u_lock);
+     return -EBUSY;  /* -EPERM würde den Benutzer verwirren */
+ }
+
+ if (scull_u_count == 0)
+   scull_u_owner = current-&#62;uid; /* das gehoert uns */
+
+ scull_u_count++;
+ spin_unlock(&#38;scull_u_lock);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wir haben uns entschieden, <TT
+CLASS="LITERAL"
+>-EBUSY</TT
+> anstelle von
+<TT
+CLASS="LITERAL"
+>-EPERM</TT
+> zurückzugeben. Zwar überprüft der Code die
+Zugriffsrechte, aber so wird ein Benutzer eher in die richtige
+Richtung geleitet. Die normale Reaktion auf &#8220;Permission
+denied&#8221; ist normalerweise ein Überprüfen des Modus und der
+Eigentümerschaft der <TT
+CLASS="FILENAME"
+>/dev</TT
+>-Datei, während
+&#8220;Device Busy&#8221; eher nahelegt, daß der Benutzer schauen
+sollte, welcher andere Prozeß das Gerät belegt.
+        </P
+><P
+>Dieser Code überprüft auch, ob der Prozeß, der versucht, das Gerät zu
+          öffnen, die Fähigkeit hat, die Dateizugriffsrechte zu
+          überschreiben. Wenn das der Fall ist, ist das Öffnen selbst
+          dann erlaubt, wenn der öffnende Prozeß nicht der Besitzer
+          des Geräts ist. Die Capability
+          <TT
+CLASS="LITERAL"
+>CAP_DAC_OVERRIDE</TT
+> kommt uns da gut zupasse.
+        </P
+><P
+>Der Code für <TT
+CLASS="LITERAL"
+>close</TT
+> ist hier nicht aufgeführt, weil
+er lediglich den Verwendungszähler herunterzählt.
+
+&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="EXOBLO"
+>Blockieren im open-Aufruf als Alternative zu EBUSY</A
+></H2
+><P
+>&#13;
+
+
+
+Meistens ist es das Beste, einen Fehler zu melden, wenn das Gerät
+gerade nicht zur Verfügung steht, aber es gibt auch Situationen, in
+denen man lieber auf das Gerät warten würde.&#13;</P
+><P
+>Ein Beispiel: Ein Datenkommunikationskanal wird sowohl dazu verwendet,
+um Berichte auf regelmäßiger Basis (mit
+<SPAN
+CLASS="APPLICATION"
+>crontab</SPAN
+>) zu senden, als auch, um gelegentlich
+Benutzeranfragen zu übertragen. In diesem Fall ist es sehr viel
+besser, wenn der regelmäßige Bericht geringfügig verspätet ist,
+anstatt ganz auszufallen, wenn der Kanal gerade belegt ist.&#13;</P
+><P
+>Hier haben wir eine der Entscheidungen, die ein Programmierer treffen
+muß, wenn er einen Gerätetreiber schreibt. Die richtige Antwort
+hängt vom zu lösenden Problem ab.&#13;</P
+><P
+>Wie Sie sich sicher schon gedacht haben, besteht die Alternative
+zu <TT
+CLASS="LITERAL"
+>EBUSY</TT
+> darin, ein blockierendes <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>
+zu implementieren.&#13;</P
+><P
+>Das <SPAN
+CLASS="APPLICATION"
+>scullwuid</SPAN
+>-Gerät ist eine Version von
+<SPAN
+CLASS="APPLICATION"
+>sculluid</SPAN
+>, die auf das Gerät wartet,
+anstelle <TT
+CLASS="LITERAL"
+>-EBUSY</TT
+> zurückzugeben. Es unterscheidet
+sich von <SPAN
+CLASS="APPLICATION"
+>sculluid</SPAN
+> nur im folgenden Teil von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+ spin_lock(&#38;scull_w_lock);
+ while (scull_w_count &#38;&#38;
+  (scull_w_owner != current-&#62;uid) &#38;&#38; /* Benutzer darf */
+  (scull_w_owner != current-&#62;euid) &#38;&#38; /* wer su ausführt, darf */
+  !capable(CAP_DAC_OVERRIDE)) {
+   spin_unlock(&#38;scull_w_lock);
+   if (filp-&#62;f_flags &#38; O_NONBLOCK) return -EAGAIN;
+   interruptible_sleep_on(&#38;scull_w_wait);
+   if (signal_pending(current)) /* ein Signal ist eingetroffen */
+    return -ERESTARTSYS; /* die FS-Schicht soll sich damit beschaeftigen */
+   /* ansonsten in die Schleife eintreten */
+   spin_lock(&#38;scull_w_lock);
+ }
+ if (scull_w_count == 0)
+   scull_w_owner = current-&#62;uid; /* das gehoert uns */
+ scull_w_count++;
+ spin_unlock(&#38;scull_w_lock);
+
+
+
+
+&#13;</PRE
+></TD
+></TR
+></TABLE
+><P
+>Diese Implementation basiert wieder einmal auf einer
+          Warteschlange. Warteschlangen wurden geschaffen, um eine
+          Liste von Prozessen zu verwalten, die schlafend auf ein
+          Ereignis warten, und sind deswegen hier perfekt geeignet.</P
+><P
+>&#13;Die <SPAN
+><I
+CLASS="EMPHASIS"
+>release</I
+></SPAN
+>-Methode ist dann dafür zuständig,
+schlafende Prozesse aufzuwecken:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+int scull_w_release (struct inode *inode, struct file *filp)
+{
+    scull_w_count--;
+    if (scull_w_count == 0)
+        wake_up_interruptible(&#38;scull_w_wait); /* andere UIDs aufwecken */
+    MOD_DEC_USE_COUNT;
+    return 0;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Bei interaktiver Benutzung ist eine Implementation mit blockierendem
+<SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> ziemlich unangenehm, weil der Benutzer
+andauernd raten muß, was gerade nicht funktioniert. Interaktive
+Benutzer verwenden normalerweise vorkompilierte Befehle wie
+<SPAN
+CLASS="APPLICATION"
+>cp</SPAN
+> und <SPAN
+CLASS="APPLICATION"
+>tar</SPAN
+> und
+können daher nicht einfach <TT
+CLASS="LITERAL"
+>O_NONBLOCK</TT
+> zum
+<SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>-Aufruf hinzufügen. Jemand, der ein Backup auf
+das Bandlaufwerk im nächsten Raum macht, hätte lieber eine
+&#8220;device or resource busy&#8221;-Meldung, anstatt raten zu
+müssen, warum <SPAN
+CLASS="APPLICATION"
+>tar</SPAN
+> beim Durchsuchen der
+Festplatte heute so ruhig ist.&#13;</P
+><P
+>Diese Art von Problem (verschiedene inkompatible Policies für ein und
+dasselbe Gerät) läßt sich am besten lösen, indem man für jede
+Zugriffs-Policy einen eigenen Geräteknoten erzeugt. Ein Beispiel für diese
+          Praktik finden Sie im Linux-Treiber für Bandlaufwerke, der
+          mehrere Gerätedateien für ein und dasselbe Gerät
+          enthält. Verschiedene Gerätedateien lassen das Laufwerk
+          beispielsweise mit oder ohne Komprimierung aufzeichnen oder
+          das Band nach dem Schließen des Geräts automatisch
+          zurückspulen.
+
+&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN7384"
+>Kopieren des Gerätes beim Öffnen</A
+></H2
+><P
+>&#13;
+
+
+Das Erzeugen verschiedener privater Kopien eines Gerätes für jeden
+Prozeß, der das Gerät öffnen will, ist eine weitere Technik,
+Zugriffskontrollen zu implementieren.&#13;</P
+><P
+>Natürlich ist das nur möglich, wenn das Gerät an keine
+Hardware gebunden ist. <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> ist ein
+Beispiel für ein &#8220;Software&#8221;-Gerät. Die Interna von
+          <TT
+CLASS="FILENAME"
+>/dev/tty</TT
+> verwenden eine ähnliche
+            Technik, um ihrem Prozeß eine andere &#8220;Sicht&#8221; auf das zu
+            geben, was der <TT
+CLASS="FILENAME"
+>/dev</TT
+>-Eintrag
+            repräsentiert. Wenn ein Software-Treiber Kopien eines
+Gerätes erzeugt, nennen wir diese virtuelle Geräte
+&#8212; analog zu den &#8220;virtuellen Konsolen&#8221;, die auf einem
+einzigen physikalischen Terminal existieren.&#13;</P
+><P
+>Eine solche Zugriffskontrolle wird zwar nur selten benötigt, aber die
+Implementation ist insofern interessant, als sie zeigt, wie einfach
+Kernel-Code die Perspektive von Anwendungen auf die umgebende Welt
+(also den Computer) verändern kann. Das Thema ist eigentlich ziemlich
+esoterisch; wenn es Sie also nicht interessiert, dann können Sie
+gleich zum nächsten Abschnitt vorgehen.&#13;</P
+><P
+>Der Geräteknoten <TT
+CLASS="FILENAME"
+>/dev/scullpriv</TT
+>
+implementiert im <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Paket virtuelle
+Geräte. Die Implementation von <SPAN
+CLASS="APPLICATION"
+>scullpriv</SPAN
+>
+verwendet die Minor-Nummer der kontrollierenden TTYs des Prozesses
+als Schlüssel für den Zugriff auf das virtuelle Gerät. Natürlich
+können Sie die Quellen so anpassen, daß ein beliebiger Integer-Wert
+für den Schlüssel verwendet wird; jede Wahl führt zu einer anderen
+Policy. Wenn Sie beispielsweise <TT
+CLASS="LITERAL"
+>uid</TT
+> verwenden, dann
+wird für jeden Benutzer ein anderes virtuelles Gerät erzeugt; benutzen
+Sie <TT
+CLASS="LITERAL"
+>pid</TT
+>, dann gibt es ein neues Gerät für jeden
+Prozeß, der darauf zugreifen will.&#13;</P
+><P
+>Wir haben hier das kontrollierende Terminal gewählt, weil es damit
+einfach ist, das Gerät mittels I/O-Umleitung zu testen: Das Gerät
+          wird von allen Befehlen auf dem gleichen virtuellen Terminal
+          gemeinsam genutzt, ist aber von den Befehlen, die auf einem
+          anderen Terminal laufen, getrennt.&#13;</P
+><P
+>Die Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> sieht etwa folgendermaßen
+aus. Sie muß das richtige virtuelle Gerät finden und gegebenenfalls
+ein neues erzeugen. Der letzte Teil der Funktion ist hier nicht
+wiedergegeben, weil er einfach nur aus
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> kopiert wurde und wir diesen Code
+schon kennen.&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+
+/* Die Clone-spezifische Datenstruktur enthaelt ein Schluesselfeld key */
+struct scull_listitem {
+  Scull_Dev device;
+  int key;
+  struct scull_listitem *next;
+
+};
+
+/* Die Liste der Geraete sowie eine Sperre zum Schutz derselben */
+struct scull_listitem *scull_c_head;
+spinlock_t scull_c_lock;
+
+/* Nach einem Geraet suchen oder eines erzeugen, wenn keines gefunden wird */
+static Scull_Dev *scull_c_lookfor_device(int key)
+{
+  struct scull_listitem *lptr, *prev = NULL;
+
+  for (lptr = scull_c_head; lptr &#38;&#38; (lptr-&#62;key != key); lptr = lptr-&#62;next)
+    prev=lptr;
+  if (lptr) return &#38;(lptr-&#62;device);
+
+  /* nicht gefunden */
+  lptr = kmalloc(sizeof(struct scull_listitem), GFP_ATOMIC);
+  if (!lptr) return NULL;
+
+  /* das Geraet initialisieren */
+  memset(lptr, 0, sizeof(struct scull_listitem));
+  lptr-&#62;key = key;
+  scull_trim(&#38;(lptr-&#62;device)); /* initialisieren */
+  sema_init(&#38;(lptr-&#62;device.sem), 1);
+
+  /* in die Liste stellen */
+  if (prev) prev-&#62;next = lptr;
+  else    scull_c_head = lptr;
+
+  return &#38;(lptr-&#62;device);
+}
+
+int scull_c_open(struct inode *inode, struct file *filp)
+{
+  Scull_Dev *dev;
+  int key, num = NUM(inode-&#62;i_rdev);
+
+  if (!filp-&#62;private_data &#38;&#38; num &#62; 0)
+    return -ENODEV; /* kein devfs: nur ein Geraet erlauben */
+
+  if (!current-&#62;tty) {
+    PDEBUG("Process \"%s\" has no ctl tty\n",current-&#62;comm);
+    return -EINVAL;
+  }
+  key = MINOR(current-&#62;tty-&#62;device);
+
+  /* nach einem scullc-Geraet in der Liste suchen */
+  spin_lock(&#38;scull_c_lock);
+  dev = scull_c_lookfor_device(key);
+  spin_unlock(&#38;scull_c_lock);
+
+  if (!dev) return -ENOMEM;
+
+  /* alles andere wird aus dem einfachen scull-Geraet kopiert */</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Die <SPAN
+><I
+CLASS="EMPHASIS"
+>release</I
+></SPAN
+>-Methode macht nichts Besonderes. Sie
+könnte das Gerät beim letzten Schließen freigeben, aber wir haben uns
+entschlossen, keinen Zähler zu verwalten, der protokolliert, wie oft
+das Gerät geöffnet wurde, um das Testen des Treibers zu
+erleichtern. Wenn das Gerät beim letzten Schließen freigegeben werden
+würde, könnten Sie nicht dieselben Daten, die Sie gerade
+hineingeschrieben haben, wieder lesen, es sei denn, mindestens ein
+Hintergrundprozeß hält das Gerät offen. Der Beispiel-Treiber geht
+hier den einfacheren Weg und behält die Daten einfach, so daß Sie
+diese beim nächsten <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> auf jeden Fall vorfinden
+werden. Die Geräte werden beim Aufruf von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>scull_cleanup</I
+></SPAN
+> freigegeben.&#13;</P
+><P
+>Hier sehen Sie die Implementation von <SPAN
+><I
+CLASS="EMPHASIS"
+>release</I
+></SPAN
+> in
+<SPAN
+CLASS="APPLICATION"
+>scullpriv</SPAN
+>, die auch diese Besprechung der
+          Geräte-Methoden abschließt:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+void scull_c_release (struct inode *inode, struct file *filp)
+{
+    /*
+     * Nichts zu tun, weil das Geraet persistent ist.
+     * Ein "echtes" geklontes Geraet sollte beim letzten Schliessen
+     * freigegeben werden.
+     */
+    MOD_DEC_USE_COUNT;
+    return 0;
+}</PRE
+></TD
+></TR
+></TABLE
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x7108.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="excompat.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Ein Gerät positionieren</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="extra.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Abwärtskompatibilität</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

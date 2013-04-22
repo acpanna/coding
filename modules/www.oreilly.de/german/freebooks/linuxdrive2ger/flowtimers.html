@@ -1,0 +1,552 @@
+<HTML
+><HEAD
+><TITLE
+>Kernel-Timer</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Der Lauf der Zeit"
+HREF="flow.html"><LINK
+REL="PREVIOUS"
+TITLE="Task-Schlangen"
+HREF="flowqueue.html"><LINK
+REL="NEXT"
+TITLE="Abwärtskompatibilität"
+HREF="x8892.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="flowqueue.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 6. Der Lauf der Zeit</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x8892.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="FLOWTIMERS"
+>Kernel-Timer</A
+></H1
+><P
+>&#13;
+
+
+Die ultimative Ressource zur Verwaltung von Zeit im Kernel sind die
+Timer. Timer werden dazu benutzt, die Ausführung einer Funktion (eines
+sogenannten Timer-Handlers) zu einem vorbestimmten Zeitpunkt
+auszulösen. Der Unterschied zu den Task-Schlangen und Tasklets besteht
+darin, daß Sie
+angeben können, <SPAN
+><I
+CLASS="EMPHASIS"
+>wann</I
+></SPAN
+> Ihre Funktion aufgerufen
+werden soll, während Sie bei einer Task-Schlange nicht exakt
+vorhersagen können, wann Ihre Funktion aufgerufen wird. Ansonsten
+ähneln Kernel-Timer den Task-Schlangen: Eine in einem Kernel-Timer
+registrierte Funktion wird nur einmal ausgeführt &#8212; Timer sind
+nicht zyklisch.&#13;</P
+><P
+>Manchmal müssen Sie eine Operation losgelöst vom Prozeß-Kontext
+ausführen. Das könnte beispielsweise das Abschalten des Floppy-Motors
+oder eine andere, länger dauernde Operation zum Herunterfahren eines
+Gerätes sein. In diesem Fall wäre es nicht fair der Anwendung
+gegenüber, wenn einfach der Rücksprung aus dem
+<SPAN
+><I
+CLASS="EMPHASIS"
+>close</I
+></SPAN
+> verzögert werden würde. Die Verwendung
+einer Task-Schlange wäre auch zuviel, denn ein Task in einer Schlange
+muß sich immer wieder selbst registrieren, während er seine
+Zeit-Berechnungen vornimmt.&#13;</P
+><P
+>Ein Timer ist viel leichter zu benutzen. Sie registrieren die Funktion
+einmalig, und der Kernel ruft die Funktion auf, wenn der Timer
+abläuft. Diese Funktionalität wird oft im Kernel selbst verwendet,
+manchmal aber auch &#8212; wie im Beispiel mit dem Floppy-Motor &#8212;
+von Treibern benutzt.</P
+><P
+>Die Kernel-Timer sind als doppelt verkettete Liste organisiert. Das
+bedeutet, daß Sie beliebig viele Timer erzeugen können. Ein Timer
+zeichnet sich durch seinen Timeout-Wert (in Jiffies) und die bei
+Ablauf des Timers aufzurufende Funktion aus. Der Timer-Handler bekommt
+ein Argument, das in der Datenstruktur gespeichert ist, sowie einen
+Zeiger auf den Handler selbst.</P
+><P
+>&#13;
+
+
+Die Datenstruktur eines Timers sieht folgendermaßen aus und ist in
+<TT
+CLASS="LITERAL"
+>&#60;linux/timer.h&#62;</TT
+> zu finden:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+struct timer_list {
+    struct timer_list *next;          /* niemals beruehren! */
+    struct timer_list *prev;          /* niemals beruehren! */
+    unsigned long expires;            /* der Timeout, in Jiffies */
+    unsigned long data;               /* Argument für den Handler */
+    void (*function)(unsigned long);  /* Handler des Timeouts */
+    volatile int running;             /* neu in 2.4, nicht anfassen */
+};</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Der Timeout eines Timers ist ein Wert in Jiffies;
+<TT
+CLASS="LITERAL"
+>timer-&#62;function</TT
+> soll also gestartet werden, wenn
+<TT
+CLASS="LITERAL"
+>jiffies</TT
+> größer oder gleich
+<TT
+CLASS="LITERAL"
+>timer-&#62;expires</TT
+> ist. Der Timeout ist ein
+absoluter Wert; er wird normalerweise erzeugt, indem man den aktuellen
+Wert von <TT
+CLASS="LITERAL"
+>jiffies</TT
+> nimmt und die gewünschte
+Verzögerung hinzuaddiert.&#13;</P
+><P
+>&#13;Sobald eine <TT
+CLASS="LITERAL"
+>timer_list</TT
+>-Struktur
+initialisiert ist, kann sie mit <SPAN
+><I
+CLASS="EMPHASIS"
+>add_timer</I
+></SPAN
+>
+in eine sortierte Liste eingefügt werden, die dann etwa einhundertmal pro Sekunde durchsucht wird. Selbst Systeme (wie Alphas), auf
+denen die Interrupt-Frequenz höher ist, überprüfen die Timer-Liste
+nicht öfter; die zusätzliche Timer-Auflösung würde die Kosten der
+zusätzlichen Durchläufe durch die Liste nicht rechtfertigen.&#13;</P
+><P
+>Die folgenden Funktionen arbeiten auf Timern:&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>void init_timer(struct timer_list * timer);</TT
+></DT
+><DD
+><P
+>Diese Inline-Funktion wird verwendet, um die
+        Timer-Struktur zu initialisieren. Derzeit werden nur die
+        <TT
+CLASS="LITERAL"
+>prev</TT
+>- und <TT
+CLASS="LITERAL"
+>next</TT
+>-Zeiger
+        mit 0 gefüllt. Programmierer sollten aber immer diese Funktion
+        verwenden, um einen Timer zu initialisieren und nie direkt
+        auf die Zeiger zugreifen, damit sie aufwärts-kompatibel bleiben.&#13;</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void add_timer(struct timer_list * timer);</TT
+></DT
+><DD
+><P
+>Diese Funktion fügt einen Timer in die globale Liste der
+        aktiven Timer ein.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int mod_timer(struct timer_list *timer, unsigned long expires);</TT
+></DT
+><DD
+><P
+>&#13;Sollten Sie den Zeitpunkt ändern müssen, an dem der Timer abläuft,
+können Sie <SPAN
+><I
+CLASS="EMPHASIS"
+>mod_timer</I
+></SPAN
+> verwenden. Nach dem
+Aufruf wird der neue Wert für <TT
+CLASS="LITERAL"
+>expires</TT
+> verwendet.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int del_timer(struct timer_list * timer);</TT
+></DT
+><DD
+><P
+>Wenn ein Timer aus der Liste entfernt werden muß, bevor
+        er abläuft, sollte <SPAN
+><I
+CLASS="EMPHASIS"
+>del_timer</I
+></SPAN
+>
+        verwendet werden. Wenn der Timer dagegen abläuft, wird er
+        automatisch entfernt.&#13;</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int del_timer_sync(struct timer_list *timer);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion arbeitet wie <SPAN
+><I
+CLASS="EMPHASIS"
+>del_timer</I
+></SPAN
+>,
+garantiert aber auch, daß bei der Rückkehr die Timer-Funktion auf
+keiner CPU ausgeführt
+wird. <SPAN
+><I
+CLASS="EMPHASIS"
+>del_timer_sync</I
+></SPAN
+> wird
+verwendet, um Race Conditions zu vermeiden, wenn eine Timer-Funktion
+zu unerwarteten Zeitpunkten ausgeführt wird; sie sollte in den meisten
+Situationen benutzt werden. Der Aufrufer von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>del_timer_sync</I
+></SPAN
+> muß sicherstellen,
+daß die Timer-Funktion nicht <SPAN
+><I
+CLASS="EMPHASIS"
+>add_timer</I
+></SPAN
+>
+verwendet, um sich selbst wieder hinzuzufügen.</P
+></DD
+></DL
+></DIV
+><P
+>&#13;Das Modul <SPAN
+CLASS="APPLICATION"
+>jiq</SPAN
+> ist ein Beispiel für die
+Verwendung von Timern. Die Datei
+<TT
+CLASS="FILENAME"
+>/proc/jitimer</TT
+> verwendet einen Timer, um
+die beiden Datenzeilen zu erzeugen; die Ausgabefunktion ist die
+gleiche wie in den Beispielen für Task-Schlangen. Die erste Datenzeile
+wird aus dem <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>-Aufruf (aufgerufen von einem
+Benutzer-Prozeß, der <TT
+CLASS="FILENAME"
+>/proc/jitimer</TT
+> ausliest)
+erzeugt, während die
+zweite Zeile von der Timer-Funktion ausgegeben wird, nachdem eine
+Sekunde verstrichen ist.&#13;</P
+><P
+>Der Code von <TT
+CLASS="FILENAME"
+>/proc/jitimer</TT
+> sieht
+folgendermaßen aus:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+
+struct timer_list jiq_timer;
+
+void jiq_timedout(unsigned long ptr)
+{
+    jiq_print((void *)ptr);            /* eine Zeile ausgeben */
+    wake_up_interruptible(&#38;jiq_wait);  /* Prozeß aufwecken */
+}
+
+
+int jiq_read_run_timer(char *buf, char **start, off_t offset,
+                   int len, int *eof, void *data)
+{
+
+    jiq_data.len = 0;      /* Argument für jiq_print() vorbereiten */
+    jiq_data.buf = buf;
+    jiq_data.jiffies = jiffies;
+    jiq_data.queue = NULL;      /* nicht erneut vormerken */
+
+    init_timer(&#38;jiq_timer);              /* Timer-Struktur initialsieren */
+    jiq_timer.function = jiq_timedout;
+    jiq_timer.data = (unsigned long)&#38;jiq_data;
+    jiq_timer.expires = jiffies + HZ; /* eine Sekunde */
+
+    jiq_print(&#38;jiq_data);   /* ausgeben und schlafen gehen */
+    add_timer(&#38;jiq_timer);
+    interruptible_sleep_on(&#38;jiq_wait);
+    del_timer_sync(&#38;jiq_timer);  /* falls uns ein Signal aufgeweckt hat */
+
+    *eof = 1;
+    return jiq_data.len;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wenn Sie <B
+CLASS="COMMAND"
+>head /proc/jitimer</B
+>
+aufrufen, bekommen Sie die folgende Ausgabe:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;    time  delta interrupt  pid cpu command
+ 45584582   0        0    8920   0 head
+ 45584682 100        1       0   1 swapper</PRE
+></TD
+></TR
+></TABLE
+><P
+>Aus der Ausgabe können Sie ersehen, daß die Timer-Funktion, die hier
+      die letzte Zeile ausgegeben hat, im Interrupt-Modus lief.</P
+><P
+>Es kann merkwürdig erscheinen, daß der Timer genau zum richtigen
+Zeitpunkt abläuft, auch wenn der Prozessor gerade einen Systemaufruf
+ausführte. Wir haben schon angedeutet, daß ein Prozeß, der sich im
+Kernel-Space befindet, nicht vom Scheduler die CPU entzogen
+bekommt. Der Clock-Tick hat aber eine Sonderstellung und erledigt alle
+seine Aufgaben unabhängig vom aktuellen Prozeß. Sie können sich
+anschauen, was passiert, wenn Sie <TT
+CLASS="FILENAME"
+>/proc/jitbusy</TT
+>
+im Vordergrund und <TT
+CLASS="FILENAME"
+>/proc/jitimer</TT
+> im Hintergrund
+ausführen. Obwohl das System durch den Busy-Wait-Systemaufruf massiv
+blockiert zu sein scheint, laufen sowohl die Timer-Warteschlange als
+auch die Kernel-Timer.</P
+><P
+>&#13;Timer können also eine weitere Quelle von Race Conditions sein, selbst
+auf Einzelprozessor-Systemen. Alle Datenstrukturen, auf die aus einer
+Timer-Funktion heraus zugegriffen wird, sollten vor nebenläufigem
+Zugriff geschützt werden, entweder durch atomare Typen (werden in
+<A
+HREF="judas.html"
+>Kapitel 10</A
+> besprochen) oder durch Spinlocks.</P
+><P
+>&#13;Man muß auch beim Löschen von Timern auf Race Conditions
+achten. Denken Sie beispielsweise an eine Situation, in der eine
+Timer-Funktion eines Moduls auf einem Prozessor ausgeführt wird,
+während ein verwandtes Ereignis (eine Datei wird geschlossen oder das
+Modul entfernt) auf einem anderen Prozessor stattfindet. Als Folge davon
+könnte die Timer-Funktion eine Situation erwarten, die nicht mehr
+gegeben ist, was zu einem Systemabsturz führen kann. Um solche Race
+Conditions zu vermeiden, sollte Ihr Modul
+<SPAN
+><I
+CLASS="EMPHASIS"
+>del_timer_sync</I
+></SPAN
+> anstelle von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>del_timer</I
+></SPAN
+> verwenden. Wenn die
+Timer-Funktion den Timer selbst neu starten kann (was oft gemacht
+wird), dann sollten Sie auch ein &#8220;Stop-Timer&#8221;-Flag haben, das Sie vor
+den Aufruf von <SPAN
+><I
+CLASS="EMPHASIS"
+>del_timer_sync</I
+></SPAN
+>
+setzen. Die Timer-Funktion sollte dann dieses Flag abfragen und sich
+selbst nicht mehr mit <SPAN
+><I
+CLASS="EMPHASIS"
+>add_timer</I
+></SPAN
+> vormerken,
+wenn das Flag gesetzt ist.</P
+><P
+>&#13;
+
+
+
+
+Ein weiteres Muster, das Race Conditions verursachen kann, tritt auf,
+wenn man Timer durch das Löschen mit <SPAN
+><I
+CLASS="EMPHASIS"
+>del_timer</I
+></SPAN
+>
+modifiziert und dann einen neuen Timer mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>add_timer</I
+></SPAN
+> erzeugt. Es ist in dieser
+Situation besser, <SPAN
+><I
+CLASS="EMPHASIS"
+>mod_timer</I
+></SPAN
+> zu verwenden,
+um die notwendigen Änderungen vorzunehmen.&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="flowqueue.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x8892.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Task-Schlangen</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="flow.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Abwärtskompatibilität</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

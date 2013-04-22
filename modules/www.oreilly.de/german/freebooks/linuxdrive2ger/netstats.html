@@ -1,0 +1,292 @@
+<HTML
+><HEAD
+><TITLE
+>Statistische Informationen</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Netzwerk-Treiber"
+HREF="net.html"><LINK
+REL="PREVIOUS"
+TITLE="Eigene ioctl-Befehle"
+HREF="netioctl.html"><LINK
+REL="NEXT"
+TITLE="Multicasting"
+HREF="netmulti.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="netioctl.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 14. Netzwerk-Treiber</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="netmulti.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="NETSTATS"
+>Statistische Informationen</A
+></H1
+><P
+>&#13;
+
+Die letzte Methode, die ein Treiber benötigt, ist
+<SPAN
+><I
+CLASS="EMPHASIS"
+>get_stats</I
+></SPAN
+>. Diese Methode gibt einen Zeiger
+auf Statistik-Daten über das Gerät zurück. Die Implementation ist
+ziemlich einfach; die hier gezeigte Implementation funktioniert selbst dann, wenn
+mehrere Schnittstellen von einem Treiber verwaltet werden, weil die
+Statistiken in der Geräte-Datenstruktur stecken.&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+struct net_device_stats *snull_stats(struct net_device *dev)
+{
+    struct snull_priv *priv = (struct snull_priv *)dev-&#62;priv;
+    return &#38;priv-&#62;stats;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die eigentliche Arbeit, aussagekräftige Statistiken zurückzuliefern,
+ist über den ganzen Treiber verteilt und an den Stellen zu finden, wo
+die diversen Felder aktualisiert werden. Die folgende Liste enthält
+die interessantesten Felder in <TT
+CLASS="LITERAL"
+>struct
+net_device_stats</TT
+>.
+&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long rx_packets;</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned long tx_packets;</TT
+></DT
+><DD
+><P
+>Diese Felder enthalten die Gesamtzahl der erfolgreich
+        eingegangenen respektive übertragenen Pakete dieser Schnittstelle.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long rx_bytes;</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned long tx_bytes;</TT
+></DT
+><DD
+><P
+>Die Anzahl der von der Schnittstelle empfangenen und übertragenen
+Bytes. Diese Felder kamen mit dem 2.2-Kernel hinzu.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long rx_errors;</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned long tx_errors;</TT
+></DT
+><DD
+><P
+>Die Anzahl der fehlerhaften Empfangsvorgänge und
+        Übertragungen. Es gibt eine Unmenge von Dingen, die bei der
+Übertragung von Paketen schiefgehen können; die Struktur
+<TT
+CLASS="LITERAL"
+>net_device_stats</TT
+> enthält sechs Zähler
+für bestimmte Empfangsfehler und fünf für Sendefehler. In
+<TT
+CLASS="LITERAL"
+>&#60;linux/netdevice.h&#62;</TT
+> finden Sie die
+vollständige Liste. Wenn möglich sollte Ihr Treiber detaillierte
+Fehlerstatistiken pflegen, weil diese für Systemadministratoren bei
+der Problemsuche sehr hilfreich sein können.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long rx_dropped;</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned long tx_dropped;</TT
+></DT
+><DD
+><P
+>Die Anzahl der Pakete, die während des Empfangs oder der
+        Übertragung verworfen worden sind. Pakete werden verworfen, wenn
+        für die Paketdaten kein Speicher mehr zur Verfügung
+        steht. <TT
+CLASS="LITERAL"
+>tx_dropped</TT
+> wird selten verwendet.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long collisions;</TT
+></DT
+><DD
+><P
+>Die Anzahl der Kollisionen aufgrund von Überlastung des Mediums.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long multicast;</TT
+></DT
+><DD
+><P
+>Die Anzahl empfangener Multicast-Pakete.</P
+></DD
+></DL
+></DIV
+><P
+>Es soll hier noch einmal wiederholt werden, daß die Methode
+<SPAN
+><I
+CLASS="EMPHASIS"
+>get_stats</I
+></SPAN
+> zu beliebigen Zeitpunkten
+aufgerufen werden kann &#8212; auch wenn die Schnittstelle nicht in
+Betrieb ist &#8212;, so daß der Treiber auch nach dem Ausführen der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>stop</I
+></SPAN
+>-Methode die Statistikinformationen vorhalten
+sollte.
+&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="netioctl.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="netmulti.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Eigene ioctl-Befehle</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="net.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Multicasting</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

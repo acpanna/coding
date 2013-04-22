@@ -1,0 +1,441 @@
+<HTML
+><HEAD
+><TITLE
+>Interrupt-Handler</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="PREVIOUS"
+TITLE="Schnellreferenz"
+HREF="x11066.html"><LINK
+REL="NEXT"
+TITLE="Den Parallel-Port vorbereiten"
+HREF="intsetup.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x11066.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="intsetup.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="IRQ"
+>Kapitel 9. Interrupt-Handler</A
+></H1
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Inhalt</B
+></DT
+><DT
+><A
+HREF="irq.html#AEN11303"
+>Überblick über die Interrupt-Steuerung</A
+></DT
+><DT
+><A
+HREF="intsetup.html"
+>Den Parallel-Port vorbereiten</A
+></DT
+><DT
+><A
+HREF="irqinstall.html"
+>Einen Interrupt-Handler installieren</A
+></DT
+><DT
+><A
+HREF="irqhandler.html"
+>Einen Handler implementieren</A
+></DT
+><DT
+><A
+HREF="irqbottom.html"
+>Tasklets und untere Hälften</A
+></DT
+><DT
+><A
+HREF="irqshare.html"
+>Gemeinsames Nutzen von Interrupts</A
+></DT
+><DT
+><A
+HREF="irqbuffers.html"
+>Interrupt-gesteuerte I/O</A
+></DT
+><DT
+><A
+HREF="irqrace.html"
+>Race Conditions</A
+></DT
+><DT
+><A
+HREF="x12799.html"
+>Abwärtskompatibilität</A
+></DT
+><DT
+><A
+HREF="x12869.html"
+>Schnellreferenz</A
+></DT
+></DL
+></DIV
+><P
+>Obwohl manche Geräte ausschließlich über ihre I/O-Bereiche gesteuert
+werden können, sind die meisten Geräte doch etwas
+komplizierter. Sie müssen mit der Welt da draußen interagieren, wobei
+es sich oft um sich drehende Platten, bewegende Bänder, Drähte an entfernte
+Plätze und so weiter handelt. Vieles muß in Zeiträumen erledigt werden,
+die anders sind und länger dauern als die des Prozessors. Da es fast
+immer unschön ist, den Prozessor auf externe Ereignisse warten
+zu lassen, muß es eine Möglichkeit geben, mit der ein Gerät dem Prozessor
+mitteilen kann, daß etwas passiert ist.</P
+><P
+>&#13;
+
+Diese Möglichkeit ist natürlich durch Interrupts gegeben. Ein
+<SPAN
+><I
+CLASS="EMPHASIS"
+>Interrupt</I
+></SPAN
+> ist einfach ein Signal, das die
+Hardware schicken kann, wenn sie die Aufmerksamkeit des Prozessors
+erheischen will. Meistens muß ein Treiber nur einen Handler für die
+Interrupts seines Geräts registrieren und diese korrekt verarbeiten,
+wenn sie eintreffen. Unter dieser einfachen Oberfläche liegt natürlich
+einiges an Komplexität. Insbesondere sind Interrupt-Handler aufgrund
+der Art und Weise, wie sie ausgeführt werden, etwas eingeschränkt in
+den ihnen möglichen Aktionen.</P
+><P
+>Es ist schwierig, die Verwendung von Interrupts zu demonstrieren, ohne
+ein echtes Hardware-Gerät zur Verfügung zu haben, um sie zu erzeugen. Daher verwendet
+der Beispiel-Code in diesem Kapitel den Parallel-Port. Wir arbeiten am
+<SPAN
+CLASS="APPLICATION"
+>short</SPAN
+>-Modul weiter, das wir im vorigen
+Kapitel eingeführt haben; mit einigen kleinen Erweiterungen kann es
+Interrupts vom Parallel-Port erzeugen und bearbeiten. Der Name des
+Moduls <SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> steht eigentlich für
+<SPAN
+CLASS="APPLICATION"
+>short int</SPAN
+> (schließlich arbeiten wir in C,
+nicht wahr?), um uns daran zu erinnern, daß wir mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>Int</I
+></SPAN
+>errupts arbeiten.&#13;</P
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN11303"
+>Überblick über die Interrupt-Steuerung</A
+></H1
+><P
+>Aufgrund von Änderungen im Design und in der verwendeten Hardware hat
+sich die Interrupt-Verarbeitung von Linux über die Jahre ziemlich
+geändert. Das Interrupt-Bild der PCs der frühen Tage war ziemlich
+einfach; es gab einfach nur sechzehn Interrupt-Leitungen und einen
+Prozessor, der sich darum kümmerte. Moderne Hardware kann weitaus mehr
+Interrupts und auch einen fortgeschrittenen Advanced Programmable
+Interrupt Controller (APIC) haben, der Interrupts auf intelligente
+(und programmierbare) Weise auf mehrere Prozessoren verteilen kann.</P
+><P
+>Glücklicherweise hat Linux all diese Änderungen mit relativ wenigen
+Inkompatibilitäten auf der Gerätetreiber-Ebene bewältigen können. Daher
+funktioniert die in diesem Kapitel beschriebene Schnittstelle mit
+wenigen Änderungen auf vielen verschiedenen Kernel-Versionen. Manchmal
+geht es eben doch gut.</P
+><P
+>&#13;
+
+
+
+
+
+Unix-artige Systeme haben seit vielen Jahren die Funktionen
+<SPAN
+><I
+CLASS="EMPHASIS"
+>cli</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>sti</I
+></SPAN
+> verwendet, um
+Interrupts aus- und einzuschalten. Auf modernen Linux-Systemen sollte
+man diese allerdings nicht direkt verwenden. Es wird immer schwieriger zu wissen, ob Interrupts gerade eingeschaltet sind; deswegen
+gilt es als schlechter Stil, einfach die Interrupts mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>sti</I
+></SPAN
+> einzuschalten, bevor man aus einer Routine
+zurückspringt. Ihre Funktion könnte in eine Funktion zurückspringen,
+die erwartet, daß die Interrupts immer noch abgeschaltet sind.</P
+><P
+>Wenn Sie Interrupts abschalten müssen, ist es daher besser, die
+folgenden Aufrufe zu verwenden:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;unsigned long flags;
+
+    save_flags(flags);
+    cli();
+
+    /* Dieser Code wird mit abgeschalteten Interrupts ausgefuehrt */
+
+    restore_flags(flags);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Beachten Sie, daß <SPAN
+><I
+CLASS="EMPHASIS"
+>save_flags</I
+></SPAN
+> ein Makro
+ist und daß die Variable, die die Flags aufnimmt, direkt und ohne
+<TT
+CLASS="LITERAL"
+>&#38;</TT
+>-Operator übergeben wird. Es gibt auch eine
+wichtige Einschränkung hinsichtlich der Verwendung dieser Makros:
+<SPAN
+><I
+CLASS="EMPHASIS"
+>save_flags</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>restore_flags</I
+></SPAN
+> müssen aus der gleichen
+Funktion aufgerufen werden. Sie können also <TT
+CLASS="LITERAL"
+>flags</TT
+>
+nicht an eine andere Funktion übergeben, sofern diese nicht inline
+ist. Code, der diese Einschränkung nicht beachtet, wird auf manchen
+Architekturen funktionieren, auf anderen aber nicht.</P
+><P
+>In zunehmendem Maße wird aber sogar von der Verwendung von Code wie
+dem eben gezeigten abgeraten. In einem Multiprozessor-System
+kann kritischer Code nicht einfach durch das Abschalten der Interrupts
+geschützt werden; man braucht irgendeinen Sperrmechanismus. Funktionen
+wie <SPAN
+><I
+CLASS="EMPHASIS"
+>spin_lock_irqsave</I
+></SPAN
+> (siehe &#8220;<A
+HREF="irqrace.html#IRQSPINLOCK"
+>the Section called <I
+>Spinlocks verwenden</I
+></A
+>&#8221; weiter hinten in diesem Kapitel) kombinieren
+Sperren und Interrupt-Steuerung; diese Funktionen sind die einzige
+sichere Möglichkeit, in Gegenwart von Interrupts Nebenläufigkeit zu
+steuern.</P
+><P
+><SPAN
+><I
+CLASS="EMPHASIS"
+>cli</I
+></SPAN
+> schaltet dagegen die Interrupts auf
+<SPAN
+><I
+CLASS="EMPHASIS"
+>allen</I
+></SPAN
+> Prozessoren des Systems ab und kann daher
+die gesamte Systemperformance negativ beeinflussen.<A
+NAME="AEN11342"
+HREF="#FTN.AEN11342"
+>[1]</A
+></P
+><P
+>Daher verschwinden explizite Aufrufe von <SPAN
+><I
+CLASS="EMPHASIS"
+>cli</I
+></SPAN
+> und
+verwandten Funktionen langsam aus großen Teilen des Kernels. Es gibt
+Gelegenheiten, bei denen man diese in einem Gerätetreiber braucht,
+aber diese sind selten. Bevor Sie <SPAN
+><I
+CLASS="EMPHASIS"
+>cli</I
+></SPAN
+> aufrufen,
+überlegen Sie, ob Sie <SPAN
+><I
+CLASS="EMPHASIS"
+>wirklich</I
+></SPAN
+> alle
+Interrupts auf dem System abschalten müssen.&#13;</P
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN11342"
+HREF="irq.html#AEN11342"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Die Wahrheit ist noch etwas komplizierter. Wenn Sie
+schon einen Interrupt bearbeiten, schaltet <SPAN
+><I
+CLASS="EMPHASIS"
+>cli</I
+></SPAN
+>
+nur die Interrupts der aktuellen CPU ab.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x11066.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="intsetup.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Schnellreferenz</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Den Parallel-Port vorbereiten</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

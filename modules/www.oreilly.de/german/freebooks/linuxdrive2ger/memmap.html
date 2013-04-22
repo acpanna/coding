@@ -1,0 +1,2233 @@
+<HTML
+><HEAD
+><TITLE
+>Die Geräteoperation mmap</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="mmap und DMA"
+HREF="mem.html"><LINK
+REL="PREVIOUS"
+TITLE="mmap und DMA"
+HREF="mem.html"><LINK
+REL="NEXT"
+TITLE="Die kiobuf-Schnittstelle"
+HREF="memkiobuf.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="mem.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 13. mmap und DMA</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="memkiobuf.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="MEMMAP"
+>Die Geräteoperation mmap</A
+></H1
+><P
+>&#13;
+
+
+Das Einblenden von Speicher (<SPAN
+><I
+CLASS="EMPHASIS"
+>memory mapping</I
+></SPAN
+>) ist eines der
+interessantesten Merkmale moderner Unix-Systeme. Bei Treibern kann
+diese Funktionalität eingesetzt werden, um Anwenderprogrammen direkten
+Zugriff auf den Gerätespeicher zu geben.</P
+><P
+>Ein sehr gutes Beispiel für die Verwendung von
+<SPAN
+CLASS="APPLICATION"
+>mmap</SPAN
+> bekommen Sie, wenn Sie sich einen Teil
+des virtuellen Speicherbereiches des X Window System-Servers anschauen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+><TT
+CLASS="USERINPUT"
+><B
+>cat /proc/731/maps</B
+></TT
+>
+08048000-08327000 r-xp 00000000 08:01 55505    /usr/X11R6/bin/XF86_SVGA
+08327000-08369000 rw-p 002de000 08:01 55505    /usr/X11R6/bin/XF86_SVGA
+40015000-40019000 rw-s fe2fc000 08:01 10778    /dev/mem
+40131000-40141000 rw-s 000a0000 08:01 10778    /dev/mem
+40141000-40941000 rw-s f4000000 08:01 10778    /dev/mem
+     ...</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die vollständige Liste der VMAs des X Servers ist recht lang, aber die
+meisten Einträge sind hier gar nicht von Interesse. Wir sehen hier aber
+drei separate Einblendungen von <TT
+CLASS="FILENAME"
+>/dev/mem</TT
+>, die uns
+einen kleinen Einblick in die Art und Weise gestatten, wie der X Server mit der
+Grafikkarte zusammenarbeitet. Die erste Einblendung zeigt einen Bereich
+von 16 KByte, der an der Adresse <TT
+CLASS="LITERAL"
+>fe2fc000</TT
+> eingeblendet
+ist. Diese Adresse liegt weit über der höchsten RAM-Adresse des Systems;
+es handelt sich statt dessen um einen Speicherbereich auf einem
+PCI-Gerät (der Grafikkarte). Vermutlich ist das ein Steuerbereich für
+die Karte. Die mittlere Einblendung befindet sich bei
+<TT
+CLASS="LITERAL"
+>a0000</TT
+>, der Standardposition für den Videospeicher
+im 640-KByte-ISA-Loch. Die letzte <TT
+CLASS="FILENAME"
+>/dev/mem</TT
+>-Einblendung
+liegt bei <TT
+CLASS="LITERAL"
+>f4000000</TT
+> und ist recht groß; das ist der
+Videospeicher selbst. Diese Regionen kann man auch in
+<TT
+CLASS="FILENAME"
+>/proc/iomem</TT
+> sehen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>000a0000-000bffff : Video RAM area
+f4000000-f4ffffff : Matrox Graphics, Inc. MGA G200 AGP
+fe2fc000-fe2fffff : Matrox Graphics, Inc. MGA G200 AGP</PRE
+></TD
+></TR
+></TABLE
+><P
+>Das Einblenden eines Gerätes erfolgt dadurch. daß ein Bereich
+von Adressen im User-Space mit dem Gerätespeicher verknüpft wird. Immer, wenn das
+Programm in den zugewiesenen Adreßbereich schreibt oder daraus liest,
+greift es in Wirklichkeit auf das Gerät zu. Im Beispiel mit dem X Server
+bekommt man durch die Verwendung von <SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+>
+schnellen und einfachen Zugriff auf den Speicher der Grafikkarte. In
+einer Performance-kritischen Anwendung wie dieser macht der direkte
+Zugriff einen großen Unterschied aus.&#13;</P
+><P
+>Wie Sie sich vielleicht schon denken können, ist nicht jedes Gerät für
+die <SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+>-Abstraktion geeignet; sie ist beispielsweise bei
+seriellen Ports und anderen datenstrom-orientierten Geräten wenig
+sinnvoll. Eine weitere Beschränkung von <SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+> besteht darin, daß
+die Granularität <TT
+CLASS="LITERAL"
+>PAGE_SIZE</TT
+> ist. Der Kernel kann virtuelle
+Adressen nur auf der Ebene der Seitentabellen verteilen, weswegen der
+eingeblendete Speicherbereich ein Vielfaches von <TT
+CLASS="LITERAL"
+>PAGE_SIZE</TT
+> sein muß
+
+und im physikalischen Speicher an einer Adresse beginnen muß, die
+ebenfalls ein Vielfaches von <TT
+CLASS="LITERAL"
+>PAGE_SIZE</TT
+> ist. Der Kernel kümmert
+sich darum, indem er einen Bereich geringfügig größer macht, wenn die
+Größe kein Vielfaches der Seitengröße ist.&#13;</P
+><P
+>Diese Einschränkungen sind für Treiber nicht besonders
+unangenehm, weil das Programm, das auf das Gerät zugreift, ohnehin
+geräteabhängig ist. Es muß wissen, wie es den eingeblendeten
+Speicherbereich interpretieren soll, so daß die Ausrichtung an
+<TT
+CLASS="LITERAL"
+>PAGE_SIZE</TT
+> kein Problem ist.
+
+
+Wenn Sie ISA-Karten in Nicht-x86-Rechner stecken, gibt es dagegen eine
+größere Einschränkung, weil die Hardware-Sicht dieser Rechner auf den
+ISA-Speicher möglicherweise nicht zusammenhängend ist. Beispielsweise
+sehen manche Alpha-Computer den ISA-Speicher als verstreute Menge von
+8-Bit-, 16-Bit- und 32-Bit-Elementen ohne direkte Einblendung. In
+diesem Fall können Sie <SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+> überhaupt nicht verwenden. Die
+inkompatiblen Spezifikationen für den Datentransfer auf den beiden
+Systemen sind der Grund dafür, daß diese Abbildung von ISA-Adressen
+auf Alpha-Adressen nicht möglich ist. Während frühe Alpha-Systeme nur
+32-Bit- und
+64-Bit-Speicherzugriffe durchführen konnten, sind auf dem ISA-Bus nur
+8-Bit- und 16-Bit-Übertragungen möglich; es gibt keine Möglichkeit,
+ein Protokoll transparent auf das jeweils andere abzubilden.&#13;</P
+><P
+>&#13;Es gibt gute Gründe dafür, <SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+> zu verwenden, wenn das möglich
+ist. Beispielsweise überträgt ein Programm wie der X Server große
+Mengen an Daten aus dem Videospeicher. Das Einblenden des Videospeichers in den User
+Space verbessert den Durchsatz dramatisch im Vergleich zu einer
+Implementation mit <SPAN
+><I
+CLASS="EMPHASIS"
+>lseek</I
+></SPAN
+>/<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>. Ein Programm, das ein
+PCI-Gerät steuert, ist ein weiteres typisches Beispiel. Die meisten
+PCI-Peripherie-Geräte bilden ihre Kontrollregister auf eine
+Speicheradresse ab, und eine anspruchsvolle Anwendung könnte es
+vorziehen, direkt auf die Register zuzugreifen, anstatt immer wieder
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+> aufrufen zu müssen.&#13;</P
+><P
+>Die Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+> ist ein Teil der Struktur <TT
+CLASS="LITERAL"
+>file_operations</TT
+>
+und wird aufgerufen, wenn der Systemaufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+> ausgeführt
+wird. Bei <SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+> erledigt der Kernel schon einen großen Teil der
+Arbeit, bevor die eigentliche Methode aufgerufen wird; daher sieht der
+Prototyp der Methode ziemlich anders aus als der Systemaufruf. Das ist
+anders als bei Aufrufen wie <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>select</I
+></SPAN
+>, bei denen
+der Kernel nicht so besonders viel tut, bevor er die Methode aufruft.</P
+><P
+>Der Systemaufruf ist folgendermaßen deklariert (und wird in der
+Man-Page <SPAN
+><I
+CLASS="EMPHASIS"
+>mmap(2)</I
+></SPAN
+> beschrieben):&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+mmap (caddr_t addr, size_t len, int prot, int flags, int fd,
+      off_t offset)</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die Datei-Operation ist dagegen deklariert:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+int (*mmap) (struct file *filp, struct vm_area_struct *vma);</PRE
+></TD
+></TR
+></TABLE
+><P
+>deklariert. Das Argument <TT
+CLASS="LITERAL"
+>filp</TT
+> in dieser Methode ist das
+gleiche wie das, das in <A
+HREF="char.html"
+>Kapitel 3</A
+> eingeführt wurde,
+während <TT
+CLASS="LITERAL"
+>vma</TT
+> Informationen über den virtuellen Adreßbereich
+enthält, über den auf das Gerät zugegriffen wird. Der Kernel hat
+bereits einen Großteil der Arbeit erledigt; um
+<SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+> zu implementieren, muß der
+Treiber lediglich passende Seitentabellen für den Adreßbereich
+aufbauen und wenn nötig <TT
+CLASS="LITERAL"
+>vma-&#62;vm_ops</TT
+> durch eine
+neue Menge an Operationen ersetzen.</P
+><P
+>Es gibt zwei Möglichkeiten, Seitentabellen aufzubauen: alles auf
+einmal mit einer Funktion namens
+<SPAN
+><I
+CLASS="EMPHASIS"
+>remap_page_range</I
+></SPAN
+> erledigen oder
+seitenweise mit dem <SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+>-VMA-Ansatz
+arbeiten. Beide Methoden haben ihre Vorteile. Wir fangen hier mit der
+"Alles auf einmal"-Methode an, die einfacher ist. Dann machen wir die
+Sache komplizierter, um auch die Anforderungen von realen Applikationen
+zu erfüllen.</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN17284"
+>remap_page_range verwenden</A
+></H2
+><P
+>&#13;
+
+Das Aufbauen neuer Seitentabellen, um einen Bereich physikalischer
+Adressen einzublenden, wird durch
+<SPAN
+><I
+CLASS="EMPHASIS"
+>remap_page_range</I
+></SPAN
+> erledigt, das den
+folgenden Prototyp hat:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;int remap_page_range(unsigned long virt_add, unsigned long phys_add,
+                     unsigned long size, pgprot_t prot);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Der Rückgabewert der Funktion ist wie üblich 0 oder ein negativer
+Fehler-Code. Schauen wir uns die genaue Bedeutung der Argumente der
+Funktion an:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>virt_add</TT
+></DT
+><DD
+><P
+>Die virtuelle User-Adresse, an der die Einblendung anfangen soll. Die
+Funktion baut die Seitentabellen für den virtuellen Adreßbereich
+zwischen <TT
+CLASS="LITERAL"
+>virt_add</TT
+> und
+<TT
+CLASS="LITERAL"
+>virt_add+size</TT
+> auf.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>phys_add</TT
+></DT
+><DD
+><P
+>Die physikalische Adresse, an der die virtuelle Adresse eingeblendet
+werden soll. Die Funktion betrifft physikalische Adressen von
+<TT
+CLASS="LITERAL"
+>phys_add</TT
+> bis
+<TT
+CLASS="LITERAL"
+>phys_add+size</TT
+>.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>size</TT
+></DT
+><DD
+><P
+>Die Größe des einzublendenden Bereichs in Bytes.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>prot</TT
+></DT
+><DD
+><P
+>Der für die neue VMA gewünschte &#8220;Schutz&#8221;. Treiber können (und sollten)
+den in <TT
+CLASS="LITERAL"
+>vma-&#62;vm_page_prot</TT
+> stehenden
+Wert verwenden.</P
+></DD
+></DL
+></DIV
+><P
+>&#13;
+Die Argumente von <SPAN
+><I
+CLASS="EMPHASIS"
+>remap_page_range</I
+></SPAN
+>
+sind ziemlich offensichtlich; die meisten stehen Ihnen bereits in der
+VMA zur Verfügung, wenn Ihre <SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+>-Methode
+aufgerufen wird. Kompliziert wird es lediglich, wenn Caching ins Spiel
+kommt: Referenzen auf Gerätespeicher sollten normalerweise nicht vom
+Prozessor zwischengespeichert werden. Oft richtet das BIOS des Systems
+das schon korrekt ein, aber es ist auch möglich, das Caching
+bestimmter VMAs über das &#8220;Schutz&#8221;-Feld abzuschalten. Leider ist das
+Abschalten des Cachings auf dieser Ebene stark
+prozessorabhängig. Neugierige Leser können einen Blick auf die
+Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>pgprot_noncached</I
+></SPAN
+> in
+<TT
+CLASS="FILENAME"
+>drivers/char/mem.c</TT
+> werfen, um zu sehen, was
+dazugehört. Wir werden das hier nicht weiter erläutern.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN17335"
+>Eine einfache Implementation</A
+></H2
+><P
+>Wenn Ihr Treiber eine einfache, lineare Einblendung von Gerätespeicher
+in den User-Adreßraum benötigt, dann kommen Sie mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>remap_page_range</I
+></SPAN
+> fast schon
+vollständig aus. Der folgende
+Code stammt aus <TT
+CLASS="FILENAME"
+>drivers/char/mem.c</TT
+> und zeigt Ihnen, wie diese
+Aufgabe in einem typischen Modul namens <SPAN
+CLASS="APPLICATION"
+>simple</SPAN
+> (Simple
+Implementation Mapping Pages with Little Enthusiasm) erledigt wird:
+&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+ #include &#60;linux/mm.h&#62;
+
+ int simple_mmap(struct file *filp, struct vm_area_struct *vma)
+ {
+     unsigned long offset = vma-&#62;vm_pgoff &#60;&#60; PAGE_SHIFT;
+
+     if (offset &#62;= _&#38;thinsp;_pa(high_memory) || (filp-&#62;f_flags &#38; O_SYNC))
+         vma-&#62;vm_flags |= VM_IO;
+     vma-&#62;vm_flags |= VM_RESERVED;
+
+     if (remap_page_range(vma-&#62;vm_start, offset,
+            vma-&#62;vm_end-vma-&#62;vm_start, vma-&#62;vm_page_prot))
+         return -EAGAIN;
+     return 0;
+ }</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Der <TT
+CLASS="FILENAME"
+>/dev/mem</TT
+>-Code überprüft, ob der gewünschte
+Offset (der in <TT
+CLASS="LITERAL"
+>vma-&#62;vm_pgoff</TT
+> gespeichert
+ist), jenseits des physikalischen Speichers liegt; wenn das der Fall
+ist, wird das VMA-Flag <TT
+CLASS="LITERAL"
+>VM_IO</TT
+> gesetzt, um den
+Bereich als I/O-Speicher zu kennzeichnen. Das Flag
+<TT
+CLASS="LITERAL"
+>VM_RESERVED</TT
+> wird immer gesetzt, um das
+System daran zu hindern, diesen Bereich auszulagern. Anschließend muß
+man einfach nur noch
+<SPAN
+><I
+CLASS="EMPHASIS"
+>remap_page_range</I
+></SPAN
+> aufrufen, um die
+notwendigen Seitentabellen zu erzeugen.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN17350"
+>VMA-Operationen hinzufügen</A
+></H2
+><P
+>&#13;
+Wie wir bereits gesehen haben, enthält die Struktur
+<TT
+CLASS="LITERAL"
+>vm_area_struct</TT
+> einen Satz von
+Operationen, der auf die VMA angewendet werden kann. Wir schauen uns
+diese Operationen jetzt in vereinfachter Form an; ein detaillierteres
+Beispiel folgt später.</P
+><P
+>&#13;
+Wir werden hier <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>- und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>close</I
+></SPAN
+>-Operationen für unsere VMA
+bereitstellen. Diese Operationen werden immer dann aufgerufen, wenn
+ein Prozeß die VMA öffnet oder schließt. Insbesondere wird die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>-Methode jedesmal aufgerufen, wenn ein
+Prozeß sich mit fork verzweigt und eine neue Referenz auf die VMA erzeugt. Die
+VMA-Methoden <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>close</I
+></SPAN
+>
+werden zusätzlich zur Verarbeitung durch den Kernel aufgerufen, müssen
+also die da bereits getane Arbeit nicht wiederholen. Sie existieren,
+um dem Treiber die Möglichkeit zu geben, eventuell notwendige
+zusätzliche Verarbeitungsschritte durchzuführen.</P
+><P
+>Wir werden diese Methoden verwenden, um den Verwendungszähler des
+Moduls zu inkrementieren, wenn die VMA geöffnet wird, und ihn zu
+dekrementieren, wenn sie geschlossen wird. In modernen Kerneln ist das
+nicht unbedingt notwendig; der Kernel ruft die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>release</I
+></SPAN
+>-Methode des Treibers so lange nicht auf,
+wie die VMA geöffnet bleibt; der Verwendungszähler des Moduls geht
+also nicht auf 0, solange nicht alle Referenzen auf die VMA
+geschlossen sind. Der 2.0-Kernel macht das aber nicht, weswegen
+portabler Code immer noch den Verwendungszähler pflegen sollte.</P
+><P
+>Wir überschreiben also den Default-Wert von
+<TT
+CLASS="LITERAL"
+>vma-&#62;vm_ops</TT
+> mit Operationen, die den
+Verwendungszähler pflegen. Der Code ist ziemlich einfach &#8212; eine
+vollständige <SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+>-Implementation für ein
+modularisiertes <TT
+CLASS="FILENAME"
+>/dev/mem</TT
+> sieht folgendermaßen
+aus:
+&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+void simple_vma_open(struct vm_area_struct *vma)
+{ MOD_INC_USE_COUNT; }
+
+void simple_vma_close(struct vm_area_struct *vma)
+{ MOD_DEC_USE_COUNT; }
+
+static struct vm_operations_struct simple_remap_vm_ops = {
+    open:  simple_vma_open,
+    close: simple_vma_close,
+};
+
+int simple_remap_mmap(struct file *filp, struct vm_area_struct *vma)
+{
+    unsigned long offset = VMA_OFFSET(vma);
+
+    if (offset &#62;= _&#8201;_pa(high_memory) || (filp-&#62;f_flags &#38; O_SYNC))
+        vma-&#62;vm_flags |= VM_IO;
+    vma-&#62;vm_flags |= VM_RESERVED;
+
+    if (remap_page_range(vma-&#62;vm_start, offset, vma-&#62;vm_end-vma-&#62;vm_start,
+                vma-&#62;vm_page_prot))
+        return -EAGAIN;
+
+    vma-&#62;vm_ops = &#38;simple_remap_vm_ops;
+    simple_vma_open(vma);
+    return 0;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Dieser Code verläßt sich darauf, daß der Kernel das Feld
+<TT
+CLASS="LITERAL"
+>vm_ops</TT
+> im neu erzeugten Bereich mit
+<TT
+CLASS="LITERAL"
+>NULL</TT
+> initialisiert, bevor er
+<TT
+CLASS="LITERAL"
+>f_op-&#62;mmap</TT
+> aufruft. Der gerade gezeigte
+Code überprüft den aktuellen Wert des Zeigers als Sicherheitsmaßnahme,
+falls sich in zukünftigen Kerneln etwas ändern sollte.</P
+><P
+>&#13;Das merkwürdige Makro <TT
+CLASS="LITERAL"
+>VMA_OFFSET</TT
+>, das in
+diesem Code auftaucht, wird dazu verwendet, die Unterschiede in den
+<TT
+CLASS="LITERAL"
+>vma</TT
+>-Strukturen einzelner Kernel-Versionen zu
+verstecken. Weil der Offset in Version 2.4 in Seiten, in 2.2 und früheren Versionen aber
+in Bytes ausgedrückt wird, deklariert
+<TT
+CLASS="LITERAL"
+>&#60;sysdep.h&#62;</TT
+> dieses Makro, um den Unterschied
+transparent zu machen (das Ergebnis wird dann in Bytes angegeben).</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN17388"
+>Speicher mit nopage einblenden</A
+></H2
+><P
+>&#13;
+
+
+
+
+Auch wenn <SPAN
+><I
+CLASS="EMPHASIS"
+>remap_page_range</I
+></SPAN
+> für
+viele &#8212; wenn nicht für die meisten &#8212;
+<SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+>-Implementationen in Treibern ausreichend
+ist, braucht man manchmal doch ein wenig mehr Flexibilität. In solchen
+Situationen kann eine Implementation mit der VMA-Methode
+<SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+> angebracht sein.</P
+><P
+>Die Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+> hat, wie Sie sich vielleicht
+erinnern werden, den folgenden Prototyp:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; struct page (*nopage)(struct vm_area_struct *vma,
+                     unsigned long address, int write_access);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Wenn ein Benutzer versucht, auf eine Seite in einer VMA zuzugreifen,
+die sich nicht im Speicher befindet, wird die zugehörige
+<SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+>-Funktion aufgerufen. Der Parameter
+<SPAN
+><I
+CLASS="EMPHASIS"
+>address</I
+></SPAN
+> enthält die virtuelle Adresse, die den
+Fehler verursacht hat, abgerundet auf den Seitenanfang. Die Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>nopage </I
+></SPAN
+>muß dann den <TT
+CLASS="LITERAL"
+>struct
+page</TT
+>-Zeiger, der auf die gewünschte Seite verweist, finden
+und zurückgeben. Außerdem muß die Funktion den Verwendungszähler der
+zurückgegebenen Seite durch den Aufruf des Makros
+<SPAN
+><I
+CLASS="EMPHASIS"
+>get_page</I
+></SPAN
+> inkrementieren:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; get_page(struct page *pageptr);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Dieser Schritt ist notwendig, damit die Referenzzähler eingeblendeter
+Seiten korrekt bleiben. Der Kernel verwaltet diesen Zähler für jede
+Seite. Wenn der Zähler auf 0 geht, weiß der Kernel, daß die Seite in
+die Liste der freien Seiten gestellt werden kann. Wenn die Einblendung
+einer VMA aufgehoben wird, dekrementiert der Kernel den
+Verwendungszähler für jede Seite im Bereich. Wenn Ihr Treiber den
+Verwendungszähler beim Hinzufügen einer Seite zum Bereich nicht
+inkrementiert, fällt der Verwendungszähler zu früh auf 0 und die
+Integrität des Systems gerät in Gefahr.</P
+><P
+>&#13;
+Eine Situation, in der der <SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+>-Ansatz nützlich
+ist, kann durch den Systemaufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>mremap</I
+></SPAN
+>
+hervorgerufen werden, der von Applikationen verwendet wird, um die
+Grenzadressen eines eingeblendeten Bereichs zu ändern. Wenn der Treiber
+mit <SPAN
+><I
+CLASS="EMPHASIS"
+>mremap</I
+></SPAN
+> umgehen können soll, funktioniert die
+vorhergehende Implementation nicht korrekt, weil der Treiber nicht
+wissen kann, daß sich der eingeblendete Bereich geändert hat.</P
+><P
+>Die Linux-Implementation von <SPAN
+><I
+CLASS="EMPHASIS"
+>mremap</I
+></SPAN
+>
+benachrichtigt den Treiber nicht über Änderungen im eingeblendeten
+Bereich. Der Treiber wird allerdings durchaus benachrichtigt, wenn die
+Größe des Bereichs mit der Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>unmap</I
+></SPAN
+>
+reduziert wird, aber es erfolgt keine Benachrichtigung, wenn die
+Größe ansteigt.</P
+><P
+>Die grundlegende Idee, warum ein Treiber über eine Verkleinerung benachrichtigt wird, besteht darin, daß der Treiber (oder das Dateisystem,
+das eine normale Datei in den Speicher einblendet) wissen muß, wenn die
+Einblendung eines Bereichs aufgehoben wird, um passende Maßnahmen (wie
+etwa das Herausschreiben von Seiten auf die Festplatte) ergreifen zu
+können. Das Wachsen des eingeblendeten Bereichs hat dagegen für den
+Treiber so lange keine Bedeutung, bis das Programm, das
+<SPAN
+><I
+CLASS="EMPHASIS"
+>mremap</I
+></SPAN
+> aufruft, auf die neuen virtuellen Adressen
+zugreift. Im wirklichen Leben ist es nicht ungewöhnlich, Bereiche
+einzublenden, die nie verwendet werden (wie etwa unbenutzte Abschnitte
+im Programm-Code). Der Linux-Kernel benachrichtigt daher den Treiber
+nicht, wenn der eingeblendete Bereich wächst, weil sich die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+>-Methode eine nach der anderen um die
+Seiten kümmert, wenn auf diese tatsächlich zugegriffen wird.</P
+><P
+>Der Treiber wird also mit anderen Worten nicht benachrichtigt, wenn
+eine Einblendung wächst, weil <SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+> das später
+erledigt, ohne daß der Speicher benutzt werden muß, bevor er wirklich
+gebraucht wird. Diese Optimierung ist vor allem für normale Dateien
+gedacht, deren Einblendung echtes RAM verbraucht.</P
+><P
+>Die Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+> muß daher implementiert
+werden, wenn Sie den Systemaufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>mremap</I
+></SPAN
+>
+unterstützen wollen. Aber wenn Sie schon einmal
+<SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+> haben, dann können sie dies mit einigen
+Einschränkungen (die wir später beschreiben) auch ausgiebig
+verwenden. Diese Methode wird im nächsten Code-Fragment gezeigt. In
+dieser Implementation von <SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+> ersetzt die
+Gerätemethode nur <TT
+CLASS="LITERAL"
+>vma-&#62;vm_ops</TT
+>. Die
+Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+> kümmert sich um das seitenweise
+erneute Einblenden und gibt die Adresse ihrer <TT
+CLASS="LITERAL"
+>struct
+page</TT
+>-Struktur zurück. Weil wir hier nur ein Fenster auf den
+physikalischen Speicher implementieren, ist der verbleibende Schritt
+einfach &#8212; wir müssen nur einen Zeiger auf die <TT
+CLASS="LITERAL"
+>struct
+page</TT
+> für die gewünschte Adresse finden und zurückgeben.</P
+><P
+>Eine Implementation von <TT
+CLASS="FILENAME"
+>/dev/mem</TT
+>, die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+> verwendet, sieht folgendermaßen aus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+struct page *simple_vma_nopage(struct vm_area_struct *vma,
+                unsigned long address, int write_access)
+{
+    struct page *pageptr;
+    unsigned long physaddr = address - vma-&#62;vm_start + VMA_OFFSET(vma);
+    pageptr = virt_to_page(_&#8201;_va(physaddr));
+    get_page(pageptr);
+    return pageptr;
+}
+
+int simple_nopage_mmap(struct file *filp, struct vm_area_struct *vma)
+{
+    unsigned long offset = VMA_OFFSET(vma);
+
+    if (offset &#62;= _&#8201;_pa(high_memory) || (filp-&#62;f_flags &#38; O_SYNC))
+        vma-&#62;vm_flags |= VM_IO;
+    vma-&#62;vm_flags |= VM_RESERVED;
+
+    vma-&#62;vm_ops = &#38;simple_nopage_vm_ops;
+    simple_vma_open(vma);
+    return 0;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Weil wir wieder einmal einfach Hauptspeicher einblenden, muß die
+Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+> nur die korrekte <TT
+CLASS="LITERAL"
+>struct
+page</TT
+> für die nicht vorhandene Adresse suchen und deren
+Referenzzähler erhöhen. Also muß folgendes erledigt werden: Wir müssen die gewünschte physikalische Adresse berechnen, diese Adresse dann mit <TT
+CLASS="LITERAL"
+>__va</TT
+> in eine logische Adresse umwandeln und anschließend diese logische Adresse mit
+<TT
+CLASS="LITERAL"
+>virt_to_page</TT
+> in eine <TT
+CLASS="LITERAL"
+>struct
+page</TT
+> umwandeln. Es wäre auch möglich, direkt von der physikalischen
+Adresse zur <TT
+CLASS="LITERAL"
+>struct page</TT
+> zu gelangen, aber der Code
+dafür wäre nur schwer über verschiedene Architekturen hinweg portabel
+zu halten. Solcher Code wäre aber notwendig, wenn wir versuchen
+würden, hohen Speicher einzublenden, der, wie Sie sich erinnern werden, keine
+logischen Adressen hat. <SPAN
+CLASS="APPLICATION"
+>simple</SPAN
+> ist, wie der
+Name sagt, einfach und kümmert sich deswegen nicht um diese (seltenen)
+Fälle.</P
+><P
+>Wenn die Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+> auf
+<TT
+CLASS="LITERAL"
+>NULL</TT
+> belassen wird, blendet der Kernel-Code, der
+sich um Seitenfehler kümmert, die Zero-Page auf die fehlende virtuelle
+Adresse ein. Die Zero-Page ist eine Copy-on-write-Seite, die als Null
+gelesen wird und die beispielsweise verwendet wird, um das BSS-Segment
+einzublenden. Wenn daher ein Prozeß einen eingeblendeten Bereich durch
+Aufruf von <SPAN
+><I
+CLASS="EMPHASIS"
+>mremap</I
+></SPAN
+> erweitert und der Treiber
+<SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+> nicht implementiert hat, dann bekommt der
+Prozeß die Zero-Page anstelle eines Segmentationsfehlers.
+
+
+
+
+
+
+
+&#13;</P
+><P
+>Die Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+> gibt normalerweise einen
+Zeiger auf eine <TT
+CLASS="LITERAL"
+>struct page</TT
+> zurück. Wenn aus
+irgendeinem Grund keine normale Seite zurückgegeben werden kann (etwa
+weil die angeforderte Adresse jenseits des Speicherbereichs des Geräts
+liegt), dann kann auch <TT
+CLASS="LITERAL"
+>NOPAGE_:SIGBUS</TT
+>
+zurückgegeben werden, um den Fehler anzuzeigen. Außerdem kann
+<SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+> <TT
+CLASS="LITERAL"
+>NOPAGE_OOM</TT
+>
+zurückgeben, um Fehler aufgrund mangelnder Ressourcen zu melden.</P
+><P
+>&#62;
+&#62;
+&#62;
+&#62;
+
+
+
+
+Beachten Sie, daß diese Implementation für ISA-Speicherbereiche
+funktioniert, aber nicht für solche auf dem PCI-Bus. PCI-Speicher wird
+oberhalb der höchsten Adresse des Systemspeichers eingeblendet, und es
+gibt in der System-Speichertabelle keine Einträge für diese
+Adressen. Und weil es keine <TT
+CLASS="LITERAL"
+>struct page</TT
+> gibt, deren
+Zeiger zurückgegeben werden könnte, kann <SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+>
+in diesen Situationen nicht verwendet werden; Sie müssen statt dessen
+<SPAN
+><I
+CLASS="EMPHASIS"
+>remap_page_range</I
+></SPAN
+> benutzen.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN17496"
+>Umblenden bestimmter I/O-Regionen</A
+></H2
+><P
+>&#13;
+
+Alle Beispiele, die wir bisher gesehen haben, sind Reimplementationen
+von <TT
+CLASS="FILENAME"
+>/dev/mem</TT
+>; Sie blenden physikalische
+Adressen erneut in den User-Space ein. Der typische Treiber will dagegen nur einen kleinen
+Adreßbereich einblenden, der zu seinem Peripherie-Gerät gehört, aber
+nicht den gesamten Speicher. Um nur eine Teilmenge des gesamten
+Speicherbereichs auf den User-Space einzublenden, muß der Treiber nur etwas an
+den Offsets drehen. Die folgenden Zeilen erledigen das für einen
+Treiber, der einen Bereich von
+<TT
+CLASS="LITERAL"
+>simple_region_size</TT
+> Bytes einblendet,
+welcher bei der physikalischen Adresse
+<TT
+CLASS="LITERAL"
+>simple_region_start</TT
+> beginnt (was an einer
+Seitengrenze liegen sollte).</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;unsigned long off = vma-&#62;vm_pgoff &#60;&#60; PAGE_SHIFT;
+unsigned long physical = simple_region_start + off;
+unsigned long vsize = vma-&#62;vm_end - vma-&#62;vm_start;
+unsigned long psize = simple_region_size - off;
+
+if (vsize &#62; psize)
+    return -EINVAL; /*  Speicherbereich zu groß */
+remap_page_range(vma_&#62;vm_start, physical, vsize, vma-&#62;vm_page_prot);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Neben dem Berechnen der Offsets überprüft dieser Code, ob das
+Programm versucht, mehr Speicher einzublenden, als sich im I/O-Bereich
+des Zielgeräts befindet, und meldet in diesem Fall einen Fehler
+zurück. <TT
+CLASS="LITERAL"
+>psize</TT
+> ist in diesem Code die physikalische
+I/O-Größe, die nach Angabe des Offsets noch übrigbleibt;
+<TT
+CLASS="LITERAL"
+>vsize</TT
+> ist die angeforderte Größe des virtuellen
+Speichers; die Funktion weigert sich, Adressen einzublenden, die
+außerhalb des erlaubten Speicherbereichs liegen.</P
+><P
+>&#13;
+Beachten Sie, daß der Benutzer-Prozeß immer <SPAN
+><I
+CLASS="EMPHASIS"
+>mremap</I
+></SPAN
+>
+verwenden kann, um seine Einblendung zu erweitern, möglicherweise sogar
+über das Ende des physikalischen Geräts hinaus. Wenn Ihr Treiber keine
+<SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+>-Methode hat, wird er davon nie
+benachrichtigt, und der zusätzliche Bereich wird auf die Zero-Page
+eingeblendet. Als Autor vom Gerätetreibern wollen Sie ein solches Verhalten vermutlich
+vermeiden; das Einblenden der Zero-Page auf das Ende Ihres Bereichs ist
+nicht nur eindeutig etwas Schlechtes, sondern auch vermutlich nicht
+das, was der Programmierer wollte.</P
+><P
+>Am einfachsten kann man ein Erweitern der Einblendung durch
+das Implementieren einer einfachen <SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+>-Methode
+verhindern, die dem Prozeß, in dem der Seitenfehler aufgetreten ist,
+immer ein Bus-Signal schickt. Eine solche Methode würde folgendermaßen
+aussehen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;struct page *simple_nopage(struct vm_area_struct *vma,
+                           unsigned long address, int write_access);
+{ return NOPAGE_SIGBUS; /* SIGBUS schicken */}</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN17534"
+>RAM umblenden</A
+></H2
+><P
+>&#13;
+
+
+
+Eine gründlichere Implementation könnte natürlich kontrollieren, ob
+sich der gewünschte Bereich im Gerät befindet, und falls dem so ist, das
+Umblenden durchführen. Aber auch hier funktioniert
+<SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+> nicht bei PCI-Speicherbereichen, so daß
+Erweiterungen von PCI-Einblendungen nicht möglich sind.
+Unter Linux wird eine Seite mit physikalischen Adressen in der
+Speichertabelle als &#8220;reserviert&#8221; markiert, um zu
+kennzeichnen, daß sie für die Speicherverwaltung nicht zur Verfügung
+steht. Auf dem PC gilt das beispielsweise für den Bereich von 640 KByte
+bis 1 MByte sowie für die Seiten, die den Kernel-Code selbst enthalten.&#13;</P
+><P
+>Es ist eine interessante Beschränkung von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>remap_page_range</I
+></SPAN
+>, daß mit dieser
+Funktion nur Zugriff auf reservierte Seiten und physikalische Adressen
+oberhalb des physikalischen Speichers möglich ist. Reservierte Seiten
+sind im Speicher gesperrt, und nur diese
+können sicher in den User-Space eingeblendet werden. Diese Einschränkung
+ist eine grundlegende Bedingung für die Systemstabilität.</P
+><P
+>Daher läßt <SPAN
+><I
+CLASS="EMPHASIS"
+>remap_page_range</I
+></SPAN
+> es
+nicht zu, konventionelle Adressen umzublenden &#8212; wozu auch diejenigen
+gehören, die Sie von <SPAN
+><I
+CLASS="EMPHASIS"
+>get_free_page</I
+></SPAN
+>
+bekommen. Statt dessen bekommen Sie die Zero-Page. Gleichwohl macht
+die Funktion aber alles, was Hardware-Treiber von ihr benötigen, weil
+sie hohe PCI-Puffer und ISA-Speicher umblenden kann.&#13;</P
+><P
+>&#13;Die Einschränkungen von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>remap_page_range</I
+></SPAN
+> kann man mit
+<SPAN
+CLASS="APPLICATION"
+>mapper</SPAN
+>
+beobachten, einem der Beispiel-Programme auf dem FTP-Server von
+O'Reilly. <SPAN
+CLASS="APPLICATION"
+>mapper</SPAN
+> ist ein einfaches
+Hilfsprogramm, das verwendet werden kann, um schnell den Systemaufruf
+<SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+> zu testen. Es blendet nur-lesbare Bereiche
+einer Datei auf Basis der Kommandozeilenoptionen ein und gibt den
+eingeblendeten Bereich auf der Standardausgabe aus. Die untenstehende
+Ausgabe zeigt, daß <TT
+CLASS="FILENAME"
+>/dev/mem</TT
+> die
+physikalische Seite an der Adresse 64 KByte nicht einblendet &#8212; statt
+dessen sehen wir eine Seite voller Nullen (der
+verwendete Rechner ist in diesem Beispiel ein PC, aber auf anderen
+Plattformen wäre das Ergebnis das gleiche):&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>&#13;
+morgana.root# <TT
+CLASS="USERINPUT"
+><B
+>./mapper /dev/mem 0x10000 0x1000 | od -Ax -t x1</B
+></TT
+>
+mapped "/dev/mem" from 65536 to 69632
+000000 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+*
+001000</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die Unfähigkeit von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>remap_page_range</I
+></SPAN
+>, mit RAM
+umzugehen, legt schon nahe, daß ein Gerät wie
+<SPAN
+CLASS="APPLICATION"
+>scullp</SPAN
+> <SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+> nicht so
+einfach implementieren kann, weil sein Gerätespeicher im
+konventionellen RAM und nicht im I/O-Speicher
+liegt. Glücklicherweise gibt es einen relativ einfachen Ausweg für
+alle Treiber, die RAM in den User-Space einblenden müssen; dazu wird die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+>-Methode verwendet, wie schon gezeigt wurde.&#13;</P
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN17573"
+>RAM mit der nopage-Methode umblenden</A
+></H3
+><P
+>&#13;
+Echtes RAM blendet man in den User-Space durch
+Verwendung von <TT
+CLASS="LITERAL"
+>vm_ops-&#62;nopage</TT
+> ein, um Seitenfehler einen nach dem anderen zu behandeln. Eine
+Beispiel-Implementation ist ein Teil des
+<SPAN
+CLASS="APPLICATION"
+>scullp</SPAN
+>-Moduls, das in <A
+HREF="get.html"
+>Kapitel 7</A
+>
+eingeführt wurde.&#13;</P
+><P
+><SPAN
+CLASS="APPLICATION"
+>scullp</SPAN
+> ist ein seitenorientiertes
+Zeichen-Gerät. Weil es seitenorientiert ist, kann es
+<SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+> auf seinem Speicher implementieren. Der Code
+dafür verwendet einige der Konzepte, die in &#8220;<A
+HREF="mem.html#MEMMAN"
+>the Section called <I
+>Speicherverwaltung in Linux</I
+></A
+>&#8221; eingeführt wurden.&#13;</P
+><P
+>Aber bevor wir den Code untersuchen, schauen wir uns die
+Design-Überlegungen der <SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+>-Implementation von
+<SPAN
+CLASS="APPLICATION"
+>scullp</SPAN
+> an.&#13;</P
+><P
+></P
+><UL
+><LI
+><P
+><SPAN
+CLASS="APPLICATION"
+>scullp</SPAN
+> gibt den
+Gerätespeicher nicht frei, solange das Gerät noch eingeblendet
+              ist. Das ist mehr eine Frage der Policy als eine
+        Anforderung. <SPAN
+CLASS="APPLICATION"
+>scullp</SPAN
+> unterscheidet sich
+        hier von <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> und ähnlichen Geräten,
+        die beim Öffnen zum Schreiben auf eine Länge von Null verkürzt
+        werden. Die Weigerung, ein eingeblendetes
+        <SPAN
+CLASS="APPLICATION"
+>scullp</SPAN
+>-Gerät freizugeben, ermöglicht
+        es einem Prozeß, Speicherbereiche zu überschreiben, die gerade von einem
+        anderen Prozeß eingeblendet sind, so daß Sie damit testen können,
+        wie Prozesse und Gerätespeicher interagieren. Um ein
+        eingeblendetes Gerät nicht freizugeben, muß der Treiber die
+        aktiven Einblendungen mitzählen. Dafür wird das
+        <TT
+CLASS="LITERAL"
+>vmas</TT
+>-Feld in der Gerätestruktur benutzt.</P
+></LI
+><LI
+><P
+>Speichereinblendungen werden nur dann
+vorgenommen, wenn der Parameter <TT
+CLASS="REPLACEABLE"
+><I
+>order</I
+></TT
+> nicht
+Null ist. Dieser Parameter beeinflußt den Aufruf von
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>get_free_pages</I
+></SPAN
+> (siehe den
+        Abschnitt &#8220;<A
+HREF="getgfp.html"
+>the Section called <I
+>get_&#8201;free_&#8201;page und Freunde</I
+> in Kapitel 7</A
+>&#8221; in <A
+HREF="get.html"
+>Kapitel 7</A
+>). Diese Wahl wird durch die Interna von
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>get_free_pages</I
+></SPAN
+>, dem von
+        <SPAN
+CLASS="APPLICATION"
+>scullp</SPAN
+> verwendeten
+        Allokationsmechanismus, vorgegeben. Um die Allokations-Performance
+        zu maximieren, verwaltet der Linux-Kernel eine Liste für jede
+        Allokationsgrößenordnung, und nur der Seitenzähler der ersten
+        Seite in einem Bereich wird von
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>get_free_pages</I
+></SPAN
+> inkrementiert
+        und von <SPAN
+><I
+CLASS="EMPHASIS"
+>free_pages</I
+></SPAN
+> dekrementiert. Die
+        Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+> wird im
+        <SPAN
+CLASS="APPLICATION"
+>scullp</SPAN
+>-Gerät abgeschaltet, wenn die
+        Allokationsgrößenordnung größer als Null ist, weil
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+> nur mit einzelnen Seiten anstelle von
+        Seiten-Clustern arbeitet. Lesen Sie in &#8220;&#8221; in <A
+HREF="get.html"
+>Kapitel 7</A
+> nach, wenn Sie sich
+nicht mehr sicher sind, wie das mit <SPAN
+CLASS="APPLICATION"
+>scullp</SPAN
+>
+und der Allokationsgrößenordnung für den Speicher war.</P
+></LI
+></UL
+><P
+>Diese letzte Entscheidung wurde hauptsächlich deswegen getroffen, um
+den Code einfach zu halten. Es <SPAN
+><I
+CLASS="EMPHASIS"
+>ist</I
+></SPAN
+> möglich,
+<SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+> auch für Mehrseiten-Allokationen korrekt zu
+implementieren, indem die Verwendungszähler der Seiten manipuliert
+werden, aber das würde nur das Beispiel komplexer machen, ohne
+interessante Informationen einzuführen.</P
+><P
+>Wenn mit dem Code RAM entsprechend der dargelegten Regeln eingeblendet
+werden soll, dann müssen die Methoden <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>,
+<SPAN
+><I
+CLASS="EMPHASIS"
+>close</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+>
+implementiert werden; außerdem muß auf die Speichertabelle zugegriffen
+werden, um die Verwendungszähler der Seiten zu aktualisieren.&#13;</P
+><P
+>Diese Implementation von <SPAN
+><I
+CLASS="EMPHASIS"
+>scullp_mmap</I
+></SPAN
+> ist
+sehr kurz, weil alles Interessante von <SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+>
+gemacht wird:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+int scullp_mmap(struct file *filp, struct vm_area_struct *vma)
+{
+    struct inode *inode = INODE_FROM_F(filp);
+
+    /* Einblendung verweigern, wenn order nicht 0 ist */
+    if (scullp_devices[MINOR(inode-&#62;i_rdev)].order)
+        return -ENODEV;
+
+    /* hier nichts machen, nopage kuemmert sich schon darum */
+    vma-&#62;vm_ops = &#38;scullp_vm_ops;
+    vma-&#62;vm_flags |= VM_RESERVED;
+    vma-&#62;vm_private_data = scullp_devices + MINOR(inode-&#62;i_rdev);
+    scullp_vma_open(vma);
+    return 0;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die Bedingungen am Anfang verhindern das Einblenden von Geräten mit einer Allokationsgrößenordnung
+ungleich 0. Die Operationen von <SPAN
+CLASS="APPLICATION"
+>scullp</SPAN
+>
+werden im <TT
+CLASS="LITERAL"
+>vm_ops</TT
+>-Feld gespeichert; ein
+Zeiger auf die Gerätestruktur wird im Feld
+<TT
+CLASS="LITERAL"
+>vm_private_data</TT
+> abgelegt.
+Am Ende wird <TT
+CLASS="LITERAL"
+>vm_ops-&#62;open</TT
+>
+aufgerufen, um den Verwendungszähler des Moduls und den Zähler für die
+aktiven Einblendungen des Gerätes zu aktualisieren.&#13;</P
+><P
+><SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>close</I
+></SPAN
+>
+kümmern sich lediglich um diese Zähler und sind folgendermaßen
+definiert:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+void scullp_vma_open(struct vm_area_struct *vma)
+{
+    ScullP_Dev *dev = scullp_vma_to_dev(vma);
+
+    dev-&#62;vmas++;
+    MOD_INC_USE_COUNT;
+}
+
+void scullp_vma_close(struct vm_area_struct *vma)
+{
+    ScullP_Dev *dev = scullp_vma_to_dev(vma);
+
+    dev-&#62;vmas--;
+    MOD_DEC_USE_COUNT;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>sculls_vma_to_dev</I
+></SPAN
+> gibt
+einfach nur den Inhalt des Feldes
+<TT
+CLASS="LITERAL"
+>vm_private_data</TT
+> zurück. Es handelt
+sich dabei um eine separate Funktion, weil Kernel-Versionen vor 2.4
+dieses Feld nicht hatten, weswegen andere Verfahren zum Holen dieses
+Zeigers notwendig sind. Siehe dazu auch &#8220;<A
+HREF="membc.html"
+>the Section called <I
+>Abwärtskompatibilität</I
+></A
+>&#8221; am
+Ende dieses Kapitels.</P
+><P
+>Die Hauptarbeit wird dann von <SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+>
+erledigt. In der
+Implementation von <SPAN
+CLASS="APPLICATION"
+>scullp</SPAN
+> wird
+<SPAN
+CLASS="APPLICATION"
+>address</SPAN
+> verwendet, um einen Offset in das
+Gerät zu berechnen. Mit diesem Offset wird dann die korrekte Seite im
+Speicherbaum von <SPAN
+CLASS="APPLICATION"
+>scullp</SPAN
+> nachgeschlagen.&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+struct page *scullp_vma_nopage(struct vm_area_struct *vma,
+                                unsigned long address, int write)
+{
+    unsigned long offset;
+    ScullP_Dev *ptr, *dev = scullp_vma_to_dev(vma);
+    struct page *page = NOPAGE_SIGBUS;
+    void *pageptr = NULL; /* Default ist "fehlt" */
+
+    down(&#38;dev-&#62;sem);
+    offset = (address - vma-&#62;vm_start) + VMA_OFFSET(vma);
+    if (offset &#62;= dev-&#62;size) goto out; /* Außerhalb des Bereichs */
+
+    /*
+     * Jetzt das scullp-Geraet aus der Liste holen, danach die
+     * Seite. Wenn das Geraet Loecher hat, dann bekommt der Prozess ein
+     * SIGBUS, wenn auf das Loch zugegriffen wird.
+     */
+    offset &#62;&#62;= PAGE_SHIFT; /* Offset ist eine Anzahl von Seiten */
+    for (ptr = dev; ptr &#38;&#38; offset &#62;= dev-&#62;qset;) {
+        ptr = ptr-&#62;next;
+        offset -= dev-&#62;qset;
+    }
+    if (ptr &#38;&#38; ptr-&#62;data) pageptr = ptr-&#62;data[offset];
+    if (!pageptr) goto out; /* Loch oder Dateiende */
+    page = virt_to_page(pageptr);
+
+    /* Seite bekommen, Zaehler inkrementieren */
+    get_page(page);
+out:
+    up(&#38;dev-&#62;sem);
+    return page;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+><SPAN
+CLASS="APPLICATION"
+>scullp</SPAN
+> verwendet mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>get_free_pages</I
+></SPAN
+> allozierten
+Speicher. Dieser Speicher wird mit logischen Adressen angesprochen,
+weswegen <SPAN
+><I
+CLASS="EMPHASIS"
+>scullp_nopage</I
+></SPAN
+> lediglich
+<SPAN
+><I
+CLASS="EMPHASIS"
+>virt_to_page</I
+></SPAN
+> aufrufen muß, um einen
+<TT
+CLASS="LITERAL"
+>struct page</TT
+>-Zeiger zu bekommen.</P
+><P
+>Das Gerät <SPAN
+CLASS="APPLICATION"
+>scullp</SPAN
+> funktioniert nun wie
+erwartet, wie Sie in der folgenden Ausgabe von
+<SPAN
+CLASS="APPLICATION"
+>mapper</SPAN
+> sehen können. Wir zeigen hier eine
+Verzeichnisausgabe von <TT
+CLASS="FILENAME"
+>/dev</TT
+> (die lang ist) auf
+das <SPAN
+CLASS="APPLICATION"
+>scullp</SPAN
+>-Gerät, sowie anschließend die
+Verwendung des Hilfsprogramms <SPAN
+CLASS="APPLICATION"
+>mapper</SPAN
+>, um uns
+die Bestandteile dieses Listings mit <SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+>
+anschauen zu können.</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>&#13;
+morgana% ls -l /dev &#62; /dev/scullp
+morgana% ./mapper /dev/scullp 0 140
+mapped "/dev/scullp" from 0 to 140
+total 77
+-rwxr-xr-x    1 root     root        26689 Mar  2  2000 MAKEDEV
+crw-rw-rw-    1 root     root      14,  14 Aug 10 20:55 admmidi0
+morgana% ./mapper /dev/scullp 8192 200
+mapped "/dev/scullp" from 8192 to 8392
+0
+crw&#8212;&#8212;&#8212;-    1 root     root     113,   1 Mar 26  1999 cum1
+crw&#8212;&#8212;&#8212;-    1 root     root     113,   2 Mar 26  1999 cum2
+crw&#8212;&#8212;&#8212;-    1 root     root     113,   3 Mar 26  1999 cum3</PRE
+></TD
+></TR
+></TABLE
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN17670"
+>Umblenden virtueller Adressen</A
+></H2
+><P
+>&#13;
+
+
+Obwohl es selten notwendig ist, ist es
+doch interessant zu sehen, wie ein Treiber eine virtuelle Adresse mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+> in den User-Space einblenden kann. Unter dem Begriff
+"virtuelle Adresse" verstehen wir hier eine von
+Funktionen wie <SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+> oder
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kmap</I
+></SPAN
+> zurückgegebene Adresse, also eine Adresse,
+die auf
+die Seitentabellen des Kernels eingeblendet wird. Der Code in diesem
+Abschnitt stammt aus <SPAN
+CLASS="APPLICATION"
+>scullv</SPAN
+>, dem Modul, das
+wie <SPAN
+CLASS="APPLICATION"
+>scullp</SPAN
+> arbeitet, seinen Speicher aber
+über <SPAN
+CLASS="APPLICATION"
+>vmalloc</SPAN
+> bezieht.
+
+&#13;</P
+><P
+>Der größte Teil der Implementation von
+<SPAN
+CLASS="APPLICATION"
+>scullv</SPAN
+> entspricht der, die wir für
+<SPAN
+CLASS="APPLICATION"
+>scullp</SPAN
+> schon gesehen haben, mit der
+Ausnahme, daß der <TT
+CLASS="LITERAL"
+>order</TT
+>-Parameter nicht überprüft
+werden muß, weil <SPAN
+CLASS="APPLICATION"
+>vmalloc</SPAN
+> die Seiten einzeln
+alloziert, denn Einzelallokationen sind mit sehr viel größerer
+Wahrscheinlichkeit erfolgreich als Mehrfachallokationen. Daher gibt
+es bei der Benutzung von <SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+> kein Problem mit der
+Allokationsgrößenordnung.&#13;</P
+><P
+>Der größte Teil der Arbeit von <SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+> besteht im
+Aufbauen der Seitentabellen, über die  auf die allozierten Seiten als
+zusammenhängender Adreßbereich zugegriffen werden kann. Die Methode
+<SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+> muß dagegen die Seitentabellen wieder
+auseinandernehmen, um dem Aufrufer einen <TT
+CLASS="LITERAL"
+>struct
+page</TT
+>-Zeiger übergeben zu können. Daher muß die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+>-Implementation von
+<SPAN
+CLASS="APPLICATION"
+>scullv</SPAN
+> die Seitentabellen absuchen, um die
+zu einer Seite gehörende physikalische Adresse zu ermitteln.
+&#13;</P
+><P
+>Die Funktion ähnelt, bis auf das Ende, der von
+<SPAN
+CLASS="APPLICATION"
+>scullp</SPAN
+>. Daher enthält dieser
+Code-Ausschnitt nur den Teil von <SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+>, der sich
+von <SPAN
+CLASS="APPLICATION"
+>scullp</SPAN
+> unterscheidet.&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+pgd_t *pgd; pmd_t *pmd; pte_t *pte;
+unsigned long lpage;
+
+  /*
+   * Nach dem Nachschlagen von scullv ist "page" jetzt die Adresse
+   * der Seite, die der aktuelle Prozess benoetigt. Weil es sich um
+   * eine vmalloc-Adresse handelt, holen wir zuerst den unsigned
+   * long-Wert, der in den Seitentabellen nachgeschlagen werden
+   * soll.
+   */
+lpage = VMALLOC_VMADDR(pageptr);
+spin_lock(&#38;init_mm.page_table_lock);
+pgd = pgd_offset(&#38;init_mm, lpage);
+pmd = pmd_offset(pgd, lpage);
+pte = pte_offset(pmd, lpage);
+page = pte_page(*pte);
+spin_unlock(&#38;init_mm.page_table_lock);
+
+/* alles klar, jetzt den Zaehler inkrementieren */
+get_page(page);
+out:
+up(&#38;dev-&#62;sem);
+return page;</PRE
+></TD
+></TR
+></TABLE
+><P
+>Auf die Seitentabellen wird mit den am Anfang dieses Kapitels
+eingeführten Funktionen zugegriffen. Das zu diesem Zweck verwendete
+Seitenverzeichnis wird in der Speicherstruktur des Kernel-Space,
+<TT
+CLASS="LITERAL"
+>init_mm</TT
+>, abgelegt. Beachten Sie, daß sich
+<SPAN
+CLASS="APPLICATION"
+>scullv</SPAN
+> die
+<TT
+CLASS="LITERAL"
+>page_table_lock</TT
+>-Sperre holt, bevor
+der Treiber die Seitentabellen traversiert. Wenn diese Sperre nicht
+gehalten werden würde, könnte ein anderer Prozessor die Seitentabelle
+verändern, während <SPAN
+CLASS="APPLICATION"
+>scullv</SPAN
+> gerade mitten
+beim Nachschlagen wäre, was zu fehlerhaften Ergebnissen führen kann.&#13;</P
+><P
+>&#13;Das Makro <TT
+CLASS="LITERAL"
+>VMALLOC_VMADDR(pageptr)</TT
+> gibt den
+korrekten <TT
+CLASS="LITERAL"
+>unsigned long</TT
+>-Wert einer
+<SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+>-Adresse zurück, der zum Nachschlagen in
+einer Seitentabelle verwendet wird. Beachten Sie, daß ein einfaches
+Casting des Wertes in älteren Kerneln als 2.1 wegen eines Fehlers in
+der Speicherverwaltung nicht ausreichen würde. Die Speicherverwaltung
+der x86-Plattform wurde in der Version 2.1.1 geändert, und
+<TT
+CLASS="LITERAL"
+>VMALLOC_VMADDR</TT
+> ist dort nun genauso die
+Identitätsfunktion, wie es das auf allen Plattformen schon immer
+gewesen ist. Um den Code portabel zu halten, sollte man dieses aber
+trotzdem immer noch verwenden.
+
+&#13;</P
+><P
+>Analog zu dieser Diskussion wollen Sie vielleicht auch versuchen,
+die von <SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+> zurückgegebenen Adressen in
+den User-Space einzublenden. Das ist ziemlich einfach möglich, weil
+Sie <SPAN
+><I
+CLASS="EMPHASIS"
+>remap_page_range</I
+></SPAN
+> direkt
+verwenden können, ohne Methoden implementieren zu müssen, die auf
+virtuelle Speicherbereiche zugreifen.
+<SPAN
+><I
+CLASS="EMPHASIS"
+>remap_page_range</I
+></SPAN
+> kann also mit
+anderen Worten bereits dafür verwendet werden, um neue Seitentabellen
+aufzubauen, die I/O-Speicher in den User-Space einblenden; es ist
+nicht nötig, in den von <SPAN
+><I
+CLASS="EMPHASIS"
+>vremap</I
+></SPAN
+> erzeugten
+Seitentabellen des Kernels nachzuschlagen, wie wir das in
+<SPAN
+CLASS="APPLICATION"
+>scullv</SPAN
+> gemacht haben.&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="mem.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="memkiobuf.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>mmap und DMA</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="mem.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Die kiobuf-Schnittstelle</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

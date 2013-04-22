@@ -1,0 +1,19 @@
+Vorgenommene Aenderungen :
+------------------------------------------
+
+
+Zeile 11: Klammern [] falsch gesetzt, y_links_pos wurde lediglich als Variable definiert
+
+Zeile 20: int[4]  --  4 durch buchstaben.length ersetzt, weil damit dynamischere Anpassung, bei Aenderung der Buchstabenfolge
+
+Zeilen 21-23: buchstaben.length() existiert nicht, da Arrays keine Klassen sind und somit auch keine Methoden besitzen
+
+Zeilen 31,35,39: Falsche Start- und Endwerte in der for-Schleife
+
+Zeile 47: In for-Schleife Abbruchbedingung  i<x_oben_pos.length in i<buchstaben.length geaendert, Grund wie in Zeile 20
+
+Zeile 51: Zuweisung y_oben_pos  = int [] {rand, rand, rand} war nicht ganz richtig (Array hat Laenge 4, nicht 3)
+
+Zeile 53: for-Schleife war ueberfluessig, habe sie mit der in Zeile 40 zusammengefasst
+
+Zeile 64: Array-Copy ist vollkommen ueberfluessig, bei mir lauefts ohne

@@ -1,0 +1,2400 @@
+<HTML
+><HEAD
+><TITLE
+></TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="NEXT"
+TITLE="Vorwort"
+HREF="f2.html"></HEAD
+><BODY
+CLASS="BOOK"
+><DIV
+CLASS="BOOK"
+><A
+NAME="AEN1"
+></A
+>
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" WIDTH="90%">
+<tr>
+<td colspan=2>
+<IMG WIDTH="515" height="37" ALIGN="BOTTOM"
+ ALT="Im Katalog suchen" BORDER="0"
+ USEMAP="#catalog_header_buttons" ISMAP
+ SRC="/graphics_new/catalog_header_buttons.gif">
+<MAP Name="catalog_header_buttons">
+<AREA Shape="Rect" coords = "407,17,512,32"  href="/search.html">
+<AREA Shape="Rect" coords = "431,3,512,18"  href="/catalog/prdindex.html">
+</MAP>
+</td>
+</tr>
+<tr>
+<td width="25%" valign="TOP">
+<A HREF="/catalog/runlinux3ger/">
+<img hspace=10 vspace=10 src="/catalog/covers/linuxdrive2ger.s.gif"
+alt="Linux-Ger&auml;tetreiber, 2.Auflage" align=left valign=top border=0>
+</a>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Linux-Ger&auml;tetreiber, 2. Auflage</H2>
+<font size="-1">
+Alessandro Rubini & Jonathan Corbet
+ <br>
+2. Auflage April 2002<br>
+ISBN 3-89721-138-6<br>
+608 Seiten, EUR 44,-
+<p>
+</font>
+</td>
+</tr>
+</table>
+<hr>
+<!-- Ueberschrift1 Anfang -->
+
+<DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Inhalt</B
+></DT
+><DT
+><A
+HREF="f2.html"
+>Vorwort</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="f2.html#AEN7"
+>Alessandros Einführung</A
+></DT
+><DT
+><A
+HREF="x16.html"
+>Jons Einführung</A
+></DT
+><DT
+><A
+HREF="x23.html"
+>Die Zielgruppe dieses Buches</A
+></DT
+><DT
+><A
+HREF="x34.html"
+>Organisation des Buches</A
+></DT
+><DT
+><A
+HREF="x39.html"
+>Hintergrundinformationen</A
+></DT
+><DT
+><A
+HREF="x45.html"
+>Weitere Informationsquellen</A
+></DT
+><DT
+><A
+HREF="x120.html"
+>Online-Versionen und Lizenz</A
+></DT
+><DT
+><A
+HREF="x148.html"
+>Konventionen in diesem Buch</A
+></DT
+><DT
+><A
+HREF="x180.html"
+>Danksagungen</A
+></DT
+></DL
+></DD
+><DT
+>1. <A
+HREF="anintro.html"
+>Eine Einführung in den Linux-Kernel</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="anintro.html#AEN198"
+>Die Rolle des Treiber-Programmierers</A
+></DT
+><DT
+><A
+HREF="x217.html"
+>Organisation des Kernels</A
+></DT
+><DT
+><A
+HREF="anclass.html"
+>Klassen von Geräten und Modulen</A
+></DT
+><DT
+><A
+HREF="x320.html"
+>Sicherheitsfragen</A
+></DT
+><DT
+><A
+HREF="x339.html"
+>Versionsnumerierung</A
+></DT
+><DT
+><A
+HREF="x357.html"
+>Lizenzbedingungen</A
+></DT
+><DT
+><A
+HREF="x385.html"
+>Selbst in der Kernel-Entwicklergemeinde tätig werden</A
+></DT
+><DT
+><A
+HREF="x392.html"
+>Übersicht über dieses Buch</A
+></DT
+></DL
+></DD
+><DT
+>2. <A
+HREF="building.html"
+>Module erstellen und starten</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="building.html#BUIAPP"
+>Module versus Applikationen</A
+></DT
+><DT
+><A
+HREF="x666.html"
+>Kompilieren und Laden</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="x666.html#BUIVERSION"
+>Versionsabhängigkeit</A
+></DT
+><DT
+><A
+HREF="x666.html#BUIPLAT"
+>Plattformabhängigkeiten</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="x956.html"
+>Die Symboltabelle des Kernels</A
+></DT
+><DT
+><A
+HREF="buiini.html"
+>Initialisierung und Beendigung</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="buiini.html#BUIERR"
+>Fehlerbehandlung in init_module</A
+></DT
+><DT
+><A
+HREF="buiini.html#AEN1193"
+>Verwendungszähler</A
+></DT
+><DT
+><A
+HREF="buiini.html#AEN1264"
+>Entladen</A
+></DT
+><DT
+><A
+HREF="buiini.html#AEN1281"
+>Explizite Initialisierungs- und Aufräumfunktionen</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="buiresource.html"
+>Ressourcen verwenden</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="buiresource.html#BUIPROBE"
+>I/O-Ports und I/O-Speicher</A
+></DT
+><DT
+><A
+HREF="buiresource.html#BUIRES24"
+>Ressourcen-Allokation in Linux 2.4</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="buiconf.html"
+>Automatische und manuelle
+Konfiguration</A
+></DT
+><DT
+><A
+HREF="x1670.html"
+>Im User-Space arbeiten</A
+></DT
+><DT
+><A
+HREF="x1736.html"
+>Abwärtskompatibilität</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="x1736.html#AEN1748"
+>Änderungen in der Ressourcen-Verwaltung</A
+></DT
+><DT
+><A
+HREF="x1736.html#AEN1806"
+>Kompilieren auf Multiprozessor-Systemen</A
+></DT
+><DT
+><A
+HREF="x1736.html#AEN1823"
+>Symbole in Linux 2.0 exportieren</A
+></DT
+><DT
+><A
+HREF="x1736.html#AEN1887"
+>Modul-Konfigurationsparameter</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="x1916.html"
+>Schnellreferenz</A
+></DT
+></DL
+></DD
+><DT
+>3. <A
+HREF="char.html"
+>Zeichen-Treiber</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="char.html#AEN2189"
+>Das Design von scull</A
+></DT
+><DT
+><A
+HREF="charmami.html"
+>Major- und Minor-Nummern</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="charmami.html#AEN2375"
+>Dynamische Zuweisung von Major-Nummern</A
+></DT
+><DT
+><A
+HREF="charmami.html#AEN2479"
+>Einen Treiber aus dem System entfernen</A
+></DT
+><DT
+><A
+HREF="charmami.html#AEN2528"
+>dev_t und kdev_t</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="charfops.html"
+>Datei-Operationen</A
+></DT
+><DT
+><A
+HREF="charfile.html"
+>Die Struktur file</A
+></DT
+><DT
+><A
+HREF="x2969.html"
+>open und release</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="x2969.html#CHAROPEN"
+>Die Methode open</A
+></DT
+><DT
+><A
+HREF="x2969.html#AEN3088"
+>Die Methode release</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="charscullmem.html"
+>Die Verwendung von
+Speicher in scull</A
+></DT
+><DT
+><A
+HREF="charrace.html"
+>Ein kurze Einführung in Race Conditions</A
+></DT
+><DT
+><A
+HREF="charrdwr.html"
+>read und write</A
+></DT
+><DT
+><A
+HREF="x3593.html"
+>Die neuen Geräte ausprobieren</A
+></DT
+><DT
+><A
+HREF="chardevfs.html"
+>Das Device-Dateisystem</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="chardevfs.html#AEN3788"
+>devfs in der Praxis</A
+></DT
+><DT
+><A
+HREF="chardevfs.html#AEN3849"
+>Portabilitätsprobleme mit devfs</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="x3895.html"
+>Abwärtskompatibilität</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="x3895.html#AEN3901"
+>Änderungen in der Struktur für die Dateioperationen</A
+></DT
+><DT
+><A
+HREF="x3895.html#AEN4023"
+>Der Verwendungszähler von Modulen</A
+></DT
+><DT
+><A
+HREF="x3895.html#AEN4051"
+>Änderungen in der Unterstützung von Semaphoren</A
+></DT
+><DT
+><A
+HREF="x3895.html#AEN4071"
+>Änderungen im Zugriff auf den User-Space</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="x4097.html"
+>Schnellreferenz</A
+></DT
+></DL
+></DD
+><DT
+>4. <A
+HREF="debug.html"
+>Debugging-Techniken</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="debug.html#AEN4249"
+>Debugging mit Ausgaben</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="debug.html#DEBPRINTK"
+>printk</A
+></DT
+><DT
+><A
+HREF="debug.html#DEBPRINTKLOG"
+>Wie Meldungen protokolliert werden</A
+></DT
+><DT
+><A
+HREF="debug.html#AEN4494"
+>Die Meldungen ein- und ausschalten</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="x4562.html"
+>Debugging mit Abfragen</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="x4562.html#DEBPROC"
+>Das /proc-Dateisystem verwenden</A
+></DT
+><DT
+><A
+HREF="x4562.html#AEN4804"
+>Die Methode ioctl</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="x4834.html"
+>Debugging durch Beobachten</A
+></DT
+><DT
+><A
+HREF="debfaults.html"
+>Debuggen von Systemfehlern</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="debfaults.html#AEN4935"
+>Oops-Meldungen</A
+></DT
+><DT
+><A
+HREF="debfaults.html#DEBHANG"
+>Das System bleibt stehen</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="x5337.html"
+>Debugger und verwandte Werkzeuge</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="x5337.html#AEN5347"
+>gdb verwenden</A
+></DT
+><DT
+><A
+HREF="x5337.html#AEN5444"
+>Der Kernel-Debugger kdb</A
+></DT
+><DT
+><A
+HREF="x5337.html#AEN5509"
+>Der Integrated Kernel Debugger-Patch</A
+></DT
+><DT
+><A
+HREF="x5337.html#AEN5549"
+>Der kgdb-Patch</A
+></DT
+><DT
+><A
+HREF="x5337.html#AEN5575"
+>Kernel Crash Dump Analyzer</A
+></DT
+><DT
+><A
+HREF="x5337.html#AEN5601"
+>Die User-Modus-Linux-Portierung</A
+></DT
+><DT
+><A
+HREF="x5337.html#AEN5616"
+>Das Linux Trace Toolkit</A
+></DT
+><DT
+><A
+HREF="x5337.html#AEN5631"
+>Dynamic Probes</A
+></DT
+></DL
+></DD
+></DL
+></DD
+><DT
+>5. <A
+HREF="extra.html"
+>Fortgeschrittene Operationen in Zeichen-Treibern</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="extra.html#EXIOCTL"
+>ioctl</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="extra.html#EXIOCTLCHOOSE"
+>Die ioctl-Befehle auswählen</A
+></DT
+><DT
+><A
+HREF="extra.html#AEN5821"
+>Der Rückgabewert</A
+></DT
+><DT
+><A
+HREF="extra.html#AEN5837"
+>Die vordefinierten Befehle</A
+></DT
+><DT
+><A
+HREF="extra.html#EXIOCTLSW"
+>Das Argument von ioctl benutzen</A
+></DT
+><DT
+><A
+HREF="extra.html#EXCAPS"
+>Capabilities und eingeschränkte Operationen</A
+></DT
+><DT
+><A
+HREF="extra.html#AEN6115"
+>Die Implementation der ioctl-Befehle</A
+></DT
+><DT
+><A
+HREF="extra.html#EXESCAPE"
+>Geräte ohne ioctl steuern</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="exblocking.html"
+>Blockierende I/O</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="exblocking.html#AEN6219"
+>Schlafen gehen und wieder aufwachen</A
+></DT
+><DT
+><A
+HREF="exblocking.html#AEN6342"
+>Ein genauerer Blick auf Warteschlangen</A
+></DT
+><DT
+><A
+HREF="exblocking.html#EXREENTER"
+>Reentranten Code schreiben</A
+></DT
+><DT
+><A
+HREF="exblocking.html#EXBLOCK"
+>Blockierende und
+nicht-blockierende Operationen</A
+></DT
+><DT
+><A
+HREF="exblocking.html#EXIMPL"
+>Eine Beispiel-Implementation: scullpipe</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="exselect.html"
+>poll und select</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="exselect.html#AEN6828"
+>Interaktion mit read und write</A
+></DT
+><DT
+><A
+HREF="exselect.html#EXSELSTRUCT"
+>Die zugrundeliegende Datenstruktur</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="exasync.html"
+>Asynchrone Benachrichtigung</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="exasync.html#AEN7030"
+>Die Sicht des Treibers</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="x7108.html"
+>Ein Gerät positionieren</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="x7108.html#AEN7117"
+>Die Implementation von llseek</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="exaccess.html"
+>Zugriffskontrolle auf Gerätedateien</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="exaccess.html#AEN7200"
+>Nur einmal zu öffnende Geräte</A
+></DT
+><DT
+><A
+HREF="exaccess.html#AEN7234"
+>Ein weiterer Abstecher zu den Race Conditions</A
+></DT
+><DT
+><A
+HREF="exaccess.html#AEN7295"
+>Den Zugriff auf jeweils einen Benutzer gleichzeitig beschränken</A
+></DT
+><DT
+><A
+HREF="exaccess.html#EXOBLO"
+>Blockieren im open-Aufruf als Alternative zu EBUSY</A
+></DT
+><DT
+><A
+HREF="exaccess.html#AEN7384"
+>Kopieren des Gerätes beim Öffnen</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="excompat.html"
+>Abwärtskompatibilität</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="excompat.html#AEN7434"
+>Warteschlangen in Linux 2.2 und 2.0</A
+></DT
+><DT
+><A
+HREF="excompat.html#AEN7468"
+>Asynchrone Benachrichtigung</A
+></DT
+><DT
+><A
+HREF="excompat.html#AEN7498"
+>Die Methode fsync</A
+></DT
+><DT
+><A
+HREF="excompat.html#AEN7513"
+>Zugriff auf den User-Space in Linux 2.0</A
+></DT
+><DT
+><A
+HREF="excompat.html#AEN7591"
+>Capabilities in 2.0</A
+></DT
+><DT
+><A
+HREF="excompat.html#AEN7606"
+>Die select-Methode in Linux 2.0</A
+></DT
+><DT
+><A
+HREF="excompat.html#AEN7634"
+>Positionieren in Linux 2.0</A
+></DT
+><DT
+><A
+HREF="excompat.html#AEN7655"
+>2.0 und SMP</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="x7658.html"
+>Schnellreferenz</A
+></DT
+></DL
+></DD
+><DT
+>6. <A
+HREF="flow.html"
+>Der Lauf der Zeit</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="flow.html#AEN8001"
+>Zeit-Intervalle im Kernel</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="flow.html#AEN8046"
+>Prozessorspezifische Register</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="x8127.html"
+>Die aktuelle Zeit ermitteln</A
+></DT
+><DT
+><A
+HREF="x8199.html"
+>Die Ausführung verzögern</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="x8199.html#FLOWDELAY"
+>Lange Verzögerungen</A
+></DT
+><DT
+><A
+HREF="x8199.html#FLOWUDELAY"
+>Kurze Verzögerungen</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="flowqueue.html"
+>Task-Schlangen</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="flowqueue.html#FLOWQUEUENATURE"
+>Wie Task-Schlangen aufgebaut sind</A
+></DT
+><DT
+><A
+HREF="flowqueue.html#AEN8406"
+>Wie Task-Schlangen ausgeführt werden</A
+></DT
+><DT
+><A
+HREF="flowqueue.html#FLOWPREDEFQ"
+>Vordefinierte Task-Schlangen</A
+></DT
+><DT
+><A
+HREF="flowqueue.html#FLOWOWNQ"
+>Eigene Task-Schlangen anlegen</A
+></DT
+><DT
+><A
+HREF="flowqueue.html#TASKLET"
+>Tasklets</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="flowtimers.html"
+>Kernel-Timer</A
+></DT
+><DT
+><A
+HREF="x8892.html"
+>Abwärtskompatibilität</A
+></DT
+><DT
+><A
+HREF="x8972.html"
+>Schnellreferenz</A
+></DT
+></DL
+></DD
+><DT
+>7. <A
+HREF="get.html"
+>Speicher ergattern</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="get.html#GETKMAL"
+>Die ganze Wahrheit über kmalloc</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="get.html#GETKMALPRI"
+>Das Argument flags</A
+></DT
+><DT
+><A
+HREF="get.html#AEN9356"
+>Das Argument size</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="getcache.html"
+>Lookaside-Caches</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="getcache.html#AEN9485"
+>Ein scull mit Slab-Caches: scullc</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="getgfp.html"
+>get_&#8201;free_&#8201;page und Freunde</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="getgfp.html#AEN9609"
+>Ein scull, das ganze Seiten verwendet: scullp</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="getvmalloc.html"
+>vmalloc und Freunde</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="getvmalloc.html#AEN9754"
+>Ein scull mit virtuellen Adressen: scullv</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="getboot.html"
+>Allozierung während des Bootens</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="getboot.html#AEN9809"
+>Einen dedizierten Puffer beim Booten bekommen</A
+></DT
+><DT
+><A
+HREF="getboot.html#AEN9850"
+>Der bigphysarea-Patch</A
+></DT
+><DT
+><A
+HREF="getboot.html#AEN9860"
+>Reservieren von hohen RAM-Adressen</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="getdep.html"
+>Abwärtskompatibilität</A
+></DT
+><DT
+><A
+HREF="x9938.html"
+>Schnellreferenz</A
+></DT
+></DL
+></DD
+><DT
+>8. <A
+HREF="hard.html"
+>Hardware-Verwaltung</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="hard.html#HARDCLASS"
+>I/O-Ports und I/O-Speicher</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="hard.html#HARDCLASSMEM"
+>I/O-Register und konventioneller Speicher</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="hardports.html"
+>I/O-Ports benutzen</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="hardports.html#HARDSTRING"
+>String-Operationen</A
+></DT
+><DT
+><A
+HREF="hardports.html#AEN10464"
+>Wartende I/O</A
+></DT
+><DT
+><A
+HREF="hardports.html#HARDDEP"
+>Plattformabhängigkeiten</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="harddigio.html"
+>Digitale I/O-Ports verwenden</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="harddigio.html#AEN10601"
+>Grundlagen des Parallel-Ports</A
+></DT
+><DT
+><A
+HREF="harddigio.html#HARDSAMPLE"
+>Ein Beispiel-Treiber</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="hardmem.html"
+>I/O-Speicher verwenden</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="hardmem.html#HARDMEMDIRECT"
+>Direkt abgebildeter Speicher</A
+></DT
+><DT
+><A
+HREF="hardmem.html#AEN10836"
+><SPAN
+><I
+CLASS="EMPHASIS"
+>short</I
+></SPAN
+> für I/O-Speicher verwenden</A
+></DT
+><DT
+><A
+HREF="hardmem.html#AEN10859"
+>Von der Software abgebildeter I/O-Speicher</A
+></DT
+><DT
+><A
+HREF="hardmem.html#HARDISA"
+>ISA-Speicher unter 1 MByte</A
+></DT
+><DT
+><A
+HREF="hardmem.html#AEN10983"
+>isa_readb und verwandte Funktionen</A
+></DT
+><DT
+><A
+HREF="hardmem.html#AEN10991"
+>Nach ISA-Speicher suchen</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="hardback.html"
+>Abwärtskompatibilität</A
+></DT
+><DT
+><A
+HREF="x11066.html"
+>Schnellreferenz</A
+></DT
+></DL
+></DD
+><DT
+>9. <A
+HREF="irq.html"
+>Interrupt-Handler</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="irq.html#AEN11303"
+>Überblick über die Interrupt-Steuerung</A
+></DT
+><DT
+><A
+HREF="intsetup.html"
+>Den Parallel-Port vorbereiten</A
+></DT
+><DT
+><A
+HREF="irqinstall.html"
+>Einen Interrupt-Handler installieren</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="irqinstall.html#IRQPROC"
+>Die /proc-Schnittstelle</A
+></DT
+><DT
+><A
+HREF="irqinstall.html#IRQPROBE"
+>Automatische Erkennung der IRQ-Nummer</A
+></DT
+><DT
+><A
+HREF="irqinstall.html#IRQFAST"
+>Schnelle und langsame Handler</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="irqhandler.html"
+>Einen Handler implementieren</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="irqhandler.html#AEN11825"
+>Argumente verwenden</A
+></DT
+><DT
+><A
+HREF="irqhandler.html#AEN11861"
+>Interrupts ein- und ausschalten</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="irqbottom.html"
+>Tasklets und untere Hälften</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="irqbottom.html#AEN11924"
+>Tasklets</A
+></DT
+><DT
+><A
+HREF="irqbottom.html#IRQBHDESIGN"
+>Das Design der unteren Hälften</A
+></DT
+><DT
+><A
+HREF="irqbottom.html#AEN12035"
+>Eine untere Hälfte (BH) schreiben</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="irqshare.html"
+>Gemeinsames Nutzen von Interrupts</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="irqshare.html#AEN12095"
+>Einen gemeinsam genutzten Handler installieren</A
+></DT
+><DT
+><A
+HREF="irqshare.html#AEN12149"
+>Aufrufen des Handlers</A
+></DT
+><DT
+><A
+HREF="irqshare.html#AEN12166"
+>Die /proc-Schnittstelle</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="irqbuffers.html"
+>Interrupt-gesteuerte I/O</A
+></DT
+><DT
+><A
+HREF="irqrace.html"
+>Race Conditions</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="irqrace.html#IRQBUFFERSCIRC"
+>Ring-Puffer verwenden</A
+></DT
+><DT
+><A
+HREF="irqrace.html#IRQSPINLOCK"
+>Spinlocks verwenden</A
+></DT
+><DT
+><A
+HREF="irqrace.html#IRQBUFFERLOCK"
+>Sperrvariablen verwenden</A
+></DT
+><DT
+><A
+HREF="irqrace.html#IRQBUFFERSLEEP"
+>Schlafen gehen ohne Race Conditions</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="x12799.html"
+>Abwärtskompatibilität</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="x12799.html#AEN12808"
+>Unterschiede im 2.2-Kernel</A
+></DT
+><DT
+><A
+HREF="x12799.html#AEN12818"
+>Weitere Unterschiede im 2.0-Kernel</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="x12869.html"
+>Schnellreferenz</A
+></DT
+></DL
+></DD
+><DT
+>10. <A
+HREF="judas.html"
+>Überlegte Verwendung von Datentypen</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="judas.html#JUDASC"
+>Verwendung der Standard-C-Typen</A
+></DT
+><DT
+><A
+HREF="judassize.html"
+>Datenelementen eine explizite
+Größe zuweisen</A
+></DT
+><DT
+><A
+HREF="judasif.html"
+>Schnittstellenspezifische Typen</A
+></DT
+><DT
+><A
+HREF="x13402.html"
+>Andere Portabilitätsfragen</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="x13402.html#AEN13408"
+>Zeit-Intervalle</A
+></DT
+><DT
+><A
+HREF="x13402.html#AEN13427"
+>Seitengröße</A
+></DT
+><DT
+><A
+HREF="x13402.html#AEN13459"
+>Byte-Reihenfolge</A
+></DT
+><DT
+><A
+HREF="x13402.html#AEN13499"
+>Datenausrichtung</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="judaslist.html"
+>Verkettete Listen</A
+></DT
+><DT
+><A
+HREF="x13652.html"
+>Schnellreferenz</A
+></DT
+></DL
+></DD
+><DT
+>11. <A
+HREF="kerneld.html"
+>kmod und fortgeschrittene Modularisierung</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="kerneld.html#KERKER"
+>Module bei Bedarf laden</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="kerneld.html#AEN13792"
+>Module im Kernel anfordern</A
+></DT
+><DT
+><A
+HREF="kerneld.html#AEN13837"
+>Die Seite des User-Space</A
+></DT
+><DT
+><A
+HREF="kerneld.html#AEN13970"
+>Sicherheitsfragen beim Laden von Modulen</A
+></DT
+><DT
+><A
+HREF="kerneld.html#AEN13999"
+>Ein Beispiel für das Laden von Modulen</A
+></DT
+><DT
+><A
+HREF="kerneld.html#AEN14050"
+>User Mode-Hilfsprogramme ausführen</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="x14088.html"
+>Kommunikation zwischen Modulen</A
+></DT
+><DT
+><A
+HREF="kerver.html"
+>Versionskontrolle in Modulen</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="kerver.html#AEN14236"
+>Versionsunterstützung in Modulen verwenden</A
+></DT
+><DT
+><A
+HREF="kerver.html#AEN14287"
+>Exportieren von Symbolen mit Versionsinformationen</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="x14360.html"
+>Abwärtskompatibilität</A
+></DT
+><DT
+><A
+HREF="x14393.html"
+>Schnellreferenz</A
+></DT
+></DL
+></DD
+><DT
+>12. <A
+HREF="lock.html"
+>Das Laden von Block-Treibern</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="lock.html#LOCKSETUP"
+>Den Treiber registrieren</A
+></DT
+><DT
+><A
+HREF="lockblkh.html"
+>Die Header-Datei blk.h</A
+></DT
+><DT
+><A
+HREF="x14882.html"
+>Anfragen bearbeiten: Eine einfache Einführung</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="x14882.html#AEN14902"
+>Die Anfrage-Warteschlange</A
+></DT
+><DT
+><A
+HREF="x14882.html#AEN14961"
+>Die eigentliche Datenübertragung durchführen</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="x15067.html"
+>Anfragen bearbeiten: Das Ganze noch einmal genauer</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="x15067.html#AEN15074"
+>Die I/O-Anfrage-Warteschlange</A
+></DT
+><DT
+><A
+HREF="x15067.html#LOCKCLUSTER"
+>Cluster-Anfragen</A
+></DT
+><DT
+><A
+HREF="x15067.html#AEN15440"
+>Block-Treiber mit mehreren Warteschlangen</A
+></DT
+><DT
+><A
+HREF="x15067.html#AEN15547"
+>Ohne die Anfrage-Warteschlange arbeiten</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="x15624.html"
+>Wie das Einhängen und Aushängen funktioniert</A
+></DT
+><DT
+><A
+HREF="x15678.html"
+>Die ioctl-Methode</A
+></DT
+><DT
+><A
+HREF="lockremove.html"
+>Herausnehmbare Geräte</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="lockremove.html#AEN15862"
+>check_media_change</A
+></DT
+><DT
+><A
+HREF="lockremove.html#LOCKREVAL"
+>Revalidierung</A
+></DT
+><DT
+><A
+HREF="lockremove.html#AEN15889"
+>Zusätzliche Vorsichtsmaßnahmen</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="lockgenhd.html"
+>Partitionierbare Geräte</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="lockgenhd.html#AEN15969"
+>Die generische Festplatte</A
+></DT
+><DT
+><A
+HREF="lockgenhd.html#AEN16073"
+>Partitionserkennung</A
+></DT
+><DT
+><A
+HREF="lockgenhd.html#AEN16164"
+>Partitionserkennung mit initrd</A
+></DT
+><DT
+><A
+HREF="lockgenhd.html#AEN16186"
+>Die Geräte-Methoden von spull</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="lockbh.html"
+>Interrupt-gesteuerte Block-Treiber</A
+></DT
+><DT
+><A
+HREF="x16318.html"
+>Abwärtskompatibilität</A
+></DT
+><DT
+><A
+HREF="x16412.html"
+>Schnellreferenz</A
+></DT
+></DL
+></DD
+><DT
+>13. <A
+HREF="mem.html"
+>mmap und DMA</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="mem.html#MEMMAN"
+>Speicherverwaltung in Linux</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="mem.html#AEN16654"
+>Adreßtypen</A
+></DT
+><DT
+><A
+HREF="mem.html#AEN16724"
+>Hoher und niedriger Speicher</A
+></DT
+><DT
+><A
+HREF="mem.html#MEMMANMAP"
+>Die Speichertabelle und struct page</A
+></DT
+><DT
+><A
+HREF="mem.html#MEMMANPAGE"
+>Seitentabellen</A
+></DT
+><DT
+><A
+HREF="mem.html#MEMMANVMA"
+>Virtuelle Speicherbereiche
+(Virtual Memory Areas)</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="memmap.html"
+>Die Geräteoperation mmap</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="memmap.html#AEN17284"
+>remap_page_range verwenden</A
+></DT
+><DT
+><A
+HREF="memmap.html#AEN17335"
+>Eine einfache Implementation</A
+></DT
+><DT
+><A
+HREF="memmap.html#AEN17350"
+>VMA-Operationen hinzufügen</A
+></DT
+><DT
+><A
+HREF="memmap.html#AEN17388"
+>Speicher mit nopage einblenden</A
+></DT
+><DT
+><A
+HREF="memmap.html#AEN17496"
+>Umblenden bestimmter I/O-Regionen</A
+></DT
+><DT
+><A
+HREF="memmap.html#AEN17534"
+>RAM umblenden</A
+></DT
+><DT
+><A
+HREF="memmap.html#AEN17670"
+>Umblenden virtueller Adressen</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="memkiobuf.html"
+>Die kiobuf-Schnittstelle</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="memkiobuf.html#AEN17765"
+>Die kiobuf-Struktur</A
+></DT
+><DT
+><A
+HREF="memkiobuf.html#AEN17828"
+>Einblenden von User-Space-Buffern und rohe I/O</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="memdma.html"
+>Direct Memory Access und Bus Mastering</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="memdma.html#MEMDMAOVER"
+>Überblick über eine DMA-Datenübertragung</A
+></DT
+><DT
+><A
+HREF="memdma.html#MEMDMABUFFER"
+>Allozieren der DMA-Puffer</A
+></DT
+><DT
+><A
+HREF="memdma.html#MEMDMABUS"
+>Bus-Adressen</A
+></DT
+><DT
+><A
+HREF="memdma.html#AEN18048"
+>DMA auf dem PCI-Bus</A
+></DT
+><DT
+><A
+HREF="memdma.html#MEMDMAISA"
+>DMA bei ISA-Geräten</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="membc.html"
+>Abwärtskompatibilität</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="membc.html#AEN18691"
+>Änderungen in der Speicherverwaltung</A
+></DT
+><DT
+><A
+HREF="membc.html#AEN18836"
+>DMA-Änderungen</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="x18853.html"
+>Schnellreferenz</A
+></DT
+></DL
+></DD
+><DT
+>14. <A
+HREF="net.html"
+>Netzwerk-Treiber</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="net.html#NETSNULL"
+>Das Design von snull</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="net.html#AEN19191"
+>Zuweisen von IP-Nummern</A
+></DT
+><DT
+><A
+HREF="net.html#AEN19265"
+>Die physikalische Übertragung der Pakete</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="netsetup.html"
+>Mit dem Kernel verbinden</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="netsetup.html#AEN19315"
+>Module laden</A
+></DT
+><DT
+><A
+HREF="netsetup.html#NETINIT"
+>Jedes Gerät initialisieren</A
+></DT
+><DT
+><A
+HREF="netsetup.html#AEN19456"
+>Entladen von Modulen</A
+></DT
+><DT
+><A
+HREF="netsetup.html#AEN19473"
+>Modularisierte und nicht-modularisierte Treiber</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="x19513.html"
+>Die Struktur net_device im Detail</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="x19513.html#AEN19524"
+>Der sichtbare Anfang</A
+></DT
+><DT
+><A
+HREF="x19513.html#AEN19598"
+>Die versteckten Felder</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="onoff.html"
+>Öffnen und Schließen</A
+></DT
+><DT
+><A
+HREF="nettx.html"
+>Paket-Übertragung</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="nettx.html#AEN20179"
+>Steuerung der Nebenläufigkeit von Übertragungen</A
+></DT
+><DT
+><A
+HREF="nettx.html#NETTIMEOUT"
+>Übertragungs-Timeouts</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="netrx.html"
+>Paket-Empfang</A
+></DT
+><DT
+><A
+HREF="netirq.html"
+>Der Interrupt-Handler</A
+></DT
+><DT
+><A
+HREF="x20332.html"
+>Änderungen im Verbindungszustand</A
+></DT
+><DT
+><A
+HREF="netskb.html"
+>Die Socket-Buffer</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="netskb.html#AEN20378"
+>Die wichtigen Felder</A
+></DT
+><DT
+><A
+HREF="netskb.html#AEN20457"
+>Funktionen, die auf Socket-Buffern operieren</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="netarp.html"
+>MAC-Adreßauflösung</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="netarp.html#AEN20580"
+>ARP mit Ethernet verwenden</A
+></DT
+><DT
+><A
+HREF="netarp.html#AEN20599"
+>Überschreiben von ARP</A
+></DT
+><DT
+><A
+HREF="netarp.html#NETARPOTHER"
+>Nicht-Ethernet-Header</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="netioctl.html"
+>Eigene ioctl-Befehle</A
+></DT
+><DT
+><A
+HREF="netstats.html"
+>Statistische Informationen</A
+></DT
+><DT
+><A
+HREF="netmulti.html"
+>Multicasting</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="netmulti.html#AEN20836"
+>Kernel-Unterstützung für Multicasting</A
+></DT
+><DT
+><A
+HREF="netmulti.html#AEN20898"
+>Eine typische Implementierung</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="x20925.html"
+>Abwärtskompatibilität</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="x20925.html#AEN20936"
+>Unterschiede in Linux 2.2</A
+></DT
+><DT
+><A
+HREF="x20925.html#AEN21014"
+>Weitere Unterschiede in Linux 2.0</A
+></DT
+><DT
+><A
+HREF="x20925.html#AEN21066"
+>Suchen und HAVE_DEVLIST</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="x21078.html"
+>Schnellreferenz</A
+></DT
+></DL
+></DD
+><DT
+>15. <A
+HREF="pci.html"
+>Ein Überblick über die Peripherie-Busse</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="pci.html#PCIPCI"
+>Die PCI-Schnittstelle</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="pci.html#AEN21314"
+>PCI-Adressierung</A
+></DT
+><DT
+><A
+HREF="pci.html#AEN21406"
+>Hochfahren des Systems</A
+></DT
+><DT
+><A
+HREF="pci.html#AEN21428"
+>Konfigurationsregister und Initialisierung</A
+></DT
+><DT
+><A
+HREF="pci.html#PCIPCICFG"
+>Zugriff auf den Konfigurationsraum</A
+></DT
+><DT
+><A
+HREF="pci.html#AEN21739"
+>Zugriff auf die I/O- und Speicherräume</A
+></DT
+><DT
+><A
+HREF="pci.html#AEN21879"
+>PCI-Interrupts</A
+></DT
+><DT
+><A
+HREF="pci.html#AEN21905"
+>Hot-Pluggable-Geräte</A
+></DT
+><DT
+><A
+HREF="pci.html#PCIDRV"
+>Hardware-Abstraktionen</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="pciisa.html"
+>Ein Blick zurück: ISA</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="pciisa.html#AEN22121"
+>Hardware-Ressourcen</A
+></DT
+><DT
+><A
+HREF="pciisa.html#AEN22138"
+>ISA-Programmierung</A
+></DT
+><DT
+><A
+HREF="pciisa.html#AEN22152"
+>Die &#8220;Plug-and-Play&#8221;-Spezifikation</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="pci104.html"
+>PC/104 und PC/104+</A
+></DT
+><DT
+><A
+HREF="pciother.html"
+>Andere PC-Busse</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="pciother.html#AEN22190"
+>MCA</A
+></DT
+><DT
+><A
+HREF="pciother.html#AEN22208"
+>EISA</A
+></DT
+><DT
+><A
+HREF="pciother.html#AEN22226"
+>VLB</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="pcisbus.html"
+>SBus</A
+></DT
+><DT
+><A
+HREF="x22248.html"
+>NuBus</A
+></DT
+><DT
+><A
+HREF="pciext.html"
+>Externe Bus-Systeme</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="pciext.html#AEN22268"
+>USB</A
+></DT
+><DT
+><A
+HREF="pciext.html#AEN22280"
+>Einen USB-Treiber schreiben</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="x22325.html"
+>Abwärtskompatibilität</A
+></DT
+><DT
+><A
+HREF="x22374.html"
+>Schnellreferenz</A
+></DT
+></DL
+></DD
+><DT
+>16. <A
+HREF="tour.html"
+>Der physikalische Aufbau der Kernel-Quellen</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="tour.html#AEN22526"
+>Booten des Kernels</A
+></DT
+><DT
+><A
+HREF="x22653.html"
+>Vor dem Booten</A
+></DT
+><DT
+><A
+HREF="tourinit.html"
+>Der init-Prozeß</A
+></DT
+><DT
+><A
+HREF="x22772.html"
+>Das Verzeichnis kernel</A
+></DT
+><DT
+><A
+HREF="x22826.html"
+>Das Verzeichnis fs</A
+></DT
+><DT
+><A
+HREF="x22924.html"
+>Das Verzeichnis mm</A
+></DT
+><DT
+><A
+HREF="x23036.html"
+>Das Verzeichnis net</A
+></DT
+><DT
+><A
+HREF="x23105.html"
+>ipc und lib</A
+></DT
+><DT
+><A
+HREF="x23127.html"
+>include und arch</A
+></DT
+><DT
+><A
+HREF="x23143.html"
+>Treiber</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="x23143.html#AEN23153"
+>drivers/char</A
+></DT
+><DT
+><A
+HREF="x23143.html#AEN23203"
+>drivers/block</A
+></DT
+><DT
+><A
+HREF="x23143.html#AEN23253"
+>drivers/ide</A
+></DT
+><DT
+><A
+HREF="x23143.html#AEN23263"
+>drivers/md</A
+></DT
+><DT
+><A
+HREF="x23143.html#AEN23274"
+>drivers/cdrom</A
+></DT
+><DT
+><A
+HREF="x23143.html#AEN23293"
+>drivers/scsi</A
+></DT
+><DT
+><A
+HREF="x23143.html#AEN23339"
+>drivers/net</A
+></DT
+><DT
+><A
+HREF="x23143.html#AEN23363"
+>drivers/sound</A
+></DT
+><DT
+><A
+HREF="x23143.html#AEN23380"
+>drivers/video</A
+></DT
+><DT
+><A
+HREF="x23143.html#AEN23429"
+>drivers/input</A
+></DT
+><DT
+><A
+HREF="x23143.html#AEN23456"
+>drivers/media</A
+></DT
+><DT
+><A
+HREF="x23143.html#AEN23480"
+>Bus-spezifische Verzeichnisse</A
+></DT
+><DT
+><A
+HREF="x23143.html#AEN23523"
+>Plattform-spezifische Verzeichnisse</A
+></DT
+><DT
+><A
+HREF="x23143.html#AEN23533"
+>Andere Unterverzeichnisse</A
+></DT
+></DL
+></DD
+></DL
+></DD
+><DT
+><A
+HREF="biblio.html"
+>Bibliographie</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="biblio.html#AEN23570"
+>Bücher zum Linux-Kernel</A
+></DT
+><DT
+><A
+HREF="x23604.html"
+>Unix-Design und Interna</A
+></DT
+></DL
+></DD
+></DL
+></DIV
+><DIV
+CLASS="LOT"
+><DL
+CLASS="LOT"
+><DT
+><B
+>Abbildungsverzeichnis</B
+></DT
+><DT
+>1-1. <A
+HREF="x217.html#FIGSPLITK"
+>Ein Blick auf die Aufgabenblöcke des Kernels</A
+></DT
+><DT
+>2-1. <A
+HREF="building.html#FIG2-1"
+>Ein Modul zum Kernel linken</A
+></DT
+><DT
+>2-2. <A
+HREF="x956.html#BUISTACKING"
+>Aufeinanderstapeln von Treibermodulen
+für den Parallel-Port</A
+></DT
+><DT
+>3-1. <A
+HREF="charscullmem.html#FIG3-QUANTA"
+>Das Layout eines scull-Geräts</A
+></DT
+><DT
+>3-2. <A
+HREF="charrdwr.html#FIG3-READ"
+>Die Argumente von read</A
+></DT
+><DT
+>5-1. <A
+HREF="exblocking.html#EXTRAWAITFIGURE"
+>Warteschlangen in Linux 2.4</A
+></DT
+><DT
+>5-2. <A
+HREF="exselect.html#FIGPOLL"
+>Die Datenstrukturen von poll</A
+></DT
+><DT
+>6-1. <A
+HREF="flowqueue.html#FLOWQUEUEFIG"
+>Zeitlicher Ablauf bei der Verwendung von Task-Schlangen</A
+></DT
+><DT
+>8-1. <A
+HREF="harddigio.html#HARDPARALLEL"
+>Die Pinbelegung des Parallel-Ports</A
+></DT
+><DT
+>10-1. <A
+HREF="judaslist.html#FIGLIST"
+>Die Datenstruktur list_head</A
+></DT
+><DT
+>12-1. <A
+HREF="lock.html#FIGBLOCK"
+>Registrieren eines Block-Gerätetreibers</A
+></DT
+><DT
+>12-2. <A
+HREF="x15067.html#FIGBLOCKIORQ"
+>Puffer in der I/O-Anfrage-Warteschlange</A
+></DT
+><DT
+>13-1. <A
+HREF="mem.html#MEMFIGADDRS"
+>Adreßtypen in Linux</A
+></DT
+><DT
+>13-2. <A
+HREF="mem.html#FIGMEMPAG"
+>Die drei Ebenen der Linux-Seitentabellen</A
+></DT
+><DT
+>14-1. <A
+HREF="net.html#FIGSNULL"
+>Wie ein Host seine Schnittstellen sieht</A
+></DT
+><DT
+>15-1. <A
+HREF="pci.html#PCIANDBRIDGES"
+>Layout eines typischen PCI-Systems</A
+></DT
+><DT
+>15-2. <A
+HREF="pci.html#FIGPCICFG"
+>Die standardisierten PCI-Konfigurationsregister</A
+></DT
+><DT
+>15-3. <A
+HREF="pciext.html#FIGUSBINPUT"
+>Für USB-Eingabegeräte verwendete Module</A
+></DT
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A HREF="/openbook/">Zur&uuml;ck</a></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="f2.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>zum Open Books Project</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Vorwort</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

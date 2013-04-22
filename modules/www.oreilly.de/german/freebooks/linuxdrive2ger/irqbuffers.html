@@ -1,0 +1,224 @@
+<HTML
+><HEAD
+><TITLE
+>Interrupt-gesteuerte I/O</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Interrupt-Handler"
+HREF="irq.html"><LINK
+REL="PREVIOUS"
+TITLE="Gemeinsames Nutzen von Interrupts"
+HREF="irqshare.html"><LINK
+REL="NEXT"
+TITLE="Race Conditions"
+HREF="irqrace.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="irqshare.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 9. Interrupt-Handler</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="irqrace.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="IRQBUFFERS"
+>Interrupt-gesteuerte I/O</A
+></H1
+><P
+>&#13;
+Immer wenn ein Datentransfer zur oder von der verwalteten Hardware aus
+irgendwelchen Gründen verzögert werden könnte, sollte der
+Treiberprogrammierer ein Zwischenspeichern implementieren. Datenpuffer
+helfen dabei, die Datenübertragung und -entgegennahme von den
+Systemaufrufen <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+> zu entkoppeln, und verbessern so die
+Gesamt-Performance des Systems.&#13;</P
+><P
+>Ein guter Puffer-Mechanismus verwendet &#8220;Interrupt-gesteuerte
+I/O&#8221;, bei der ein Eingabe-Puffer zur Interrupt-Zeit gefüllt
+und von Prozessen, die von dem Gerät lesen, geleert wird. Entsprechend
+wird ein Ausgabe-Puffer von den auf das Gerät schreibenden Prozessen
+gefüllt und zur Interrupt-Zeit geleert. Ein Beispiel für die
+Interrupt-gesteuerte Ausgabe ist die Implementation von
+<TT
+CLASS="FILENAME"
+>/dev/shortint</TT
+>.&#13;</P
+><P
+>Damit die Interrupt-gesteuerte Datenübertragung funktioniert, muß die
+Hardware in der Lage sein, Interrupts mit der folgenden Semantik zu
+generieren:&#13;</P
+><P
+></P
+><UL
+><LI
+STYLE="list-style-type: disc"
+><P
+>Bei Eingaben unterbricht das Gerät den Prozessor, wenn neue Daten
+eingetroffen sind und vom Systemprozessor abgeholt werden können. Wie
+das passiert, hängt davon ab, ob das Gerät I/O-Ports, das Abbilden in
+den Speicher (Memory Mapping) oder DMA verwendet.</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>Bei Ausgaben meldet das Gerät einen Interrupt, wenn es entweder in
+der Lage ist, neue Daten entgegenzunehmen, oder wenn es eine
+erfolgreiche Übertragung bestätigen will. Geräte, die in den Speicher
+abgebildet werden können oder DMA-fähig sind, erzeugen meistens
+Interrupts, um dem System mitzuteilen, daß sie mit dem Puffer fertig
+sind.</P
+></LI
+></UL
+><P
+>Die Zusammenhänge im Timing zwischen <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> oder
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+> einerseits und dem tatsächlichen Eintreffen
+der Daten andererseits wurden in &#8220;<A
+HREF="exblocking.html#EXBLOCK"
+>the Section called <I
+>Blockierende und
+nicht-blockierende Operationen</I
+> in Kapitel 5</A
+>&#8221; in <A
+HREF="extra.html"
+>Kapitel 5</A
+>
+eingeführt. Interrupt-gesteuerte I/O bringt noch das zusätzliche
+Problem mit sich, daß beim nebenläufigen Zugriff auf gemeinsam
+genutzte Datenelemente Race Conditions auftreten können und deswegen
+Synchronisationsmechanismen vorgesehen werden müssen. Im nächsten
+Abschnitt wird dieses verwandte Thema detaillierter besprochen.
+
+&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="irqshare.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="irqrace.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Gemeinsames Nutzen von Interrupts</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="irq.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Race Conditions</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

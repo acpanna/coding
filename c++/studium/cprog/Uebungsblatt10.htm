@@ -1,0 +1,1189 @@
+<HTML>
+ <HEAD>
+   <TITLE>
+     &Uuml;bungsblatt 10, 13.07.1999
+   </TITLE>
+ </HEAD>
+ <BODY>
+
+  <H1>
+     &Uuml;bungsblatt 10, 13.07.1999
+   </H1>
+   <H2>
+     Abgabetermin: Di, 20.07.1999, 10<SUP>00</SUP> Uhr
+   </H2>
+
+<DIV ALIGN="right">
+  <A HREF="mailto:Robert.Baier@uni-bayreuth.de">R. Baier</A> <BR>
+  <A HREF="mailto:Anton.Betten@uni-bayreuth.de">A. Betten</A> <BR>
+  <A HREF="mailto:hiwi511@btcipmatx1.cip.uni-bayreuth.de">M. Kohl</A> <BR>
+  <A HREF="mailto:hiwi502@btcipmatx1.cip.uni-bayreuth.de">B. Seifert</A>
+  <BR CLEAR=&auml;ll">
+</DIV>
+<P>
+
+Das &Uuml;bungsblatt besteht aus den Aufgaben <A HREF="#A_28">28</A>,
+<A HREF="#A_29">29</A> und <A HREF="#A_30">30</A>.
+Das &Uuml;bungsblatt inkl. aller Sourcecodes, Bilder, HTML-Seiten, ... kann auch
+als
+<UL>
+  <LI><A HREF="blatt_10.tar.gz"><TT>gzip</TT>'tes <TT>tar</TT>-Archive</A>
+  </LI>
+  <LI>
+      <A HREF="blatt_10.zip"><TT>ZIP</TT>-Archive</A>
+  </LI>
+</UL>
+heruntergeladen werden. <BR>
+
+<EM>Beachten Sie die <A HREF="../allgemein/hinweise.html">allgemeinen Abgabehinweise</A>!!</EM>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A_28">&nbsp;</A>
+
+   <H2>
+     Aufgabe 28
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi502@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Bernd Seifert)
+   </H3>
+
+
+Hertha Hastig mu&szlig; ein Programm f&uuml;r die Sparkasse in Heinersreuth
+schreiben. Der Sparkasse wurde von einem V-Mann der Bayreuther Polizei
+der Hinweis gegeben, da&szlig; in der kommenden Woche irgendjemand versuchen
+wird, selbstgedruckte Banknoten in Umlauf zu bringen. Die Banknoten sollen
+sehr gute Bl&uuml;ten sein, nur schien den F&auml;lschern nicht bekannt zu sein,
+da&szlig; sich hinter den Geldscheinnummern ein Pr&uuml;fziffernmechanismus
+versteckt. <BR>
+
+Die Berechnung der Pr&uuml;fziffer ist eine Rechenoperation auf der Ziffernmenge
+<I>{ 0, 1, ..., 9 }</I>. Methoden, die nicht nur alle Einzelfehler,
+sondern auch 2/3 der Vertauschungsfehler erkennen, bauen auf 
+Gruppenmultiplikationen auf: <BR>
+
+Ist <I>x<SUB>1</SUB> x<SUB>2</SUB> ... x<SUB>n</SUB></I> die zu pr&uuml;fende Zahl
+mit Pr&uuml;fziffer <I>x<SUB>n</SUB></I>, so mu&szlig; gelten:
+
+ <BLOCKQUOTE><I>
+    x<SUB>1</SUB> &#183; x<SUB>2</SUB> &#183; ... &#183; x<SUB>n</SUB> = 0
+ </I></BLOCKQUOTE>
+
+Gemeint ist aber nicht die normale Multiplikation, sondern eine 
+gem&auml;&szlig; der Multiplikationstabelle <I>A</I>:
+
+ <BLOCKQUOTE><I>
+        <TABLE ALIGN="center">
+           <TR>
+              <TD>
+                &#183; 
+              </TD> 
+              <TD>
+                |
+              </TD>
+              <TD>
+                0  
+              </TD>
+              <TD>
+                1  
+              </TD> 
+              <TD>
+                2  
+              </TD> 
+              <TD>
+                3  
+              </TD> 
+              <TD>
+                4   
+              </TD> 
+              <TD>
+                |
+              </TD>
+              <TD>
+                5 
+              </TD> 
+              <TD>
+                6  
+              </TD> 
+              <TD>
+                7  
+              </TD> 
+              <TD>
+                8  
+              </TD> 
+              <TD>
+                9
+              </TD>
+            </TR>
+            
+            <TR>
+              <TD>
+                --
+              </TD> 
+              <TD>
+                --
+              </TD>
+              <TD>
+                --
+              </TD>
+              <TD>
+                --
+              </TD>
+              <TD>
+                --
+              </TD>
+              <TD>
+                --
+              </TD>
+              <TD>
+                --
+              </TD>
+              <TD>
+                --
+              </TD>
+              <TD>
+                --
+              </TD>
+              <TD>
+                --
+              </TD>
+              <TD>
+                --
+              </TD>
+              <TD>
+                --
+              </TD>
+              <TD>
+                --
+              </TD>
+            </TR>
+            
+            <TR>
+              <TD>
+                0  
+              </TD> 
+              <TD>
+                |
+              </TD> 
+              <TD>
+                0  
+              </TD> 
+              <TD>
+                1  
+              </TD> 
+              <TD>
+                2  
+              </TD> 
+              <TD>
+                3  
+              </TD> 
+              <TD>
+                4    
+              <TD>
+                |
+              </TD>
+              <TD>
+                5  
+              </TD> 
+              <TD>
+                6  
+              </TD> 
+              <TD>
+                7  
+              </TD> 
+              <TD>
+                8  
+              </TD> 
+              <TD>
+                9
+              </TD>
+            </TR>
+            
+            <TR>
+              <TD>
+                1  
+              </TD> 
+              <TD>
+                |
+              </TD> 
+              <TD>
+                1  
+              </TD> 
+              <TD>
+                2  
+              </TD> 
+              <TD>
+                3  
+              </TD> 
+              <TD>
+                4  
+              </TD> 
+              <TD>
+                0    
+              <TD>
+                |
+              </TD>
+              <TD>
+                6  
+              </TD> 
+              <TD>
+                7  
+              </TD> 
+              <TD>
+                8  
+              </TD> 
+              <TD>
+                9  
+              </TD> 
+              <TD>
+                5
+              </TD>
+            </TR>
+            
+            <TR>
+              <TD>
+                2  
+              </TD> 
+              <TD>
+                |
+              </TD> 
+              <TD>
+                2  
+              </TD> 
+              <TD>
+                3  
+              </TD> 
+              <TD>
+                4  
+              </TD> 
+              <TD>
+                0  
+              </TD> 
+              <TD>
+                1    
+              <TD>
+                |
+              </TD>
+              <TD>
+                7  
+              </TD> 
+              <TD>
+                8  
+              </TD> 
+              <TD>
+                9  
+              </TD> 
+              <TD>
+                5  
+              </TD> 
+              <TD>
+                6
+              </TD>
+            </TR>
+            
+            <TR>
+              <TD>
+                3  
+              </TD> 
+              <TD>
+                |
+              </TD> 
+              <TD>
+                3  
+              </TD> 
+              <TD>
+                4  
+              </TD> 
+              <TD>
+                0  
+              </TD> 
+              <TD>
+                1  
+              </TD> 
+              <TD>
+                2    
+              <TD>
+                |
+              </TD>
+              <TD>
+                8  
+              </TD> 
+              <TD>
+                9  
+              </TD> 
+              <TD>
+                5  
+              </TD> 
+              <TD>
+                6  
+              </TD> 
+              <TD>
+                7
+              </TD>
+            </TR>
+            
+            <TR>
+              <TD>
+                4  
+              </TD> 
+              <TD>
+                |
+              </TD> 
+              <TD>
+                4  
+              </TD> 
+              <TD>
+                0  
+              </TD> 
+              <TD>
+                1  
+              </TD> 
+              <TD>
+                2  
+              </TD> 
+              <TD>
+                3    
+              <TD>
+                |
+              </TD>
+              <TD>
+                9   
+              </TD>     
+              <TD>
+                5   
+              </TD>     
+              <TD>
+                6   
+              </TD>     
+              <TD>
+                7   
+              </TD>     
+              <TD>
+                8
+              </TD>
+            </TR>
+            
+            <TR>
+              <TD>
+                &nbsp;
+              </TD> 
+              <TD>
+                |
+              </TD>
+              <TD>
+                &nbsp;
+              </TD> 
+              <TD>
+                &nbsp;
+              </TD>
+              <TD>
+                &nbsp;
+              </TD>
+              <TD>
+                &nbsp;
+              </TD>
+              <TD>
+                &nbsp;
+              </TD>
+              <TD>
+                |
+              </TD>
+              <TD>
+                &nbsp;
+              </TD>
+              <TD>
+                &nbsp;
+              </TD>
+              <TD>
+                &nbsp;
+              </TD>
+              <TD>
+                &nbsp;
+              </TD>
+              <TD>
+                &nbsp;
+              </TD>
+            </TR>
+            
+            <TR>
+              <TD>
+                5   
+              </TD> 
+              <TD>
+                |
+              </TD> 
+              <TD>
+                5   
+              </TD> 
+              <TD>
+                9   
+              </TD> 
+              <TD>
+                8   
+              </TD> 
+              <TD>
+                7   
+              </TD> 
+              <TD>
+                6    
+              <TD>
+                |
+              </TD>
+              <TD>
+                0   
+              </TD> 
+              <TD>
+                4   
+              </TD> 
+              <TD>
+                3   
+              </TD> 
+              <TD>
+                2   
+              </TD> 
+              <TD>
+                1
+              </TD>
+            </TR>
+            
+            <TR>
+              <TD>
+                6   
+              </TD> 
+              <TD>
+                |
+              </TD> 
+              <TD>
+                6   
+              </TD> 
+              <TD>
+                5   
+              </TD> 
+              <TD>
+                9   
+              </TD> 
+              <TD>
+                8   
+              </TD> 
+              <TD>
+                7    
+              <TD>
+                |
+              </TD>
+              <TD>
+                1   
+              </TD> 
+              <TD>
+                0   
+              </TD> 
+              <TD>
+                4   
+              </TD> 
+              <TD>
+                3   
+              </TD> 
+              <TD>
+                2
+              </TD>
+            </TR>
+            
+            <TR>
+              <TD>
+                7   
+              </TD> 
+              <TD>
+                |
+              </TD> 
+              <TD>
+                7   
+              </TD> 
+              <TD>
+                6   
+              </TD> 
+              <TD>
+                5   
+              </TD> 
+              <TD>
+                9   
+              </TD> 
+              <TD>
+                8    
+              <TD>
+                |
+              </TD>
+              <TD>
+                2   
+              </TD> 
+              <TD>
+                1   
+              </TD> 
+              <TD>
+                0   
+              </TD> 
+              <TD>
+                4   
+              </TD> 
+              <TD>
+                3
+              </TD>
+            </TR>
+            
+            <TR>
+              <TD>
+                8   
+              </TD> 
+              <TD>
+                |
+              </TD> 
+              <TD>
+                8   
+              </TD> 
+              <TD>
+                7   
+              </TD> 
+              <TD>
+                6   
+              </TD> 
+              <TD>
+                5   
+              </TD> 
+              <TD>
+                9    
+              <TD>
+                |
+              </TD>
+              <TD>
+                3   
+              </TD> 
+              <TD>
+                2   
+              </TD> 
+              <TD>
+                1   
+              </TD> 
+              <TD>
+                0   
+              </TD> 
+              <TD>
+                4
+              </TD>
+            </TR>
+            
+            <TR>
+              <TD>
+                9   
+              </TD> 
+              <TD>
+                |
+              </TD>
+              <TD>
+                9   
+              </TD> 
+              <TD>
+                8   
+              </TD> 
+              <TD>
+                7   
+              </TD> 
+              <TD>
+                6   
+              </TD> 
+              <TD>
+                5    
+              <TD>
+                |
+              </TD>
+              <TD>
+                4   
+              </TD> 
+              <TD>
+                3   
+              </TD> 
+              <TD>
+                2   
+              </TD> 
+              <TD>
+                1   
+              </TD> 
+              <TD>
+                0
+              </TD>
+            </TR>
+         </TABLE>
+ </I></BLOCKQUOTE>
+
+Das Produkt <I>x<SUB>1</SUB> &#183; x<SUB>2</SUB></I> wird also wie folgt 
+berechnet:
+
+ <BLOCKQUOTE>
+    <I>x<SUB>1</SUB> &#183; x<SUB>2</SUB></I> 
+    := <TT>A[</TT><I>x<SUB>1</SUB></I><TT>][</TT><I>x<SUB>2</SUB></I><TT>]</TT>
+ </BLOCKQUOTE>
+
+Um noch mehr Vertauschungen zu erkennen, f&uuml;hrt man noch Permutationen
+<I><IMG WIDTH="13" HEIGHT="13" ALIGN="BOTTOM" BORDER="0"
+     SRC="pi.gif" ALT="$\pi$"><SUB>i</SUB></I> ein, 
+so da&szlig; der Test f&uuml;r die Pr&uuml;fziffer lautet (Multiplikation
+wieder bzgl. der obigen Tabelle):
+
+ <BLOCKQUOTE><I>
+    <IMG WIDTH="13" HEIGHT="13" ALIGN="BOTTOM" BORDER="0"
+     SRC="pi.gif" ALT="$\pi$"><SUB>1</SUB>(x<SUB>1</SUB>) &#183; <IMG WIDTH="13" HEIGHT="13" ALIGN="BOTTOM" BORDER="0"
+     SRC="pi.gif" ALT="$\pi$"><SUB>2</SUB>(x<SUB>2</SUB>) &#183; ... &#183; <IMG WIDTH="13" HEIGHT="13" ALIGN="BOTTOM" BORDER="0"
+     SRC="pi.gif" ALT="$\pi$"><SUB>n</SUB>(x<SUB>n</SUB>) = 0
+ </I></BLOCKQUOTE>
+
+Damit Hertha Hastig falsche Pr&uuml;fziffern bei den elfstelligen Banknoten 
+erkennt, mu&szlig; sie folgende Permutationen verwenden:
+
+ <BLOCKQUOTE><I>
+   <TABLE ALIGN="center">
+      <TR>
+        <TD>
+          <IMG WIDTH="13" HEIGHT+"13" ALIGN="bottom" BORDER="0"
+	       SRC="pi.gif" ALT="$\pi"><SUB>1</SUB> 
+        </TD>
+        <TD>
+          =  
+        </TD>
+        <TD>
+          (1, 5, 7, 6, 2, 8, 3, 0, 9, 4)  
+        </TD>
+      </TR>
+
+      <TR>
+        <TD>
+          <IMG WIDTH="13" HEIGHT+"13" ALIGN="bottom" BORDER="0"
+	       SRC="pi.gif" ALT="$\pi"><SUB>2</SUB>   
+        </TD>
+        <TD>
+          =    
+        </TD>
+        <TD>
+          (5, 8, 0, 3, 7, 9, 6, 1, 4, 2)  
+        </TD>
+      </TR>
+      
+      <TR>
+        <TD>
+          <IMG WIDTH="13" HEIGHT+"13" ALIGN="bottom" BORDER="0"
+	       SRC="pi.gif" ALT="$\pi"><SUB>3</SUB>     
+        </TD>
+        <TD>
+          =     
+        </TD>
+        <TD>
+          (8, 9, 1, 6, 0, 4, 3, 5, 2, 7)  
+        </TD>
+      </TR>
+      
+      <TR>
+        <TD>
+          <IMG WIDTH="13" HEIGHT+"13" ALIGN="bottom" BORDER="0"
+	       SRC="pi.gif" ALT="$\pi"><SUB>4</SUB>      
+        </TD>
+        <TD>
+          =      
+        </TD>
+        <TD>
+          (9, 4, 5, 3, 1, 2, 6, 8, 7, 0)  
+        </TD>
+      </TR>
+      
+      <TR>
+        <TD>
+          <IMG WIDTH="13" HEIGHT+"13" ALIGN="bottom" BORDER="0"
+	       SRC="pi.gif" ALT="$\pi"><SUB>5</SUB>       
+        </TD>
+        <TD>
+          =       
+        </TD>
+        <TD>
+          (4, 2, 8, 6, 5, 7, 3, 9, 0, 1)  
+        </TD>
+      </TR>
+      
+      <TR>
+        <TD>
+          <IMG WIDTH="13" HEIGHT+"13" ALIGN="bottom" BORDER="0"
+	       SRC="pi.gif" ALT="$\pi"><SUB>6</SUB>        
+        </TD>
+        <TD>
+          =        
+        </TD>
+        <TD>
+          (2, 7, 9, 3, 8, 0, 6, 4, 1, 5)  
+        </TD>
+      </TR>
+      
+      <TR>
+        <TD>
+          <IMG WIDTH="13" HEIGHT+"13" ALIGN="bottom" BORDER="0"
+	       SRC="pi.gif" ALT="$\pi"><SUB>7</SUB>         
+        </TD>
+        <TD>
+          =         
+        </TD>
+        <TD>
+          (7, 0, 4, 6, 9, 1, 3, 2, 5, 8)  
+        </TD>
+      </TR>
+      
+      <TR>
+        <TD>
+          <IMG WIDTH="13" HEIGHT+"13" ALIGN="bottom" BORDER="0"
+	       SRC="pi.gif" ALT="$\pi"><SUB>8</SUB>         
+        </TD>
+        <TD>
+          =         
+        </TD>
+        <TD>
+          (0, 1, 2, 3, 4, 5, 6, 7, 8, 9)  
+        </TD>
+      </TR>
+      
+      <TR>
+        <TD>
+          <IMG WIDTH="13" HEIGHT+"13" ALIGN="bottom" BORDER="0"
+	       SRC="pi.gif" ALT="$\pi"><SUB>9</SUB>         
+        </TD>
+        <TD>
+          =         
+        </TD>
+        <TD>
+          <IMG WIDTH="13" HEIGHT+"13" ALIGN="bottom" BORDER="0"
+	       SRC="pi.gif" ALT="$\pi"><SUB>1</SUB>  
+        </TD>
+      </TR>
+      
+      <TR>
+        <TD>
+          <IMG WIDTH="13" HEIGHT+"13" ALIGN="bottom" BORDER="0"
+	       SRC="pi.gif" ALT="$\pi"><SUB>10</SUB>         
+        </TD>
+        <TD>
+          =         
+        </TD>
+        <TD>
+          <IMG WIDTH="13" HEIGHT+"13" ALIGN="bottom" BORDER="0"
+	       SRC="pi.gif" ALT="$\pi"><SUB>2</SUB>  
+        </TD>
+      </TR>
+      
+      <TR>
+        <TD>
+          <IMG WIDTH="13" HEIGHT+"13" ALIGN="bottom" BORDER="0"
+	       SRC="pi.gif" ALT="$\pi"><SUB>11</SUB>        
+        </TD>
+        <TD>
+          =         
+        </TD>
+        <TD>
+          (0, 1, 2, 3, 4, 5, 6, 7, 8, 9)  
+        </TD>
+      </TR>
+   </TABLE>
+ </I></BLOCKQUOTE>
+
+Bei Banknoten werden jedoch an der 1. , 2. und 10. Stelle Buchstaben
+statt Ziffern verwendet, die, bevor die Pr&uuml;fziffer <I>x<SUB>11</SUB></I>
+&uuml;berpr&uuml;ft werden kann, umgesetzt werden m&uuml;ssen:
+
+ <BLOCKQUOTE>
+    <TABLE ALIGN="center">
+       <TR>
+         <TD> 
+           A 
+         </TD>
+         <TD> 
+           D 
+         </TD>
+         <TD> 
+           G 
+         </TD>
+         <TD> 
+           K 
+         </TD>
+         <TD> 
+           L 
+         </TD>
+         <TD> 
+           N 
+         </TD> 
+         <TD> 
+           S 
+         </TD>
+         <TD> 
+           U 
+         </TD>
+         <TD> 
+           Y 
+         </TD>
+         <TD> 
+           Z 
+         </TD>
+       </TR>
+       <TR>
+         <TD> 
+           0 
+         </TD>
+         <TD> 
+           1 
+         </TD>
+         <TD> 
+           2 
+         </TD>
+         <TD> 
+           3 
+         </TD>
+         <TD> 
+           4 
+         </TD>
+         <TD> 
+           5 
+         </TD>
+         <TD> 
+           6 
+         </TD>
+         <TD> 
+           7 
+         </TD>
+         <TD> 
+           8 
+         </TD>
+         <TD> 
+           9 
+         </TD>
+       </TR>
+    </TABLE>
+ </BLOCKQUOTE>
+
+Beispiel: 20 DM-Schein mit Seriennummer AD5339660L5
+
+ <BLOCKQUOTE>
+    <TABLE ALIGN="center">
+       <TR>
+         <TD>
+           Seriennummer: 
+         </TD>
+         <TD>
+           <TT>AD5339660L5</TT> 
+         </TD>
+       </TR>
+
+       <TR>
+         <TD>
+           codierte Zahl: 
+         </TD>
+         <TD>
+           <TT>01533966045</TT> 
+         </TD>
+       </TR>
+      
+       <TR>
+         <TD>
+           Zahl: 
+         </TD>
+         <TD>
+           <I><IMG WIDTH="13" HEIGHT+"13" ALIGN="bottom" BORDER="0"
+	        SRC="pi.gif" ALT="$\pi"><SUB>1</SUB>(0) <IMG WIDTH="13" HEIGHT+"13" ALIGN="bottom" BORDER="0"
+		     SRC="pi.gif" ALT="$\pi"><SUB>2</SUB>(1) <IMG WIDTH="13" HEIGHT+"13" ALIGN="bottom" BORDER="0"
+		          SRC="pi.gif" ALT="$\pi"><SUB>3</SUB>(5)
+              ... <IMG WIDTH="13" HEIGHT+"13" ALIGN="bottom" BORDER="0"
+	           SRC="pi.gif" ALT="$\pi"><SUB>10</SUB>(4) <IMG WIDTH="13" HEIGHT+"13" ALIGN="bottom" BORDER="0"
+		        SRC="pi.gif" ALT="$\pi"><SUB>11</SUB>(5)</I> 
+         </TD>
+       </TR>
+
+       <TR>
+         <TD>
+           &nbsp;&nbsp;&nbsp; nach Permutation:          
+         </TD>
+         <TD>
+           <TT>18436536175</TT> 
+         </TD>
+       </TR>
+
+       <TR>
+         <TD VALIGN="top">
+           Test der Pr&uuml;fziffer 5:          
+         </TD>
+         <TD>
+           <I>1 &#183; 8 &#183; 4 &#183; 3 &#183; 6 &#183; 5
+              &#183; 3 &#183; 6 &#183; 1 &#183; 7 &#183; 5 = 0</I> 
+         </TD>
+       </TR>
+    </TABLE>
+ </BLOCKQUOTE>
+
+Der Geldschein scheint also eine richtige Seriennummer zu tragen. <BR>
+
+Versuchen Sie, die F&auml;lscher zu entlarven, indem Sie ein passendes 
+C-Programm schreiben, das die Pr&uuml;fziffer bei den Seriennummern testet. <BR>
+
+Als Eingabe wird die Seriennummer als String erwartet. Verwenden Sie die
+Multiplikationstabelle und die 11 Permutationen aus der Vorgabe
+"<A HREF="aufg_28.c"><TT>aufg_28.c</TT></A>" und verwenden Sie ggf. 
+die in der Vorlesung vorgestellten Stringroutinen.
+
+<P>
+Abzugeben ist das C-/C++-Programm.
+
+<P>
+<HR SIZE=5 WIDTH="100%">
+
+<A NAME="A_29">&nbsp;</A>
+
+   <H2>
+     Aufgabe 29
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi502@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Bernd Seifert)
+   </H3>
+
+Im Programm "<A HREF="komplex_0.c"><TT>komplex_0.c</TT></A>"
+sind die elementaren Funktionen f&uuml;r die Arithmetik mit 
+komplexen Zahlen programmiert, wobei Real- und Imagin&auml;rteil einer 
+komplexen Zahl durch jeweils eine Variable in einer Struktur dargestellt 
+werden.  <BR>
+
+Wir wollen nun mit Hilfe der dort vorgestellten Funktionen die 
+<I>Mandelbrotmenge</I> berechnen. Dazu betrachten wir das komplexe 
+Fixpunktproblem
+
+ <BLOCKQUOTE><I>
+    z<SUB>k+1</SUB> = z<SUB>k</SUB><SUP>2</SUP>+ c 
+      &nbsp;&nbsp;&nbsp; 
+      (k <IMG WIDTH="14" HEIGHT="27" ALIGN="MIDDLE" BORDER="0"
+              SRC="in.gif" ALT="$\in$">
+      <!-- MATH: $\mathbb{N} _0$ -->
+      <IMG WIDTH="21" HEIGHT="28" ALIGN="MIDDLE" BORDER="0"
+           SRC="mathbb_N0.gif" ALT="$\mathbb{N}_0$">)
+      &nbsp;&nbsp;&nbsp;
+      &nbsp;&nbsp;&nbsp;
+      &nbsp;&nbsp;&nbsp;
+      (1)
+ </I></BLOCKQUOTE>
+
+mit einem festen Parameter 
+<I>c <IMG WIDTH="14" HEIGHT="27" ALIGN="MIDDLE" BORDER="0"
+          SRC="in.gif" ALT="$\in$">
+<!-- MATH: $\mathbb{C}$ -->
+<IMG WIDTH="15" HEIGHT="15" ALIGN="BOTTOM" BORDER="0"
+ SRC="mathbb_C.gif" ALT="$\mathbb{C} $">
+</I>. <BR>
+ </I></BLOCKQUOTE>
+
+Anleitung:
+
+ <UL>
+    <LI> (i) <BR>
+           	W&auml;hlen Sie Intervalle 
+           	<I>[p<SUB>min</SUB>,p<SUB>max</SUB>]</I> und 
+           	<I>[q<SUB>min</SUB>,q<SUB>max</SUB>]</I>
+		f&uuml;r die Real- und Imagin&auml;rteile des Parameters 
+		<I>c</I> in Gleichung (1). <BR>
+		
+		W&auml;hlen Sie die Aufl&ouml;sung der Bildschirmausgabe, 
+		d.h. <I>r<SUB>x</SUB></I> und <I>r<SUB>y</SUB></I>,
+		um das Bild mit einer Aufl&ouml;sung von 
+		<I>r<SUB>x</SUB> x r<SUB>y</SUB></I> Pixeln zu 
+                erstellen. Es stehen
+		<I>17</I> Farben zur Verf&uuml;gung, jede Farbe entspricht 
+		also einer Zahl zwischen <I>1</I> und <I>17</I> 
+		(<I>17</I>: schwarz).
+    </LI>
+    <LI> (ii)  <BR>
+               W&auml;hlen Sie die Schrittweiten
+	       <BLOCKQUOTE>
+		  <IMG WIDTH="17" HEIGHT="13" ALIGN="BOTTOM" BORDER="0"
+                       SRC="Delta.gif" ALT="$\Delta$">
+                  p := (p<SUB>max</SUB>-p<SUB>min</SUB>) / 
+		              (r<SUB>x</SUB>-1), &nbsp;&nbsp;&nbsp;
+		  <IMG WIDTH="17" HEIGHT="13" ALIGN="BOTTOM" BORDER="0"
+                       SRC="Delta.gif" ALT="$\Delta$">
+		  q := (q<SUB>max</SUB>-q<SUB>min</SUB>) / 
+		              (r<SUB>y</SUB>-1)
+	       </BLOCKQUOTE>
+	       und eine maximale Iterationszahl 
+	       <I>K <IMG WIDTH="14" HEIGHT="27" ALIGN="MIDDLE" BORDER="0"
+                         SRC="in.gif" ALT="$\in$">
+	          <!-- MATH: $\mathbb{N}$ -->
+                  <IMG WIDTH="15" HEIGHT="15" ALIGN="BOTTOM" BORDER="0"
+                       SRC="mathbb_N.gif" ALT="$\mathbb{N}$">
+	       </I> 
+	       sowie eine Abbruchschranke <I>M>0</I> f&uuml;r das maximale
+	       Betragsquadrat einer Iterierten.
+    </LI>
+    <LI> (iii)   <BR>
+               F&uuml;r alle <I>n<SUB>p</SUB>=0,...,r<SUB>x</SUB>-1</I> 
+               und <I>n<SUB>q</SUB>=0,...,r<SUB>y</SUB>-1</I> f&uuml;hre 
+               man die Schritte (iv)-(vi) durch.
+    </LI>
+    <LI> (iv)  <BR>
+               	Setzen Sie den Iterationsz&auml;hler <I>k=0</I>, setzen Sie
+
+		 <BLOCKQUOTE>
+		    p:=p<SUB>min</SUB>+n<SUB>p</SUB> &#183;
+		    <IMG WIDTH="17" HEIGHT="13" ALIGN="BOTTOM" BORDER="0"
+                         SRC="Delta.gif" ALT="$\Delta$">
+		    p, &nbsp;&nbsp;&nbsp; 
+		    q:=q<SUB>min</SUB>+n<SUB>q</SUB> &#183;
+		    <IMG WIDTH="17" HEIGHT="13" ALIGN="BOTTOM" BORDER="0"
+                         SRC="Delta.gif" ALT="$\Delta$">
+		    q
+		 </BLOCKQUOTE>
+		 
+		und w&auml;hlen Sie den Parameter <I>c=p+iq</I> in 
+		Gleichung (1) sowie den Startwert <I>z<SUB>0</SUB>=0</I>.
+    </LI>
+    <LI> (v)  <BR>
+               	Berechnen Sie die n&auml;chste Iterierte <I>z<SUB>k+1</SUB></I> 
+               	gem&auml;&szlig; Gleichung (1) und inkrementieren Sie <I>k</I>.
+    </LI>
+    <LI> (vi)  <BR>
+               	Hat <I>k</I> die maximale Iterationszahl <I>K</I> erreicht,
+                so w&auml;hle man
+		die Farbe schwarz (<I>17</I>) und gehe zu (vii).<BR>
+
+		Ansonsten berechne man den Betrag von <I>z<SUB>k</SUB></I>.<BR>
+
+		Ist <I>|z<SUB>k</SUB>| &lt;= M</I> und <I>k < K</I>, so gehe man
+		zu (v). <BR>
+
+		Ist <I>|z<SUB>k</SUB>|> M</I>, so w&auml;hle man die Farbe 
+		<I>k</I> modulo <I>16</I> und gehe zu (vii).
+    </LI>
+    <LI> (vii)  <BR>
+               	Schreiben Sie den Wert der Farbe (<TT>int</TT>-Variable!) in
+		ein Ausgabefile (die resultierende <I>(n<SUB>p</SUB> x
+	        n<SUB>q</SUB>)</I>-Matrix soll hier zeilenweise abgelegt 
+	        werden). Verwenden Sie dazu das Programmfragment
+                "<A HREF="aufg_29.c"><TT>aufg_29.c</TT></A>".
+                F&uuml;hren Sie gegebenenfalls die Schritte (iv)-(vi) 
+                f&uuml;r das n&auml;chste Pixel 
+                <I>(n<SUB>p</SUB>,n<SUB>q</SUB>)</I> durch.
+    </LI>
+ </UL>
+
+<B>Visualisierung:</B><BR>
+
+Ohne Visualisierung ist die L&ouml;sung der Aufgabe nur die H&auml;lfte wert.
+Das Ergebnis Ihrer Bem&uuml;hungen k&ouml;nnen Sie sich unter MATLAB 
+ansehen. Eine geeignete Visualisierungsroutine 
+"<A HREF="fracplot.m"><TT>fracplot.m</TT></A>" steht 
+zur Verf&uuml;gung. Kopieren Sie sie in Ihr Arbeitsverzeichnis (z.B.
+<TT>C:\WORK</TT> bzw. <TT>ueb_09</TT> unter Unix) und verfahren Sie wie 
+folgt:
+
+<P>
+&Ouml;ffnen Sie die MATLAB-Programmgruppe unter Windows NT und starten 
+Sie MATLAB (unter Unix mu&szlig; man den Befehl "<TT>matlab</TT>" eingeben). Es erscheint
+ein Fenster mit dem MATLAB-Prompt 
+"<I>
+<IMG WIDTH="19" HEIGHT="27" ALIGN="MIDDLE" BORDER="0"
+     SRC="gg.gif" ALT="$\gg$">
+</I>". Wechseln Sie in Ihr
+Arbeitsverzeichnis mit dem MATLAB-Befehl "<TT>cd D:\WORK</TT>" (bzw.
+"<TT>cd ueb_09</TT>" unter Unix). Jetzt kann man die
+Visualisierungsroutine <TT>fracplot</TT>
+aufrufen. Sie hat drei Parameter: den Namen der Datei, in der die Matrix
+aus Farbwerten gespeichert ist, sowie die Zahl der Zeilen und Spalten der
+Matrix. Wenn die gew&auml;hlte Aufl&ouml;sung
+also zum Beispiel <I>300 x 300</I> Pixel betr&auml;gt, so lautet der Aufruf
+
+ <PRE>
+      fracplot('filename',300,300);
+ </PRE>
+
+Daraufhin wird die Matrix eingelesen und die Ausgabe erzeugt. <BR>
+
+Mit dem Befehl "<TT>help fracplot</TT>" ist auch ein kurzer Hilfetext 
+abrufbar.<BR>
+
+<B>Hinweise:</B>
+
+ <UL>
+    <LI> Sinnvolle Werte f&uuml;r die Parameter bei der Berechnung der
+	      Mandelbrotmenge sind zum Beispiel:<BR>
+
+	      <I>p<SUB>min</SUB>=-2.25</I>, <I>p<SUB>max</SUB>=0.75</I>, <I>q<SUB>min</SUB>=-1.5</I>, <I>q<SUB>max</SUB>=1.5</I>,
+	      <I>r<SUB>x</SUB>=r<SUB>y</SUB>=300</I>, <I>K=150</I>, <I>M=2.0</I>.
+    <LI> Das Programm ben&ouml;tigt eine gewisse Zeit, um die Berechnungen
+	      durchzuf&uuml;hren, ebenfalls die Visualisierungsroutine. GEDULD!
+    <LI> Sollte die Routine <TT>fracplot</TT> mit einer Fehlermeldung
+         abbrechen, die mangelnden Speicherplatz anzeigt, so schlie&szlig;e
+	 man zun&auml;chst alle Nicht-MATLAB Anwendungen (IDE, Editor,
+	 ...).
+      	 Wenn das nicht hilft, f&uuml;hren Sie alle Berechnungen mit einer 
+      	 niedrigeren Aufl&ouml;sung durch!
+    <LI> WARNUNG! Zu langes Spielen mit Fraktalen kann zu Suchterscheinungen
+	 f&uuml;hren ... .
+ </UL>
+
+ <A HREF="mandel_color.gif">
+ <IMG WIDTH="933" HEIGHT="701"
+      SRC="mandel_color.gif"
+      ALT="\begin{figure}\centering \epsfig{file=mandel.eps,width=7cm, clip=} \end{figure}">
+ </A>
+
+<P>
+<HR SIZE=5 WIDTH="100%">
+
+<A NAME="A_30">&nbsp;</A>
+
+   <H2>
+     Aufgabe 30 (6 Punkte)
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an hiwi511@btcipmatx1.cip.uni-bayreuth.de 
+     (Matthias Kohl)
+   </H3>
+
+Rudi Ratlos steht gem&auml;&szlig; seines Namens vor seinem umfangreichen
+Bestand an Videokassetten und versucht sich verzweifelt zu erinnern, auf
+welcher Kassette er den Woody Allen-Film "<I>Bullets over Broadway</I>"
+aufgenommen hat. Als er nach zweist&uuml;ndiger Suche noch immer nicht
+f&uuml;ndig wird, beschlie&szlig;t er, eine Datenbank f&uuml;r Fernsehaufnahmen
+in C zu entwerfen.
+<P>
+
+Sein C-Programm soll zun&auml;chst nur die Ein- und Ausgabe einer 
+Aufnahme sowie die Suche nach Schl&uuml;sselw&ouml;rtern (zur 
+Vereinfachung nur in dem Namen des Films) erlauben.
+F&uuml;r eine Aufnahme m&ouml;chte er mindestens den Namen des Films, den 
+des Regisseurs sowie den Bandstand (<TT>unsigned short</TT>-Zahl) des 
+Anfangs und die Kassettennummer (<TT>unsigned char</TT>-Zahl) abspeichern.
+<P>
+
+Hertha Hastig, der er das neue Vorhaben erz&auml;hlt, schl&auml;gt ihm
+vor, mit Strukturen zu arbeiten. "Dann brauchst Du nicht so viele
+Argumente in den Funktionen angeben!", meint sie.
+<P>
+
+<OL TYPE=a>
+  <LI>
+    Entwerfen Sie eine Struktur namens "<TT>Aufnahme</TT>", die mindestens
+    die von Rudi gew&uuml;nschten Angaben enth&auml;lt.
+    <P>
+  </LI>
+  
+  <LI>
+    Schreiben Sie die Funktionen <TT>einlesen()</TT>,
+    <TT>ausgeben()</TT> und <TT>suchen()</TT>, die jeweils eine
+    Strukturvariable &uuml;bergeben.
+    <P>
+  </LI>
+  
+  <LI>
+    Testen Sie das Programm anhand einiger Datens&auml;tze. Das Programm soll
+    alle Datens&auml;tze (bis zu einer bestimmten H&ouml;chstzahl) in ein 
+    statisches Array von Strukturen ablegen.
+  </LI>
+</UL>
+ 
+Abzugeben ist das C-Programm, eine Testeingabe und die zugeh&ouml;rige
+Programmausgabe.
+ </BODY>
+</HTML>

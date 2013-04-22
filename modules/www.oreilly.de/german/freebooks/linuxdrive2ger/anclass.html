@@ -1,0 +1,468 @@
+<HTML
+><HEAD
+><TITLE
+>Klassen von Geräten und Modulen</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Eine Einführung in den Linux-Kernel"
+HREF="anintro.html"><LINK
+REL="PREVIOUS"
+TITLE="Organisation des Kernels"
+HREF="x217.html"><LINK
+REL="NEXT"
+TITLE="Sicherheitsfragen"
+HREF="x320.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x217.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 1. Eine Einführung in den Linux-Kernel</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x320.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="ANCLASS"
+>Klassen von Geräten und Modulen</A
+></H1
+><P
+>Unter UNIX werden Geräte in drei verschiedene Gerätetypen
+eingeteilt. Jedes Modul implementiert normalerweise nur
+einen Treiber und kann daher beispielsweise als
+<SPAN
+><I
+CLASS="EMPHASIS"
+>Zeichen-Modul</I
+></SPAN
+>, als
+<SPAN
+><I
+CLASS="EMPHASIS"
+>Block-Modul</I
+></SPAN
+> oder als
+<SPAN
+><I
+CLASS="EMPHASIS"
+>Netzwerk-Modul</I
+></SPAN
+> klassifiziert werden. Diese
+Aufteilung der Module in verschiedene Typen und Klassen ist nicht
+strikt; es ist möglich, riesige Module zu schreiben, die verschiedene
+Treiber in einem einzigen Code-Stück implementieren. Gute
+Programmierer schreiben aber trotzdem normalerweise ein Modul pro
+implementierter Funktionalität, weil eine solche Aufteilung ein
+zentrales Hilfsmittel ist, um Skalierbarkeit und Erweiterbarkeit zu
+erreichen.&#13;</P
+><P
+>Kommen wir noch einmal zu den Geräten zurück. Es gibt die
+drei folgenden Typen:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><SPAN
+><I
+CLASS="EMPHASIS"
+>Zeichen-Geräte (<SPAN
+><I
+CLASS="EMPHASIS"
+>Character Devices</I
+></SPAN
+>)</I
+></SPAN
+></DT
+><DD
+><P
+>Ein Zeichen-Gerät ist ein Gerät, auf das wie auf einen Stream von Bytes
+zugegriffen werden kann. Ein Zeichen-Treiber implementiert dieses
+Verhalten. Dazu gehört normalerweise die Implementierung der
+Systemaufrufe <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>, <SPAN
+><I
+CLASS="EMPHASIS"
+>close</I
+></SPAN
+>,
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>. Die
+Text-Konsole (<TT
+CLASS="FILENAME"
+>/dev/console</TT
+>) und die seriellen
+Ports (<TT
+CLASS="FILENAME"
+>/dev/ttyS0</TT
+> und Freunde) sind Beispiele für
+Zeichen-Geräte; sie können
+gut durch die Stream-Abstraktion repräsentiert werden. Auf
+Zeichen-Geräte wird mit Hilfe von Dateisystem-Knoten zugegriffen, also
+beispielsweise mit <SPAN
+><I
+CLASS="EMPHASIS"
+>/dev/tty1</I
+></SPAN
+> oder
+<SPAN
+><I
+CLASS="EMPHASIS"
+>/dev/lp0</I
+></SPAN
+>. Der einzige relevante
+Unterschied zwischen einem Zeichen-Gerät und einer normalen Datei
+besteht darin, daß Sie in einer regulären Datei immer vor- und
+zurückspringen können, während die meisten Zeichen-Geräte nur ein
+Datenkanal sind, auf den Sie nur sequentiell zugreifen können. Es
+existieren aber trotzdem Zeichen-Geräte, die wie ein Datenbereich
+aussehen, in dem Sie dann vor- und zurückspulen können, beispielsweise
+Framegrabber, bei denen die Applikationen mittels
+<SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+> oder <SPAN
+><I
+CLASS="EMPHASIS"
+>lseek</I
+></SPAN
+> auf das
+gesamte eingelesene Bild zugreifen können.</P
+></DD
+><DT
+><SPAN
+><I
+CLASS="EMPHASIS"
+>Block-Geräte</I
+></SPAN
+></DT
+><DD
+><P
+>Wie auf Zeichen-Geräte wird auch auf Block-Geräte über
+Dateisystem-Einträge im <TT
+CLASS="FILENAME"
+>/dev</TT
+>-Verzeichnis
+zugegriffen.
+Ein Block-Gerät ist etwas, das ein Dateisystem aufnehmen kann,
+beispielsweise eine Festplatte. Auf den meisten UNIX-Systemen kann auf
+ein Block-Gerät nur in Vielfachen eines Blocks zugegriffen werden; ein
+Block ist normalerweise ein Kilobyte oder eine andere Zweierpotenz an
+Daten. Linux erlaubt es Applikationen, auf
+ein Block-Gerät wie auf ein Zeichen-Gerät zuzugreifen. Es ermöglicht,
+beliebig viele Bytes auf einmal zu übertragen. Daraus folgt, daß sich
+Block- und Zeichen-Geräte nur darin unterscheiden, wie die Daten
+intern vom Kernel verwaltet werden, also in der Schnittstelle zwischen
+dem Kernel und dem Treiber. Wie auf Zeichen-Geräte wird auf
+Block-Geräte über Dateisystemknoten zugegriffen; der Unterschied ist
+für den Benutzer transparent. Ein Block-Treiber kommuniziert mit dem
+Kernel über die gleiche Schnittstelle wie ein Zeichen-Treiber,
+darüber hinaus aber auch über eine zusätzliche Schnittstelle, die für
+den Benutzer oder die Applikation, die
+<TT
+CLASS="FILENAME"
+>/dev</TT
+>-Einsprungpunkte verwenden, unsichtbar
+ist. Diese Block-Schnittstelle ist aber notwendig, um ein Dateisystem
+<SPAN
+><I
+CLASS="EMPHASIS"
+>einhängen</I
+></SPAN
+> (<SPAN
+><I
+CLASS="EMPHASIS"
+>mounten</I
+></SPAN
+>) zu
+können.</P
+></DD
+><DT
+><SPAN
+><I
+CLASS="EMPHASIS"
+>Netzwerk-Schnittstellen</I
+></SPAN
+></DT
+><DD
+><P
+>Jede Netzwerk-Kommunikation geschieht über Schnittstellen, d.h. über
+ein Gerät, das Daten mit anderen Rechnern austauschen kann. Eine
+Schnittstelle ist normalerweise ein Stück Hardware, kann aber auch ein
+reines Software-Gerät wie die Loopback-Schnittstelle sein. Eine
+Netzwerk-Schnittstelle hat die Aufgabe, vom Netzwerk-Subsystem des
+Kernels gesteuert, Datenpakete zu senden und zu empfangen, muß aber
+nicht wissen, wie die einzelnen Kommunikationsvorgänge auf die
+schließlich übertragenen Pakete abgebildet werden. Obwohl sowohl
+Telnet- als auch FTP-Verbindungen
+Stream-orientiert sind und die Daten über das gleiche Gerät übertragen
+werden, sieht das Gerät nicht die einzelnen Streams, sondern nur die
+Datenpakete.</P
+><P
+>Da Netzwerk-Schnittstellen keine Stream-orientierten Geräte sind,
+können sie nicht so einfach in einen Knoten im Dateisystem wie
+<SPAN
+><I
+CLASS="EMPHASIS"
+>/dev/tty1</I
+></SPAN
+> abgebildet werden. Unter UNIX
+werden den Schnittstellen eindeutige Namen wie <TT
+CLASS="LITERAL"
+>eth0</TT
+>
+zugewiesen. Zu so einem Namen gibt es keinen dazugehörigen Eintrag im
+Dateisystem. Die Kommunikation zwischen dem Kernel und dem
+Netzwerk-Gerätetreiber ist völlig anders als die, die bei Zeichen- und
+Block-Treibern verwendet wird. Anstelle von <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>
+und <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+> ruft der Kernel Funktionen auf, die zur
+Paketübertragung gehören.</P
+></DD
+></DL
+></DIV
+><P
+>Es gibt in Linux noch weitere Klassen von
+Treiber-Modulen. Die Module jeder Klasse nutzen öffentliche Dienste
+des Kernels aus, um mit bestimmten Gerätetypen umgehen zu können. Auf
+diese Art und Weise können USB-(Universal Serial Bus-)Module, serielle
+Module usw. angesprochen werden. Die gängigste Nicht-Standard-Klasse
+von Geräten sind die SCSI<A
+NAME="AEN309"
+HREF="#FTN.AEN309"
+>[1]</A
+>-Treiber. Obwohl jedes Gerät, das an den SCSI-Bus
+                angeschlossen ist, in <TT
+CLASS="FILENAME"
+>/dev</TT
+> entweder
+                als Zeichen- oder als Block-Gerät erscheint, ist der interne
+                Aufbau der Software anders.
+&#13;</P
+><P
+>So wie Netzwerkkarten dem Netzwerk-Subsystem die
+Hardware-Funktionalität zur Verfügung stellen, stellt ein
+SCSI-Controller dem SCSI-Subsystem den Zugriff auf das eigentliche
+Schnittstellenkabel zur Verfügung. SCSI ist ein
+Kommunikationsprotokoll zwischen Computern und Peripheriegeräten, und
+jedes SCSI-Gerät verwendet dasselbe Protokoll, unabhängig davon, welche
+Controller-Karte im Rechner steckt. Der Linux-Kernel enthält also eine
+SCSI-Implementation (d.h. eine Abbildung der Datei-Operationen auf das
+SCSI-Kommunikationsprotokoll). Der Treiber-Programmierer muß die
+Abbildung zwischen der SCSI-Abstraktion und dem physikalischen Kabel
+implementieren. Diese Abbildung hängt vom SCSI-Controller ab und ist
+unabhängig davon, welche Geräte am SCSI-Kabel angeschlossen sind.&#13;</P
+><P
+>Andere Klassen von Gerätetreibern sind in jüngerer Zeit
+zum Kernel hinzugefügt worden, darunter USB-Treiber, FireWire-Treiber
+und I2O-Treiber. Genau wie bei den SCSI-Treibern haben
+Kernel-Entwickler klassenweite Merkmale bestimmt und an die
+Treiber-Implementierer übergeben, um Mehrfacharbeit und Fehler zu
+vermeiden. Auf diese Weise haben sie den Vorgang, solche Treiber zu schreiben, vereinfacht
+und die Entwickler unterstützt.</P
+><P
+>Außer Gerätetreibern gibt es noch weitere Funktionalitäten &#8212; sowohl als
+Hardware
+als auch als Software &#8212;, die im Kernel modularisiert sind. Die
+wichtigste Klasse von Modulen nach den Gerätetreibern sind die Dateisysteme. Ein Dateisystem-Typ beschreibt, wie
+Informationen auf einem Block-Gerät organisiert sind, um einen Baum
+aus Verzeichnissen und Dateien zu repräsentieren. Es handelt sich
+dabei nicht um einen Gerätetreiber in dem Sinne, daß ein
+bestimmtes Gerät eingebunden ist, um die Informationen zu
+verteilen. Der Dateisystem-Typ ist dagegen ein Software-Treiber, weil
+er die Datenstrukturen auf einer niedrigeren Ebene auf die Datenstrukturen
+auf einer höheren Ebene abbildet. Das Dateisystem bestimmt, wie lang
+ein Dateiname sein darf und welche Informationen in einem
+Verzeichniseintrag über jede Datei gespeichert werden müssen. Die
+Dateisystem-Module müssen die niedrigste Ebene der Systemaufrufe
+implementieren, indem sie Dateinamen und Pfade (und andere
+Informationen wie Zugriffsrechte) auf Datenstrukturen abbilden, die in
+Datenblocks gespeichert sind. Eine solche Schnittstelle ist
+vollkommen unabhängig von der eigentlichen Datenübertragung von und
+zur Festplatte (oder einem anderen Medium), die ihrerseits von einem
+Block-Gerätetreiber erledigt wird.&#13;</P
+><P
+>Wenn Sie berücksichtigen, wie sehr ein UNIX-System vom
+zugrundeliegenden Dateisystem abhängt, wird Ihnen klar, daß ein
+solches Software-Konzept maßgeblich für den Systembetrieb ist. Die
+Fähigkeit, Informationen über das Dateisystem zu verstehen, bleibt
+auf der niedrigsten Ebene in der Kernel-Hierarchie und ist von
+äußerster Wichtigkeit. Selbst wenn Sie einen Block-Treiber für Ihr
+neues CD-ROM-Laufwerk schreiben, ist das nutzlos, wenn Sie nicht
+<SPAN
+CLASS="APPLICATION"
+>ls</SPAN
+> oder <SPAN
+CLASS="APPLICATION"
+>cp</SPAN
+> auf den Daten
+ausführen können. Linux unterstützt Dateisystem-Module, deren
+Software-Schnittstellen die verschiedenen Operationen deklarieren, die
+auf einer Inode, einem Verzeichnis, einer Datei oder einem Superblock
+des Dateisystems ausgeführt werden können. Es ist ziemlich unüblich,
+daß ein Programmierer tatsächlich ein
+Dateisystem-Modul schreiben muß, weil der offizielle Kernel bereits den
+Code für die wichtigsten Dateisystemtypen enthält.&#13;</P
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN309"
+HREF="anclass.html#AEN309"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>SCSI ist ein Akronym für Small Computer Systems
+                  Interface und steht für einen etablierten Standard im
+                  Workstation- und High-End-Server-Bereich.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x217.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x320.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Organisation des Kernels</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="anintro.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Sicherheitsfragen</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

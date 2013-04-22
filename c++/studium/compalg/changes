@@ -1,0 +1,111 @@
+.bŽÄnderungen im Interface
+
+********************************************************************************
+16.01.04
+********************************************************************************
+
+1)
+Datentyp Fp: stelle statische Variable p zur VerfŽügung.
+
+********************************************************************************
+09.01.04
+********************************************************************************
+
+1)
+THEMA 9: irred(): Return-value wird als Parameter Žübergeben.
+
+********************************************************************************
+01.12.03
+********************************************************************************
+
+1)
+THEMA 4: gauss(): Vektor w (Linearkombination im Falle linearer Abh.AŽängigkeit) hat jetzt
+die gleiche LŽänge wie die Basis.
+
+********************************************************************************
+27.11.03
+********************************************************************************
+
+1)
+Die read() Funktionen erhalten die M.bŽöglichkeit, dass man bereits bekannte 
+Dimensionen per Parameter Žübergibt. Die werden dann nicht mehr eingelesen.
+
+  bool read(istream& in, matrix& ret, int n=-1, int m=-1);
+  bool read(istream& in, vektor& ret, int n=-1);
+
+2) 
+FŽür gaussinfo (THEMA 4) gibt es eine Initialisierungsfunktion, die alle
+Elemente auf gegebene Dimension vorinitialisiert
+
+  inline gaussinfo& init(int n, gaussinfo& ret);
+
+3) 
+FŽür die Funktionen ggT(a,b, ret) (THEMA 3) und mult(p,A,v, ret) (THEMA 7) gibt 
+es nun auch Vereinfachte Versionen, ohne ParameterŽübergabe der Return-Variable:
+
+  inline vektor mult(polynom const& p, matrix const& A, vektor const& v);
+  inline polynom ggT(polynom const& p, polynom const& q);
+
+4) 
+Komfortable Ausgabe von vektor, matrix, basis, polynom mit operator<<, z.B
+
+  vektor p(n,0); 
+  cout << "Der Nullvektor der Dimension " << n << " ist [ "<< p << " ].\n"
+
+********************************************************************************
+26.11.03
+********************************************************************************
+
+1)
+Einige Funktionen zum Initialisieren von Basis/Permutation
+
+  basis& nullbasis(int n, int k, basis& ret);
+  basis& stdbasis (int n, int k, basis& ret);
+  permutation& id(int n, permutation& ret);
+
+2)
+Wenn ein Polynom direkt initialisiert wurde, stellt trim() sicher, dass 
+das Format eingehalten wird (d.h. f.AŽührende Nullen werden weggeschmissen)
+
+  polynom& trim(polynom& p);
+
+3)
+Die Bestimmung des Grades eines Polynoms kann sicher (Ohne Gefahr eines 
+unsigned int- ŽÜberlaufs) mit 
+  deg(p)
+bestimmt werden.
+
+4)
+Im Interface von Thema 3 wurde eine Funktion zum einfachen Aufruf von ggT 
+bereitgestellt
+
+  ggT(p,q,ret)
+
+5)
+Im Interface von Thema 4: gauss() gibt einen Wert zurŽück: true, falls neue 
+Vektor lin. unabh. von vorherigen war.
+
+6)
+Weiterhin hab ich die Information die zwischen einzelnen Gauss-aufrufen 
+ausgetauscht werden (Basis,Permutation,Transformationsmatrix), in einem 
+struct zusammengefasst.
+
+  struct gaussinfo 
+
+Ein neue Auffrufform von gauss wŽürdigt dies:
+
+  bool gauss(gaussinfo &B, vektor const& v, vektor& w);
+
+
+6)
+Thema 7:
+ordpoly() und minpoly() bekommen die Basis von U samt aller Information fŽür 
+Gauss -- ein Parameter vom Typ gaussinfo
+Dies erspart einige Aufrufe fŽür gauss, so dass die Algorithmen rationale_nf 
+und jordansche_nf davon profitieren.
+
+Hannes Buchholzer hat eine Funktion implementiert, die direkt p(A)*v fŽür 
+Polynom p, Matrix A und Vektor v ausrechnet, ohne den Umweg, die Matrix p(A) 
+auszurechnen. Diese stelle ich global zur VerfŽügung, da sie auch die spŽäteren 
+VortrŽäge nutzen kŽönnen.
+

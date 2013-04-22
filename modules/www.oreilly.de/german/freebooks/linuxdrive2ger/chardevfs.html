@@ -1,0 +1,973 @@
+<HTML
+><HEAD
+><TITLE
+>Das Device-Dateisystem</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Zeichen-Treiber"
+HREF="char.html"><LINK
+REL="PREVIOUS"
+TITLE="Die neuen Geräte ausprobieren"
+HREF="x3593.html"><LINK
+REL="NEXT"
+TITLE="Abwärtskompatibilität"
+HREF="x3895.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x3593.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 3. Zeichen-Treiber</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x3895.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="CHARDEVFS"
+>Das Device-Dateisystem</A
+></H1
+><P
+>&#13;
+Wie bereits am Anfang des Kapitels angedeutet, enthalten die neueren
+Versionen des Linux-Kernels ein spezielles Dateisystem für
+Geräte-Einsprungpunkte. Dieses Dateisystem gibt es seit einiger Zeit
+als unoffiziellen Patch. In den offiziellen Quell-Baum wurde es mit
+Version 2.3.46 aufgenommen. Eine Rückportierung auf 2.2 steht ebenfalls
+zur Verfügung, ist aber nicht in den offiziellen 2.2-Kerneln enthalten.
+&#13;</P
+><P
+>&#13;
+
+Auch wenn die Verwendung dieses speziellen Dateisystems derzeit noch
+nicht besonders weit verbreitet ist, bieten die neuen Features doch
+einige Vorteile für Autoren von Gerätetreibern. Deswegen verwendet
+unsere Version von <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> das
+<SPAN
+CLASS="APPLICATION"
+>devfs</SPAN
+>, wenn dieses auf dem Zielsystem
+vorhanden ist. Das Modul verwendet Konfigurationsinformationen des
+Kernels zur Compile-Zeit, um herauszufinden, ob bestimmte Features
+eingeschaltet worden sind; in diesem Fall geht es darum festzustellen, ob <TT
+CLASS="LITERAL"
+>CONFIG_DEVFS_FS</TT
+> definiert ist oder nicht.</P
+><P
+>&#13;Die wichtigsten Vorteile von <SPAN
+CLASS="APPLICATION"
+>devfs</SPAN
+> sind:</P
+><P
+></P
+><UL
+><LI
+><P
+>Geräte-Einsprungpunkte in <TT
+CLASS="FILENAME"
+>/dev</TT
+> werden bei der
+Initialisierung des Geräts erzeugt und beim Entfernen des Geräts
+ebenfalls wieder entfernt.</P
+></LI
+><LI
+><P
+>Der Gerätetreiber kann Gerätenamen, Besitzer und Zugriffsrechte
+angeben, aber Programme im User-Space können trotzdem noch den
+Besitzer und die Zugriffsrechte ändern (aber nicht den Dateinamen).</P
+></LI
+><LI
+><P
+>Man muß keine Major-Nummer für den Treiber anfordern und sich nicht
+mit Minor-Nummern auseinandersetzen.</P
+></LI
+></UL
+><P
+>Als Folge daraus ist es nicht notwendig, beim Laden oder Entladen
+eines Moduls ein Skript auszuführen, das die Gerätedateien erzeugt,
+weil der Treiber durch die Verwaltung seiner eigenen Gerätedateien
+autonom ist.</P
+><P
+>&#13;
+
+
+
+Um Geräte zu erzeugen und zu entfernen, sollte der Treiber die
+folgenden Funktionen aufrufen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;#include &#60;linux/devfs_fs_kernel.h&#62;
+
+devfs_handle_t devfs_mk_dir (devfs_handle_t dir,
+  const char *name, void *info);
+
+devfs_handle_t devfs_register (devfs_handle_t dir,
+  const char *name, unsigned int flags,
+  unsigned int major, unsigned int minor,
+  umode_t mode, void *ops, void *info);
+
+  void devfs_unregister (devfs_handle_t de);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die <SPAN
+CLASS="APPLICATION"
+>devfs</SPAN
+>-Implementation enthält noch
+weitere Funktionen zur Verwendung durch Kernel-Code. Diese ermöglichen
+die Erzeugung symbolischer Links, den Zugriff auf die internen
+Datenstrukturen, um <TT
+CLASS="LITERAL"
+>devfs_handle_t</TT
+>-Elemente aus
+Inodes zu bekommen, sowie weitere Aufgaben. Wir behandeln diese
+Funktionen hier nicht, weil sie entweder nicht wichtig oder aber
+schwer zu verstehen sind. Neugierige Leser finden weitere
+Informationen in der Header-Datei.</P
+><P
+>Die diversen Argumente der Funktionen zum Registrieren und
+Deregistrieren lauten:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>dir</TT
+></DT
+><DD
+><P
+>Das Eltern-Verzeichnis, in dem die neue Gerätedatei erzeugt werden
+soll. Die meisten Treiber werden hier <TT
+CLASS="LITERAL"
+>NULL</TT
+> angeben,
+um die Dateien im Verzeichnis <TT
+CLASS="FILENAME"
+>/dev</TT
+> zu
+erzeugen. Um ein eigenes Verzeichnis zu erzeugen, sollte der Treiber
+<SPAN
+><I
+CLASS="EMPHASIS"
+>devfs_mk_dir</I
+></SPAN
+> verwenden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>name</TT
+></DT
+><DD
+><P
+>Der Name des Geräts ohne das führende <TT
+CLASS="LITERAL"
+>/dev</TT
+>. Der
+Name kann Schrägstriche enthalten, wenn das Gerät in einem
+Unterverzeichnis stehen soll; das Unterverzeichnis wird dann während
+der Registrierung erzeugt. Alternativ dazu können Sie auch einen
+gültigen <TT
+CLASS="LITERAL"
+>dir</TT
+>-Zeiger auf das gewünschte
+Unterverzeichnis angeben.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>flags</TT
+></DT
+><DD
+><P
+>Eine Bitmaske mit
+<SPAN
+CLASS="APPLICATION"
+>devfs</SPAN
+>-Flags.
+<TT
+CLASS="LITERAL"
+>DEVFS_FL_DEFAULT</TT
+> kann eine gute Wahl sein;
+<TT
+CLASS="LITERAL"
+>DEVFS_FL_AUTO_DEVNUM</TT
+> ist das Flag für die
+automatische Zuweisung von Major- und Minor-Nummern. Welche Flags es
+gibt und was sie bedeuten, beschreiben wir später.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>major</TT
+>, <TT
+CLASS="LITERAL"
+>minor</TT
+></DT
+><DD
+><P
+>Die Major- und Minor-Nummern des Geräts. Sie werden nicht verwendet, wenn
+<TT
+CLASS="LITERAL"
+>DEVFS_FL_AUTO_DEVNUM</TT
+> in den Flags angegeben worden
+ist.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>mode</TT
+></DT
+><DD
+><P
+>Die Zugriffsrechte auf das neue Gerät.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>ops</TT
+></DT
+><DD
+><P
+>Ein Zeiger auf die Dateioperationsstruktur des Geräts.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>info</TT
+></DT
+><DD
+><P
+>Ein Default-Wert für <TT
+CLASS="LITERAL"
+>filp-&#62;private_data</TT
+>. Das
+Dateisystem initialisiert den Zeiger mit diesem Wert, wenn das Gerät
+geöffnet wird. Der an <TT
+CLASS="LITERAL"
+>devfs_mk_dir</TT
+> übergebene
+<TT
+CLASS="LITERAL"
+>info</TT
+>-Zeiger wird nicht von
+<SPAN
+CLASS="APPLICATION"
+>devfs</SPAN
+> verwendet und dient als
+&#8220;Benutzerdaten&#8221;-Zeiger.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>de</TT
+></DT
+><DD
+><P
+>Ein &#8220;<SPAN
+><I
+CLASS="EMPHASIS"
+>devfs</I
+></SPAN
+>-Eintrag&#8221;, der aus einem früheren
+Aufruf von <SPAN
+><I
+CLASS="EMPHASIS"
+>devfs_register</I
+></SPAN
+> stammt.</P
+></DD
+></DL
+></DIV
+><P
+>&#13;
+
+Diese Flags werden verwendet, um bestimmte Eigenschaften der zu
+erzeugenden Gerätedatei auszuwählen. Sie sind zwar kurz und deutlich
+in <TT
+CLASS="LITERAL"
+>&#60;linux/devfs_fs_kernel.h&#62;</TT
+> dokumentiert,
+aber es lohnt sich trotzdem, sie hier zu beschreiben.</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>DEVFS_FL_NONE</TT
+>, <TT
+CLASS="LITERAL"
+>DEVFS_FL_DEFAULT</TT
+></DT
+><DD
+><P
+>&#13;
+Das zuerst genannte Symbol ist einfach <TT
+CLASS="LITERAL"
+>0</TT
+> und sollte
+verwendet werden, um den Code besser lesbar zu machen. Das zweite Makro ist
+derzeit als <TT
+CLASS="LITERAL"
+>DEVFS_FL_NONE</TT
+> definiert, ist aber eine
+gute Wahl, um aufwärtskompatibel mit zukünftigen Implementationen des
+Dateisystems zu sein.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>DEVFS_FL_AUTO_OWNER</TT
+></DT
+><DD
+><P
+>&#13;Dieses Flag läßt das Gerät so aussehen, als gehörte es der letzten
+Benutzer-/Gruppen-ID, die es geöffnet hat; außerdem ist es les- und
+schreibbar für alle, wenn es derzeit von keinem Prozeß geöffnet
+ist. Dieses Feature ist für TTY-Gerätedateien nützlich, aber auch               für Gerätetreiber interessant, die den gleichzeitigen Zugriff auf ein
+Gerät verhindern müssen, das nicht gemeinsam genutzt werden kann. Um solche Fragen kümmern wir
+uns in <A
+HREF="extra.html"
+>Kapitel 5</A
+>&#62;.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>DEVFS_FL_SHOW_UNREG</TT
+>, <TT
+CLASS="LITERAL"
+>DEVFS_FL_HIDE</TT
+></DT
+><DD
+><P
+>&#13;
+Das erste Flag legt fest, daß die Gerätedatei bei der Deregistrierung
+nicht aus <TT
+CLASS="FILENAME"
+>/dev</TT
+> entfernt wird; das zweite bestimmt, daß die
+Datei nie in <TT
+CLASS="FILENAME"
+>/dev</TT
+> erscheint. Diese Flags sind für
+normale Geräte üblicherweise nicht notwendig.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>DEVFS_FL_AUTO_DEVNUM</TT
+></DT
+><DD
+><P
+>&#13;Alloziert automatisch eine Gerätenummer für dieses Gerät. Die Nummer
+gehört auch nach der Deregistrierung des
+<SPAN
+CLASS="APPLICATION"
+>devfs</SPAN
+>-Eintrags zum Gerät. Wenn der Treiber
+also erneut geladen wird, bevor das System heruntergefahren worden
+ist, bekommt er das gleiche Paar aus Major- und Minor-Nummer.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>DEVFS_FL_NO_PERSISTENCE</TT
+></DT
+><DD
+><P
+>&#13;Den Eintrag nicht verfolgen, nachdem er entfernt worden ist. Dieses
+Flag spart nach dem Entfernen des Moduls etwas Systemspeicher, allerdings auf
+Kosten der Persistenz von Gerätemerkmalen über das Entladen und
+erneute Laden hinweg. Die persistenten Features sind die Zugriffsrechte,
+die Eigentümerschaft und die Major- und Minor-Nummern.</P
+></DD
+></DL
+></DIV
+><P
+>&#13;
+Es ist möglich, die zu einem Gerät gehörenden Flags zur Laufzeit
+abzufragen oder zu verwenden. Dazu dienen die beiden folgenden
+Funktionen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;int devfs_get_flags (devfs_handle_t de, unsigned int *flags);
+int devfs_set_flags (devfs_handle_t de, unsigned int flags);</PRE
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN3788"
+>devfs in der Praxis</A
+></H2
+><P
+>&#13;Weil <SPAN
+CLASS="APPLICATION"
+>devfs</SPAN
+> zu ernsthaften
+Inkompatibilitäten hinsichtlich Gerätenamen im User-Space führt,
+benutzen es nicht alle Systeme. Unabhängig davon, wie dieses neue
+Feature von den Linux-Benutzern akzeptiert wird, ist es nicht so
+wahrscheinlich, daß Sie in näherer Zeit reine
+<SPAN
+CLASS="APPLICATION"
+>devfs</SPAN
+>-Treiber schreiben werden, weswegen
+Sie auch das &#8220;alte&#8221; Verfahren mit dem Erzeugen von Dateien und
+Zugriffsrechten im User-Space und mit der Verwendung von Major- und
+Minor-Nummern im Kernel-Space unterstützen müssen.</P
+><P
+>Der Code zur Initialisierung eines Gerätetreibers, der nur
+funktioniert, wenn <SPAN
+CLASS="APPLICATION"
+>devfs</SPAN
+> installiert ist,
+ist eine Untermenge des Codes, den Sie für beide Umgebungen brauchen,
+so daß wir Ihnen hier nur die Dual-Mode-Initialisierung
+zeigen. Anstatt einen speziellen Treiber zu schreiben, der
+<SPAN
+CLASS="APPLICATION"
+>devfs</SPAN
+> verwendet, fügen wir
+einfach <SPAN
+CLASS="APPLICATION"
+>devfs</SPAN
+>-Unterstützung zum
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Treiber hinzu. Wenn Sie
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> in einen Kernel laden, der
+<SPAN
+CLASS="APPLICATION"
+>devfs</SPAN
+> verwendet, dann müssen Sie
+<SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+> direkt aufrufen, anstatt das Skript
+<SPAN
+CLASS="APPLICATION"
+>scull_load</SPAN
+> zu verwenden.</P
+><P
+>Wir haben uns entschieden, ein Verzeichnis zu erzeugen, das alle
+Gerätedateien von <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> enthalten soll,
+weil die Struktur von <SPAN
+CLASS="APPLICATION"
+>devfs</SPAN
+> in hohem Maße
+hierarchisch ist und es keinen Grund gibt, sich nicht an diese
+Konvention zu halten. Außerdem können wir so zeigen, wie ein
+Verzeichnis erzeugt und entfernt wird.</P
+><P
+>&#13;Der folgende Code in <SPAN
+><I
+CLASS="EMPHASIS"
+>scull_init</I
+></SPAN
+> kümmert sich um
+die Geräteerzeugung und verwendet ein Feld namens
+<TT
+CLASS="LITERAL"
+>handle</TT
+> in der Gerätestruktur, um sich zu merken,
+welche Geräte bereits registriert worden sind:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+ /* Wenn wir devfs haben, /dev/scull erzeugen, wo die Dateien hinkommen */
+ scull_devfs_dir = devfs_mk_dir(NULL, "scull", NULL);
+ if (!scull_devfs_dir) return -EBUSY; /* Problem */
+
+ for (i=0; i &#60; scull_nr_devs; i++) {
+  sprintf(devname, "%i", i);
+  devfs_register(scull_devfs_dir, devname,
+      DEVFS_FL_AUTO_DEVNUM,
+      0, 0, S_IFCHR | S_IRUGO | S_IWUGO,
+      &#38;scull_fops,
+      scull_devices+i);
+ }</PRE
+></TD
+></TR
+></TABLE
+><P
+>Dieser Code wird von den folgenden Zeilen aus
+<SPAN
+><I
+CLASS="EMPHASIS"
+>scull_cleanup</I
+></SPAN
+> vervollständigt:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+ if (scull_devices) {
+  for (i=0; i&#60;scull_nr_devs; i++) {
+   scull_trim(scull_devices+i);
+   /* Die folgende Zeile ist nur für devfs */
+   devfs_unregister(scull_devices[i].handle);
+  }
+  kfree(scull_devices);
+ }
+
+ /* auch das ist nur für devfs */
+ devfs_unregister(scull_devfs_dir);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Ein Teil der obenstehenden Code-Fragmente wird mit <TT
+CLASS="LITERAL"
+>#ifdef
+CONFIG_DEVFS_FS</TT
+> umgeben. Wenn das Feature im aktuellen
+Kernel nicht eingeschaltet ist, verwendet
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> weiterhin
+<SPAN
+><I
+CLASS="EMPHASIS"
+>register_chrdev</I
+></SPAN
+>.</P
+><P
+>&#13;
+
+Um beide Umgebungen zu
+unterstützen, ist jetzt nur noch die Initialisierung von
+<TT
+CLASS="LITERAL"
+>filp-&#62;f_ops</TT
+> und
+<TT
+CLASS="LITERAL"
+>filp-&#62;private_data</TT
+> in der Gerätemethode
+<SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> erforderlich. Der erste Zeiger wird so gelassen, wie er
+ist, weil die korrekten Datei-Operationen bereits in
+<SPAN
+><I
+CLASS="EMPHASIS"
+>devfs_register</I
+></SPAN
+> angegeben worden sind. Der zweite
+Zeiger muß nur von der <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>-Methode initialisiert
+werden, wenn er <TT
+CLASS="LITERAL"
+>NULL</TT
+> ist, denn nur dann wird
+<SPAN
+CLASS="APPLICATION"
+>devfs</SPAN
+> nicht verwendet.</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+ /*
+  * Wenn die privaten Daten nicht gueltig sind, dann verwenden wir kein
+  * devfs und setzen also den Typ (aus der Minor-Nummer), um einen neuen
+  * Wert für f_op anzugeben.
+  */
+ if (!filp-&#62;private_data &#38;&#38; type) {
+  if (type &#62; SCULL_MAX_TYPE) return -ENODEV;
+  filp-&#62;f_op = scull_fop_array[type];
+  return filp-&#62;f_op-&#62;open(inode, filp); /* an open weiterleiten */
+ }
+
+ /* Typ 0, Geraetenummer ueberpruefen (wenn private_data nicht gültig ist) */
+ dev = (Scull_Dev *)filp-&#62;private_data;
+ if (!dev) {
+  if (num &#62;= scull_nr_devs) return -ENODEV;
+  dev = &#38;scull_devices[num];
+  filp-&#62;private_data = dev; /* für andere Methoden */
+ }</PRE
+></TD
+></TR
+></TABLE
+><P
+>Mit dem oben gezeigten Code kann das
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Modul in einem System, das
+<SPAN
+CLASS="APPLICATION"
+>devfs</SPAN
+> verwendet, geladen
+werden. <SPAN
+><I
+CLASS="EMPHASIS"
+>ls -l /dev/scull</I
+></SPAN
+> zeigt dann die folgende
+Ausgabe an:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;crw-rw-rw- 1 root  root  144,  1 Jan 1 1970 0
+crw-rw-rw- 1 root  root  144,  2 Jan 1 1970 1
+crw-rw-rw- 1 root  root  144,  3 Jan 1 1970 2
+crw-rw-rw- 1 root  root  144,  4 Jan 1 1970 3
+crw-rw-rw- 1 root  root  144,  5 Jan 1 1970 pipe0
+crw-rw-rw- 1 root  root  144,  6 Jan 1 1970 pipe1
+crw-rw-rw- 1 root  root  144,  7 Jan 1 1970 pipe2
+crw-rw-rw- 1 root  root  144,  8 Jan 1 1970 pipe3
+crw-rw-rw- 1 root  root  144, 12 Jan 1 1970 priv
+crw-rw-rw- 1 root  root  144,  9 Jan 1 1970 single
+crw-rw-rw- 1 root  root  144, 10 Jan 1 1970 user
+crw-rw-rw- 1 root  root  144, 11 Jan 1 1970 wuser</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die Funktion der einzelnen Dateien ist die gleiche wie beim &#8220;normalen&#8221;
+<SPAN
+><I
+CLASS="EMPHASIS"
+>scull</I
+></SPAN
+>-Modul; der einzige Unterschied besteht in
+den Pfadnamen der Gerätedateien: Was vorher
+<TT
+CLASS="FILENAME"
+>/dev/scull0</TT
+> war, ist jetzt
+<TT
+CLASS="FILENAME"
+>/dev/scull/0</TT
+>.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN3849"
+>Portabilitätsprobleme mit devfs</A
+></H2
+><P
+>&#13;
+
+
+Die Quelldateien von <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> sind ein wenig
+komplizierter, weil sie unter Linux 2.0, 2.2 und 2.4 kompilierbar sein und
+laufen sollen. Diese Portabilitätsanforderungen führen zu mehreren
+Fällen bedingter Kompilierung auf der Basis von
+<TT
+CLASS="LITERAL"
+>CONFIG_DEVFS_FS</TT
+>.</P
+><P
+>&#13;Glücklicherweise sind sich die meisten Entwickler darüber einig, daß
+<TT
+CLASS="LITERAL"
+>#ifdef</TT
+>-Konstrukte von Übel sind, wenn sie im Rumpf
+von Funktionsdefinitionen (im Gegensatz zu Header-Dateien)
+stehen. Daher brauchen wir zusätzliche Mechanismen, wenn wir trotz der
+Verwendung von <SPAN
+CLASS="APPLICATION"
+>devfs</SPAN
+>
+<TT
+CLASS="LITERAL"
+>#ifdef</TT
+>s in unserem Code vermeiden
+wollen. Gleichwohl findet sich noch bedingte Kompilation in
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>, weil ältere Versionen der
+Kernel-Header-Dateien keine andere Unterstützung enthalten.</P
+><P
+>Wenn Ihr Code nur mit der Version 2.4 des Kernels verwendet werden
+soll, können Sie bedingte Kompilierung durch das Aufrufen von
+Kernel-Funktionen vermeiden, die den Treiber auf beide Arten
+initialisieren; eine der beiden Initialisierungen macht dabei gar
+nichts und meldet nur eine erfolgreiche Ausführung zurück. Hier folgt
+ein Beispiel, wie eine solche Initialisierung aussehen kann:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; #include &#60;devfs_fs_kernel.h&#62;
+
+ int init_module()
+ {
+  /* Major-Nummer anfordern, macht nichts, wenn devfs verwendet wird */
+  result = devfs_register_chrdev(major, "name", &#38;fops);
+  if (result &#60; 0) return result;
+
+  /* mit devfs registrieren, macht nichts, wenn devfs nicht verwendet wird */
+  devfs_register(NULL, "name", /* .... */ );
+  return 0;
+ }</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Sie können ähnliche Tricks in Ihren eigenen Header-Dateien verwenden,
+solange Sie dabei aufpassen, keine Funktionen umzudefinieren, die
+schon von den Kernel-Header-Dateien verwendet werden. Das
+Beseitigen von bedingter Kompilierung ist eine gute Sache, weil die
+Lesbarkeit des Codes verbessert und die Wahrscheinlichkeit von Fehlern
+verringert wird, denn der Compiler parst die gesamte
+Eingabedatei. Immer, wenn eine/die bedingte Kompilierung verwendet wird,
+besteht die Gefahr, daß sich Tipp- oder andere Fehler einschleichen,
+die unentdeckt bleiben, weil sie an einer Stelle stehen, die vom
+C-Präprozessor aufgrund eines <TT
+CLASS="LITERAL"
+>#ifdef</TT
+> verworfen
+wird.</P
+><P
+>Hier zeigen wir als Beispiel, wie <TT
+CLASS="FILENAME"
+>scull.h</TT
+>
+die bedingte Kompilierung im Aufräum-Teil des Programms vermeidet. Dieser
+Code ist über alle Kernel-Versionen hinweg portabel, weil er sich
+nicht darauf verläßt, daß <SPAN
+CLASS="APPLICATION"
+>devfs</SPAN
+> in den
+Header-Dateien bekannt ist:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+#ifdef CONFIG_DEVFS_FS /* nur, wenn verwendet, um Fehler in 2.0 zu vermeiden */
+#include &#60;linux/devfs_fs_kernel.h&#62;
+#else
+ typedef void * devfs_handle_t; /* #ifdef in der Struktur vermeiden */
+#endif</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#62;
+&#62;
+&#62;
+&#62;
+In <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> wird nichts definiert, weil es sehr
+schwer ist, solche Hacks generisch genug zu implementieren, um
+allgemein verwendbar zu sein. Jeder Treiber sollte seine eigenen
+Bedürfnisse abdecken, um eine exzessive Verwendung von
+<TT
+CLASS="LITERAL"
+>#ifdef</TT
+> im Funktionscode zu vermeiden. Wir haben
+uns außerdem entschlossen, im Beispiel-Code zu diesem Buch (mit der
+Ausnahme von <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>),
+<SPAN
+CLASS="APPLICATION"
+>devfs</SPAN
+> nicht zu unterstützen. Wir hoffen,
+daß dieser Abschnitt hier ausreichend ist, um Ihnen das weitere
+Entdecken von <SPAN
+CLASS="APPLICATION"
+>devfs</SPAN
+> zu ermöglichen, wenn
+Sie das wünschen. Wir haben die
+<SPAN
+CLASS="APPLICATION"
+>devfs</SPAN
+>-Unterstützung aus den weiteren
+Beispielen herausgelassen, um den Code einfach zu halten.
+&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x3593.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x3895.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Die neuen Geräte ausprobieren</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="char.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Abwärtskompatibilität</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

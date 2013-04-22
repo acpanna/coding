@@ -1,0 +1,426 @@
+<HTML
+><HEAD
+><TITLE
+>Allozierung während des Bootens</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Speicher ergattern"
+HREF="get.html"><LINK
+REL="PREVIOUS"
+TITLE="vmalloc und Freunde"
+HREF="getvmalloc.html"><LINK
+REL="NEXT"
+TITLE="Abwärtskompatibilität"
+HREF="getdep.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="getvmalloc.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 7. Speicher ergattern</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="getdep.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="GETBOOT"
+>Allozierung während des Bootens</A
+></H1
+><P
+>&#13;
+
+
+Wenn Sie wirklich einen riesigen Puffer physikalisch zusammenhängenden
+Speichers benötigen, dann müssen Sie diesen allozieren, indem Sie den
+Speicher bereits während des Bootens anfordern. Diese Technik ist
+unelegant und unflexibel, gelingt aber auch am
+sichersten. Natürlich ist es Modulen nicht möglich, Speicher während
+des Bootens zu allozieren; nur Treiber, die direkt in den Kernel gelinkt
+sind, können das.</P
+><P
+>Die Allokation während des Bootens ist die einzige Möglichkeit,
+zusammenhängende Speicherseiten zu bekommen und dabei die Begrenzungen
+von <SPAN
+><I
+CLASS="EMPHASIS"
+>get_free_pages</I
+></SPAN
+> hinsichtlich der Puffer-Größe &#8211;
+sowohl hinsichtlich der maximal zulässigen Größe als auch hinsichtlich der
+eingeschränkten Größenauswahl &#8211; zu umgehen. Speicher
+beim Booten zu allozieren ist eine &#8220;unsaubere Technik&#8221;, weil dabei sämtliche
+Speicherverwaltungsregelungen durch das Reservieren eines privaten
+Speicher-Pools umgangen werden.</P
+><P
+>Ein spürbares Problem mit der Allokation beim Booten besteht darin,
+daß es für normale Benutzer kaum möglich ist: Die Technik steht nur
+für Code zur Verfügung, der in das Kernel-Image eingelinkt ist; ein
+Gerätetreiber, der diese Art von Allokationstechnik verwendet, kann
+nur durch das erneute Kompilieren des Kernels und Rebooten des Computers installiert
+oder ersetzt werden. Glücklicherweise gibt es einige Workarounds für
+dieses Problem, die wir uns in Kürze anschauen werden.</P
+><P
+>Obwohl wir Ihnen hier nicht raten wollen, Ihren Speicher beim Booten
+zu allozieren, ist es doch erwähnenswert, daß dies in den ersten
+Linux-Versionen (bevor <TT
+CLASS="LITERAL"
+>__GFP_DMA</TT
+> eingeführt wurde)
+die einzige Möglichkeit war, einen DMA-fähigen Puffer zu bekommen.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN9809"
+>Einen dedizierten Puffer beim Booten bekommen</A
+></H2
+><P
+>&#13;
+
+Wenn der Kernel gebootet wird, steht ihm der gesamte im System
+vorhandene physikalische Speicher zur Verfügung. Er initialisiert dann seine Subsysteme durch das Aufrufen der jeweiligen
+Initialisierungsfunktion, wobei der Initialisierungscode einen
+Speicher-Puffer zur privaten Verwendung allozieren kann, was die
+RAM-Menge für den normalen Systembetrieb entsprechend reduziert.</P
+><P
+>&#13;
+
+
+
+
+In der Version 2.4 des Kernels wird diese Art von Allokation durch
+eine der folgenden Funktionen durchgeführt:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;#include &#60;linux/bootmem.h&#62;
+void *alloc_bootmem(unsigned long size);
+void *alloc_bootmem_low(unsigned long size);
+void *alloc_bootmem_pages(unsigned long size);
+void *alloc_bootmem_low_pages(unsigned long size);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die Funktionen allozieren entweder ganze Seiten (wenn sie auf
+<TT
+CLASS="LITERAL"
+>_pages</TT
+> enden) oder nicht auf Seitengrenzen
+ausgerichtete Speicherbereiche. Sie allozieren entweder unteren oder
+normalen Speicher (siehe die Behandlung von Speicherzonen weiter oben
+in diesem Kapitel). Eine normale Allokation gibt Speicheradressen oberhalb
+von <TT
+CLASS="LITERAL"
+>MAX_DMA_ADDRESS</TT
+> zurück, unterer Speicher liegt
+an Adressen unter diesem Wert.</P
+><P
+>Dieses Interface wurde in der Version 2.3.23 des Kernels
+eingeführt. Frühere Versionen benutzten ein weniger ausgeklügeltes
+Interface, ähnlich dem, das in Unix-Büchern beschrieben wird. Im
+wesentlichen erwarteten die Initialisierungsfunktionen mehrerer
+Kernel-Subsysteme zwei <TT
+CLASS="LITERAL"
+>unsigned long</TT
+>-Argumente, die
+die aktuellen Grenzen des freien Speicherbereiches
+repräsentierten. Jede dieser Funktionen konnte dann einen Teil von
+diesem Bereich abschneiden und die neue untere Grenze zurückgeben. Ein
+Treiber, der Speicher beim Booten allozierte, konnte also
+zusammenhängenden Speicher aus dem linearen Array des verfügbaren RAMs
+entnehmen.</P
+><P
+>Das Hauptproblem mit diesem älteren Mechanismus zur Bearbeitung von
+Allokationsanforderungen beim Booten bestand darin, daß nicht alle
+Initialisierungsfunktionen die untere Speichergrenze ändern konnten,
+so daß das Schreiben eines Treibers, der eine solche Allokation
+benötigte, normalerweise mit dem Liefern eines Kernel-Patches
+einherging. Andererseits kann <SPAN
+><I
+CLASS="EMPHASIS"
+>alloc_bootmem</I
+></SPAN
+> von
+der Initialisierungsfunktion eines beliebigen Kernel-Subsystems
+aufgerufen werden, sofern dies während des Bootens geschieht.</P
+><P
+>Diese Art, Speicher zu allozieren, hat mehrere Nachteile, darunter
+den, daß die Puffer nie wieder freigegeben werden können. Nachdem sich
+ein Treiber den Speicher geholt hat, gibt es keine Möglichkeit, diesen
+wieder in den Pool freier Seiten zurückzugeben; dieser Pool wird
+erzeugt, nachdem alle physikalischen Allokationen abgeschlossen sind. Wir
+empfehlen nicht, an den internen Datenstrukturen der
+Speicherverwaltung herumzuhacken. Ein Vorteil dieser Technik besteht
+aber darin, daß ein zusammenhängender physikalischer Speicherbereich
+bereitgestellt wird, der DMA-geeignet ist. Dies ist derzeit die
+einzige sichere Möglichkeit, in einem Standard-Kernel einen Puffer von
+mehr als 32 aufeinanderfolgenden Seiten zu allozieren, weil der
+maximale Wert von <TT
+CLASS="LITERAL"
+>order</TT
+>, den
+<SPAN
+><I
+CLASS="EMPHASIS"
+>get_free_pages</I
+></SPAN
+> akzeptiert, bei 5 liegt. Wenn Sie
+aber viele Seiten brauchen und diese nicht zusammenhängen müssen, dann
+ist <SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+> mit Abstand die beste Funktion für
+diesen Zweck.</P
+><P
+>Wenn Sie sich dazu entschließen sollten, Speicher beim Booten zu
+allozieren, dann müssen Sie <TT
+CLASS="FILENAME"
+>init/main.c</TT
+> in den
+Kernel-Quellen ändern. Mehr zu <TT
+CLASS="FILENAME"
+>main.c</TT
+> finden Sie
+in <A
+HREF="tour.html"
+>Kapitel 16</A
+>&#62;.</P
+><P
+>Beachten Sie, daß diese &#8220;Allokation&#8221; nur in Mehrfachen der Seitengröße
+geschehen kann, auch wenn die Anzahl der Seiten keine Zweierpotenz
+sein muß.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN9850"
+>Der bigphysarea-Patch</A
+></H2
+><P
+>&#13;Ein anderer Ansatz, große, zusammenhängende Speicherbereiche für
+Treiber zur Verfügung zu stellen, besteht im Anwenden des
+<SPAN
+><I
+CLASS="EMPHASIS"
+>bigphysarea</I
+></SPAN
+>-Patch. Dieser inoffizielle Patch ist
+schon seit einigen Jahren im Netz zu finden. Er hat einen so guten Ruf
+und ist so nützlich, daß einige Distributionen ihn defaultmäßig auf
+die installierten Kernel-Images anwenden. Der Patch alloziert den
+Speicher beim Booten und stellt ihn den Gerätetreibern zur Laufzeit
+zur Verfügung. Sie müssen dann eine Kommandozeilenoption an den Kernel
+übergeben, mit der Sie angeben, wieviel Speicher tatsächlich beim
+Booten reserviert werden soll.</P
+><P
+>Der Patch wird derzeit an der Adresse <SPAN
+CLASS="SYSTEMITEM"
+>http://www.polyware.nl/&#732;middelink/En/hob-v4l.html</SPAN
+>
+gepflegt. Hier finden Sie auch die dazugehörige Dokumentation, die die
+Allokations-Schnittstelle für Gerätetreiber beschreibt. Der Zoran
+36120-Framegrabber-Treiber im 2.4-Kernel (in
+<SPAN
+><I
+CLASS="EMPHASIS"
+>drivers/char/zr36120.c</I
+></SPAN
+>) verwendet die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>bigphysarea</I
+></SPAN
+>-Erweiterung, wenn diese verfügbar ist,
+und ist damit ein gutes Beispiel, wie diese Schnittstelle benutzt wird.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN9860"
+>Reservieren von hohen RAM-Adressen</A
+></H2
+><P
+>&#13;
+
+Die letzte (und möglicherweise einfachste) Option zum Allozieren zusammenhängender Speicherbereiche besteht darin, einen
+Speicherbereich am <SPAN
+><I
+CLASS="EMPHASIS"
+>Ende</I
+></SPAN
+> des physikalischen
+Speichers zu reservieren (<SPAN
+CLASS="APPLICATION"
+>bigphysarea</SPAN
+> macht
+das dagegen am Anfang des physikalischen Speichers). Dazu müssen Sie
+dem Kernel eine Kommandozeilenoption übergeben, mit der die Menge
+des zu verwaltenden Speichers begrenzt wird. Beispielsweise verwendet
+einer der Autoren <TT
+CLASS="LITERAL"
+>mem=126M</TT
+>, um zwei Megabytes in
+einem System zu reservieren, das in Wirklichkeit 128 MByte RAM hat. Zur
+Laufzeit kann dieser Speicher dann alloziert und von Gerätetreibern
+verwendet werden.</P
+><P
+>&#13;Das <SPAN
+CLASS="APPLICATION"
+>allocator</SPAN
+>-Modul, das Sie im
+Beispiel-Code auf der O'Reilly-FTP-Site finden, enthält eine
+Allokations-Schnittstelle, mit der nicht vom Linux-Kernel verwendeter
+hoher Speicher verwaltet werden kann. Das Modul wird detailliert in
+"&#62;" in <A
+HREF="mem.html"
+>Kapitel 13</A
+>&#62;
+beschrieben.
+&#13;</P
+><P
+>&#13;
+
+
+Der Vorteil von <SPAN
+CLASS="APPLICATION"
+>allocator</SPAN
+> gegenüber dem
+<SPAN
+CLASS="APPLICATION"
+>bigphysarea</SPAN
+>-Patch besteht darin, daß es
+nicht notwendig ist, die offiziellen Kernel-Quellen zu ändern. Der
+Nachteil ist die Notwendigkeit einer Kommandozeilenoption, mit der Sie
+die erreichbare Menge an RAM im System verändern. Außerdem ist
+<SPAN
+CLASS="APPLICATION"
+>allocator</SPAN
+> in Situationen ungeeignet, in
+denen hoher Speicher nicht verwendet werden kann, etwa als DMA-Puffer
+für ISA-Geräte.
+&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="getvmalloc.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="getdep.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>vmalloc und Freunde</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="get.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Abwärtskompatibilität</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

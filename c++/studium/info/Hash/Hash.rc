@@ -1,0 +1,422 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Deutsch (Deutschland) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
+#ifdef _WIN32
+LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 7, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif //_WIN32\r\n"
+    "#include ""res\\Hash.rc2""  // Nicht mit Microsoft Visual C++ bearbeitete Ressourcen\r\n"
+    "#include ""l.deu\\afxres.rc""          // Standardkomponenten\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINFRAME           ICON    DISCARDABLE     "res\\Hash.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_HASH_DIALOG DIALOGEX 0, 0, 320, 229
+STYLE DS_MODALFRAME | WS_MINIMIZEBOX | WS_POPUP | WS_VISIBLE | WS_CAPTION | 
+    WS_SYSMENU
+EXSTYLE WS_EX_APPWINDOW
+CAPTION "Hash - Funktions - Berechnung"
+FONT 8, "MS Sans Serif"
+BEGIN
+    PUSHBUTTON      "Anzeigen der aktuellen Schlüsselwertmenge",IDC_KEYMENGE,
+                    44,10,232,14
+    PUSHBUTTON      "Löschen der aktuellen Schlüsselwertmenge",IDC_KEYCLEAR,
+                    44,70,232,14
+    PUSHBUTTON      "Anwenden der Divisions - Rest - Methode",IDC_DIVREST,44,
+                    145,232,14
+    PUSHBUTTON      "Anwenden der Mitte - des - Quadrats - Methode",
+                    IDC_MITTEQUAD,44,115,232,14
+    PUSHBUTTON      "Anwenden der Schiebe - Faltungs - Methode",
+                    IDC_SCHIEBEFALT,44,130,232,14
+    PUSHBUTTON      "Anwenden der Faltung - an - den - Grenzen - Methode",
+                    IDC_FALTGRENZEN,44,85,232,14
+    PUSHBUTTON      "Anwenden der Basis - Transformations - Methode",
+                    IDC_BASISTRANS,44,100,232,14
+    PUSHBUTTON      "Eingabe der Schlüsselwertmenge von Hand",IDC_KEYEINGABE,
+                    44,25,232,14
+    PUSHBUTTON      "Einlesen der Schlüsselwertmenge aus einer Datei",
+                    IDC_KEYEINLESEN,44,40,232,14
+    PUSHBUTTON      "Programm beenden",IDC_EXIT,44,175,232,14
+    PUSHBUTTON      "Speichern der Schlüsselwertmenge in eine Datei",
+                    IDC_KEYSAVE,44,55,232,14
+    PUSHBUTTON      "Information/Hilfe zum Programm",IDC_INFO,44,160,232,14
+    LTEXT           "Status: Computer bereit!!!",IDC_STATUS,91,202,136,11
+    GROUPBOX        "",IDC_STATIC,83,194,153,22
+END
+
+IDD_SHOWMENGE_DIALOG DIALOG DISCARDABLE  0, 0, 199, 133
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Aktuelle Schlüsselwertmenge"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,74,112,50,14
+    LISTBOX         IDC_LIST_SHOWMENGE,7,7,185,100,LBS_SORT | 
+                    LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | 
+                    WS_TABSTOP
+END
+
+IDD_EINGABE_DIALOG DIALOG DISCARDABLE  0, 0, 316, 143
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Eingabe der Schlüsselwerte"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "Nächster Wert",IDOK,85,122,59,14
+    LTEXT           "Bitte geben Sie die einzelnen Schlüsselwerte ",
+                    IDC_STATIC,22,7,142,8
+    LTEXT           "ein, und bestätigen Sie mit dem OK - Button.",
+                    IDC_STATIC,23,16,140,8
+    EDITTEXT        IDC_EDIT_EINGABE,7,29,302,14,ES_AUTOHSCROLL
+    LISTBOX         IDC_LIST_EINGABE,7,46,302,70,LBS_SORT | 
+                    LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | 
+                    WS_TABSTOP
+    PUSHBUTTON      "Fertig",IDCANCEL,177,122,50,14
+END
+
+IDD_DIVREST_DIALOG DIALOG DISCARDABLE  0, 0, 186, 113
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Anwenden der Divisions - Rest - Methode"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,22,92,50,14
+    PUSHBUTTON      "Abbrechen",IDCANCEL,113,92,50,14
+    LTEXT           "Bitte geben Sie die Größe p des Adressraumes an :",
+                    IDC_STATIC,12,7,161,8
+    LTEXT           "Mindestgröße:",IDC_STATIC,29,20,46,8
+    LTEXT           "Für zeitlich annähernd konstante Zahl von Schlüssel-",
+                    IDC_STATIC,8,33,168,8
+    LTEXT           "werten sollte p keine Primfaktoren <20 enthalten ",
+                    IDC_STATIC,16,43,154,8
+    LTEXT           "und p sollte  >= ",IDC_STATIC,24,53,51,8
+    LTEXT           "sein (max. 2000).",IDC_STATIC,101,53,54,8
+    LTEXT           "Wert für p :",IDC_STATIC,58,72,36,8
+    EDITTEXT        IDC_EDIT_DIVREST,97,70,30,14,ES_AUTOHSCROLL
+    LTEXT           "Static",IDC_STATIC_DIVMIND1,80,20,25,8
+    LTEXT           "Static",IDC_STATIC_DIVMIND2,80,53,22,8
+END
+
+IDD_AUSGABE_DIALOG DIALOG DISCARDABLE  0, 0, 478, 191
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Ausgabe der HashFunktion"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,192,170,92,14
+    LTEXT           "Anzahl der Kollisionen: ",IDC_STATIC,7,9,74,8
+    GROUPBOX        "Speicherbelegung",IDC_STATIC,18,20,207,142
+    LISTBOX         IDC_LIST_AUSSP,22,30,199,128,LBS_USETABSTOPS | 
+                    LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | 
+                    WS_TABSTOP
+    GROUPBOX        "Überlaufliste",IDC_STATIC,252,20,207,142
+    LISTBOX         IDC_LIST_AUSUBL,256,30,199,128,LBS_NOINTEGRALHEIGHT | 
+                    WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
+    LTEXT           "Static",IDC_STATIC_AUSKOLL,84,9,19,8
+END
+
+IDD_SCHFALT_DIALOG DIALOG DISCARDABLE  0, 0, 189, 86
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Anwenden der Schiebe - Faltungs - Methode"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,23,65,50,14
+    PUSHBUTTON      "Abbrechen",IDCANCEL,116,65,50,14
+    LTEXT           "Festsetzung der Hashtabellenlänge",IDC_STATIC,39,7,112,
+                    8
+    LTEXT           "Static",IDC_STATIC_LEN,108,17,19,8
+    LTEXT           "auf maximal :",IDC_STATIC,62,17,42,8
+    LTEXT           "(Bei Überschreitung modulo - Rechnung)",IDC_STATIC,30,
+                    27,129,8
+    LTEXT           "Bitte geben Sie die Länge der Abschnitte (maximal 4)",
+                    IDC_STATIC,11,38,166,8
+    LTEXT           "ein :",IDC_STATIC,76,49,14,8
+    EDITTEXT        IDC_EDIT_SCHFALT,94,48,19,14,ES_AUTOHSCROLL
+END
+
+IDD_GRFALT_DIALOG DIALOG DISCARDABLE  0, 0, 226, 87
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Anwenden der Faltung - an - den - Grenzen - Methode"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,41,66,50,14
+    PUSHBUTTON      "Abbrechen",IDCANCEL,134,66,50,14
+    LTEXT           "Festsetzung der Hashtabellenlänge",IDC_STATIC,57,7,112,
+                    8
+    LTEXT           "Static",IDC_STATIC_LEN,126,17,19,8
+    LTEXT           "auf maximal :",IDC_STATIC,80,17,42,8
+    LTEXT           "(Bei Überschreitung modulo - Rechnung)",IDC_STATIC,48,
+                    27,129,8
+    LTEXT           "Bitte geben Sie die Länge der Abschnitte (maximal 4)",
+                    IDC_STATIC,29,38,166,8
+    LTEXT           "ein :",IDC_STATIC,94,49,14,8
+    EDITTEXT        IDC_EDIT_GRFALT,112,48,19,14,ES_AUTOHSCROLL
+END
+
+IDD_MITTE_DIALOG DIALOG DISCARDABLE  0, 0, 208, 79
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Anwenden der Mitte - des - Quadrats - Methode"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,42,53,50,14
+    PUSHBUTTON      "Abbrechen",IDCANCEL,114,52,50,14
+    LTEXT           "Bitte geben Sie die Anzahl der herauszugreifenden",
+                    IDC_STATIC,24,7,160,8
+    LTEXT           "Stellen an (maximal 3) :",IDC_STATIC,67,17,73,8
+    EDITTEXT        IDC_EDIT_MITTE,93,31,21,14,ES_AUTOHSCROLL
+END
+
+IDD_BASTRANS_DIALOG DIALOG DISCARDABLE  0, 0, 210, 119
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Anwenden der Basis - Transformations - Methode"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,33,98,50,14
+    PUSHBUTTON      "Abbrechen",IDCANCEL,126,98,50,14
+    LTEXT           "Festsetzung der Hashtabellenlänge",IDC_STATIC,49,7,112,
+                    8
+    LTEXT           "Static",IDC_STATIC_LEN,118,17,19,8
+    LTEXT           "auf maximal :",IDC_STATIC,72,17,42,8
+    LTEXT           "(Bei Überschreitung modulo - Rechnung)",IDC_STATIC,40,
+                    27,129,8
+    LTEXT           "Bitte geben Sie eine geeignete Basis ein (max 20) :",
+                    IDC_STATIC,24,68,160,8
+    EDITTEXT        IDC_EDIT_BASTRANS,95,81,19,14,ES_AUTOHSCROLL
+    LTEXT           "ACHTUNG: Das Programm überprüft nicht, ob die",
+                    IDC_STATIC,26,43,157,8
+    LTEXT           "eingegebene Basis zu einem Überlauf führt !",IDC_STATIC,
+                    35,53,140,8
+END
+
+IDD_DIALOG_INFO DIALOG DISCARDABLE  0, 0, 296, 170
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Information/Hilfe"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,122,149,50,14
+    LISTBOX         IDC_LIST1,7,7,282,138,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | 
+                    WS_HSCROLL | WS_TABSTOP
+END
+
+
+#ifndef _MAC
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,0
+ PRODUCTVERSION 1,0,0,0
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040704b0"
+        BEGIN
+            VALUE "Comments", "Dient zur Veranschaulichung des Prinzips von Hash-Funktionen\0"
+            VALUE "CompanyName", "\0"
+            VALUE "FileDescription", "Hash - Funktions - Berechnung\0"
+            VALUE "FileVersion", "1, 0, 0, 0\0"
+            VALUE "InternalName", "Hash\0"
+            VALUE "LegalCopyright", "Copyright (C) 1999\0"
+            VALUE "LegalTrademarks", "\0"
+            VALUE "OriginalFilename", "Hash.EXE\0"
+            VALUE "PrivateBuild", "\0"
+            VALUE "ProductName", "Anwendung Hash.exe\0"
+            VALUE "ProductVersion", "1, 0, 0, 0\0"
+            VALUE "SpecialBuild", "\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x407, 1200
+    END
+END
+
+#endif    // !_MAC
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_HASH_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 313
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 222
+    END
+
+    IDD_SHOWMENGE_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 192
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 126
+    END
+
+    IDD_EINGABE_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 309
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 136
+    END
+
+    IDD_DIVREST_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 179
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 106
+    END
+
+    IDD_AUSGABE_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 471
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 184
+    END
+
+    IDD_SCHFALT_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 182
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 79
+    END
+
+    IDD_GRFALT_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 219
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 80
+    END
+
+    IDD_MITTE_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 201
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 72
+    END
+
+    IDD_BASTRANS_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 203
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 112
+    END
+
+    IDD_DIALOG_INFO, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 289
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 163
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+#endif    // Deutsch (Deutschland) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
+#ifdef _WIN32
+LANGUAGE 7, 1
+#pragma code_page(1252)
+#endif //_WIN32
+#include "res\Hash.rc2"  // Nicht mit Microsoft Visual C++ bearbeitete Ressourcen
+#include "l.deu\afxres.rc"          // Standardkomponenten
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

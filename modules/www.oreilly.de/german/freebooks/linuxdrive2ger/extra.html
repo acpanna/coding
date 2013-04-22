@@ -1,0 +1,2231 @@
+<HTML
+><HEAD
+><TITLE
+>Fortgeschrittene Operationen in Zeichen-Treibern</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="PREVIOUS"
+TITLE="Debugger und verwandte Werkzeuge"
+HREF="x5337.html"><LINK
+REL="NEXT"
+TITLE="Blockierende I/O"
+HREF="exblocking.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x5337.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="exblocking.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="EXTRA"
+>Kapitel 5. Fortgeschrittene Operationen in Zeichen-Treibern</A
+></H1
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Inhalt</B
+></DT
+><DT
+><A
+HREF="extra.html#EXIOCTL"
+>ioctl</A
+></DT
+><DT
+><A
+HREF="exblocking.html"
+>Blockierende I/O</A
+></DT
+><DT
+><A
+HREF="exselect.html"
+>poll und select</A
+></DT
+><DT
+><A
+HREF="exasync.html"
+>Asynchrone Benachrichtigung</A
+></DT
+><DT
+><A
+HREF="x7108.html"
+>Ein Gerät positionieren</A
+></DT
+><DT
+><A
+HREF="exaccess.html"
+>Zugriffskontrolle auf Gerätedateien</A
+></DT
+><DT
+><A
+HREF="excompat.html"
+>Abwärtskompatibilität</A
+></DT
+><DT
+><A
+HREF="x7658.html"
+>Schnellreferenz</A
+></DT
+></DL
+></DIV
+><P
+>In <A
+HREF="char.html"
+>Kapitel 3</A
+> haben wir einen vollständigen
+Gerätetreiber geschrieben, auf den der Benutzer schreiben und aus dem
+er lesen kann. Ein echtes Gerät bietet aber normalerweise viel mehr
+Möglichkeiten als synchrones Lesen und Schreiben. Jetzt, da wir wissen,
+wie wir auf die Fehlersuche gehen können, wenn etwas schiefgeht, können
+wir weitermachen und neue Operationen implementieren.&#13;</P
+><P
+>Eine der Funktionalitäten, die normalerweise zum Lesen und Schreiben
+hinzukommen, ist das Steuern der Hardware über den
+Gerätetreiber. Diese Kontrolloperationen werden normalerweise in der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Methode implementiert. Die Alternative wäre
+es, den auf das Gerät geschriebenen Datenfluß zu analysieren und
+spezielle Sequenzen als Steuerbefehle zu interpretieren. Diese Technik sollte vermieden werden, weil sie verlangt, daß einzelne Zeichen zu
+Steuerzwecken reserviert werden und deswegen nicht mehr im Datenfluß
+auftauchen dürfen. Außerdem ist diese Technik komplexer als
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>. Trotzdem ist dieser Ansatz manchmal
+nützlich und wird von TTYs und anderen Geräten verwendet. Wir
+beschreiben ihn weiter hinten in diesem
+Kapitel in &#8220;<A
+HREF="extra.html#EXESCAPE"
+>the Section called <I
+>Geräte ohne ioctl steuern</I
+></A
+>&#8221;.&#13;</P
+><P
+>Wie wir im vorigen Kapitel schon angedeutet haben, stellt der
+Systemaufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+> einen gerätespezifischen
+Einsprungpunkt für den Treiber dar, um &#8220;Steuerbefehle&#8221; zu
+handhaben. <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+> ist insofern gerätespezifisch, als
+es &#8212; im Gegensatz zu <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> und anderen
+Methoden &#8212; den Applikationen ermöglicht, auf spezielle Merkmale der
+angesprochenen Hardware zuzugreifen. Dazu können die Konfiguration des
+Gerätes und das Wechseln von Betriebsmodi gehören. Diese
+Steuerbefehle stehen normalerweise nicht über
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> oder <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+> zur
+Verfügung. Beispielsweise wird alles, was Sie auf einen seriellen Port
+schreiben, als Kommunikationsdaten verwendet; Sie können nicht durch
+Schreibvorgänge die Baudrate des Gerätes ändern. Genau dafür, für die
+Steuerung des I/O-Kanals, ist <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+> gedacht.&#13;</P
+><P
+>Ein weiteres wichtiges Merkmal echter Geräte (im Gegensatz zu
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>) ist es, daß die gelesenen oder
+geschriebenen Daten mit anderer Hardware ausgetauscht werden, was eine
+Synchronisation erfordert. Diese Lücke wird durch blockierende I/O
+und asynchrone Benachrichtigung gefüllt. Wir werden dies in diesem
+Kapitel anhand eines modifizierten <SPAN
+><I
+CLASS="EMPHASIS"
+>scull</I
+></SPAN
+>-Gerätes
+erläutern. Der Treiber verwendet eine Interaktion zwischen verschiedenen
+Prozessen, um asynchrone Ereignisse zu erzeugen. Wie beim
+ursprünglichen <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> brauchen wir auch hier
+keine Spezial-Hardware, um den Treiber auszuprobieren. Wir
+<SPAN
+><I
+CLASS="EMPHASIS"
+>werden</I
+></SPAN
+> uns auch noch mit richtiger Hardware
+beschäftigen, aber erst in <A
+HREF="hard.html"
+>Kapitel 8</A
+>.
+&#13;</P
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="EXIOCTL"
+>ioctl</A
+></H1
+><P
+>&#13;
+Die <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Funktion im User-Space entspricht dem
+folgenden Prototyp:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+int ioctl(int fd, int cmd, ...);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Dieser Prototyp unterscheidet sich von den anderen Unix-Systemaufrufen
+durch die Punkte, die normalerweise auf eine variable Anzahl von
+Argumenten hinweisen. In einem realen System kann ein Systemaufruf
+aber nicht eine variable Anzahl von Argumenten haben. Systemaufrufe
+müssen eine wohldefinierte Anzahl von Argumenten haben, denn
+Anwendungsprogramme können auf diese (wie in &#8220;<A
+HREF="building.html#BUISPACE"
+>the Section called <I
+>User-Space und Kernel-Space</I
+> in Kapitel 2</A
+>&#8221; in <A
+HREF="building.html"
+>Kapitel 2</A
+>
+beschrieben) nur durch Hardware-&#8220;Tore&#8221; zugreifen. Daher
+repräsentieren die Punkte im Prototyp keine variable Anzahl von
+Argumenten, sondern ein einziges optionales Argument, das
+traditionell als <TT
+CLASS="LITERAL"
+>char *argp</TT
+> bezeichnet wird. Die
+Punkte sind einfach nur da, um
+während des Kompilierens die Typenüberprüfung abzuschalten. Was das
+dritte Argument bedeutet, hängt vom jeweiligen Steuerbefehl ab (dem
+zweiten Argument). Manche Befehle erwarten keine Argumente, andere
+einen Integer-Wert und wieder andere erwarten einen Zeiger auf andere
+Daten. Mit einem Zeiger können beliebige Daten an den
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Aufruf übergeben werden; das Gerät kann
+eine beliebige Menge von Daten mit dem User-Space austauschen.&#13;</P
+><P
+>Die <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Treibermethode verwendet ihre
+Argumente entsprechend der folgenden Deklaration:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+
+int (*ioctl) (struct inode *inode, struct file *filp,
+              unsigned int cmd, unsigned long arg);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+Die Zeiger <TT
+CLASS="LITERAL"
+>inode</TT
+> und <TT
+CLASS="LITERAL"
+>filp</TT
+> sind
+die Werte, die dem von der Applikation übergebenen Dateideskriptor
+<TT
+CLASS="LITERAL"
+>fd</TT
+> entsprechen, und werden genauso benutzt wie bei
+<SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>. Das
+<TT
+CLASS="LITERAL"
+>cmd</TT
+>-Argument wird unverändert übergeben, das
+optionale <TT
+CLASS="LITERAL"
+>arg</TT
+>-Argument wird dagegen in Form eines
+<TT
+CLASS="LITERAL"
+>unsigned long</TT
+> übergeben, egal ob es sich dabei ursprünglich
+um einen Integer-Wert oder einen Zeiger handelte. Wenn das aufrufende
+Programm das dritte Argument nicht übergibt, dann bekommt auch der
+Treiber kein sinnvolles <TT
+CLASS="LITERAL"
+>arg</TT
+> übergeben.&#13;</P
+><P
+>Da beim dritten Argument die Typprüfung abgeschaltet ist, kann der
+Compiler Sie nicht warnen, wenn Sie ein ungültiges Argument an
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+> übergeben; Sie werden den Fehler also bis
+zur Laufzeit des Programms nicht bemerken. Diese fehlende Kontrolle
+kann als kleineres Problem der <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Definition
+angesehen werden, ist aber ein Preis, den man für die allgemeine
+Funktionalität bezahlen muß.&#13;</P
+><P
+>Wie Sie sich vorstellen können, bestehen die meisten Implementationen
+von <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+> aus einer
+<TT
+CLASS="LITERAL"
+>switch</TT
+>-Anweisung, die das korrekte Verhalten anhand
+des <TT
+CLASS="LITERAL"
+>cmd</TT
+>-Arguments auswählt. Verschiedene Befehle
+haben verschiedene numerische Werte, die normalerweise in Form
+symbolischer Namen angegeben werden, um den Code zu vereinfachen. Ein
+symbolischer Name wird durch eine Präprozessor-Definition
+zugewiesen. Benutzerdefinierte Treiber deklarieren solche Symbole für
+gewöhnlich in ihren Header-Dateien; <TT
+CLASS="FILENAME"
+>scull.h</TT
+> tut
+das für <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>. Benutzerprogramme müssen
+natürlich diese Header-Datei einbinden, um auf diese Symbole zugreifen
+zu können.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="EXIOCTLCHOOSE"
+>Die ioctl-Befehle auswählen</A
+></H2
+><P
+>&#13;
+Bevor Sie Code für <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+> schreiben, müssen Sie
+die Zahlen auswählen, die den Befehlen entsprechen
+sollen. Unglücklicherweise funktioniert die naheliegendste Möglichkeit, nämlich kleine
+Nummern, mit 1 beginnend, zu nehmen, nicht besonders gut.&#13;</P
+><P
+>Die Befehlsnummern sollten im ganzen System eindeutig sein, um
+Fehler zu vermeiden, bei denen der richtige Befehl an das falsche
+Gerät geschickt wird. So eine Verwechslung kann leicht passieren. So
+kann ein Programm beispielsweise versuchen, die Baudrate eines
+nicht-seriellen Eingabegerätes wie eines FIFOs oder eines
+Audiogeräts zu verändern. Wenn jede
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Nummer nur einmal auftritt, dann bekommt
+die Applikation einen <TT
+CLASS="LITERAL"
+>EINVAL</TT
+>-Fehler zurück,
+anstatt erfolgreich etwas Unbeabsichtigtes zu tun.&#13;</P
+><P
+>Um Programmierern dabei zu helfen, eine solche Eindeutigkeit zu
+erreichen, sind diese Codes in mehrere Bitfelder aufgeteilt worden. Die
+ersten Versionen von Linux verwendeten 16-Bit-Zahlen: die oberen acht
+Bits waren eine &#8220;magische&#8221; Nummer, die zum Gerät gehörte,
+und die unteren acht eine fortlaufende Nummer innerhalb dieses
+Gerätes. Der Grund dafür war, daß Linus &#8220;keinen Plan
+hatte&#8221; (um ihn zu zitieren), und man erst später auf eine
+bessere Aufteilung der Bitfelder kam. Unglücklicherweise verwenden
+eine ganze Reihe von Treibern weiterhin die alte Konvention. Das geht
+auch nicht anders: Ein Ändern der Befehlscodes würde Unmengen von
+Binärprogrammen nicht mehr funktionieren lassen. In unseren Quellen
+werden wir aber ausschließlich die neue Konvention für Befehlscodes
+verwenden.&#13;</P
+><P
+>&#13;
+
+
+Um <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Nummern entsprechend der neuen
+Konvention für Ihren Treiber auszuwählen,
+sollten Sie zunächst <TT
+CLASS="FILENAME"
+>include/asm/ioctl.h</TT
+>
+und <TT
+CLASS="FILENAME"
+>Documentation/ioctl-number.txt</TT
+> lesen. Die
+Header-Datei definiert die Bitfelder, die Sie verwenden werden: Typ
+(magische Zahl), laufende
+Nummer, Übertragungsrichtung und Größe des
+Arguments. <TT
+CLASS="FILENAME"
+>ioctl-number.txt</TT
+> führt die im Kernel
+verwendeten magischen Nummern auf, damit Sie Ihre eigenen Nummern ohne
+Überlappungsgefahr wählen können. Diese Textdatei nennt auch die
+Gründe, warum dieser Konvention gefolgt werden sollte.&#13;</P
+><P
+>Die alte und jetzt nicht mehr empfohlene Methode, eine
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Nummer auszuwählen, war einfach: Wähle eine
+magische 8-Bit-Zahl wie &#8220;k&#8221; (Hex 0x6b), und addiere eine
+ganze Zahl, wie im folgenden Beispiel:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+
+#define SCULL_IOCTL1 0x6b01
+#define SCULL_IOCTL2 0x6b02
+/* .... */</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wenn sich Applikation und Treiber über die Zahlen einig sind, müssen
+Sie nur die switch-Anweisung im Treiber implementieren.  Diese
+Methode, <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Nummern zu definieren, die aus
+alter Unix-Tradition stammt, sollte aber heute nicht mehr verwendet
+werden. Wir haben Ihnen das nur gezeigt, damit Sie einen Eindruck
+davon bekommen, wie <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Nummern aussehen.&#13;</P
+><P
+>Die neue Methode verwendet vier Bitfelder, die die folgenden
+Bedeutungen haben. Alle neuen Symbole, die wir in dieser Liste
+einführen, sind in
+<TT
+CLASS="LITERAL"
+>&#60;linux/ioctl.h&#62;</TT
+> definiert.&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+>type</DT
+><DD
+><P
+>Die magische Zahl. Wählen Sie einfach eine Zahl
+(nachdem Sie <TT
+CLASS="FILENAME"
+>ioctl-number.txt</TT
+> zu Rate gezogen haben), und benutzen
+        Sie diese im gesamten Treiber. Dieses Feld ist 8 Bit breit
+        (<TT
+CLASS="LITERAL"
+>_IOC_TYPEBITS</TT
+>).</P
+></DD
+><DT
+>number</DT
+><DD
+><P
+>Die laufende Nummer. Sie ist 8 Bits breit
+        (<TT
+CLASS="LITERAL"
+>_IOC_NRBITS</TT
+>).</P
+></DD
+><DT
+>direction</DT
+><DD
+><P
+>Die Richtung der Datenübertragung, falls bei diesem Befehl
+        Daten übertragen werden. Die möglichen Werte sind
+        <TT
+CLASS="LITERAL"
+>_IOC_NONE</TT
+>  (keine
+        Datenübertragung), <TT
+CLASS="LITERAL"
+>_IOC_READ</TT
+>,
+        <TT
+CLASS="LITERAL"
+>_IOC_WRITE</TT
+> und
+        <TT
+CLASS="LITERAL"
+>_IOC_READ; &#8866;
+        _IOC_WRITE</TT
+> (Daten werden in beiden
+        Richtungen übertragen). Datentransfers werden aus Sicht der
+        Applikation bezeichnet; <TT
+CLASS="LITERAL"
+>_IOC_READ</TT
+>
+        bedeutet also, daß <SPAN
+><I
+CLASS="EMPHASIS"
+>vom</I
+></SPAN
+> Gerät gelesen wird,
+        der Treiber muß also in den User-Space schreiben. Beachten Sie,
+        daß dieses Feld eine Bitmaske ist;
+        <TT
+CLASS="LITERAL"
+>_IOC_READ</TT
+> und
+        <TT
+CLASS="LITERAL"
+>_IOC_WRITE</TT
+> können also mit einer
+        logischen UND-Operation extrahiert werden.</P
+></DD
+><DT
+>size</DT
+><DD
+><P
+>Die Menge der betroffenen Daten. Die Breite dieses Feldes
+        ist architekturabhängig und variiert zur Zeit von 8 bis 14 Bit. Sie
+        können den Wert für Ihre Architektur aus dem Makro
+        <TT
+CLASS="LITERAL"
+>_IOC_SIZEBITS</TT
+> ermitteln. Wenn Sie
+        Ihren Treiber portabel halten wollen, sollten Sie sich jedoch
+        nicht auf mehr als 255 verlassen. Sie müssen dieses Feld nicht
+        verwenden. Wenn Sie größere Datentransfers benötigen, können Sie
+        es einfach ignorieren. Wir werden bald sehen, wozu es gut ist.</P
+></DD
+></DL
+></DIV
+><P
+>Die Header-Datei <TT
+CLASS="LITERAL"
+>&#60;asm/ioctl.h&#62;</TT
+>, die von
+<TT
+CLASS="LITERAL"
+>&#60;linux/ioctl.h&#62;</TT
+> eingebunden wird,
+definiert Makros, mit denen Sie Befehlsnummern wie folgt erzeugen können:
+<TT
+CLASS="LITERAL"
+>_IO(type,nr)</TT
+>,
+<TT
+CLASS="LITERAL"
+>_IOR(type,nr,dataitem)</TT
+>,
+<TT
+CLASS="LITERAL"
+>_IOW(type,nr,dataitem)</TT
+> und
+<TT
+CLASS="LITERAL"
+>_IOWR(type,nr,dataitem)</TT
+>. Jedes Makro entspricht
+          einem der möglichen Werte für die Übertragungsrichtung. Die
+          Felder <TT
+CLASS="LITERAL"
+>type</TT
+> und <TT
+CLASS="LITERAL"
+>number</TT
+>
+          werden als Argumente übergeben, und das Feld
+          <TT
+CLASS="LITERAL"
+>size</TT
+> wird abgeleitet, indem Sie
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>sizeof</I
+></SPAN
+> auf das Argument
+          <TT
+CLASS="LITERAL"
+>dataitem</TT
+> anwenden. Außerdem definiert die
+Header-Datei Makros, um die Nummern wieder zu decodieren:
+<TT
+CLASS="LITERAL"
+>_IOC_DIR(nr)</TT
+>,
+<TT
+CLASS="LITERAL"
+>_IOC_TYPE(nr)</TT
+>,
+<TT
+CLASS="LITERAL"
+>_IOC_NR(nr)</TT
+> und
+<TT
+CLASS="LITERAL"
+>_IOC_SIZE(nr)</TT
+>. Wir werden hier nicht
+weiter auf diese Makros eingehen. Die Header-Datei ist leicht zu
+lesen, und weiter unten finden Sie auch Beispiel-Code.&#13;</P
+><P
+>&#13;Das folgende Listing zeigt, wie <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Befehle in
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> definiert werden. Konkret setzen diese Befehle die konfigurierbaren Parameter des Treibers bzw. fragen sie ab.&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+/* 'k' als Magic Number verwenden */
+#define SCULL_IOC_MAGIC  'k'
+
+#define SCULL_IOCRESET    _IO(SCULL_IOC_MAGIC, 0)
+
+/*
+ * S steht fuer "Setzen": über einen Zeiger
+ * T steht fuer "Tell" (Sagen, Setzen): direkt über den Argumentwert
+ * G steht fuer "Get" (Abholen): Antwort durch Setzen ueber den Zeiger
+ * Q steht fuer "Query" (Abfrage): Rueckgabewert ist die Antwort
+ * X steht fuer "eXchange": G und S atomar
+ * H steht fuer "sHift": T und Q atomar
+ */
+#define SCULL_IOCSQUANTUM _IOW(SCULL_IOC_MAGIC, 1, scull_quantum)
+#define SCULL_IOCSQSET  _IOW(SCULL_IOC_MAGIC, 2, scull_qset)
+#define SCULL_IOCTQUANTUM _IO(SCULL_IOC_MAGIC,  3)
+#define SCULL_IOCTQSET  _IO(SCULL_IOC_MAGIC,  4)
+#define SCULL_IOCGQUANTUM _IOR(SCULL_IOC_MAGIC, 5, scull_quantum)
+#define SCULL_IOCGQSET  _IOR(SCULL_IOC_MAGIC, 6, scull_qset)
+#define SCULL_IOCQQUANTUM _IO(SCULL_IOC_MAGIC,  7)
+#define SCULL_IOCQQSET  _IO(SCULL_IOC_MAGIC,  8)
+#define SCULL_IOCXQUANTUM _IOWR(SCULL_IOC_MAGIC, 9, scull_quantum)
+#define SCULL_IOCXQSET  _IOWR(SCULL_IOC_MAGIC,10, scull_qset)
+#define SCULL_IOCHQUANTUM _IO(SCULL_IOC_MAGIC, 11)
+#define SCULL_IOCHQSET  _IO(SCULL_IOC_MAGIC, 12)
+#define SCULL_IOCHARDRESET _IO(SCULL_IOC_MAGIC, 15) /* zum Debuggen */
+
+#define SCULL_IOC_MAXNR 15</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+Der letzte Befehl, <TT
+CLASS="LITERAL"
+>HARDRESET</TT
+>, wird benutzt, um den
+Verwendungszähler des Moduls auf Null zurückzusetzen, so daß das Modul
+entladen werden kann, wenn etwas mit dem Zähler schiefgeht. Die echte
+Quelldatei definiert auch die Befehle zwischen
+<TT
+CLASS="LITERAL"
+>IOCHQSET</TT
+> und <TT
+CLASS="LITERAL"
+>HARDRESET</TT
+>, die hier
+nicht zu sehen sind.&#13;</P
+><P
+>Wir haben uns entschieden, beide Möglichkeiten der Übergabe von
+Integer-Argumenten zu implementieren &#8212; über einen Zeiger und als
+expliziter Wert &#8212;, auch wenn es eine etablierte Konvention ist,
+daß <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+> Daten über Zeiger
+übergibt. Entsprechend sind auch beide Möglichkeiten, eine
+Integer-Zahl zurückzugeben, implementiert: über einen Zeiger oder über
+den Rückgabewert. Das funktioniert, solange der Rückgabewert eine
+positive ganze Zahl ist, denn positive Werte bleiben erhalten (wie wir
+es schon bei <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>
+gesehen haben), während negative Werte als Fehler-Code interpretiert
+werden und im User-Space in <TT
+CLASS="LITERAL"
+>errno</TT
+> landen.&#13;</P
+><P
+>Die &#8220;Austausch&#8221;- (<SPAN
+><I
+CLASS="EMPHASIS"
+>exchange</I
+></SPAN
+>) und
+&#8220;Verschiebe&#8221;- (<SPAN
+><I
+CLASS="EMPHASIS"
+>shift</I
+></SPAN
+>) Operationen
+sind für <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> nicht so besonders
+nützlich. Wir haben &#8220;exchange&#8221; implementiert, um zu
+          zeigen, wie der Treiber mehrere Operationen zu einer
+          einzigen atomaren Operation kombinieren kann, und haben
+          &#8220;shift&#8221; implementiert, um &#8220;tell&#8221; und
+          &#8220;query&#8221; zu ergänzen. Manchmal werden solche
+          atomaren<A
+NAME="AEN5811"
+HREF="#FTN.AEN5811"
+>[1]</A
+> test-and-set-Operationen benötigt, insbesondere
+          dann, wenn Applikationen Sperren setzen und freigeben müssen.&#13;</P
+><P
+>Die explizite laufende Nummer hat keine spezielle Bedeutung. Sie wird
+nur benutzt, um die einzelnen Befehle auseinanderzuhalten. Natürlich
+könnten Sie auch die gleiche laufende Nummer für einen lesenden und
+einen schreibenden Befehl verwenden, weil sich die eigentliche
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Nummer in den &#8220;direction&#8221;-Bits
+unterscheidet, aber es gibt keinen Grund dafür, das zu tun. Wir haben
+          uns entschieden, die laufende Nummer nur in
+der Deklaration zu verwenden, so daß wir ihr keinen symbolischen Wert
+zugewiesen haben. Daher stehen in der obigen Definition explizite
+Zahlen. Wir zeigen Ihnen hier eine Möglichkeit, die Befehlsnummern zu
+verwenden; Sie können das auch anders machen.&#13;</P
+><P
+>          Der Wert des
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-<TT
+CLASS="LITERAL"
+>cmd</TT
+>-Arguments
+          wird derzeit nicht vom
+Kernel benutzt, und es ist unwahrscheinlich, daß das in der Zukunft
+passieren wird. Daher könnten Sie, wenn Sie faul sind, auch die
+komplexen, oben gezeigten Deklarationen vermeiden und explizit einen
+Satz von skalaren Nummern deklarieren. Auf der anderen Seite könnten Sie
+dann aber nicht von den Bitfeldern profitieren können. Die
+Header-Datei <TT
+CLASS="LITERAL"
+>&#60;linux/kd.h&#62;</TT
+> ist ein
+Beispiel für diesen veralteten Ansatz, bei dem skalare 16-Bit-Werte
+          zur Definition der <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Befehle
+          verwendet wurden. Diese Quelldatei verließ sich auf skalare
+          Nummern, weil sie die damals verfügbare Technologie
+          verwendete, und nicht etwa aus Faulheit. Wenn man
+die Datei jetzt noch ändern würde, würde das zu einer umfassenden
+          Inkompatibilität führen.
+&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN5821"
+>Der Rückgabewert</A
+></H2
+><P
+>&#13;Die Implementation von <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+> ist normalerweise
+eine <TT
+CLASS="LITERAL"
+>switch</TT
+>-Anweisung auf Basis der
+Befehlsnummer. Aber was sollte im <TT
+CLASS="LITERAL"
+>default</TT
+>-Fall
+gemacht werden, also wenn die Befehlsnummer nicht zu einer gültigen
+Operation gehört? Diese Frage wird kontrovers diskutiert. Die meisten
+Kernel-Funktionen geben <TT
+CLASS="LITERAL"
+>-EINVAL</TT
+> (&#8220;invalid
+argument&#8221;, ungültiges Argument) zurück, was sinnvoll ist, denn
+der Befehlswert ist ja ungültig. Der POSIX-Standard schreibt
+allerdings vor, daß in diesem Fall <TT
+CLASS="LITERAL"
+>-ENOTTY</TT
+>
+zurückgegeben werden sollte. Der dazugehörige Text ist in allen
+          Bibliotheken bis einschließlich <SPAN
+><I
+CLASS="EMPHASIS"
+>libc5</I
+></SPAN
+>
+          &#8220;Not a typewriter&#8221;. Erst in
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>libc6</I
+></SPAN
+> wurde das in &#8220;Inappropriate ioctl
+          for device&#8221; geändert, was die Sache besser trifft.  Weil die
+          meisten neueren Linux-Systeme
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>libc6</I
+></SPAN
+>-basiert sind, bleiben wir beim
+          Standard und verwenden <TT
+CLASS="LITERAL"
+>-ENOTTY</TT
+>. Es ist
+          aber immer noch recht gebräuchlich,
+          <TT
+CLASS="LITERAL"
+>-EINVAL</TT
+> als Antwort auf einen ungültigen
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Befehl zurückzugeben.&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN5837"
+>Die vordefinierten Befehle</A
+></H2
+><P
+>&#13;Auch wenn der <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Systemaufruf meistens auf
+Geräten arbeitet, erkennt der Kernel einige Befehle selbst. Beachten
+Sie, daß diese Befehle, wenn Sie auf Ihr Gerät angewendet werden,
+          decodiert werden, bevor Ihre eigenen
+Datei-Operationen aufgerufen werden. Wenn Sie also die gleiche Nummer
+für einen Ihrer <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Befehle verwenden, dann
+wird dieser Befehl nie aufgerufen werden, und die Applikation wird
+nach etwas Unerwartetem fragen, weil die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Nummer nicht eindeutig ist.&#13;</P
+><P
+>Die vordefinierten Befehle sind in drei Gruppen eingeteilt:
+          <P
+></P
+><UL
+><LI
+><P
+>diejenigen Befehle, die auf jeder Datei (normale Datei, Gerätedatei,
+                <SPAN
+><I
+CLASS="EMPHASIS"
+>FIFO</I
+></SPAN
+> und Socket) ausgeführt
+                werden können</P
+></LI
+><LI
+><P
+>diejenigen Befehle, die nur auf normalen Dateien
+                ausgeführt werden können</P
+></LI
+><LI
+><P
+>dateisystemtyp-spezifische Befehle</P
+></LI
+></UL
+>
+Die Befehle in der letzten Gruppe werden von der Implementation des
+          umgebenden Dateisystems ausgeführt (siehe den Befehl
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>chattr</I
+></SPAN
+>). Autoren von Gerätetreibern
+          interessieren sich nur für die erste Gruppe von Befehlen,
+          deren magische Zahl &#8220;T&#8221; ist. Wie die anderen Gruppen
+          funktionieren, können Sie sich bei Interesse selbst
+          anschauen; <SPAN
+><I
+CLASS="EMPHASIS"
+>ext2_ioctl</I
+></SPAN
+> ist eine äußerst
+          interessante Funktion (wenn auch einfacher, als Sie
+          vielleicht vermuten), weil sie die Flags für append-only und für die
+          Unveränderlichkeit implementiert.</P
+><P
+>Die folgenden <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Befehle sind auf
+jeder Datei vordefiniert:&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>FIOCLEX</TT
+></DT
+><DD
+><P
+>Setzt den close-on-exec-Schalter (File IOctl CLose on
+                EXec). Das Setzen dieses Flags sorgt dafür, daß der
+                Dateideskriptor geschlossen wird, wenn der aufrufende
+                Prozeß ein neues Programm ausführt.&#13;</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>FIONCLEX</TT
+></DT
+><DD
+><P
+>Setzt den close-on-exec-Schalter zurück.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>FIOASYNC</TT
+></DT
+><DD
+><P
+>Schaltet die asynchrone Benachrichtigung für die Datei ein oder
+        aus (siehe dazu den Abschnitt &#8220;Asynchrone Benachrichtigung&#8221;
+                weiter hinten in diesem Kapitel). Beachten Sie, daß
+                die Kernel-Versionen bis einschließlich 2.2.4 diesen
+                Befehle fälschlicherweise dazu verwendeten, das
+                <TT
+CLASS="LITERAL"
+>O_SYNC</TT
+>-Flag zu ändern. Weil beide
+                Aktionen auch anders erreicht werden können, verwendet
+                niemand den Befehl <TT
+CLASS="LITERAL"
+>FIOASYNC</TT
+>, der
+                hier nur aus Gründen der Vollständigkeit aufgeführt
+                ist.
+
+&#13;</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>FIONBIO</TT
+></DT
+><DD
+><P
+>&#13;
+
+''File IOctl Nonblocking I/O'' (wird später in &#8220;<A
+HREF="exblocking.html#EXBLOCK"
+>the Section called <I
+>Blockierende und
+nicht-blockierende Operationen</I
+></A
+>&#8221;
+beschrieben). Dieser Aufruf modifiziert den
+<TT
+CLASS="LITERAL"
+>O_NONBLOCK</TT
+>-Schalter in
+<TT
+CLASS="LITERAL"
+>filp-&#62;f_flags</TT
+>. Das dritte Argument des
+Systemaufrufs wird benutzt, um zu bestimmen, ob der Schalter
+gesetzt oder zurückgesetzt werden soll. Wir werden später noch auf die
+Aufgabe dieses Schalters zurückkommen. Beachten Sie, daß dieser
+Schalter auch mit dem Systemaufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>fcntl</I
+></SPAN
+> unter
+Verwendung des <SPAN
+><I
+CLASS="EMPHASIS"
+>F_SETFL</I
+></SPAN
+>-Befehls verändert
+werden kann.</P
+></DD
+></DL
+></DIV
+><P
+>&#13;Das letzte Element in der Liste führt einen neuen Systemaufruf namens
+<SPAN
+><I
+CLASS="EMPHASIS"
+>fcntl</I
+></SPAN
+> ein, der <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>
+ähnlich sieht. Die Ähnlichkeit ist sogar so groß, daß auch
+<SPAN
+><I
+CLASS="EMPHASIS"
+>fcntl</I
+></SPAN
+> ein Befehlsargument und ein zusätzliches
+optionales Argument erwartet. <SPAN
+><I
+CLASS="EMPHASIS"
+>fcntl</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+> werden hauptsächlich aus historischen
+Gründen auseinandergehalten: Als die Entwickler von Unix auf das Problem
+stießen, daß I/O-Operationen irgendwie gesteuert werden mußten,
+entschieden sie, daß Dateien und Geräte unterschiedlich zu
+          behandeln seien. Zu der Zeit waren die einzigen Geräte mit
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Implementationen
+Terminals, weswegen <TT
+CLASS="LITERAL"
+>-ENOTTY</TT
+> auch die
+Standardantwort bei einem ungültigen <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Befehl
+          ist. Das hat sich geändert, aber <SPAN
+><I
+CLASS="EMPHASIS"
+>fcntl</I
+></SPAN
+>
+          bleibt aus Kompatibilitätsgründen im Namen.
+&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="EXIOCTLSW"
+>Das Argument von ioctl benutzen</A
+></H2
+><P
+>&#13;Bevor wir uns den <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Code von
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> ansehen, müssen wir noch erklären,
+wie das zusätzliche Argument verwendet wird. Wenn es sich um einen
+Integer-Wert handelt, ist das einfach: Der Wert kann direkt verwendet
+werden. Handelt es sich aber um einen Zeiger, muß man vorsichtiger
+vorgehen.
+&#13;</P
+><P
+>&#13;
+
+
+Wenn ein Zeiger verwendet wird, um auf den User-Space zu verweisen,
+müssen wir sichergehen, daß die Adresse gültig und die entsprechende
+Seite gerade geladen ist. Wenn Kernel-Code versucht, auf eine
+Adresse außerhalb des gültigen Bereiches zuzugreifen, dann löst der
+Prozessor eine Ausnahme aus. In den Versionen des Kernels bis
+          einschließlich 2.0.<SPAN
+><I
+CLASS="EMPHASIS"
+>x</I
+></SPAN
+> werden diese
+          Ausnahmen in Oops-Meldungen
+umgewandelt; Version 2.1 und spätere gehen mit diesem Problem weniger
+          rabiat um. Auf jeden Fall liegt es in der Verantwortung des
+          Treibers, alle verwendeten Adressen im User-Space zu
+          überprüfen und im Fehlerfall auch einen Fehler zurückzumelden.</P
+><P
+>          Die Überprüfung der Adressen ist ab Kernel
+          2.2.<SPAN
+><I
+CLASS="EMPHASIS"
+>x</I
+></SPAN
+> in der Funktion
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>access_ok</I
+></SPAN
+> implementiert, die in
+          <TT
+CLASS="LITERAL"
+>&#60;asm/uaccess.h&#62;</TT
+> deklariert ist:
+        </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>&#13;
+int access_ok( int type, const void* addr, unsigned long size );</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Das erste Argument sollte entweder
+<TT
+CLASS="LITERAL"
+>VERIFY_READ</TT
+> oder
+<TT
+CLASS="LITERAL"
+>VERIFY_WRITE</TT
+> sein, je nach dem, ob die
+auszuführende Aktion Schreiben oder Lesen ist. Das Argument
+<TT
+CLASS="LITERAL"
+>addr</TT
+> enthält die Adresse im User-Space, und
+<TT
+CLASS="LITERAL"
+>size</TT
+> gibt die Anzahl der Bytes an. Wenn
+beispielsweise <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+> einen Integer-Wert aus dem
+User-Space lesen muß, dann ist <TT
+CLASS="LITERAL"
+>size</TT
+> gleich
+<TT
+CLASS="LITERAL"
+>sizeof(int)</TT
+>. Wenn Sie eine Adresse sowohl lesen als
+auch beschreiben müssen, dann verwenden Sie
+<TT
+CLASS="LITERAL"
+>VERIFY_WRITE</TT
+>; eine Obermenge von
+<TT
+CLASS="LITERAL"
+>VERIFY_READ</TT
+>.</P
+><P
+>Im Gegensatz zu den meisten anderen Funktionen gibt
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>access_ok</I
+></SPAN
+> einen Booleschen Wert
+          zurück: 1 im Erfolgsfall (Zugriff erlaubt) und 0 im
+          Fehlerfall (Zugriff nicht erlaubt). Wenn ein Fehler
+          zurückgegeben wird, geben Treiber normalerweise
+          <TT
+CLASS="LITERAL"
+>-EFAULT</TT
+> an den Aufrufer zurück.</P
+><P
+>An <SPAN
+><I
+CLASS="EMPHASIS"
+>access_ok</I
+></SPAN
+> gibt es eine Reihe
+          interessanter Dinge zu bemerken: Zunächst wird der
+          Speicherzugriff nicht vollständig überprüft, sondern es wird nur
+          kontrolliert, daß sich die Speicherreferenz in einem
+          Speicherbereich befindet, auf den der Prozeß Zugriff haben
+          könnte. Insbesondere kontrolliert
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>access_ok</I
+></SPAN
+>, daß sich die Adresse nicht
+          im Kernel-Space befindet. Weiterhin muß Treiber-Code nur
+          selten <SPAN
+><I
+CLASS="EMPHASIS"
+>access_ok</I
+></SPAN
+> aufrufen. Die weiter
+          hinten beschriebenen Speicherzugriffsroutinen erledigen das
+          für Sie. Trotzdem zeigen wir deren Verwendung, damit Sie
+          sehen können, wie man das macht - und aus Gründen der
+          Abwärtskompatibilität, auf die wir am Ende des Kapitels
+          eingehen werden.</P
+><P
+>&#13;Der Quellcode von <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> nutzt die Bitfelder
+in der <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Nummer aus, um die Argumente vor der
+<TT
+CLASS="LITERAL"
+>switch</TT
+>-Anweisung überprüfen zu können:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+ int err = 0, tmp;
+ int ret = 0;
+
+ /*
+  * Die type- und number-Bitfelder extrahieren und falsche Befehle
+  * nicht decodieren: ENOTTY (falsches ioctl) vor access_ok()
+  * zurueckgeben.
+  */
+ if (_IOC_TYPE(cmd) != SCULL_IOC_MAGIC) return -ENOTTY;
+ if (_IOC_NR(cmd) &#62; SCULL_IOC_MAXNR) return -ENOTTY;
+
+ /*
+  * Die Richtung ist eine Bitmaske, und VERIFY_WRITE faengt
+  * R/W-Uebertragungen ab. 'Type' ist User-orientiert, waehrend
+  * access_ok Kernel-orientiert ist, so daß das Konzept von "read" und
+  * "write" umgedreht wird.
+  */
+ if (_IOC_DIR(cmd) &#38; _IOC_READ)
+   err = !access_ok(VERIFY_WRITE, (void *)arg, _IOC_SIZE(cmd));
+ else if (_IOC_DIR(cmd) &#38; _IOC_WRITE)
+   err = !access_ok(VERIFY_READ, (void *)arg, _IOC_SIZE(cmd));
+ if (err) return -EFAULT;</PRE
+></TD
+></TR
+></TABLE
+><P
+>Nach dem Aufruf von <SPAN
+><I
+CLASS="EMPHASIS"
+>access_ok</I
+></SPAN
+> kann der
+Treiber gefahrlos die eigentliche Übertragung durchführen. Außer
+<SPAN
+><I
+CLASS="EMPHASIS"
+>copy_from_user</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>copy_to_user</I
+></SPAN
+> kann der Treiber noch zwei
+weitere Funktionen verwenden, die für die am häufigsten verwendeten
+Datengrößen (1, 2 und 4 Bytes, auf 64-Bit-Plattformen auch 8 Bytes)
+optimiert sind. Diese Funktionen sind in der folgenden Liste
+          beschrieben und in
+<TT
+CLASS="LITERAL"
+>&#60;asm/uaccess.h&#62;</TT
+> definiert.&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>put_user(datum, ptr)</TT
+>, <TT
+CLASS="LITERAL"
+>__put_user(datum, ptr)</TT
+></DT
+><DD
+><P
+>&#13;
+Diese Makros schreiben das Datum in den User-Space; sie sind relativ
+                schnell und sollten anstelle
+                von <SPAN
+><I
+CLASS="EMPHASIS"
+>copy_to_user</I
+></SPAN
+> verwendet werden,
+                wenn nur einzelne Werte übertragen werden. Da bei der
+Expansion von Makros keine Typenüberprüfung stattfindet, können Sie
+beliebige Zeigertypen an <SPAN
+><I
+CLASS="EMPHASIS"
+>put_user</I
+></SPAN
+>
+übergeben, die Adressen im User-Space enthalten sollten. Die Größe der
+übertragenen Daten hängt vom Typ des <TT
+CLASS="LITERAL"
+>ptr</TT
+>-Arguments
+ab und wird während des Kompilierens mit einer speziellen
+<SPAN
+CLASS="APPLICATION"
+>gcc</SPAN
+>-Pseudofunktion bestimmt, die hier zu
+zeigen sich nicht lohnt. Wenn <TT
+CLASS="LITERAL"
+>ptr</TT
+> also ein Zeiger
+auf <TT
+CLASS="LITERAL"
+>char</TT
+> ist, wird ein Byte übertragen, ansonsten
+entsprechend 2, 4 und möglicherweise 8 Bytes.</P
+><P
+><SPAN
+><I
+CLASS="EMPHASIS"
+>put_user</I
+></SPAN
+> versucht
+                sicherzustellen, daß der Prozeß an die angegebene
+                Speicheradresse schreiben darf. Im Erfolgsfall wird
+                0, ansonsten <TT
+CLASS="LITERAL"
+>-EFAULT</TT
+>
+                zurückgegeben. <SPAN
+><I
+CLASS="EMPHASIS"
+>__put_user</I
+></SPAN
+> führt
+                weniger Überprüfungen durch (ruft nicht
+                <SPAN
+><I
+CLASS="EMPHASIS"
+>access_ok</I
+></SPAN
+> auf), kann aber
+                trotzdem bei manchen Arten von fehlerhaften Adressen
+                fehlschlagen. <SPAN
+><I
+CLASS="EMPHASIS"
+>__put_user</I
+></SPAN
+> sollte
+                also nur dann verwendet werden, wenn der
+                Speicherbereich bereits mit
+                <SPAN
+><I
+CLASS="EMPHASIS"
+>access_ok</I
+></SPAN
+> überprüft wurde.</P
+><P
+>Als generelle Regel werden Sie
+                <SPAN
+><I
+CLASS="EMPHASIS"
+>__put_user</I
+></SPAN
+> aufrufen, um ein paar
+                Taktzyklen zu sparen, wenn Sie eine
+                <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>-Methode implementieren oder
+                mehrere Elemente kopieren und deswegen
+                <SPAN
+><I
+CLASS="EMPHASIS"
+>access_ok</I
+></SPAN
+> nur einmal direkt vor
+                der ersten Datenübertragung aufrufen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>get_user(ptr)</TT
+>, <TT
+CLASS="LITERAL"
+>__get_user(local,ptr)</TT
+></DT
+><DD
+><P
+>Diese Makros werden dazu verwendet, ein einziges Datum aus dem
+        User-Space zu holen. Sie verhalten sich genauso wie
+                <SPAN
+><I
+CLASS="EMPHASIS"
+>put_user</I
+></SPAN
+> und
+                <SPAN
+><I
+CLASS="EMPHASIS"
+>__put_user</I
+></SPAN
+>, übertragen aber die
+                Daten in
+        die entgegengesetzte Richtung. Der abgeholte Wert wird in der
+                lokalen Variablen <TT
+CLASS="LITERAL"
+>local</TT
+>
+                gespeichert; der Rückgabewert gibt an, ob die
+                Operation erfolgreich war oder nicht. Auch hier sollte
+                <SPAN
+><I
+CLASS="EMPHASIS"
+>__get_user</I
+></SPAN
+> nur verwendet werden,
+                wenn die Adresse bereits mit
+                <SPAN
+><I
+CLASS="EMPHASIS"
+>access_ok</I
+></SPAN
+> überprüft worden ist.
+&#13;</P
+></DD
+></DL
+></DIV
+><P
+>Wenn mit einer der angegebenen Funktionen versucht wird, einen nicht
+          passenden Wert zu übertragen, dann ist das Ergebnis meistens
+          eine merkwürdige Compiler-Fehlermeldung wie &#8220;conversion to
+          non-scalar type requested&#8221;. In diesen Fällen müssen
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>copy_to_user</I
+></SPAN
+> und
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>copy_from_user</I
+></SPAN
+> verwendet werden.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="EXCAPS"
+>Capabilities und eingeschränkte Operationen</A
+></H2
+><P
+>&#13;
+
+
+
+Der Zugriff auf ein Gerät wird durch die Zugriffsrechte auf die
+          Gerätedatei(en) gesteuert; der Treiber ist an der
+          Überprüfung der Zugriffsrechte normalerweise nicht
+          beteiligt. Es gibt aber Situationen, in denen beliebigen
+          Benutzern Lese-/Schreibrechte auf das Gerät gewährt, einige
+          andere Operationen aber verweigert werden
+          sollen. Beispielsweise sollten nicht alle Benutzer eines
+          Bandlaufwerks die Default-Blockgröße verändern dürfen, und
+          die Berechtigung, auf eine Festplatte zuzugreifen, bedeutet
+          noch lange nicht, daß der Benutzer auch das Laufwerk
+          formatieren darf. In diesen Fällen muß der Treiber
+          zusätzliche Überprüfungen durchführen, um sicherzustellen,
+          daß der Benutzer die angegebene Operation durchführen darf.</P
+><P
+>Unix-Systeme haben traditionell privilegierte Operationen auf den
+          Superuser beschränkt. Das ist ein Alles-oder-nichts-Konzept:
+          Der Superuser darf absolut alles machen, alle anderen
+          Benutzer sind dagegen stark eingeschränkt. Im Linux-Kernel
+          gibt es seit der Version 2.2 ein flexibleres System namens
+          <I
+CLASS="FIRSTTERM"
+>Capabilities</I
+>. Ein
+          Capabilities-basiertes System ist kein
+          Alles-oder-nichts-System mehr, sondern teilt die
+          privilegierten Operationen in mehrere Untergruppen auf. Damit
+          kann ein bestimmter Benutzer (oder ein Programm) das Recht
+          bekommen, eine privilegierte Operation auszuführen, ohne
+          damit auch das Recht zu bekommen, andere, damit nicht
+          verwandte Operationen ausführen zu dürfen. Capabilities
+          werden derzeit kaum im User-Space verwendet, im Kernel-Space
+          dagegen fast überall.</P
+><P
+>&#13;
+Die vollständige Menge der Capabilities finden Sie in
+<TT
+CLASS="LITERAL"
+>&#60;linux/capability.h&#62;</TT
+>. Zu denjenigen
+          Capabilities, die für Gerätetreiber-Autoren interessant sein
+          könnten, gehören folgende:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>CAP_DAC_OVERRIDE</TT
+></DT
+><DD
+><P
+>&#13;Die Fähigkeit, Zugriffsbeschränkungen auf Dateien und Verzeichnisse zu
+                überschreiben.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>CAP_NET_ADMIN</TT
+></DT
+><DD
+><P
+>&#13;Die Fähigkeit, Netzwerk-Administrationsaufgaben durchzuführen, darunter
+                auch diejenigen, die Netzwerkschnittstellen betreffen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>CAP_SYS_MODULE</TT
+></DT
+><DD
+><P
+>&#13;Die Fähigkeit, Kernel-Module zu laden oder zu entladen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>CAP_SYS_RAWIO</TT
+></DT
+><DD
+><P
+>&#13;Die Fähigkeit, &#8220;rohe&#8221; I/O-Operationen durchzuführen. Dazu gehören  der
+                Zugriff auf Geräteschnittstellen oder die direkte
+                Kommunikation mit USB-Geräten.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>CAP_SYS_ADMIN</TT
+></DT
+><DD
+><P
+>&#13;Eine zusammenfassende Capability, die den Zugriff auf viele
+                Operationen der Systemadministration erlaubt.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>CAP_SYS_TTY_CONFIG</TT
+></DT
+><DD
+><P
+>&#13;Die Fähigkeit, TTYs zu konfigurieren.</P
+></DD
+></DL
+></DIV
+><P
+>&#13;
+
+Bevor eine privilegierte Operation ausgeführt wird, sollte ein
+          Gerätetreiber mit der
+          Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>capable</I
+></SPAN
+> (definiert in
+<TT
+CLASS="LITERAL"
+>&#60;sys/sched.h&#62;</TT
+>) überprüfen, daß der aufrufende
+          Prozeß die entsprechenden Rechte hat:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+> int capable(int capability);</PRE
+></TD
+></TR
+></TABLE
+><P
+>          Im <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Beispiel-Treiber darf
+          jeder Benutzer die Quantum- und Quantum-Mengen-Größen
+          abfragen, aber nur privilegierte Benutzer dürfen diese Werte
+          verändern, weil unpassende Werte die System-Performance
+          negativ beeinflussen könnten. Wenn nötig, überprüft die
+          <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Implementation von
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+> die Rechte eines Benutzers
+          folgendermaßen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; if (! capable (CAP_SYS_ADMIN))
+   return -EPERM;</PRE
+></TD
+></TR
+></TABLE
+><P
+>Mangels einer spezifischeren Capability wurde hier
+<TT
+CLASS="LITERAL"
+>CAP_SYS_ADMIN</TT
+> verwendet.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN6115"
+>Die Implementation der ioctl-Befehle</A
+></H2
+><P
+>Die Implementation von <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>
+in <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> überträgt nur die konfigurierbaren
+Parameter des Geräts und erweist sich als sehr einfach:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+
+ switch(cmd) {
+
+#ifdef SCULL_DEBUG
+   case SCULL_IOCHARDRESET:
+        /*
+         * Zaehler auf 1 zuruecksetzen, um bei Problemen das Entladen
+         * zu ermoeglichen. Wir verwenden hier 1 und nicht 0, weil die
+         * Geraetedatei im aufrufenden Prozess noch geschlossen werden muß.
+         */
+     while (MOD_IN_USE)
+       MOD_DEC_USE_COUNT;
+     MOD_INC_USE_COUNT;
+        /* kein break: der naechste Block soll ebenfalls ausgefuehrt werden */
+#endif /* SCULL_DEBUG */
+
+   case SCULL_IOCRESET:
+    scull_quantum = SCULL_QUANTUM;
+    scull_qset = SCULL_QSET;
+    break;
+
+   case SCULL_IOCSQUANTUM: /* Set: arg zeigt auf den Wert */
+    if (! capable (CAP_SYS_ADMIN))
+      return -EPERM;
+    ret = _&#8201;_get_user(scull_quantum, (int *)arg);
+    break;
+
+   case SCULL_IOCTQUANTUM: /* Tell: arg ist der Wert */
+    if (! capable (CAP_SYS_ADMIN))
+      return -EPERM;
+    scull_quantum = arg;
+    break;
+
+   case SCULL_IOCGQUANTUM: /* Get: arg ist ein Zeiger auf das Ergebnis */
+    ret = _&#8201;_put_user(scull_quantum, (int *)arg);
+    break;
+
+   case SCULL_IOCQQUANTUM: /* Query: zurueckgeben (Wert ist positiv) */
+    return scull_quantum;
+
+   case SCULL_IOCXQUANTUM: /* eXchange: arg als Zeiger verwenden */
+    if (! capable (CAP_SYS_ADMIN))
+      return -EPERM;
+    tmp = scull_quantum;
+    ret = _&#8201;_get_user(scull_quantum, (int *)arg);
+    if (ret == 0)
+      ret = _&#8201;_put_user(tmp, (int *)arg);
+    break;
+
+   case SCULL_IOCHQUANTUM: /* sHift: wie Tell + Query */
+    if (! capable (CAP_SYS_ADMIN))
+      return -EPERM;
+    tmp = scull_quantum;
+    scull_quantum = arg;
+    return tmp;
+
+   default: /* redundant, cmd wurde schon mit MAXNR verglichen */
+    return -ENOTTY;
+ }
+ return ret;</PRE
+></TD
+></TR
+></TABLE
+><P
+>          Zusätzlich gibt es in <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> sechs
+          weitere Befehle, die auf
+<TT
+CLASS="LITERAL"
+>scull_qset</TT
+> arbeiten. Diese entsprechen denen
+von <TT
+CLASS="LITERAL"
+>scull_quantum</TT
+> und sind im obigen
+Beispiel nicht enthalten, um Platz zu sparen.&#13;</P
+><P
+>Die sechs Möglichkeiten, Argumente zu übergeben und zurückzubekommen,
+sehen aus der Sicht des Aufrufers (also aus dem User-Space betrachtet) so aus:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+int quantum;
+
+ioctl(fd,SCULL_IOCSQUANTUM, &#38;quantum);
+ioctl(fd,SCULL_IOCTQUANTUM, quantum);
+
+ioctl(fd,SCULL_IOCGQUANTUM, &#38;quantum);
+quantum = ioctl(fd,SCULL_IOCQQUANTUM);
+
+ioctl(fd,SCULL_IOCXQUANTUM, &#38;quantum);
+quantum = ioctl(fd,SCULL_IOCHQUANTUM, quantum);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Natürlich würde ein normaler Treiber nicht so eine Mischung von
+          Aufrufmodi implementieren. Wir haben das hier nur gemacht,
+          um die verschiedenen Möglichkeiten zu
+          demonstrieren. Normalerweise würde der Datenaustausch
+          konsistent erfolgen, entweder (normalerweise) über Zeiger oder (seltener)
+          über Werte, und man würde es vermeiden, die beiden Techniken zu mischen.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="EXESCAPE"
+>Geräte ohne ioctl steuern</A
+></H2
+><P
+>&#13;
+
+
+
+
+Manchmal ist es besser, wenn der Treiber durch das Schreiben von
+Steuersequenzen auf das Gerät gesteuert wird. Diese Technik wird
+beispielsweise im Konsolentreiber verwendet, wo sogenannte
+Fluchtsequenzen (<SPAN
+><I
+CLASS="EMPHASIS"
+>escape sequences</I
+></SPAN
+>)
+dazu dienen, den Cursor zu bewegen, die Default-Farbe zu verändern
+oder andere Konfigurationsaufgaben durchzuführen. Der Vorteil dieser
+Technik besteht darin, daß der Benutzer das Gerät steuern kann, indem er
+einfach Daten auf das Gerät schreibt; er braucht also keine speziellen
+Programme (die er möglicherweise auch noch selbst schreiben müßte),
+nur um das Gerät zu konfigurieren.&#13;</P
+><P
+>&#13;Beispielsweise beeinflußt das
+Programm <SPAN
+CLASS="APPLICATION"
+>setterm</SPAN
+> die Konfiguration der
+Konsole (oder eines anderen Terminals) durch die Ausgabe von
+Fluchtsequenzen. Man gewinnt damit zusätzlich die Möglichkeit, Geräte
+aus der Ferne zu steuern. Das steuernde Programm kann auf einem
+anderen Computer laufen als das kontrollierte Gerät, denn für die
+Konfiguration ist nur eine einfache Umleitung des Datenstroms
+notwendig. Sie sind es bereits gewöhnt, das mit Terminals zu machen,
+aber die Technik kann viel allgemeiner verwendet werden.&#13;</P
+><P
+>&#13;
+Der Nachteil dieses &#8220;Steuerns durch Ausgaben&#8221; besteht darin,
+daß Policy-Beschränkungen für das Gerät eingeführt
+werden. Beispielsweise ist es nur möglich, diese Technik zu verwenden,
+wenn Sie sicher sind, daß die Steuersequenz nicht in den Daten
+auftauchen kann, die normalerweise auf das Gerät geschrieben
+werden. Bei Terminals ist das nur teilweise der Fall. Während ein
+Textterminal eigentlich nur dazu da ist, ASCII-Zeichen anzuzeigen,
+schlüpfen manchmal Steuerzeichen im Datenstrom durch und beeinflussen
+die Konfiguration der Konsole. Das kann beispielsweise passieren, wenn
+Sie den Befehl <SPAN
+><I
+CLASS="EMPHASIS"
+>grep</I
+></SPAN
+> auf einer Binärdatei
+ausführen, denn die extrahierten Zeilen können alles enthalten. Oft
+haben Sie dann am Ende den falschen Zeichensatz auf Ihrer
+Konsole.<A
+NAME="AEN6165"
+HREF="#FTN.AEN6165"
+>[2]</A
+>&#13;</P
+><P
+>Dieses &#8220;Controlling-by-Write&#8221; ist immer dann die
+beste Möglichkeit, wenn es sich um Geräte handelt, die keine Daten
+übertragen, sondern nur auf Befehle antworten &#8212; wie beispielsweise Roboter.&#13;</P
+><P
+>Einer der Treiber, die einer der Autoren aus Spaß geschrieben hat, bewegt
+beispielsweise eine Kamera entlang zweier Achsen. In diesem Treiber ist
+das &#8220;Gerät&#8221; einfach nur ein Paar aus alten Schrittmotoren,
+auf die man nicht richtig schreiben und von denen man nicht lesen kann. Bei
+Schrittmotoren ergibt das Konzept, &#8220;einen Datenstrom zu
+schicken&#8221;, keinen Sinn. In diesem Fall interpretiert der Treiber
+ASCII-Befehle und konvertiert diese in eine Folge von Impulsen, die
+auf die Schrittmotoren wirken. Die Idee ähnelt etwas den AT-Befehlen,
+          die man an ein Modem schickt, um die Kommunikation zu
+          konfigurieren; der Hauptunterschied besteht darin, daß der
+          serielle Port, über den mit dem Modem kommuniziert wird,
+          auch reale Daten übertragen muß. Der Vorteil der direkten Steuerung
+bei diesem Gerät besteht darin, daß Sie <SPAN
+CLASS="APPLICATION"
+>cat</SPAN
+>
+verwenden können, um die Kamera zu bewegen, und keinen speziellen Code
+schreiben und kompilieren müssen, der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Aufrufe ausführen würde.&#13;</P
+><P
+>Wenn man befehlsorientierte Treiber schreibt, gibt es
+keinen Grund, die Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+> zu
+implementieren. Ein zusätzlicher Befehl im Interpreter ist einfacher
+zu implementieren und zu benutzen.&#13;</P
+><P
+>Manchmal entscheiden Sie sich aber vielleicht für die andere Richtung:
+          Anstatt <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+> zu einem Interpreter zu
+          machen und <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+> zu vermeiden, könnten
+          Sie auch <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+> ganz vermeiden und
+          ausschließlich <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Befehle verwenden
+          und zum Treiber ein spezielles Kommandozeilenwerkzeug
+          mitliefern, mit dem Befehle zum Treiber geschickt werden
+          können. Dieser Ansatz verschiebt die Komplexität vom Kernel
+          Space in den User-Space, wo man damit einfacher umgehen
+          kann. Das hält den Treiber klein, verhindert aber die
+          Verwendung von einfachen Befehlen wie <B
+CLASS="COMMAND"
+>cat</B
+>
+          oder <B
+CLASS="COMMAND"
+>echo</B
+>.
+
+
+
+
+&#13;</P
+></DIV
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN5811"
+HREF="extra.html#AEN5811"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Ein Stückchen Programmcode heißt atomar, wenn es
+              immer wie eine einzige Anweisung ausgeführt wird, ohne
+              daß zwischendrin der Prozessor unterbrochen werden und
+              etwas anderes (wie die Ausführung anderen Codes)
+              passieren kann.</P
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN6165"
+HREF="extra.html#AEN6165"
+>[2]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+> 
+
+
+<SPAN
+CLASS="bold"
+><B
+CLASS="EMPHASIS"
+>Strg-N</B
+></SPAN
+> wählt den alternativen
+Zeichensatz aus, der aus grafischen Symbolen besteht und daher nicht
+besonders gut geeignet ist, um Eingaben in der Shell zu machen; wenn
+Sie dieses Problem haben, geben Sie mit
+<SPAN
+CLASS="APPLICATION"
+>echo</SPAN
+> ein <SPAN
+CLASS="bold"
+><B
+CLASS="EMPHASIS"
+>Strg-O</B
+></SPAN
+> ein, um den primären Zeichensatz wieder zu
+aktivieren.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x5337.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="exblocking.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Debugger und verwandte Werkzeuge</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Blockierende I/O</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

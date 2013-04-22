@@ -1,0 +1,70 @@
+<!DOCTYPE html PUBLIC "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+        
+  <meta http-equiv="Content-Type"
+ content="text/html; charset=iso-8859-1">
+        
+  <meta name="GENERATOR"
+ content="Mozilla/4.74 [en] (X11; U; Linux 2.2.13 i586) [Netscape]">
+  <title>&Uuml;bungsblatt 7</title>
+</head>
+  <body>
+  Prof. Dr. R. Laue&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ WS0203  
+<center>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ Graphentheoretische Optimierung <br>
+</center>
+<div align="center">
+<center> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ &Uuml;bungsblatt 7 </center>
+Abgabe: bis Donnerstag 05.12.02 12.00 Raum 736 Mathe NW2   </div>
+<p>URL:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a
+ href="http://www.mathe2.uni-bayreuth.de/axel/graph_ws0001_blatt2.html"> http://www.mathe2.uni-bayreuth.de/axel/graph_ws0203_blatt7.html</a> 
+ <br>
+ &nbsp; </p>
+ 
+<h2> </h2>
+    
+<h2> Aufgabe 14 - stark zusammenh&auml;ngend (4 Punkte)</h2>
+    
+<p><br>
+ F&uuml;hren Sie am folgenden Beispiel die Berechnung der starken Zusammenhangskomponenten 
+durch.<img src="graph_ws0203_aufg14.gif" height="223" width="478"
+ alt="da fehlt das bild">
+  <br>
+ Stellen Sie den jeweiligen Kellerinhalt dar. Geben Sie die Variablenbelegung
+LOWPT, DFSNUM, CURRENT und S mit aus.<br>
+ &nbsp; <br>
+ &nbsp; </p>
+ 
+<h2> </h2>
+    
+<h2> <b>Aufgabe 15- bcc Teil 1 - (2+6 Punkte)</b></h2>
+    
+<p><br>
+ Auf unserem Weg zum Algorithmus f&uuml;r Zweifachzusammenhangskomponenten
+(bcc) definieren wir:<br>
+Sei G=(V,E) ein ungerichteter Graph ohne Schleifen.. </p>
+ 
+<p>Das Zentrum der bcc sei der Knoten mit der zweitkleinsten DFSNUM. Bei
+Verwendung der Notation (T,F,B,DFSNUM, FATHER)&nbsp;aus dem DFS&nbsp;Algorithmus
+definiert man &auml;hnlich wie bei der Einfachzusammenhangskomponente: </p>
+ 
+<p>LOWPT[v]= min { DFSNUM[v]&nbsp;<img src="union.gif" height="9"
+ width="7">
+  {DFSNUM[z] | ex ein Knoten w mit v&nbsp; --<sub>T</sub><sup>*</sup>&gt; 
+w&nbsp; --<sub>B</sub>&gt; z}} </p>
+ 
+<p>Beweisen Sie folgendes Lemma: </p>
+ 
+<p>1)&nbsp;LOWPT[v] &lt;=&nbsp;DFSNUM[FATHER[v]] f&uuml;r alle v mit DFSNUM[v]
+ &gt;=2 </p>
+ 
+<p>2)&nbsp;v ist Zentrum einer bcc&nbsp; &lt;==&gt;&nbsp;LOWPT[v] =&nbsp;DFSNUM[FATHER[v]]
+ und DFSNUM[v] &gt;= 2 <br>
+ &nbsp; <br>
+ &nbsp; </p>
+ <br>
+</body>
+</html>

@@ -1,0 +1,471 @@
+<HTML
+><HEAD
+><TITLE
+>Schnellreferenz</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Der Lauf der Zeit"
+HREF="flow.html"><LINK
+REL="PREVIOUS"
+TITLE="Abwärtskompatibilität"
+HREF="x8892.html"><LINK
+REL="NEXT"
+TITLE="Speicher ergattern"
+HREF="get.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x8892.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 6. Der Lauf der Zeit</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="get.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN8972"
+>Schnellreferenz</A
+></H1
+><P
+>Dieses Kapitel führte die folgenden Symbole ein:&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/param.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>HZ  </TT
+></DT
+><DD
+><P
+>Das Symbol <TT
+CLASS="LITERAL"
+>HZ</TT
+> gibt die Anzahl der pro
+        Sekunde generierten Taktschläge an.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/sched.h&#62; </TT
+>, <TT
+CLASS="LITERAL"
+>volatile unsigned long jiffies</TT
+></DT
+><DD
+><P
+>Die Variable <TT
+CLASS="LITERAL"
+>jiffies</TT
+> wird einmal pro Takt
+        inkrementiert, also <TT
+CLASS="LITERAL"
+>HZ</TT
+>mal pro Sekunde.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;asm/msr.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>rdtsc(low,high);</TT
+>, <TT
+CLASS="LITERAL"
+>rdtscl(low);</TT
+></DT
+><DD
+><P
+>&#13;
+
+Liest den Zeitstempel-Zähler oder dessen untere Hälfte. Die
+Header-Datei und Makros gibt es nur auf PC-Prozessoren; andere
+Plattformen müssen <TT
+CLASS="LITERAL"
+>asm</TT
+>-Konstrukte verwenden, um
+ähnliche Resultate zu erzielen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>extern struct timeval xtime;</TT
+></DT
+><DD
+><P
+>&#13;Die aktuelle Zeit zum Zeitpunkt des letzten Timer-Ticks.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/time.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>void do_gettimeofday(struct timeval *tv);</TT
+>, <TT
+CLASS="LITERAL"
+>void get_fast_time(struct timeval *tv);</TT
+></DT
+><DD
+><P
+>Diese Funktionen geben die aktuelle Zeit zurück. Die
+erste hat eine hohe Auflösung, die letzte ist schneller bei
+geringerer Auflösung.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/delay.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>void udelay(unsigned long usecs);</TT
+>, <TT
+CLASS="LITERAL"
+>void mdelay(unsigned long msecs);</TT
+></DT
+><DD
+><P
+>Diese Funktionen verzögern die
+        Ausführung um die angegebene Anzahl von Mikrosekunden oder
+Millisekunden. Die erste Funktion sollte verwendet werden, um maximal eine
+Millisekunde zu warten; die zweite sollte mit großer Vorsicht verwendet
+werden, weil diese Verzögerungen beide Busy-Loops sind.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int in_interrupt();</TT
+></DT
+><DD
+><P
+>&#13;Gibt einen von Null verschiedenen Wert zurück, wenn sich der Prozessor
+gerade im Interrupt-Modus befindet.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/tqueue.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>DECLARE_TASK_QUEUE(variablename);</TT
+></DT
+><DD
+><P
+>&#13;
+
+Das Makro deklariert eine neue Variable und initialisiert diese.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void queue_task(struct tq_struct *task, task_queue *list);</TT
+></DT
+><DD
+><P
+>&#13;Die Funktion registriert einen Task zur späteren Ausführung.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void run_task_queue(task_queue *list);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion führt eine Task-Schlange aus.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>task_queue tq_immediate, tq_timer;</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+
+Diese vordefinierten Task-Schlangen werden sobald wie möglich (bei
+<TT
+CLASS="LITERAL"
+>tq_immediate)</TT
+> oder nach jedem Timer-Tick
+(bei <TT
+CLASS="LITERAL"
+>tq_timer</TT
+>) ausgeführt.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int schedule_task(struct tq_struct *task);</TT
+></DT
+><DD
+><P
+>&#13;Merkt einen Task zur Ausführung in der Scheduler-Schlange vor.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/interrupt.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>DECLARE_TASKLET(name, function, data)</TT
+>, <TT
+CLASS="LITERAL"
+>DECLARE_TASKLET_DISABLED(name, function, data)</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+Deklarieren eine Tasklet-Struktur, die die angegebene Funktion aufruft
+(und die angegebenen <TT
+CLASS="LITERAL"
+>unsigned long</TT
+>-Daten übergibt),
+wenn das Tasklet ausgeführt wird. Die zweite Version initialisiert
+das Tasklet mit einem gesperrten Zustand, so daß es nicht ausgeführt
+wird, bevor es nicht explizit freigeschaltet wird.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void tasklet_schedule(struct tasklet_struct *tasklet);</TT
+></DT
+><DD
+><P
+>&#13;Merkt das angegebene Tasklet zur Ausführung vor. Wenn das Tasklet
+freigeschaltet ist, wird es kurze Zeit später auf der gleichen CPU
+ausgeführt, die auch <SPAN
+><I
+CLASS="EMPHASIS"
+>tasklet_schedule</I
+></SPAN
+>
+aufgerufen hat.
+
+
+
+
+
+
+
+&#13;</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>tasklet_enable(struct tasklet_struct *tasklet);</TT
+>, <TT
+CLASS="LITERAL"
+>tasklet_disable(struct tasklet_struct *tasklet);</TT
+></DT
+><DD
+><P
+>&#13;
+Diese Funktionen schalten ein Tasklet frei respektive sperren es. Ein
+gesperrtes Tasklet kann vorgemerkt werden, wird aber nicht ausgeführt,
+bevor es nicht freigeschaltet ist.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void tasklet_kill(struct tasklet_struct *tasklet);</TT
+></DT
+><DD
+><P
+>&#13;Hindert ein sich immer wieder vormerkendes Tasklet an der weiteren
+Ausführung. Diese Funktion kann blockieren und darf nicht zur
+Interrupt-Zeit aufgerufen werden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/timer.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>void init_timer(struct timer_list * timer);</TT
+></DT
+><DD
+><P
+>Diese Funktion initialisiert einen frisch allozierten Timer.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void add_timer(struct timer_list * timer);</TT
+></DT
+><DD
+><P
+>Diese Funktion fügt <TT
+CLASS="LITERAL"
+>timer</TT
+> in die globale
+        Liste der ausstehenden Timer ein.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int mod_timer(struct timer_list *timer, unsigned long expires);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion wird dazu verwendet, den Ablaufzeitpunkt einer bereits
+vorgemerkten Timer-Struktur zu ändern.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int del_timer(struct timer_list * timer);</TT
+></DT
+><DD
+><P
+><SPAN
+><I
+CLASS="EMPHASIS"
+>del_timer</I
+></SPAN
+> entfernt einen Timer aus der
+        Liste der ausstehenden Timer. Wenn der Timer tatsächlich
+        vorgemerkt war, gibt <SPAN
+><I
+CLASS="EMPHASIS"
+>del_timer</I
+></SPAN
+> 1
+        zurück, ansonsten 0.&#13;</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int del_timer_sync(struct timer_list *timer);</TT
+></DT
+><DD
+><P
+>&#13;
+Diese Funktion ähnelt <SPAN
+><I
+CLASS="EMPHASIS"
+>del_timer</I
+></SPAN
+>, garantiert aber,
+daß die vorgemerkte Funktion derzeit nicht gerade auf anderen CPUs läuft.</P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x8892.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="get.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Abwärtskompatibilität</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="flow.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Speicher ergattern</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

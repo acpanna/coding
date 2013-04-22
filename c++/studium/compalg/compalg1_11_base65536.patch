@@ -1,0 +1,200 @@
+diff -c compalg1_11/compalg1_11.cpp compalg1_11_new/compalg1_11.cpp
+*** compalg1_11/compalg1_11.cpp	2004-02-04 19:54:43.000000000 +0100
+--- compalg1_11_new/compalg1_11.cpp	2004-02-04 20:03:53.000000000 +0100
+***************
+*** 18,26 ****
+  static const unsigned short USHORT_DECIMALS = (unsigned short) \
+  		((sizeof(unsigned short) * 8 * log(2.0))/log(10.0));
+  
+! // BASE gibt an, bzgl. welcher Basis
+! // die LongInts intern dargestellt werden.
+! static const unsigned long BASE = (unsigned long) pow(10.0, USHORT_DECIMALS);
+  
+  
+  /******** Verschiedene Hilfsfunktionen ********/
+--- 18,26 ----
+  static const unsigned short USHORT_DECIMALS = (unsigned short) \
+  		((sizeof(unsigned short) * 8 * log(2.0))/log(10.0));
+  
+! // BASE gibt an, bzgl. welcher Basis 
+! // die LongInts intern dargestellt werden
+! static const unsigned long BASE = USHRT_MAX + 1;
+  
+  
+  /******** Verschiedene Hilfsfunktionen ********/
+***************
+*** 120,149 ****
+  
+  LongInt& LongInt::operator =(const char * const src)
+  {
+! 	char *ptr, *str = new char[strlen(src) + 1];
+  	assert(str);
+  	strcpy(str, src);
+  
+! 	clear();
+! 	sign = trim_string(str); 
+  	
+  	ptr = str;
+- 	while (*ptr != '\0')
+- 		ptr++;
+  	
+! 	while (ptr != str) {
+! 		ptr -= USHORT_DECIMALS;
+! 
+! 		if (ptr <= str) 
+! 			ptr = str;
+  
+! 		push_back((unsigned short) atol(ptr));
+! 		*ptr = '\0';
+  	}
+  
+  	if (empty())
+  		*this = 0;
+! 
+  	delete [] str;
+  	return *this;
+  }
+--- 120,165 ----
+  
+  LongInt& LongInt::operator =(const char * const src)
+  {
+! 	bool this_sign;
+! 	unsigned short digit, digits = 0, digits_len = 0;			
+! 	
+! 	char *ptr, *str = new char[strlen(src) + 1], str2[2];
+  	assert(str);
++ 		
+  	strcpy(str, src);
+  
+! 	this_sign = trim_string(str); 
+! 	*this = 0;
+  	
+  	ptr = str;
+  	
+! 	while (*ptr != '\0') {
+! 		sprintf(str2, "%c", *ptr);
+! 		digit = atoi(str2);
+! 
+! 		digits = digits*10 + digit;
+! 		digits_len++;
+! 
+! 		if (digits_len == USHORT_DECIMALS) {
+! 			mul(*this,(long)std::pow(10.0, USHORT_DECIMALS),*this);
+! 			add(*this, digits, *this);
+! 		
+! 			digits_len = 0;
+! 			digits = 0;
+! 		}
+  
+! 		ptr++;
+! 	}
+! 			
+! 	if (digits_len != 0) {
+! 		mul(*this, (long)std::pow(10.0, digits_len), *this);
+! 		add(*this, digits, *this);
+  	}
+  
++ 	sign = this_sign;
+  	if (empty())
+  		*this = 0;
+! 	
+  	delete [] str;
+  	return *this;
+  }
+***************
+*** 665,693 ****
+  	return ret;
+  }
+  
+! ostream& operator <<(ostream &OS, const LongInt &value)
+  {
+! 	if (!value.sign)
+  		OS << "-";
+  	
+! 	for (Vector::const_reverse_iterator iter=value.rbegin();
+! 			iter != value.rend(); iter++)
+! 	{
+! 		char *str = new char[USHORT_DECIMALS + 1];
+! 		assert(str);
+  		
+! 		sprintf(str, "%u", *iter);
+! 	
+! 		if (iter != value.rbegin()) {
+! 			for (unsigned short i=0; 
+! 					i<USHORT_DECIMALS-strlen(str); i++)
+! 				OS << 0;
+! 		}
+  		
+! 		OS << *iter;
+! 		delete [] str;
+  	}
+! 	
+  	return OS;
+  }
+  	
+--- 681,725 ----
+  	return ret;
+  }
+  
+! ostream& operator <<(ostream &OS, LongInt value)
+  {
+! 	if (!value.sign) {
+  		OS << "-";
++ 		value.sign = true;
++ 	}
++ 
++ 	// Umrechnung ins Dezimalsystem 
++ 	vector<unsigned short> stack;
++ 	LongInt q((long)pow(10.0, USHORT_DECIMALS)), r;
++ 
++ 	while(value != 0) {
++ 		LongInt::div(value, q, value, r);
++ 		stack.push_back(r.front());
++ 	}
++ 
++ 	// Eigentliche Ausgabe
++ 	char *str = new char[USHORT_DECIMALS + 1];
++ 	assert(str);
+  	
+! 	if (!stack.empty()) {
+! 		sprintf(str, "%u", stack.back());
+! 		stack.pop_back();
+! 	} else
+! 		sprintf(str, "%u", 0);
+! 	
+! 	OS << str;
+! 	
+! 	while (!stack.empty()) {
+! 		sprintf(str, "%u", stack.back());
+! 		stack.pop_back();
+  		
+! 		for (unsigned short i=0; i<USHORT_DECIMALS-strlen(str); i++)
+! 			OS << 0;
+  		
+! 		OS << str;
+  	}
+! 		
+! 	delete [] str;
+  	return OS;
+  }
+  	
+diff -c compalg1_11/rational.h compalg1_11_new/rational.h
+*** compalg1_11/rational.h	2004-02-03 17:08:32.000000000 +0100
+--- compalg1_11_new/rational.h	2004-02-04 20:04:22.000000000 +0100
+***************
+*** 97,103 ****
+  inline LongInt operator %(const LongInt &lts, const LongInt &rts) 
+  { LongInt q, r; LongInt::div(lts, rts, q, r); return r; }
+  
+! std::ostream& operator <<(std::ostream&, const LongInt&); 
+  std::istream& operator >>(std::istream&, LongInt&); 
+  
+  class Rational {
+--- 97,103 ----
+  inline LongInt operator %(const LongInt &lts, const LongInt &rts) 
+  { LongInt q, r; LongInt::div(lts, rts, q, r); return r; }
+  
+! std::ostream& operator <<(std::ostream&, LongInt); 
+  std::istream& operator >>(std::istream&, LongInt&); 
+  
+  class Rational {

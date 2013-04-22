@@ -1,0 +1,505 @@
+<HTML
+><HEAD
+><TITLE
+>Die Struktur file</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Zeichen-Treiber"
+HREF="char.html"><LINK
+REL="PREVIOUS"
+TITLE="Datei-Operationen"
+HREF="charfops.html"><LINK
+REL="NEXT"
+TITLE="open und release"
+HREF="x2969.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="charfops.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 3. Zeichen-Treiber</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x2969.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="CHARFILE"
+>Die Struktur file</A
+></H1
+><P
+>&#13;<TT
+CLASS="LITERAL"
+>struct file</TT
+>, definiert in
+<TT
+CLASS="LITERAL"
+>&#60;linux/fs.h&#62;</TT
+>, ist die zweitwichtigste
+Datenstruktur, die in Gerätetreibern verwendet wird. Beachten Sie, daß
+<TT
+CLASS="LITERAL"
+>file</TT
+> nichts mit der Struktur
+<TT
+CLASS="LITERAL"
+>FILE</TT
+> in Anwendungsprogrammen zu tun hat. <TT
+CLASS="LITERAL"
+>FILE</TT
+> wird
+in der C-Bibliothek definiert und taucht nie im Kernel-Code
+auf. <TT
+CLASS="LITERAL"
+>struct file</TT
+> dagegen ist eine Kernel-Struktur,
+die nie in Anwendungsprogrammen auftaucht.&#13;</P
+><P
+>Die Struktur <TT
+CLASS="LITERAL"
+>file</TT
+> repräsentiert eine <I
+CLASS="FIRSTTERM"
+>offene
+Datei</I
+>. (Sie ist nichts gerätetreiberspezifisches; jede
+offene Datei hat so eine <TT
+CLASS="LITERAL"
+>struct file</TT
+> im
+Kernel-Space.) Sie wird vom Kernel beim <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>
+erzeugt und wird bis zum <SPAN
+><I
+CLASS="EMPHASIS"
+>close</I
+></SPAN
+> an jede Funktion
+übergeben, die auf der Datei operiert. Nachdem die Datei geschlossen
+worden ist, gibt der Kernel die Datenstruktur frei. Eine
+<I
+CLASS="FIRSTTERM"
+>offene Datei</I
+> unterscheidet sich von einer
+<I
+CLASS="FIRSTTERM"
+>Plattendatei</I
+>, die durch <TT
+CLASS="LITERAL"
+>struct inode</TT
+>
+repräsentiert wird.&#13;</P
+><P
+>&#13;In den Kernel-Quellen heißen Zeiger auf <TT
+CLASS="LITERAL"
+>struct
+file</TT
+> üblicherweise entweder <TT
+CLASS="LITERAL"
+>file</TT
+> oder
+<TT
+CLASS="LITERAL"
+>filp</TT
+> (<I
+CLASS="FIRSTTERM"
+>File Pointer</I
+>). Wir werden den
+Zeiger durchgehend <TT
+CLASS="LITERAL"
+>filp</TT
+> nennen, um Verwechslungen
+mit der Struktur selbst zu vermeiden: <TT
+CLASS="LITERAL"
+>filp</TT
+> ist ein
+Zeiger (und als solcher eines der Argumente der Geräte-Methoden),
+<TT
+CLASS="LITERAL"
+>file</TT
+> die Struktur selbst.&#13;</P
+><P
+>Die wichtigsten Felder in <TT
+CLASS="LITERAL"
+>struct file</TT
+> werden unten
+aufgeführt. Wie der letzte Abschnitt kann auch diese Liste beim ersten
+Lesen übersprungen werden. Im nächsten Abschnitt werden wir dann aber
+auf echten C-Code stoßen, und wir werden dort auf einige dieser Felder
+eingehen, so daß Sie dann eventuell hier nachschlagen möchten.&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>mode_t f_mode;</TT
+></DT
+><DD
+><P
+>&#13;
+
+Der Dateimodus identifiziert die Datei durch die Bits
+<TT
+CLASS="LITERAL"
+>FMODE_READ</TT
+> und
+<TT
+CLASS="LITERAL"
+>FMODE_WRITE</TT
+> als entweder lesbar oder
+schreibbar (oder beides). Es kann nützlich
+sein, dieses Feld auf Lese/Schreib-Erlaubnis in Ihren
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Funktionen zu überprüfen, aber Sie müssen
+die Zugriffsrechte nicht beim <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+> überprüfen, weil der Kernel das schon
+macht, bevor Ihr Treiber aufgerufen wird. Ein Versuch, ohne
+Schreibrechte zu schreiben, wird zurückgewiesen, bevor der Treiber
+überhaupt davon erfährt.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>loff_t f_pos;</TT
+></DT
+><DD
+><P
+>&#13;
+Die aktuelle
+Lese/Schreib-Position. <TT
+CLASS="LITERAL"
+>loff_t</TT
+> ist ein
+64-Bit-Wert (in <SPAN
+CLASS="APPLICATION"
+>gcc</SPAN
+>-Terminologie ein
+<TT
+CLASS="LITERAL"
+>long long</TT
+>). Der Treiber kann diesen Wert auslesen,
+wenn er die aktuelle Position in der Datei wissen muß, sollte diesen
+Wert aber nie verändern (<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+> sollten die Position durch den Zeiger
+aktualisieren, den sie als letztes Argument bekommen, anstatt direkt
+auf <TT
+CLASS="LITERAL"
+>filp-&#62;f_pos</TT
+> zuzugreifen).</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned int f_flags;</TT
+></DT
+><DD
+><P
+>&#13;
+
+Dies sind die Datei-Schalter wie <TT
+CLASS="LITERAL"
+>O_RDONLY</TT
+>,
+<TT
+CLASS="LITERAL"
+>O_NONBLOCK</TT
+> und
+<TT
+CLASS="LITERAL"
+>O_SYNC</TT
+>. Ein Treiber muß den Schalter für das Nicht-Blockieren überprüfen; die anderen Schalter werden
+selten verwendet. Insbesondere sollten Lese/Schreib-Rechte mit
+<TT
+CLASS="LITERAL"
+>f_mode</TT
+> anstelle von
+<TT
+CLASS="LITERAL"
+>f_flags</TT
+> überprüft werden. Alle Flags werden
+in der Header-Datei
+<TT
+CLASS="LITERAL"
+>&#60;linux/fcntl.h&#62;</TT
+> definiert.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct file_operations *f_op;</TT
+></DT
+><DD
+><P
+>&#13;
+Die Operationen, die mit der Datei assoziiert sind. Der Kernel weist
+die Zeiger im Zuge der Implementation von <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> zu
+und liest sie immer, wenn
+er eine Operation weiterleiten muß. Der Wert in
+<TT
+CLASS="LITERAL"
+>filp-&#62;f_op</TT
+> wird nie für später
+abgespeichert; das bedeutet, daß Sie die Datei-Operationen auf Ihrer
+Datei ändern können, wann immer Sie wollen. Die neuen Methoden gelten
+dann unmittelbar nach dem Rücksprung zum Aufrufer. Beispielsweise
+ersetzt der Code für <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>
+für die Major-Nummer 1 (<TT
+CLASS="FILENAME"
+>/dev/null</TT
+>,
+<TT
+CLASS="FILENAME"
+>/dev/zero</TT
+> usw.) die Operationen in
+<TT
+CLASS="LITERAL"
+>filp-&#62;f_op</TT
+> je nachdem, welche
+Minor-Nummer geöffnet wird. Dieses Verfahren erlaubt die
+Implementation unterschiedlichen Verhaltens für die gleiche
+Major-Nummer, ohne daß ein zusätzlicher Systemaufruf eingeführt werden
+muß. Die Möglichkeit, die Datei-Operationen zu ersetzen, ist das
+Kernel-Äquivalent zu der Technik, die in der objektorientierten
+Programmierung <I
+CLASS="FIRSTTERM"
+>Überschreiben von Methoden</I
+>
+genannt wird.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void *private_data;</TT
+></DT
+><DD
+><P
+>&#13;
+Der Systemaufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> setzt diesen Zeiger auf
+<TT
+CLASS="LITERAL"
+>NULL</TT
+>, bevor die <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>-Methode
+des Treibers aufgerufen wird. Der Treiber kann dieses Feld für seine
+eigenen Zwecke verwenden oder ignorieren. Er kann das Feld auch
+verwenden, um auf allozierte Daten zu verweisen, muß es dann aber in
+der <SPAN
+><I
+CLASS="EMPHASIS"
+>release</I
+></SPAN
+>-Methode wieder freigeben, bevor die
+<TT
+CLASS="LITERAL"
+>file</TT
+>-Struktur vom Kernel zerstört
+wird. <TT
+CLASS="LITERAL"
+>private_data</TT
+> ist eine gute
+Möglichkeit, um Zustandsinformationen zwischen Systemaufrufen
+abzuspeichern und wird von den meisten unserer Beispielmodule
+verwendet.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct dentry *f_dentry;</TT
+></DT
+><DD
+><P
+>&#13;
+
+Die Verzeichniseintrag-Struktur (<I
+CLASS="FIRSTTERM"
+>dentry</I
+>, von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>directory entry</I
+></SPAN
+>), die zur Datei gehört. Dentries
+sind eine in der 2.1-Serie eingeführte Optimierung. Autoren von
+Gerätetreibern müssen sich &#8212; abgesehen vom Zugriff auf die
+<TT
+CLASS="LITERAL"
+>inode</TT
+>-Struktur als
+<TT
+CLASS="LITERAL"
+>filp-&#62;f_dentry-&#62;d_inode</TT
+> &#8212; normalerweise nicht
+mit Dentry-Strukturen befassen.</P
+></DD
+></DL
+></DIV
+><P
+>Die tatsächliche Struktur hat noch einige weitere Felder, die aber für
+Gerätetreiber nicht nützlich sind. Wir können diese Felder problemlos
+ignorieren, weil Treiber <TT
+CLASS="LITERAL"
+>file</TT
+>-Strukturen nie
+füllen; sie greifen nur auf andernorts erzeugte Strukturen zu.
+
+&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="charfops.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x2969.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Datei-Operationen</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="char.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>open und release</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

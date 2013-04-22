@@ -1,0 +1,615 @@
+%% LyX 1.3 created this file.  For more info, see http://www.lyx.org/.
+%% Do not edit unless you really know what you are doing.
+\documentclass[english,german,german , dvips]{slides}
+\usepackage[T1]{fontenc}
+\usepackage[latin1]{inputenc}
+\pagestyle{plain}
+\usepackage{amsmath}
+\usepackage{color}
+\usepackage{amssymb}
+
+\makeatletter
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LyX specific LaTeX commands.
+\newcommand{\lyxline}[1]{
+  {#1 \vspace{1ex} \hrule width \columnwidth \vspace{1ex}}
+}
+\newcommand{\noun}[1]{\textsc{#1}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Textclass specific LaTeX commands.
+ \newcounter{slidetype}
+ \setcounter{slidetype}{0}
+ \newif\ifLyXsNoCenter
+ \LyXsNoCenterfalse
+ \newcommand{\noslidecentering}{
+    \LyXsNoCentertrue%
+ }
+ \newcommand{\slidecentering}{
+    \LyXsNoCenterfalse%
+ }
+ \newcommand{\lyxendslide}[1]{
+    \ifLyXsNoCenter%
+         \vfill%
+    \fi%
+    \ifcase \value{slidetype}%
+         \or % no action for 0
+         \end{slide} \or%
+         \end{overlay} \or%
+         \end{note}%
+    \fi%
+    \setcounter{slidetype}{0}
+\visible
+ }
+ \AtEndDocument{\lyxendslide{.}}
+ \newcommand{\lyxnewslide}[1]{
+    \lyxendslide{.}
+    \setcounter{slidetype}{1}
+    \begin{slide}
+ }
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
+\usepackage[T1]{fontenc}
+\usepackage[latin1]{inputenc}
+\usepackage{geometry}
+\geometry{verbose,paperwidth=310mm,paperheight=210mm,tmargin=10mm,bmargin=10mm,lmargin=15mm,rmargin=15mm,headheight=0mm,headsep=0mm,footskip=0mm}
+\setlength\parskip{\smallskipamount}
+\setlength\parindent{0pt}
+\pagestyle{plain}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{array}
+\usepackage{amsmath}
+%\usepackage[dvips]{color}
+%\usepackage[dvips]{graphicx}
+\usepackage{amssymb}
+
+\makeatletter
+
+\usepackage{amsmath, amsfonts ,amssymb, german, theorem} 
+\theorembodyfont{\normalfont}
+\theoremstyle{break}
+\newtheorem{Def}{\underline{Definition}}
+
+\theorembodyfont{\normalfont}
+\theoremstyle{break}
+\newtheorem{Sat}{\underline{Satz}}
+
+\theorembodyfont{\normalfont}
+\theoremstyle{break}
+\newtheorem{Bem}{\underline{Bemerkung}}
+
+\theorembodyfont{\normalfont}
+\theoremstyle{break}
+\newtheorem{Bei}{\underline{Beispiel}}
+
+\newcommand{\ggT}{ \textrm{ggT} }
+\newcommand{\kgV}{ \textrm{kgV} }
+\newcommand{\R}{\textrm{r} }
+
+\usepackage{babel}
+\makeatother
+
+\usepackage{babel}
+\makeatother
+\begin{document}
+\begin{flushleft}\textbf{\large Seminar: Computeralgebra 1}\\
+\end{flushleft}
+
+\lyxline{\Huge}\vspace{-1\parskip}
+\begin{center}\textcolor{red}{\noun{\Huge Thema 7 : }}\\
+\textcolor{red}{\noun{\Huge }}\\
+\textcolor{red}{\noun{\Huge Berechnung des Minimalplolynoms zu einem
+Endomorphismus }}\\
+\textcolor{red}{\noun{\Huge }}\\
+\textcolor{red}{\noun{\Huge Die Algorithmen Ordpoly und Minpoly}}\end{center}{\Huge \par}
+\lyxline{\Huge}
+
+\begin{flushleft}Hannes Buchholzer \end{flushleft}
+
+
+\lyxnewslide{}
+
+\noindent \textbf{\textcolor{black}{\underbar{\Huge Generalvoraussetzungen:}}}\\
+\\
+ \textcolor{black}{\huge Seien $K$ ein Körper, $R$ ein euklidischer
+Ring, $V$ ein $K$-Vektorraum mit $dimV=n\:(n\in\mathbb{N})$, $\tau\in End(V)$
+, und $M$ ein eindlich erzeugter Modul über $R$.}{\huge \par}
+
+
+\lyxnewslide{}
+
+\textcolor{blue}{\Huge Gliederung:}\textcolor{blue}{\huge }\\
+{\huge \par}
+
+\textcolor{black}{\huge 1. Wiederholung}\\
+{\huge \par}
+
+\textcolor{black}{\huge 2. Der Algorithmus Ordpoly}\\
+{\huge \par}
+
+\textcolor{black}{\huge 3. Der Algorithmus Minpoly}{\huge \par}
+
+\vspace*{\fill}
+
+
+\lyxnewslide{}
+
+\textcolor{blue}{\Huge 1 Wiederholung}{\Huge \par}
+
+\begin{enumerate}
+\item Der Polynomring $K[X]$ ist ein euklidischer Ring, insbesondere ein
+Hauptidealring (HIR). 
+\item Das Annulatorideal von M ist $A(M):=\{ r\in R\mid rm=0\:\forall m\in M\}$. 
+\item Das Ordnungsideal von $m\in M$ ist $O(m):=\{ r\in R\mid r\cdot m=0\}$.
+$O(m)$ ist ein Ideal. 
+\item Ein Element $m\in M$ heißt Torsionselement, wenn $O(m)\supsetneqq\{0\}$.
+Ist jedes $m\in M$ Torsionselement, so heißt $M$ Torsionsmodul.
+\vspace*{\fill}
+\end{enumerate}
+
+\lyxnewslide{}
+
+\textcolor{blue}{\huge 1 Wiederholung}\\
+{\huge \par}
+
+\begin{Def}[ {\(K[X]\)-Modul \(V_{\tau}\)} ]
+Sei \( f \in K[X]\) und \(v \in V\). Durch die Definition 
+\( f \cdot v :=  (f(\tau))(v) \) wird \(V\) zu einem \(K[X]\)-Modul, bezeichnet mit \(V_{\tau}\).\\*[16pt]
+
+\end{Def}
+
+
+
+
+
+
+
+
+
+\begin{Bem}
+
+1. Für Elemente $k\in K\subset K[X]$ folgt aus diese Definition:
+$k\cdot v=k\cdot\tau^{0}(v)=$ \\
+$k\star v$ , wobei $\star$ die Skalarmultiplikation im $K$-Vektorraum
+$V$ bezeichnet. \\
+2. Der Modul $V_{\tau}$ ist endlich erzeugt. \\
+3. Außerdem ist $V_{\tau}$ ein Torsionsmodul.  \\
+ \end{Bem}
+
+\vspace*{\fill}
+
+
+\lyxnewslide{}
+
+\textcolor{blue}{\Huge 2. Der Algorithmus Ordpoly}{\Huge \par}
+
+\selectlanguage{english}
+\begin{itemize}
+\item Definition des Ordnungspolynoms
+\item Beispiel zur Berechnung des Ordnungspolynoms
+\item Ordnungspolynom in einem Faktorraum $V/U$
+\item Algorithmus Ordpoly\foreignlanguage{german}{\vspace*{\fill}}
+\end{itemize}
+
+\lyxnewslide{}
+
+\selectlanguage{german}
+\textcolor{blue}{\huge Definition des Ordnungspolynoms}\\
+{\huge \par}
+
+\begin{Def}[Ordnungspolynom]
+ 
+
+Sei $v\in V$. Das Polynom $o\in K[X]$ heißt Ordnungspolynom von
+$v$, wenn gilt: \\
+$o$ ist normiert und $(o)=K[X]o=O(v)$ \\*[16pt]
+
+\end{Def}
+
+\begin{Bem} 
+
+1. Das Ordnungspolynom ist eindeutig bestimmt, weil $K[X]$ ein   H.I.R.
+ist und weil es normiert ist.
+
+2. Allgemein gilt: Jedes Ideal $I\subset K[X]$ wird von allen Polynomen
+des kleinsten Grades in $I$ erzeugt.
+
+\end{Bem}
+
+\vspace*{\fill}
+
+
+\lyxnewslide{}
+
+\textcolor{blue}{\huge Beispiel zur Berechnung des Ordnungspolynoms}\\
+{\huge \par}
+
+\begin{Bei}
+
+Hier ist $K=\mathbb{Z}_{5}\;,\; V=\left(\mathbb{Z}_{5}\right)^{3}$
+und $End(V)=Mat(3\times3,\mathbb{Z}_{5})$.\\
+Sei $\tau=A\in Mat(3\times3,\mathbb{Z}_{5})\;,\; A:=\left(\begin{array}{ccc}
+3 & 0 & 0\\
+2 & 1 & 0\\
+4 & 1 & 2\end{array}\right)$und $v\in\left(\mathbb{Z}_{5}\right)^{3}\;,\; v:=\left(\begin{array}{c}
+1\\
+2\\
+1\end{array}\right)$.\\
+Berechne: $Av=\left(\begin{array}{c}
+3\\
+4\\
+3\end{array}\right)\;,\; A^{2}v=\left(\begin{array}{c}
+4\\
+0\\
+2\end{array}\right)\;,\; A^{3}v=\left(\begin{array}{c}
+2\\
+3\\
+0\end{array}\right)$.\\
+Bestimmes $s$ minimal, so daß $v,Av,\ldots,A^{s}v$ linear abhängig
+sind. Hier $s=3$.\\
+$A^{3}v=v+4Av+A^{2}v\quad\Longrightarrow\quad A^{3}v+4A^{2}v+Av+4v=0$
+\\
+$\Longrightarrow\;\left(A^{3}+4A^{2}+A+4E\right)v=0\quad\Longrightarrow\quad(X^{3}+4X^{2}+X+4)v=0$.\\
+Dann ist $o:=X^{3}+4X^{2}+X+4$ das Ordnungspolynom von $v$.
+
+\end{Bei}
+
+\vspace*{\fill}
+
+
+\lyxnewslide{}
+
+\textcolor{blue}{\huge Ordnungspolynom in $V/U$}\\
+{\huge \par}
+
+Dies erfordert den Übergang zum $K[X]$-Faktormodul $V_{\tau}/U_{\tau}$:
+\\*
+
+\begin{enumerate}
+\item Die Untermoduln von $V_{\tau}$ sind gerade diejenigen Unterräume
+$U$ von $V$ die $\tau(U)\subset U$ ( d.h. $U$ ist $\tau$-invariant
+) erfüllen , hier bezeichnet mit $U_{\tau}$. 
+\item Der Endomorphismus $\tau$ muss nun verändert werden: Setze \[
+\overline{\tau}\::\: V_{\tau}/U_{\tau}\longrightarrow V_{\tau}/U_{\tau}\quad;\:\overline{\tau}(\overline{v})=\overline{\tau(v)}\]
+ Dies ist die kanonische Definition. 
+\item Die Addition ist gegeben durch $\overline{v}+\overline{w}=\overline{v+w}\quad\forall\, v,w\in V_{\tau}$.
+Und die Multiplikation ist gegeben durch $p\cdot\overline{v}=p(\overline{\tau})(\overline{v})=\overline{p(\tau)(v)}\quad\forall p\in K[X]\;\forall v\in V$.
+$\qquad\Rightarrow$ Man rechnet ganz in $V_{\tau}$ und macht erst
+zum Schluss der Rechnung den Übergang modulo $U_{\tau}$. \vspace*{\fill}
+\end{enumerate}
+
+\lyxnewslide{}
+
+\textcolor{blue}{\huge Algorithmus Ordpoly}\\
+{\huge \par}
+
+Sei $\overline{v}\in V_{\tau}/U_{\tau}$ , und $U\:\tau$-invariant.
+Weiter sei $b_{0},\ldots\,\, b_{k}$ eine Basis von $U_{\tau}$.\\
+ Setzte $i:=0$\\
+ Wiederhole solange die Vektoren $b_{0},\ldots,b_{k},v,\tau(v),\ldots,\tau^{i}(v)$
+linear unabhängig sind ( dies wird mit der Funktion gauss getestet
+) : setzte $i:=i+1$ . \\
+ Setze $m:=i$.\\
+ Die Funktion gauss liefert dann einen Vektor $f$, so daß gilt :
+\[
+\tau^{m}(v)=f_{0}b_{0}+\cdots+f_{k}b_{k}+f_{k+1}v+\cdots+f_{k+m}\tau^{m-1}(v)\]
+\\
+ Setze $w:=(f_{0},\ldots,f_{k})$ \hspace{12pt} ( Anteil in $U_{\tau}$
+) \\
+ Setze $f:=(f_{k+1},\ldots,f_{k+m})$ \hspace{12pt} ( Anteil im direkten
+Komplement von $U_{\tau}$ ). \\
+ Dann gilt: $\tau^{m}(v)-f_{m-1}\tau^{m-1}(v)-\cdots-f_{0}v=w_{0}b_{0}+\cdots+w_{k}b_{k}$.\\
+ modulo $U_{\tau}$: $\quad\overline{\tau}^{m}(\overline{v})-f_{m-1}\overline{\tau}^{m-1}(\overline{v})-\cdots-f_{0}\overline{v}=\overline{0}$\\
+ Setze $o:=X^{m}-f_{m-1}X^{m-1}-\cdots-f_{1}X-f_{0}$ .\\
+ Dann ist $o$ das Ordnungspolynom.
+
+\vspace*{\fill}
+
+
+\lyxnewslide{}
+
+\textcolor{blue}{\Huge 3. Der Algorithmus Minpoly}{\Huge \par}
+
+\begin{itemize}
+\item Definition des Minimalpolynoms
+\item Beispiel zur Berechnung eines Minimalpolynoms
+\item Theoretische Bestimmung des Minimalpolynoms
+\item Bestimmung eines maximalen Vektors
+\item Algorithmus Minpoly\vspace*{\fill}
+\end{itemize}
+
+\lyxnewslide{}
+
+\textcolor{blue}{\huge Definition des Minimalpolynoms}\\
+{\huge \par}
+
+\begin{Def}[Minimalpolynom]
+
+
+
+
+Sei $\tau\in End(V)$. Das Polynom $m\in K[X]$ heißt Minimalpolynom
+von $\tau$ , wenn gilt: $m$ ist normiert und $(m)=K[X]m=A(V_{\tau})=\{ p\in K[X]\mid p\cdot v=0\quad\forall v\in V_{\tau}\}$
+
+\end{Def}
+
+\vspace*{\fill}
+
+
+\lyxnewslide{}
+
+\textcolor{blue}{\huge Beispiel zur Berechnung eines Minimalpolynoms}\\
+{\huge \par}
+
+\begin{Bei}
+
+Hier ist $K=\mathbb{Z}_{5}\;,\; V=\left(\mathbb{Z}_{5}\right)^{4}$
+und $End(V)=Mat(4\times4,\mathbb{Z}_{5})$. 
+
+Gegeben: Basis von $V$ : $v_{0}=\left(\begin{array}{c}
+0\\
+1\\
+0\\
+0\end{array}\right)\;,\; v_{1}=\left(\begin{array}{c}
+2\\
+2\\
+4\\
+1\end{array}\right)\;,\; v_{2}=\left(\begin{array}{c}
+3\\
+3\\
+2\\
+0\end{array}\right)\;,\; v_{3}=\left(\begin{array}{c}
+2\\
+0\\
+0\\
+0\end{array}\right)$.\\
+ein Endomorphismus $A=\tau\in Mat(4\times4,\mathbb{Z}_{5})$ $\;,\; A:=\left(\begin{array}{cccc}
+3 & 4 & 2 & 4\\
+0 & 1 & 3 & 0\\
+0 & 0 & 1 & 4\\
+0 & 0 & 0 & 2\end{array}\right)$\\
+und die Ordnungspolynome zu den Basisvektoren:\\
+$\begin{array}{ll}
+o_{0}=X^{2}+X+3=(X+2)(X+4) & \quad o_{1}=X^{2}+1=(X+2)(X+3)\\
+o_{2}=X^{3}+2X+2=(X+2)(X+4)^{2} & \quad o_{3}=X+2\end{array}$
+
+\end{Bei}
+
+\vspace*{\fill}
+
+
+\lyxnewslide{}
+
+\textcolor{blue}{\huge Beispiel (Fortsetzung)}{\huge \par}
+
+\enlargethispage{1cm}
+
+\textbf{\textcolor{black}{Schritt 0}}\textcolor{black}{:} Setze: $m=o_{0}$
+und $v=v_{0}$.
+
+\textbf{\textcolor{black}{Schritt 1:}} \textcolor{black}{Setze: $\: c:=m=(X+2)(X+4)=X^{2}+X+3$}\\
+\phantom{{\bf Schritt 1:} Setze: }$d:=o_{1}=(X+2)(X+3)=X^{2}+1$\textcolor{black}{}\\
+\textcolor{black}{Berechne:}\begin{eqnarray*}
+t & := & \ggT(c,d)=X+2\\
+C & := & \R(c,\frac{d}{t})=\R(c\:,\:(X+3)\,)=(X+2)(X+4)=X^{2}+X+3\\
+D & := & \R(d,\frac{c}{t})=\R(d\:,\:(X+4)\,)=(X+2)(X+3)=X^{2}+1\\
+T & := & \ggT(C,D)=X+2\\
+D_{2} & := & \frac{D}{T}=X+3\\
+m & := & CD_{2}=(X+2)(X+3)(X+4)=X^{3}+4X^{2}+X+4\\
+v & := & \frac{c}{C}\cdot v+\frac{d}{D_{2}}\cdot v_{1}=1\cdot\left(\begin{array}{c}
+0\\
+1\\
+0\\
+0\end{array}\right)+(X+2)\left(\begin{array}{c}
+2\\
+2\\
+4\\
+1\end{array}\right)=\left(\begin{array}{c}
+0\\
+4\\
+1\\
+4\end{array}\right)\end{eqnarray*}
+
+
+\vspace*{\fill}
+
+
+\lyxnewslide{}
+
+\textcolor{blue}{\huge Beispiel (Fortsetzung)}{\huge \par}
+
+\textbf{\textcolor{black}{Schritt 2:}} \textcolor{black}{Setze: $c:=m=(X+2)(X+3)(X+4)=X^{3}+4X^{2}+X+4$}\\
+\phantom{{\bf Schritt 2:} Setze: }$d:=o_{2}=(X+2)(X+4)^{2}=X^{3}+2X+2$\textcolor{black}{}\\
+\textcolor{black}{Berechne:}\begin{eqnarray*}
+t & := & \ggT(c,d)=(X+2)(X+4)=X^{2}+X+3\\
+C & := & \R(c,\frac{d}{t})=\R(\, c,\:(X+4)\,)=(X+2)(X+3)=X^{2}+1\\
+D & := & \R(d,\frac{c}{t})=\R(\, d,\:(X+3)\,)=(X+2)(X+4)^{2}=X^{3}+2X+2\\
+T & := & \ggT(C,D)=X+2\\
+D_{2} & := & \frac{D}{T}=(X+4)^{2}=X^{2}+3X+1\\
+m & := & CD_{2}=(X+2)(X+3)(X+4)^{2}=X^{4}+3X^{3}+2X^{2}+3X+1\\
+v & := & \frac{c}{C}\cdot v+\frac{d}{D_{2}}\cdot v_{2}=(X+4)\left(\begin{array}{c}
+0\\
+4\\
+1\\
+4\end{array}\right)+(X+2)\left(\begin{array}{c}
+3\\
+3\\
+2\\
+0\end{array}\right)=\left(\begin{array}{c}
+0\\
+3\\
+2\\
+4\end{array}\right)\end{eqnarray*}
+Hier Abbruch der Berechnungen, denn das Minimalpolynom $m$ kann nach
+der Theorie nicht mehr größer werden.\vspace*{\fill}
+
+
+\lyxnewslide{}
+
+\textcolor{blue}{\huge Bestimmung des Minimalpolynoms}\\
+{\huge \par}
+
+\textbf{\textcolor{black}{1. Schritt:}}
+
+Es sei $m\in K[X]$ das Minimalpolynom von $\tau$. Dann gilt \begin{equation}
+K[X]m=A(V_{\tau})=\bigcap_{v\in V}O(v)\label{eq:1}\end{equation}
+ nach Definition.
+
+\vspace*{\fill}
+
+
+\lyxnewslide{}
+
+\textcolor{blue}{\huge Bestimmung des Minimalpolynoms}\\
+{\huge \par}
+
+\textbf{\textcolor{black}{2. Schritt:}}
+
+Sei $E=(e_{0},e_{1},\ldots,e_{k})$ ein endliches Erzeugendensystem
+von $V_{\tau}$. Wegen dem Satz 1 , reicht es den Schnitt in (\ref{eq:1})
+nur über das Erzeugendensystem $E$ zu bilden:\[
+K[X]m=\bigcap_{i=0}^{k}O(e_{i})\]
+\\
+
+
+\begin{Sat}
+Sei \(e_{0}, e_{1} , \ldots , e_{k} \) ein Erzeugendensystem von dem \(R\)-Modul \(M\). Dann gilt : \[A(M) = \bigcap_{i=0}^{k} O(e_{i}) \]
+\end{Sat}
+
+\vspace*{\fill}
+
+
+\lyxnewslide{}
+
+\textcolor{blue}{\huge Bestimmung des Minimalpolynoms}\\
+{\huge \par}
+
+\textbf{\textcolor{black}{3. Schritt:}}
+
+Sei $o_{i}\in K[X]$ das Ordnungspolynom von $e_{i}$ für $i=0,\ldots,k$
+d.h. $K[X]o_{i}=O(e_{i})\quad(i=0,\ldots,k)$. Dann gilt nach Satz
+2 : \[
+K[X]m=\bigcap_{i=0}^{k}K[X]o_{i}=K[X]\cdot\kgV(o_{0},\ldots,o_{k})\]
+
+
+$\Longrightarrow\quad m\in\kgV(o_{0},\ldots,o_{k})$
+
+\begin{Sat}
+Seien \( b_{0}, \ldots , b_{m} \in R \). Dann gilt: \[ \bigcap_{i=0}^{m} R b_{i} = R \cdot  \kgV(b_{0}, \ldots , b_{m}) \]
+\end{Sat}
+
+
+
+\vspace*{\fill}
+
+
+\lyxnewslide{}
+
+\textcolor{blue}{\huge Bestimmung des Minimalpolynoms}\\
+{\huge \par}
+
+\begin{Bem}
+ Seien \( r_{0},\ldots,r_{m},r,s \in R \). Dann gilt:   
+\begin{eqnarray*}
+\kgV(r_{0},\ldots ,r_{m}) & = & \kgV(r_{0},\kgV(r_{1},\ldots ,r_{m}) ) \\
+\kgV(r,s) & = & \frac{rs}{ \ggT(r,s) }
+\end{eqnarray*}
+
+\end{Bem}
+
+\vspace*{\fill}
+
+
+\lyxnewslide{}
+
+\textcolor{blue}{\huge Bestimmung eines maximalen Vektors}\\
+{\huge \par}
+
+\begin{Sat}
+Seien \(c,d \in R\). Setzte: \( \quad t:= \ggT(c,d) \: , \: C:=r(c, \frac{d}{t} )\) und \(D:= r(d, \frac{c}{t} )\). Dann gilt:
+\[ \kgV(c,d) = \kgV(C,D) \]
+\end{Sat}
+
+
+
+\begin{Bei} 
+Seien \(c=2^{3}3^{2}5^{4},\, d=2^{3}37^{2}\in \mathbb{Z}\). 
+Dann ist: \(t=\ggT (c,d)=2^{3}3\; \Rightarrow \; \frac{c}{t}=35^{4}\: ,\: \frac{d}{t}=7^{2}\). 
+Weiter ist: \( C=r(c,\frac{d}{t})=r(2^{3}3^{2}5^{4},\, 7^{2})=2^{3}3^{2}5^{4}\quad D=r(d,\, \frac{c}{t})=r(2^{3}37^{2},\, 35^{4})=2^{3}7^{2}\)
+und \(T=\ggT (C,D)=2^{3}\; \) 
+
+
+\( \Rightarrow \; \kgV (C,D)=\frac{CD}{T}=2^{3}3^{2}5^{4}7^{2}\).
+
+\end{Bei}
+
+\vspace*{\fill}
+
+
+\lyxnewslide{}
+
+\textcolor{blue}{\huge Bestimmung eines maximalen Vektors}\\
+{\huge \par}
+
+\begin{Sat}
+Seien \(v_{0}, v_{1} \in M\) Torsionselemente. Ferner sei \(O(v_{0}) = R c \) und \(O(v_{1}) = R d\). Setze:   \( \quad  C:=r(c, \frac{d}{\ggT(c,d)} ) \: , \: D:= r(d, \frac{c}{\ggT(c,d)} )\) und \( D_{2}:=\frac{D}{\ggT(C,D)}\). Setze ferner \(v:= \frac{c}{C} v_{0} + \frac{d}{D_{2}} v_{1}\). Dann gilt: \[ O(v) = O(v_{0}) \cap O(v_{1}) = Rc \cap Rd = R \cdot \kgV(c,d) \]
+\end{Sat}
+
+\vspace*{\fill}
+
+
+\lyxnewslide{}
+
+\textcolor{blue}{\huge Algorithmus Minpoly}\\
+{\huge \par}
+
+Sei $v_{0},v_{1},\ldots,v_{n-1}$ eine Basis von $V$. Dann ist $\overline{v_{0}},\overline{v_{1}},\ldots,\overline{v_{n-1}}$
+ein Erzeugendensystem von $V_{\tau}/U_{\tau}$ ( auch $U_{\tau}=\{0\}$
+möglich ).Bestimme Minimalpolynom von $\overline{\tau}$ .\\
+
+
+\textbf{Vorarbeit:}~ Berechne Ordnungspolynom von $\overline{v_{i}}$
+und speichere es in $ordpol[i]$ für $\: i=0,\ldots,n-1$ . 
+
+\textbf{Schritt~0:}~ Setze $\overline{v}$ und $m$ wie folgt: \begin{eqnarray*}
+\overline{v} & := & \overline{v_{0}}\\
+m & := & ordpol[0]\end{eqnarray*}
+
+
+\vspace*{\fill}
+
+
+\lyxnewslide{}
+
+\textcolor{blue}{\huge Algorithmus Minpoly}{\huge \par}
+
+\textbf{Schritt~i:}~ ( Für $i=1,\ldots,n-1$ ) \\
+ Setze: $\qquad c:=m\:$ und $d:=ordpol[i]$ \\
+,~wobei $m=\kgV(ordpol[0],\ldots,ordpol[i-1])$\\
+ Berechne Hilfsvariblen: $\qquad t:=\ggT(c,d)\:,\: C:=r(c,\frac{d}{t})\:,\: D:=r(d,\frac{c}{t})\:,\: T:=\ggT(C,D)\:$
+und $\: D_{2}:=\frac{D}{T}$. \\
+ Berechne neues $m$ und neues $\overline{v}$ : \begin{eqnarray*}
+m:= & C\cdot D_{2} & \quad(\textrm{ d}.\textrm{h}.\: m:=\kgV(m,orpol[i])\:\:)\\
+\overline{v}:= & \frac{c}{C}\overline{v}+\frac{d}{D_{2}}\overline{v_{i}} & \quad(\textrm{ d}.\textrm{h}.\: O(\overline{v})=K[X]m\:\:)\end{eqnarray*}
+ Falls $grad(m)=dimV-dimU$ verlasse Schleife vorzeitig. 
+
+\textbf{Nacharbeit:} Normiere $m$. 
+
+\vspace*{\fill}
+
+
+\lyxnewslide{}
+
+\textcolor{blue}{\huge Algorithmus Minpoly}{\huge \par}
+
+\textbf{Ergebnis:}~ ~
+
+Es ist $m=\kgV(\, ordpol[0],\ldots,ordpol[n-1]\,)$ Also ist $K[X]m=\bigcap_{i=0}^{n-1}K[X]ordpol[i]=\bigcap_{i=0}^{n}O(\overline{v_{i}})=A(V_{\tau}/U_{\tau})\:$
+nach den Sätzen 1 und 2 . Damit ist $m$ das Minimalpolynom von $\overline{\tau}$
+nach der Definition 1. 
+
+Es ist $O(\overline{v})=\bigcap_{i=0}^{n-1}{O(\overline{v_{i}})}=K[X]m$
+nach Satz 4. Also hat $\overline{v}$ das Polynom $m$ als Ordnungspolynom. 
+
+\vspace*{\fill}
+\end{document}

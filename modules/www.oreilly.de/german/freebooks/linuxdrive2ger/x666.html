@@ -1,0 +1,1114 @@
+<HTML
+><HEAD
+><TITLE
+>Kompilieren und Laden</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Module erstellen und starten"
+HREF="building.html"><LINK
+REL="PREVIOUS"
+TITLE="Module erstellen und starten"
+HREF="building.html"><LINK
+REL="NEXT"
+TITLE="Die Symboltabelle des Kernels"
+HREF="x956.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="building.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 2. Module erstellen und starten</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x956.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN666"
+>Kompilieren und Laden</A
+></H1
+><P
+>&#13;Im Rest dieses Kapitels werden wir ein vollständiges, wenn auch
+typenloses Modul schreiben, das heißt, das Modul wird nicht zu einer der in
+&#8220;<A
+HREF="anclass.html"
+>the Section called <I
+>Klassen von Geräten und Modulen</I
+> in Kapitel 1</A
+>&#8221; in <A
+HREF="anintro.html"
+>Kapitel 1</A
+>
+genannten Klassen gehören.
+Der Beispiel-Treiber, den wir Ihnen in diesem Kapitel zeigen werden,
+heißt <SPAN
+CLASS="APPLICATION"
+>skull</SPAN
+>, was ein Akronym für &#8220;Simple
+Kernel Utility for Loading Localities&#8221; ist. Sie können den
+Source-Code von <SPAN
+CLASS="APPLICATION"
+>skull</SPAN
+> verwenden, um Ihren eigenen
+lokalen Code in den Kernel zu laden, wenn Sie die darin enthaltene
+Beispiel-Funktionalität entfernen.<A
+NAME="AEN675"
+HREF="#FTN.AEN675"
+>[1]</A
+></P
+><P
+>Bevor wir uns mit der Aufgabe von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>init_module</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>cleanup_module</I
+></SPAN
+> beschäftigen, werden wir
+ein <TT
+CLASS="FILENAME"
+>makefile</TT
+> schreiben, mit dem Objektcode
+erzeugt wird, den der Kernel laden kann.&#13;</P
+><P
+>&#13;
+
+Zunächst müssen wir das Präprozessor-Symbol
+<TT
+CLASS="LITERAL"
+>__KERNEL__</TT
+> definieren, bevor wir
+irgendwelche Header-Dateien einbinden. Wie bereits erwähnt, ist ein
+großer Teil des Kernel-spezifischen Inhalts in den
+Kernel-Header-Dateien unerreichbar, wenn dieses Symbol nicht definiert ist.</P
+><P
+>&#13;Ein weiteres wichtiges Symbol ist <TT
+CLASS="LITERAL"
+>MODULE</TT
+>, das
+definiert sein muß, bevor <TT
+CLASS="LITERAL"
+>&#60;linux/module&#62;</TT
+>
+eingebunden wird. Dieses Symbol ist immer definiert, es sei denn, es
+wird ein Treiber kompiliert, der direkt zum Kernel hinzugelinkt
+wird. Da keiner der Treiber, die wir in diesem Buch behandeln werden,
+direkt zum Kernel hinzugelinkt wird, definieren wir dieses Symbol
+in diesem Buch immer.&#13;</P
+><P
+>Wenn Sie Code für einen
+
+
+SMP-Rechner kompilieren, dann müssen Sie
+auch
+<TT
+CLASS="LITERAL"
+>__SMP__</TT
+>
+definieren, bevor Sie Kernel-Header-Dateien einbinden. In der Version
+2.2 wurde die Wahl zwischen Multiprozessor und Einzelprozessor zu
+einem richtigen Konfigurationselement, weswegen es ausreicht, diese
+Zeilen am Anfang Ihres Moduls zu verwenden:
+
+
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; #include &#60;linux/config.h&#62;
+ #ifdef CONFIG_SMP
+ # define _&#8201;_SMP_&#8201;_
+ #endif</PRE
+></TD
+></TR
+></TABLE
+>
+
+&#13;</P
+><P
+>&#13;Ein Modul-Programmierer muß darüber hinaus den Compiler-Schalter
+<SPAN
+><I
+CLASS="EMPHASIS"
+>&#8211;O</I
+></SPAN
+> auf der Kommandozeile angeben, da
+viele Funktionen in den Header-Dateien als <TT
+CLASS="LITERAL"
+>inline</TT
+>
+deklariert sind. <SPAN
+CLASS="APPLICATION"
+>gcc</SPAN
+> expandiert Inline-Funktionen
+nicht, wenn die Optimierung nicht eingeschaltet ist, kommt aber auch
+mit gleichzeitiger Angabe von <SPAN
+><I
+CLASS="EMPHASIS"
+>&#8211;g</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>&#8211;O</I
+></SPAN
+> klar, so daß Sie auch Code, der
+Inline-Funktionen verwendet, debuggen können.<A
+NAME="AEN712"
+HREF="#FTN.AEN712"
+>[2]</A
+> Weil der Kernel umfassenden Gebrauch von
+Inline-Funktionen macht, ist es wichtig, daß diese korrekt expandiert
+werden.</P
+><P
+>Sie müssen außerdem sicherstellen, daß der Compiler, den Sie
+verwenden, zum Kernel paßt, den Sie kompilieren; lesen Sie dazu
+die Datei <TT
+CLASS="FILENAME"
+>Documentation/Changes</TT
+> in den
+Kernel-Quellen. Der Kernel und der Compiler werden zur gleichen Zeit
+von verschiedenen Gruppen entwickelt, so daß manchmal Änderungen
+an dem einen Fehler im anderen hervorrufen können. Manche
+Distributionen (besonders Red Hat ist dafür bekannt) liefern eine
+Version des Compilers aus, die zu neu ist, um den Kernel zuverlässig
+bauen zu können. In diesem Fall gibt es normalerweise ein separates
+Paket (das oft <B
+CLASS="COMMAND"
+>kgcc</B
+> heißt) mit einem für die
+Kernel-Kompilierung geeigneten Compiler.</P
+><P
+>&#13;
+Schließlich möchten wir Ihnen raten, daß Sie den Compiler-Schalter
+<SPAN
+><I
+CLASS="EMPHASIS"
+>&#8211;Wall</I
+></SPAN
+> (alle Warnungen) verwenden, um
+unliebsame Überraschungen vermeiden, und daß Sie Ihren Code so ändern,
+daß der Compiler keine Warnungen ausgibt, selbst wenn das
+bedeutet, daß Sie Ihren üblichen Programmierstil ändern müssen. Beim
+Schreiben von Kernel-Code ist der bevorzugte Code-Stil eindeutig der
+von Linus selbst. <TT
+CLASS="FILENAME"
+>Documentation/CodingStyle</TT
+> liest
+sich recht amüsant und ist eine obligatorische Lerneinheit für alle,
+die sich für das Kernel-Hacken interessieren.&#13;</P
+><P
+>&#13;Es ist am besten, alle bisher eingeführten Definitionen und Schalter
+in der von <SPAN
+CLASS="APPLICATION"
+>make</SPAN
+> verwendeten Variable
+<TT
+CLASS="LITERAL"
+>CFLAGS</TT
+> unterzubringen.&#13;</P
+><P
+>Außer einer passenden <TT
+CLASS="LITERAL"
+>CFLAGS</TT
+>-Variable muß das
+<TT
+CLASS="FILENAME"
+>Makefile</TT
+> eine Regel enthalten, um die einzelnen
+Objektdateien zu verbinden. Diese Regel wird nur benötigt, wenn
+das Modul über verschiedene Quelldateien verteilt ist, was aber bei
+Modulen nicht unüblich ist. Die Module werden mit dem Befehl
+<TT
+CLASS="LITERAL"
+>ld -r</TT
+> zusammengelinkt.
+
+Genauer gesagt, ist das kein Link-Vorgang, auch wenn der Linker
+verwendet wird. Die Ausgabe ist eine neue Objektdatei, die den
+Code aller Eingabedateien enthält. Die Option
+<SPAN
+><I
+CLASS="EMPHASIS"
+>&#8211;r</I
+></SPAN
+> steht für <SPAN
+><I
+CLASS="EMPHASIS"
+>relocatable</I
+></SPAN
+>, die
+Ausgabedatei ist relozierbar, da
+sie noch keine absoluten Adressen enthält.&#13;</P
+><P
+>Das folgende <TT
+CLASS="FILENAME"
+>makefile</TT
+> ist ein minimales Beispiel,
+das zeigt, wie man ein Modul aus zwei Quelldateien baut. Wenn das
+Modul nur aus einer einzigen Quelldatei besteht,
+können Sie den Eintrag mit <TT
+CLASS="LITERAL"
+>ld -r</TT
+> einfach
+weglassen.&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+# Entweder hier aendern oder auf der Kommandozeile von "make" angeben
+KERNELDIR = /usr/src/linux
+
+include = $(KERNELDIR)/.config
+
+CFLAGS = -D__KERNEL__ -DMODULE -I$(KERNELDIR)/include \
+  -O -Wall
+
+ifdef CONFIG_SMP
+  CFLAGS += -D__SMP__ -DSMP
+endif
+
+all: skull.o
+
+skull.o: skull_init.o skull_clean.o
+        $(LD) -r $&#8257; -o $@
+
+clean:
+        rm -f *.o *&#732; core</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wenn <SPAN
+CLASS="APPLICATION"
+>make</SPAN
+> neu für Sie ist, dann
+wundern Sie sich vielleicht darüber, daß keine
+<TT
+CLASS="FILENAME"
+>.c</TT
+>-Datei und keine Kompilationsregel im obigen
+<TT
+CLASS="FILENAME"
+>makefile</TT
+> stehen. Diese Deklarationen sind nicht
+notwendig, da <SPAN
+CLASS="APPLICATION"
+>make</SPAN
+> schlau genug ist, ohne
+weitere Anweisungen eine <TT
+CLASS="FILENAME"
+>.c</TT
+>-Datei zu einer
+<TT
+CLASS="FILENAME"
+>.o</TT
+>-Datei zu machen, wobei der aktuelle Compiler
+(oder der Default), <TT
+CLASS="LITERAL"
+>$(CC)</TT
+>, und dessen Flags,
+<TT
+CLASS="LITERAL"
+>$(CFLAGS)</TT
+>, verwendet werden.</P
+><P
+>Nachdem das Modul gebaut worden ist, muß es in den Kernel geladen
+werden. Wie wir bereits erwähnt haben, wird das von
+<SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+> erledigt. Dieses Programm arbeitet ähnlich
+wie <SPAN
+CLASS="APPLICATION"
+>ld</SPAN
+>; es linkt alle im Modul nicht aufgelösten
+Symbole gegen die Symboltabelle des laufenden Kernels. Im Gegensatz
+zum Linker wird aber nicht die Datei auf der Festplatte, sondern das
+Abbild im Speicher modifiziert. <SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+> akzeptiert
+eine Reihe von Kommandozeilenoptionen (näheres finden Sie in der
+Man-Page), und kann Integer- und String-Variablen in
+Ihrem Modul Werte zuweisen, bevor das Modul in den laufenden Kernel gelinkt
+wird. Wenn ein Modul also korrekt entwickelt wurde, dann kann es zur
+Ladezeit konfiguriert werden. Diese Fähigkeit gibt dem Benutzer mehr
+Flexibilität als die Konfiguration zur Kompilierzeit, die leider noch
+manchmal verwendet wird. Die Konfiguration zur Ladezeit wird in
+&#8220;<A
+HREF="buiconf.html"
+>the Section called <I
+>Automatische und manuelle
+Konfiguration</I
+></A
+>&#8221; weiter hinten in diesem Kapitel
+beschrieben.&#13;</P
+><P
+>Interessierte Leser wollen sich vielleicht ansehen, wie
+<SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+> vom Kernel unterstützt
+wird. <SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+> verwendet einige wenige Systemaufrufe,
+die in <TT
+CLASS="FILENAME"
+>kernel/module.c</TT
+> definiert sind.
+Die Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>sys_create_module</I
+></SPAN
+> alloziert
+<SPAN
+><I
+CLASS="EMPHASIS"
+>Kernel</I
+></SPAN
+>-Speicher, um das Modul aufzunehmen (dieser
+Speicher wird mit <SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+> alloziert, siehe dazu
+&#8220;<A
+HREF="getvmalloc.html"
+>the Section called <I
+>vmalloc und Freunde</I
+> in Kapitel 7</A
+>&#8221; in <A
+HREF="get.html"
+>Kapitel 7</A
+>); der
+Systemaufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>get_kernel_syms</I
+></SPAN
+> gibt
+die Symboltabelle des Kernels zurück, um das Modul dagegen zu linken,
+und <SPAN
+><I
+CLASS="EMPHASIS"
+>sys_init_module</I
+></SPAN
+> kopiert den
+relozierten Objekt-Code in den Kernel-Space und ruft die
+Initialisierungsfunktion des Moduls auf.&#13;</P
+><P
+>Wenn Sie sich die Kernel-Quellen ansehen, werden Sie feststellen, daß
+den Namen der Systemaufrufe <TT
+CLASS="LITERAL"
+>sys_</TT
+>
+vorangestellt ist. Das ist bei allen Systemaufrufen und bei keiner anderen
+Funktion der Fall. Das ist nützlich zu wissen, wenn Sie mit
+<SPAN
+CLASS="APPLICATION"
+>grep</SPAN
+> nach Systemaufrufen in den Quellen suchen.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="BUIVERSION"
+>Versionsabhängigkeit</A
+></H2
+><P
+>&#13;
+Denken Sie daran, daß Ihr Modul für jede Version des Kernels, mit der
+es verwendet werden soll, neu kompiliert werden muß. Jedes Modul
+definiert ein Symbol namens
+
+<TT
+CLASS="LITERAL"
+>__module_kernel_version</TT
+>, das von <SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+> mit der
+Versionsnummer des aktuellen Kernels verglichen wird. Dieses Symbol
+steht im <TT
+CLASS="LITERAL"
+>.modinfo</TT
+>-Abschnitt des ELF-Formats
+(Executable Linking and Format; siehe <A
+HREF="kerneld.html"
+>Kapitel 11</A
+>. Beachten Sie bitte, daß die Beschreibung der
+Interna nur auf die Versionen 2.2 und 2.4 zutrifft; Linux 2.0 tat das
+gleiche auf eine andere Weise.</P
+><P
+>Der Compiler definiert dieses Symbol für Sie, wenn Sie
+<TT
+CLASS="LITERAL"
+>&#60;linux/module.h&#62;</TT
+> einbinden (deswegen hat
+<TT
+CLASS="FILENAME"
+>hello.c</TT
+> das nicht deklariert). Das bedeutet auch,
+daß Sie <TT
+CLASS="LITERAL"
+>&#60;linux/module.h&#62;</TT
+> nur einmal
+einbinden müssen, selbst wenn Ihr Modul aus mehreren Quelldateien
+besteht. (Es sei denn, Sie verwenden <TT
+CLASS="LITERAL"
+>__NO_VERSION__</TT
+>, das in Kürze eingeführt werden wird.)&#13;</P
+><P
+>&#13;
+
+
+
+Wenn die Versionen nicht übereinstimmen, können Sie trotzdem noch
+versuchen, das Modul mit einer anderen Kernel-Version zu laden, in dem
+Sie den Schalter <SPAN
+><I
+CLASS="EMPHASIS"
+>&#8211;f</I
+></SPAN
+> (&#8220;force&#8221;)
+beim Aufruf von <SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+> verwenden; aber das ist
+nicht besonders sicher und kann auch fehlschlagen. Außerdem ist es
+schwierig vorherzusagen, was passieren wird. Das Laden kann wegen
+nicht zusammenpassender Symbole fehlschlagen. In diesem Fall wird
+eine Fehlermeldung ausgegeben. Es kann aber auch wegen einer internen
+Änderung im Kernel fehlschlagen. Wenn das passiert, bekommen Sie
+üble Laufzeitfehler und möglicherweise eine Systempanik &#8212; ein
+guter Grund, um vorsichtig mit nicht zusammenpassenden Versionen zu
+sein. Nicht zusammenpassende Versionen können besser mit
+<I
+CLASS="FIRSTTERM"
+>Versioning</I
+> im Kernel behandelt werden, ein
+fortgeschrittenes Thema, das wir in &#8220;<A
+HREF="kerver.html"
+>the Section called <I
+>Versionskontrolle in Modulen</I
+> in Kapitel 11</A
+>&#8221; in <A
+HREF="kerneld.html"
+>Kapitel 11</A
+> behandeln werden.&#13;</P
+><P
+>Wenn Sie ein Modul für eine bestimmte Kernel-Version kompilieren
+wollen, dann müssen Sie die passenden Header-Dateien für diesen Kernel
+einbinden (beispielsweise, indem Sie ein anderes
+<TT
+CLASS="LITERAL"
+>KERNELDIR</TT
+> im obigen <TT
+CLASS="FILENAME"
+>makefile</TT
+>
+deklarieren). Diese Situation ist nicht ungewöhnlich, wenn man mit den
+Kernel-Quellen herumspielt, weil Sie am Ende oft mehrere Versionen des
+Quellbaumes haben werden. Alle Beispiel-Module in diesem Buch verwenden
+die Variable <TT
+CLASS="LITERAL"
+>KERNELDIR</TT
+>, um auf die korrekten
+Kernel-Quellen zu verweisen; diese Variable kann entweder in Ihrer
+Umgebung oder in der Kommandozeile von <SPAN
+CLASS="APPLICATION"
+>make</SPAN
+>
+gesetzt werden.&#13;</P
+><P
+>Um Versionsabhängigkeiten beim Laden zu berücksichtigen, verwendet
+<SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+> einen speziellen Suchpfad und sucht
+zuerst in versionsabhängigen Verzeichnissen unterhalb von
+<TT
+CLASS="FILENAME"
+>/lib/modules</TT
+>. Ältere Versionen suchten zunächst
+im aktuellen Verzeichnis, aber dieses Verhalten ist jetzt aus
+Sicherheitsgründen abgeschaltet (das Problem ist das gleiche wie bei
+der Umgebungsvariable <TT
+CLASS="LITERAL"
+>PATH</TT
+>). Wenn Sie also ein
+Modul aus dem aktuellen Verzeichnis laden wollen, müssen Sie
+<TT
+CLASS="FILENAME"
+>./module.o</TT
+> verwenden, was mit allen
+<SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+>-Versionen funktioniert.</P
+><P
+>Manchmal werden Sie auf Kernel-Schnittstellen stoßen, die sich bei
+den Versionen 2.0.<SPAN
+><I
+CLASS="EMPHASIS"
+>x</I
+></SPAN
+> und
+2.4.<SPAN
+><I
+CLASS="EMPHASIS"
+>x</I
+></SPAN
+> unterschiedlich verhalten. In diesem Fall müssen Sie
+die Makros verwenden, die die Versionsnummer des aktuellen Quellbaumes
+definieren. Diese sind in der
+Header-Datei<TT
+CLASS="LITERAL"
+>&#60;linux/version.h&#62;</TT
+> definiert. Wir
+weisen Sie jeweils darauf hin, wenn sich Schnittstellen geändert
+haben; entweder direkt vor Ort oder in einem speziellen Abschnitt über
+Versionsabhängigkeiten am Ende des jeweiligen Kapitels, wenn wir eine
+2.4-spezifische Diskussion nicht verkomplizieren wollen.</P
+><P
+>Die Header-Datei, die von <TT
+CLASS="FILENAME"
+>linux/module.h</TT
+>
+automatisch eingebunden wird, definiert die folgenden Makros:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>UTS_RELEASE</TT
+></DT
+><DD
+><P
+>&#13;Dieses Makro expandiert zu einem String, der die Version des
+Kernel-Baumes beschreibt, etwa <TT
+CLASS="LITERAL"
+>"2.3.48"</TT
+>.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>LINUX_VERSION_CODE</TT
+></DT
+><DD
+><P
+>&#13;Dieses Makro expandiert zur binären Repräsentation der Kernel-Version;
+dabei wird ein Byte pro Teil der Versionsnummer verwendet. Beispielsweise ist der Code für
+2.3.48 131888 (0x020330).<A
+NAME="AEN858"
+HREF="#FTN.AEN858"
+>[3]</A
+> Mit dieser Information kann man ziemlich
+einfach bestimmen, mit welcher Kernel-Version man es zu tun hat.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>KERNEL_VERSION(major,minor,release)</TT
+></DT
+><DD
+><P
+>&#13;Dies ist das Makro, das dazu verwendet wird, einen
+"Kernel-Versions-Code" aus den einzelnen Zahlen der Versionsnummer zu
+bauen. Beispielsweise expandiert
+<TT
+CLASS="LITERAL"
+>KERNEL_VERSION(2,3,48)</TT
+> zu 131888. Dieses Makro ist
+nützlich, wenn Sie die aktuelle Version und einen bekannten
+Referenzpunkt vergleichen müssen. Wir werden dieses Makro in diesem
+Buch mehrmals verwenden.</P
+></DD
+></DL
+></DIV
+><P
+>&#13;Die Datei <TT
+CLASS="FILENAME"
+>version.h</TT
+> wird von
+<TT
+CLASS="FILENAME"
+>module.h</TT
+> eingebunden, so daß Sie normalerweise
+<TT
+CLASS="FILENAME"
+>version.h</TT
+> nicht explizit einbinden
+müssen. Andererseits können Sie <TT
+CLASS="FILENAME"
+>module.h</TT
+> auch
+daran hindern, indem Sie <TT
+CLASS="LITERAL"
+>__NO_VERSION__</TT
+>
+deklarieren. Dies machen Sie, wenn Sie
+<TT
+CLASS="LITERAL"
+>&#60;linux/module.h&#62;</TT
+> in mehreren, später
+zusammengelinkten Quelldateien einbinden müssen, zum Beispiel, wenn Sie in
+<TT
+CLASS="FILENAME"
+>module.h</TT
+> deklarierte Präprozessor-Makros
+benötigen. Das Deklarieren von
+<TT
+CLASS="LITERAL"
+>_&#8201;_NO_VERSION_&#8201;_</TT
+> vor dem Einbinden von
+<TT
+CLASS="FILENAME"
+>module.h</TT
+> verhindert die automatische Deklaration
+des Strings <TT
+CLASS="LITERAL"
+>_&#8201;_module_kernel_version</TT
+> oder
+seiner Äquivalente in den Quelldateien, in denen Sie das nicht wünschen
+(<SPAN
+><I
+CLASS="EMPHASIS"
+>ld -r</I
+></SPAN
+> würde sich sonst über die mehrfache
+Definition des Symbols beschweren). Die Beispiel-Module in diesem Buch
+verwenden aus diesem Grund ebenfalls
+<TT
+CLASS="LITERAL"
+>_&#8201;_NO_VERSION_&#8201;_</TT
+>.</P
+><P
+>&#13;Die meisten Abhängigkeiten von der jeweiligen Kernel-Version können
+mit bedingten Präprozessor-Ausdrücken, die
+<TT
+CLASS="LITERAL"
+>KERNEL_VERSION</TT
+> und
+<TT
+CLASS="LITERAL"
+>LINUX_VERSION_CODE</TT
+> verwenden, umgangen
+werden. Versionsabhängigkeiten sollten den Treiber-Code aber nicht mit
+komplizierten <TT
+CLASS="LITERAL"
+>#ifdef</TT
+>-Ausdrücken verschandeln; am
+besten ist es, wenn man die Inkompatibilitäten in einer einzigen
+Header-Datei versteckt. Deswegen enthält unser Beispiel-Code eine
+Header-Datei namens <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+>, die alle
+Inkompatibilitäten in passenden Makro-Definitionen verbirgt.</P
+><P
+>&#13;Die erste Versionsabhängigkeit, mit der wir es zu tun haben, ist die
+Definition einer <TT
+CLASS="LITERAL"
+>make install</TT
+>-Regel für unsere
+Treiber. Wie Sie vielleicht erwarten, wird das
+Installationsverzeichnis, das sich von Kernel-Version zu
+Kernel-Version unterscheiden kann, durch Nachschlagen in
+<TT
+CLASS="FILENAME"
+>version.h</TT
+> ermittelt. Das folgende Fragment stammt
+aus der Datei <TT
+CLASS="FILENAME"
+>Rules.make</TT
+>, die in alle Makefiles
+eingebunden wird:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+VERSIONFILE = $(INCLUDEDIR)/linux/version.h
+VERSION  = $(shell awk -F\" '/REL/ {print $$2}' $(VERSIONFILE))
+INSTALLDIR = /lib/modules/$(VERSION)/misc</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+
+Wir haben uns entschlossen, alle unsere Treiber in das
+<TT
+CLASS="FILENAME"
+>misc</TT
+>-Verzeichnis zu installieren; das ist
+einerseits die richtige Wahl für diverse Zusatztreiber und
+andererseits eine gute Möglichkeit, um mit der Änderung in der
+Verzeichnisstruktur unterhalb von <TT
+CLASS="FILENAME"
+>/lib/modules</TT
+>
+umzugehen, die kurz vor Einführung der 2.4-Version des Kernels
+vorgenommen wurde. Auch wenn die neue Verzeichnisstruktur
+komplizierter ist, wird das <TT
+CLASS="FILENAME"
+>misc</TT
+>-Verzeichnis
+sowohl von alten als auch von neuen Versionen des
+<SPAN
+CLASS="APPLICATION"
+>modutils</SPAN
+>-Pakets verwendet.</P
+><P
+>&#62;
+&#62;
+Mit der oben gezeigten Definition von <TT
+CLASS="LITERAL"
+>INSTALLDIR</TT
+>
+sieht die <TT
+CLASS="LITERAL"
+>install</TT
+>-Regel aller Makefiles dann so aus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+install:
+        install -d $(INSTALLDIR)
+        install -c $(OBJS) $(INSTALLDIR)
+&#13;</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="BUIPLAT"
+>Plattformabhängigkeiten</A
+></H2
+><P
+>&#13;
+Jede Computer-Plattform hat ihre Eigenheiten, und
+Kernel-Designern steht es frei, alle diese Eigenheiten
+auszunutzen, um in der Objektdatei eine bessere Performance zu
+erreichen.</P
+><P
+>Im Gegensatz zu Applikationsentwicklern, die ihren Code gegen
+vorkompilierte Bibliotheken linken und sich an Konventionen zur
+Parameterübergabe halten müssen, können Kernel-Entwickler einige
+Prozessor-Register für bestimmte Aufgaben reservieren und haben das
+auch getan. Außerdem kann Kernel-Code für einen bestimmten Prozessor
+in einer CPU-Familie optimiert sein, um das Maximum aus der
+Zielplattform herauszuholen: Im Gegensatz zu Applikationen, die oft
+binär verteilt werden, kann eine spezialisierte Kernel-Kompilation für
+einen bestimmten Computer optimiert sein.</P
+><P
+>&#13;Modularisierter Code muß mit den gleichen Optionen wie der Kernel
+kompiliert werden, um mit diesem zusammenarbeiten zu können (es müssen
+also die gleichen Register zur besonderen Verwendung reserviert und
+die gleichen Optimierungen vorgenommen werden). Aus diesem Grund
+bindet unser Top-level-<TT
+CLASS="FILENAME"
+>Rules.make</TT
+> eine
+plattformabhängige Datei ein, die die Makefiles durch zusätzliche
+Definitionen ergänzt. Alle diese Dateien heißen
+<TT
+CLASS="LITERAL"
+>Makefile</TT
+>.<TT
+CLASS="REPLACEABLE"
+><I
+>plattform</I
+></TT
+> und
+weisen den <SPAN
+CLASS="APPLICATION"
+>make</SPAN
+>-Variablen für die aktuelle
+Kernel-Konfiguration passende Werte zu.</P
+><P
+>&#13;Ein weiteres interessantes Feature dermaßen aufgebauter Makefiles ist
+die Unterstützung der Cross-Kompilation in einem gesamten Baum von
+Beispieldateien. Wann immer Sie für eine bestimmte Zielplattform
+cross-kompilieren müssen, müssen Sie all Ihre Werkzeuge
+(<SPAN
+CLASS="APPLICATION"
+>gcc</SPAN
+>,
+<SPAN
+CLASS="APPLICATION"
+>ld</SPAN
+> usw.) durch andere Werkzeuge (zum
+Beispiel <SPAN
+CLASS="APPLICATION"
+>m68k-linux-gcc</SPAN
+> und
+<SPAN
+CLASS="APPLICATION"
+>m68k-linux-ld</SPAN
+>&#8201;) ersetzen. Das zu
+verwendende Präfix ist als <TT
+CLASS="LITERAL"
+>$(CROSS_COMPILE)</TT
+>
+definiert, entweder auf der
+<SPAN
+CLASS="APPLICATION"
+>make</SPAN
+>-Kommandozeile oder in Ihrer Umgebung.</P
+><P
+>&#13;
+
+Die SPARC-Architektur ist ein Sonderfall, der ebenfalls von den
+Makefiles behandelt werden muß. User-Space-Programme, die auf der
+SPARC64-(SPARC V9-)Plattform laufen, sind die gleichen Binaries wie
+auf SPARC32 (SPARC V8). Der Default-Compiler auf SPARC64
+(<SPAN
+CLASS="APPLICATION"
+>gcc</SPAN
+>) erzeugt daher
+SPARC32-Objekt-Code. Der Kernel benötigt aber SPARC V9-Objekt-Code,
+weswegen ein Cross-Compiler her muß. Alle Linux-Distributionen für
+SPARC64 enthalten einen passenden Cross-Compiler, den die Makefiles
+auswählen.</P
+><P
+>Auch wenn die vollständige Liste der Versions- und
+Plattformabhängigkeiten noch etwas komplizierter als hier beschrieben
+ist, sollten die vorangegangene Beschreibung und die von uns
+bereitgestellten Makefiles für den Anfang genug sein. Wenn Sie
+detailliertere Informationen wünschen, können Sie die Makefiles und
+die Kernel-Quellen durchlesen.
+&#13;</P
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN675"
+HREF="x666.html#AEN675"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Wir verwenden das Wort &#8220;lokal&#8221; hier, um
+                  damit unsere eigenen Änderungen am System zu bezeichnen, und
+                  befinden uns damit in guter Tradition von
+                  <TT
+CLASS="FILENAME"
+>/usr/local</TT
+>.</P
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN712"
+HREF="x666.html#AEN712"
+>[2]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Beachten Sie aber, daß
+jede Optimierung größer als <SPAN
+><I
+CLASS="EMPHASIS"
+>&#8211;O2</I
+></SPAN
+> riskant
+ist, da der Compiler eventuell Funktionen als inline behandeln
+könnte, die nicht im Quellcode als <TT
+CLASS="LITERAL"
+>inline</TT
+>
+deklariert sind. Das kann bei Kernel-Code ein Problem sein, da
+manche Funktionen ein bestimmtes Stack-Layout bei ihrem Aufruf
+erwarten.</P
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN858"
+HREF="x666.html#AEN858"
+>[3]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Damit sind bis zu 256
+Entwicklungsversionen zwischen den stabilen Versionen
+möglich.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="building.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x956.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Module erstellen und starten</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="building.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Die Symboltabelle des Kernels</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

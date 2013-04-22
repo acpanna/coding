@@ -1,0 +1,492 @@
+<HTML>
+ <HEAD>
+   <TITLE>
+     &Uuml;bungsblatt 08, 29.06.1999
+   </TITLE>
+ </HEAD>
+ <BODY>
+
+  <H1>
+     &Uuml;bungsblatt 08, 29.06.1999
+   </H1>
+   <H2>
+     Abgabetermin: Di, 06.07.1999, 10<SUP>00</SUP> Uhr
+   </H2>
+
+<DIV ALIGN="right">
+  <A HREF="mailto:Robert.Baier@uni-bayreuth.de">R. Baier</A> <BR>
+  <A HREF="mailto:Anton.Betten@uni-bayreuth.de">A. Betten</A> <BR>
+  <A HREF="mailto:hiwi511@btcipmatx1.cip.uni-bayreuth.de">M. Kohl</A> <BR>
+  <A HREF="mailto:hiwi502@btcipmatx1.cip.uni-bayreuth.de">B. Seifert</A>
+  <BR CLEAR="all">
+</DIV>
+<P>
+
+Das &Uuml;bungsblatt besteht aus den Aufgaben <A HREF="#A_22">22</A>,
+<A HREF="#A_23">23</A> und <A HREF="#A_24">24</A>.
+Das &Uuml;bungsblatt inkl. aller Sourcecodes, Bilder, HTML-Seiten, ... kann auch
+als
+<UL>
+  <LI><A HREF="blatt_08.tar.gz"><TT>gzip</TT>'tes <TT>tar</TT>-Archive</A>
+  </LI>
+  <LI>
+      <A HREF="blatt_08.zip"><TT>ZIP</TT>-Archive</A>
+  </LI>
+</UL>
+heruntergeladen werden. <BR>
+
+<EM>Beachten Sie die <A HREF="../allgemein/hinweise.html">allgemeinen Abgabehinweise</A>!!</EM>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A_22">&nbsp;</A>
+
+   <H2>
+     Aufgabe 22
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi502@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Bernd Seifert)
+   </H3>
+
+Schreiben Sie eine kleine Sammlung an n&uuml;tzlichen Vektorroutinen:
+
+<dl COMPACT>
+  <dt>
+    (i)
+  </dt>
+
+  <dd>
+    Berechnung der Summennorm &nbsp;
+
+    <!-- MATH: $\sum\limits_{i=1}^n |x_i|$ -->
+
+    <IMG SRC="norm_eins.gif" ALT="$\sum\limits_{i=1}^n \vert x_i\vert$" 
+         BORDER=0 height=48 width=46 align=CENTER>
+
+    &nbsp; eines <i>n</i>-dimensionalen Vektors mit Prototyp
+
+    <blockquote>
+      <tt>double norm_1(int n, double x[]);</tt>
+    </blockquote>
+  </dd>
+
+  <dt>
+    (ii)
+  </dt>
+
+  <dd>
+    Berechnung des maximalen Elements
+    &nbsp;
+
+    <!-- MATH: $\max\limits_{i=1,\ldots,n} x_i$ -->
+
+    <IMG SRC="max_elem.gif" 
+         ALT="$\max\limits_{i=1,\ldots,n} x_i$"
+         BORDER=0 HEIGHT=38 WIDTH=73 ALIGN=middle>
+
+    &nbsp; eines <i>n</i>-dimensionalen Vektors mit Prototyp
+
+    <blockquote>
+      <tt>double max_elem(int n, double x[]);</tt>
+    </blockquote>
+  </dd>
+
+  <dt>
+    (iv)
+  </dt>
+
+  <dd>
+    Vergleich zweier Strings (jeweils in einem <TT>char</TT>-Array gespeichert),
+    wobei Gro&szlig;- und Kleinschreibung nicht unterschieden
+    werden soll und die Umlaute gem&auml;&szlig; der unten stehenden Tabelle wie zwei Zeichen
+    gewertet werden.
+
+    <P>
+    <TABLE ALIGN="center" BORDER=1>
+      <TR>
+        <TH>
+          Umlaut
+        </TH>
+        <TH>
+          Entsprechung bei der Einsortierung
+        </TH>
+      </TR>
+
+      <TR>
+        <TD ALIGN="center">
+          <TT>&auml;</TT>
+        </TD>
+        <TD ALIGN="center">
+          <TT>ae</TT>
+        </TD>
+      </TR>
+
+      <TR>
+        <TD ALIGN="center">
+          <TT>&ouml;</TT>
+        </TD>
+        <TD ALIGN="center">
+          <TT>oe</TT>
+        </TD>
+      </TR>
+
+      <TR>
+        <TD ALIGN="center">
+          <TT>&uuml;</TT>
+        </TD>
+        <TD ALIGN="center">
+          <TT>ue</TT>
+        </TD>
+      </TR>
+
+      <TR>
+        <TD ALIGN="center">
+          <TT>&szlig;</TT>
+        </TD>
+        <TD ALIGN="center">
+          <TT>ss</TT>
+        </TD>
+      </TR>
+
+      <TR>
+        <TD ALIGN="center">
+          <TT>&Auml;</TT>
+        </TD>
+        <TD ALIGN="center">
+          <TT>Ae</TT>
+        </TD>
+      </TR>
+
+      <TR>
+        <TD ALIGN="center">
+          <TT>&Ouml;</TT>
+        </TD>
+        <TD ALIGN="center">
+          <TT>Oe</TT>
+        </TD>
+      </TR>
+
+      <TR>
+        <TD ALIGN="center">
+          <TT>&Uuml;</TT>
+        </TD>
+        <TD ALIGN="center">
+          <TT>Ue</TT>
+        </TD>
+      </TR>
+    </TABLE>
+    <P>
+
+    Bsp.: Der Name <TT>"B&auml;r"</TT> kommt im Telefonbuch vor
+    <TT>"Banasch"</TT>, <TT>"F&uuml;rst"</TT> kommt vor 
+    <TT>"Furchtwanger"</TT>, <TT>"M&ouml;ller"</TT> stimmt mit
+    <TT>"Moeller"</TT> &uuml;berein, <TT>"M&auml;rkl"</TT> kommt
+    nach <TT>"Mader"</TT>,  <TT>"M&auml;der"</TT> kommt
+    nach <TT>"Mader"</TT>, ... .
+    
+    <P>
+    Die Funktion mit dem Prototypen
+    
+    <blockquote>
+      <tt>int lex_vergleich_uml(char wort_1[], char wort_2[]);</tt>
+    </blockquote>
+    
+    soll wie die ANSI-C-Funktion <TT>strcmp()</TT> die Werte
+
+    <P>
+    <TABLE ALIGN="center" BORDER=1>
+      <TR>
+        <TH>
+          Funktionswert
+        </TH>
+        <TH>
+          Fall
+        </TH>
+      </TR>
+
+      <TR>
+        <TD ALIGN="center">
+          &lt; 0
+        </TD>
+        <TD>
+          Name <TT>name_1</TT> ist lexikographisch kleiner
+          als <TT>name_2</TT>, d.h. kommt im Telefonbuch vor
+          dem anderen Namen
+        </TD>
+      </TR>
+
+      <TR>
+        <TD ALIGN="center">
+          =&nbsp;= 0
+        </TD>
+        <TD>
+          Name <TT>name_1</TT> stimmt mit <TT>name_2</TT>
+          &uuml;berein
+        </TD>
+      </TR>
+
+      <TR>
+        <TD ALIGN="center">
+          &gt; 0
+        </TD>
+        <TD>
+          Name <TT>name_1</TT> ist lexikographisch gr&ouml;&szlig;er
+          als <TT>name_2</TT>, d.h. kommt im Telefonbuch nach
+          dem anderen Namen
+        </TD>
+      </TR>
+    </TABLE>
+  </dd>
+</dl>
+
+<P>
+Abzugeben ist das C-/C++-Programm mit den Funktionen 
+und einem Beispielaufruf der Funktionen.                                       
+
+<P>
+
+<HR SIZE=5 WIDTH="100%">
+
+<A NAME="A_23">&nbsp;</A>
+
+   <H2>
+     Aufgabe 23
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi502@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Bernd Seifert)
+   </H3>
+
+Aus interaktiven Programmierumgebungen wie MATLAB kennt man Funktionen,
+die bestimmte Matrizen erzeugen:
+
+<P>
+<ul>
+  <li>
+    <tt>ident()</tt>: Einheitsmatrix (in MATLAB: <tt>eye()</tt>)
+    <p>
+  </li>
+
+  <li>
+    <tt>zeros()</tt>: Nullmatrix
+    <p>
+  </li>
+
+  <LI>
+    <tt>randsym()</tt>: symmetrische Zufallsmatrix
+
+    <p>
+    Nutzen Sie dabei die Funktion "<tt>rand()</tt>", die in der Headerdatei
+    "<tt>stdlib.h</tt>" definiert ist.
+    <p>
+  </LI>
+  
+  <li>
+    <tt>tridiag()</tt>: spezielle Tridiagonalmatrix mit vorgegebenem Diagonalvektor
+    <i>(d<sub>i</sub>)<sub>i=1,...,n</sub></i>
+
+    <blockquote>
+
+      <!-- MATH: \begin{displaymath}
+      \left(
+      \begin{array}{cccccc}
+                     d_1 & 1   & 0   & \ldots     & \ldots  & 0 \\
+                     -2  & d_2 & 1 & \ddots     &         & \vdots \\
+                     0   & -2  & d_3 & 1        & \ddots  & \vdots \\
+                     \vdots & \ddots & \ddots & \ddots  & \ddots  & 0 \\
+                     \vdots &        & \ddots & -2      & d_{n-1} & 1 \\
+                     0      & \ldots & \ldots & 0       & -2      & d_n \\
+                  \end{array}
+               \right)
+      \end{displaymath} -->
+
+      <IMG SRC="spez_tridiag_matrix.gif" 
+           ALT="\begin{displaymath}\left(
+           \begin{array}{cccccc}
+           d_1 & 1 & 0 & \ldots & \ldots ...
+           ...
+           0 & \ldots & \ldots & 0 & -2 & d_n \\
+           \end{array} \right)
+           \end{displaymath}"
+           HEIGHT=179 WIDTH=264>
+
+   </blockquote>
+  </li>
+</UL>
+
+Definieren Sie Matrizen als (statisches) zweidimensionales Array 
+mit fester Maximall&auml;nge <TT>NMAX</TT> f&uuml;r Zeilen und Spalten
+und implementieren Sie die obigen Funktionen. 
+
+Jede Funktion soll als &Uuml;bergabeparameter die Zeilenzahl der Matrix und
+die Matrix selbst erhalten (die Funktion <TT>tridiag()</TT> soll 
+zus&auml;tzlich den Vektor als eindimensionales Array &uuml;bergeben) und diese 
+Matrix auf die Einheitsmatrix, die Nullmatrix, ... setzen.
+Die in der Funktion &uuml;bergebene Zeilen- und Spaltenzahl einer Matrix
+soll dabei auch kleiner als <TT>NMAX</TT> sein k&ouml;nnen.
+
+<P>
+&Uuml;berlegen Sie, ob und wie sie Zeilen- und Spaltenzahl der Matrizen und
+die Matrix selbst &uuml;bergeben m&uuml;ssen. Rufen Sie eine geeignete 
+Funktion zur Ausgabe einer Matrix an, um dadurch
+die Funktionen &uuml;berpr&uuml;fen zu k&ouml;nnen. 
+
+<P>
+Abzugeben ist das C-/C++-Programm mit einer Ausgabe der Matrizen.
+
+<P>
+<HR SIZE=5 WIDTH="100%">
+
+<A NAME="A_24">&nbsp;</A>
+
+   <H2>
+     Aufgabe 24
+   </H2>
+   <H3>
+     keine Abgabe/Korrektur m&ouml;glich
+   </H3>
+   <H3>
+     (Wiederverwendung in einer sp&auml;teren Aufgabe geplant)
+   </H3>
+
+In der Programmierung benutzt man oft die beiden Speicherstrukturen
+<I>Stack</I> und <I>Queue</I> (bzw. <I>Keller</I> und <I>Schlange</I>).
+Auf beide Objekte k&ouml;nnen die Operationen <I>pop</I> und <I>push</I> 
+angewendet werden, die ein Element eines bestimmten Datentyps im 
+Stack/Queue ablegen bzw. auslesen. <BR>
+
+Ein Stack verf&auml;hrt beim Entfernen eines Elements nach dem LIFO-Prinzip
+(<B>l</B>ast <B>i</B>n -- <B>f</B>irst <B>o</B>ut),
+eine Queue hingegen nach der FIFO-Regel
+(<B>f</B>irst <B>i</B>n -- <B>f</B>irst <B>o</B>ut). Beim Stack
+wird also immer das Element ausgegeben, das zuletzt abgelegt wurde, bei
+der Queue das zuerst eingegebene. 
+
+<P>
+Ein Stack gleicht also einem Buchstapel,
+bei dem man nur an das oberste (das zuletzt daraufgelegte) Buch herankommt,
+an die daruntergelegten jedoch nicht sofort. An das erste hingelegte Buch
+kommt man also erst, nachdem alle anderen B&uuml;cher von oben her 
+weggenommen werden. Eine Queue kann man sich als Schlange vor der 
+Supermarktkasse vorstellen, bei der nat&uuml;rlich zun&auml;chst nur der 
+erste in der Schlange abkassiert wird und der letzte in der Schlange erst 
+bedient wird, wenn alle anderen in der Reihenfolge ihres Eintreffens 
+bedient wurden. 
+
+<P>
+Meistens wird ein Stack/Queue als eindimensionales Array repr&auml;sentiert, bei
+der jedoch nur auf das letzte bzw. erste Element zugegriffen werden darf. 
+Der Einfachheit halber soll dabei ein
+statisches Array mit einer H&ouml;chstgrenze <TT>NMAX</TT> an Datenelementen verwendet 
+werden. Der aktuelle Stack soll aber auch weniger Elemente als <TT>NMAX</TT> haben 
+k&ouml;nnen, jedoch zu keinem Zeitpunkt mehr als <TT>NMAX</TT> Elemente.
+
+<P>
+<B>Aufgabe:</B> <BR>
+Implementieren Sie einen Stack f&uuml;r <TT>int</TT>-Werte.
+Schreiben Sie ein Programm, in dem man in einem Men&uuml; w&auml;hlen 
+kann, welches der 7 B&uuml;cher
+
+<P>
+<TABLE ALIGN="center" BORDER=1>
+  <TR>
+    <TH>
+      Buchnummer
+    </TH>
+
+    <TH>
+      Buch (Autor: Buchtitel)
+    </TH>
+  </TR>
+
+  <TR>
+    <TD ALIGN="center">
+      1
+    </TD>
+
+    <TD>
+      Kernighan, Ritchie: <BR>
+      Programmieren in C mit dem Reference Manual in deutscher Sprache
+    </TD>
+  </TR>
+
+  <TR>
+    <TD ALIGN="center">
+      2
+    </TD>
+
+    <TD>
+      Kr&uuml;ger: <BR>
+      C programmieren
+    </TD>
+  </TR>
+
+  <TR>
+    <TD ALIGN="center">
+      3
+    </TD>
+
+    <TD>
+      Willms: <BR>
+      Das C-Grundlagen-Buch
+    </TD>
+  </TR>
+
+  <TR>
+    <TD ALIGN="center">
+      4
+    </TD>
+
+    <TD>
+      Geary: <BR>
+      Graphic Java. Mastering the JFC I
+    </TD>
+  </TR>
+
+  <TR>
+    <TD ALIGN="center">
+      5
+    </TD>
+
+    <TD>
+      Lippman, Lajoie: <BR>
+      C++ Primer
+    </TD>
+  </TR>
+
+  <TR>
+    <TD ALIGN="center">
+      6
+    </TD>
+
+    <TD>
+      S.u.S.E.: <BR>
+      Linux 6.1 Handbuch
+    </TD>
+  </TR>
+
+  <TR>
+    <TD ALIGN="center">
+      7
+    </TD>
+
+    <TD>
+      Flanagan: <BR>
+      JavaScript. Das umfassende Referenzwerk
+    </TD>
+  </TR>
+</TABLE>
+
+<P>
+man auf den B&uuml;cherstapel seines Schreibtisches legt (<I>push</I>) 
+oder davon entfernt (<I>pop</I>). Im Stack soll nur die Buchnummer gespeichert
+werden. Erzeugen Sie vor/nach jeder Operation eine 
+Ausgabe des B&uuml;cherstapels (mit Autor und Buchtitel).
+
+<P>
+Abzugeben ist das C-/C++-Programm mit einer Ausgabe eines Tests
+mit mehreren Operationen (Wegnehmen von B&uuml;chern, Darauflegen neuer
+B&uuml;cher auf den Stapel).
+
+ </BODY>
+</HTML>

@@ -1,0 +1,388 @@
+<HTML
+><HEAD
+><TITLE
+>Überlegte Verwendung von Datentypen</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="PREVIOUS"
+TITLE="Schnellreferenz"
+HREF="x12869.html"><LINK
+REL="NEXT"
+TITLE="Datenelementen eine explizite
+Größe zuweisen"
+HREF="judassize.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x12869.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="judassize.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="JUDAS"
+>Kapitel 10. Überlegte Verwendung von Datentypen</A
+></H1
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Inhalt</B
+></DT
+><DT
+><A
+HREF="judas.html#JUDASC"
+>Verwendung der Standard-C-Typen</A
+></DT
+><DT
+><A
+HREF="judassize.html"
+>Datenelementen eine explizite
+Größe zuweisen</A
+></DT
+><DT
+><A
+HREF="judasif.html"
+>Schnittstellenspezifische Typen</A
+></DT
+><DT
+><A
+HREF="x13402.html"
+>Andere Portabilitätsfragen</A
+></DT
+><DT
+><A
+HREF="judaslist.html"
+>Verkettete Listen</A
+></DT
+><DT
+><A
+HREF="x13652.html"
+>Schnellreferenz</A
+></DT
+></DL
+></DIV
+><P
+>Bevor wir zu den fortgeschritteneren Themen kommen, müssen wir uns noch
+kurz mit einigen Portabilitätsfragen befassen. Moderne Versionen des
+Linux-Kernels sind hochportabel und laufen auf mehreren sehr
+verschiedenen Architekturen. In Anbetracht dieser
+Multiplattform-Eigenschaft von Linux sollten auch Treiber für den
+ernsthaften Einsatz portabel sein.
+
+&#13;</P
+><P
+>Ein Kern-Problem beim Schreiben von Kernel-Code besteht aber darin, daß
+man sowohl auf Datenelemente bekannter Länge zugreifen möchte
+(beispielsweise auf Dateisystem-Datenstrukturen oder auf Register auf
+Hardware-Karten), aber andererseits auch die Fähigkeiten der einzelnen
+Prozessoren (32-Bit- und 64-Bit-Architekturen und möglichst auch
+16-Bit-Architekturen) ausnutzen möchte.&#13;</P
+><P
+>Mehrere Probleme, auf die die Kernel-Entwickler beim Portieren des
+x86-Codes auf neue Architekturen gestoßen sind, haben mit inkorrekten
+Datentypen zu tun. Die meisten Fehler können durch striktes Typisieren
+und Kompilieren mit den Schaltern <SPAN
+><I
+CLASS="EMPHASIS"
+>&#8211;Wall
+&#8211;Wstrict-prototypes</I
+></SPAN
+> vermieden werden.&#13;</P
+><P
+>Die vom Kernel verwendeten Datentypen können in drei Klassen
+eingeteilt werden: Standard-C-Typen wie <TT
+CLASS="LITERAL"
+>int</TT
+>, Typen
+mit expliziten Größen wie <TT
+CLASS="LITERAL"
+>u32</TT
+> und
+Kernel-Objekt-spezifische Typen wie
+<TT
+CLASS="LITERAL"
+>pid_t</TT
+>. Wir werden noch sehen, wann und wie
+jede der drei Klassen verwendet werden sollte. Die letzten Abschnitte
+dieses Kapitels beschreiben dann einige weitere typische Probleme, auf
+die Sie stoßen könnten, wenn Sie einen Treiber von x86 auf andere
+Plattformen portieren möchten, und führen die verallgemeinerte
+Unterstützung für verkettete Listen ein, die von neueren
+Kernel-Header-Dateien bereitgestellt wird.&#13;</P
+><P
+>Wenn Sie den hier gegebenen Ratschlägen folgen, dann kompiliert und
+läuft Ihr Treiber auch auf Plattformen, auf denen Sie ihn gar nicht
+testen können.
+&#13;</P
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="JUDASC"
+>Verwendung der Standard-C-Typen</A
+></H1
+><P
+>&#13;
+Während die meisten Programmierer daran gewöhnt sind, beliebig
+Standardtypen wie <TT
+CLASS="LITERAL"
+>int</TT
+> oder <TT
+CLASS="LITERAL"
+>long</TT
+>
+zu verwenden, müssen beim Programmieren von Gerätetreibern einige
+Vorsichtsmaßnahmen beachtet werden, um Typisierungskonflikte und
+obskure Fehler zu vermeiden.&#13;</P
+><P
+>Die Standard-Datentypen können aber nicht verwendet werden, wenn Sie
+&#8220;zwei Füllbytes&#8221; oder &#8220;etwas, was einen
+4-Byte-String repräsentiert&#8221; benötigen, weil die normalen
+C-Datentypen nicht auf allen Architekturen die gleiche Größe
+haben. Um Ihnen die Größe der diversen C-Typen zu zeigen, haben wir in
+die Beispielprogramme auf dem O'Reilly-FTP-Server das Programm
+<SPAN
+CLASS="APPLICATION"
+>datasize</SPAN
+> im Verzeichnis
+<TT
+CLASS="FILENAME"
+>misc-progs</TT
+> mit aufgenommen. Hier ist eine
+Beispielausgabe von einem PC (die letzten vier Typen werden im
+nächsten Abschnitt eingeführt):</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>morgana% misc-progs/datasize
+arch   Size:  char  shor   int  long   ptr long-long  u8 u16 u32 u64
+i686            1     2     4     4     4     8        1   2   4   8</PRE
+></TD
+></TR
+></TABLE
+><P
+>Das Programm zeigt unter anderem, daß <TT
+CLASS="LITERAL"
+>long</TT
+>-Werte
+und Zeiger auf 64-Bit-Plattformen eine andere Größe haben, wenn man es
+auf verschiedenen Linux-Computern ausführt:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>arch   Size:  char  shor   int  long   ptr long-long  u8 u16 u32 u64
+i386            1     2     4     4     4     8        1   2   4   8
+alpha           1     2     4     8     8     8        1   2   4   8
+armv4l          1     2     4     4     4     8        1   2   4   8
+ia64            1     2     4     8     8     8        1   2   4   8
+m68k            1     2     4     4     4     8        1   2   4   8
+mips            1     2     4     4     4     8        1   2   4   8
+ppc             1     2     4     4     4     8        1   2   4   8
+sparc           1     2     4     4     4     8        1   2   4   8
+sparc64         1     2     4     4     4     8        1   2   4   8</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Interessanterweise verwendet der User-Space der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>Linux-sparc64</I
+></SPAN
+>-Plattform 32-Bit-Code, weswegen
+Zeiger im User-Space 32 Bit breit sind, obwohl sie im Kernel ganze 64
+Bit breit sind. Man kann dies durch Laden des Moduls
+<SPAN
+CLASS="APPLICATION"
+>kdatasize</SPAN
+> (auch dieses finden Sie bei den
+Beispieldateien im Verzeichnis <TT
+CLASS="FILENAME"
+>misc-modules</TT
+>)
+verifizieren. Das Modul meldet die Größen mittels
+<SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+> beim Laden und löst dann einen Fehler aus
+(damit man es nicht extra entladen muß):</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>kernel: arch   Size:  char short int long  ptr long-long u8 u16 u32 u64
+kernel: sparc64         1    2    4    8    8     8       1   2   4   8</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+Sie müssen zwar beim Mischen von <TT
+CLASS="LITERAL"
+>int</TT
+> und
+<TT
+CLASS="LITERAL"
+>long</TT
+> vorsichtig vorgehen, aber es gibt dafür auch
+manchmal gute Gründe. Ein solches Beispiel sind Speicheradressen, die
+für den Kernel eine Sonderbedeutung haben.  Obwohl Adressen
+konzeptionell Zeiger sind, funktioniert die Speicherverwaltung besser,
+wenn Integer-Datentypen verwendet werden. Der Kernel behandelt den
+physikalischen Speicher wie ein riesiges Array, und eine
+Speicheradresse ist lediglich ein Index in dieses Array. Außerdem kann
+ein Zeiger leicht dereferenziert werden; wenn Sie aber direkt mit
+Speicheradressen arbeiten, wollen Sie diese fast nie auf diese Weise
+dereferenzieren. Die Verwendung eines Integer-Typs verhindert diese
+Dereferenzierung und vermeidet damit Fehler. Deswegen sind Adressen im
+Kernel <TT
+CLASS="LITERAL"
+>unsigned
+long</TT
+>. Damit wird die Tatsache ausgenutzt, daß Zeiger und
+lange Integer immer die gleiche Größe haben, zumindest aber auf allen
+Plattformen, die derzeit von Linux unterstützt werden.</P
+><P
+>&#13;
+Der C99-Standard definiert die Typen
+<TT
+CLASS="LITERAL"
+>intptr_t</TT
+> und
+<TT
+CLASS="LITERAL"
+>uintptr_t</TT
+> für Integer-Variablen, die einen
+Zeigerwert aufnehmen können. Diese Typen werden im 2.4-Kernel fast gar
+nicht verwendet, aber es würde uns nicht wundern, wenn sie im Rahmen
+der weiteren Entwicklung öfter auftauchen würden.
+
+&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x12869.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="judassize.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Schnellreferenz</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Datenelementen eine explizite
+Größe zuweisen</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

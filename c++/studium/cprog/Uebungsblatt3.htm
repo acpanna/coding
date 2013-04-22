@@ -1,0 +1,412 @@
+<HTML>
+ <HEAD>
+   <TITLE>
+     &Uuml;bungsblatt 03, 25.05.1999
+   </TITLE>
+ </HEAD>
+ <BODY>
+
+  <H1>
+     &Uuml;bungsblatt 03, 25.05.1999
+   </H1>
+   <H2>
+     Abgabetermin: Di, 01.06.1999, 10<SUP>00</SUP> Uhr
+   </H2>
+
+<DIV ALIGN="right">
+  <A HREF="mailto:Robert.Baier@uni-bayreuth.de">R. Baier</A> <BR>
+  <A HREF="mailto:hiwi511@btcipmatx1.cip.uni-bayreuth.de">M. Kohl</A> <BR>
+  <A HREF="mailto:hiwi502@btcipmatx1.cip.uni-bayreuth.de">B. Seifert</A>
+  <BR CLEAR="all">
+</DIV>
+<P>
+
+Das &Uuml;bungsblatt besteht aus den Aufgaben <A HREF="#A_07">07</A>,
+<A HREF="#A_08">08</A> und <A HREF="#A_09">09</A>.
+Das &Uuml;bungsblatt inkl. aller Sourcecodes, Bilder, HTML-Seiten, ... kann auch
+als
+<UL>
+  <LI><A HREF="blatt_03.tar.gz"><TT>gzip</TT>'tes <TT>tar</TT>-Archive</A>
+  </LI>
+  <LI>
+      <A HREF="blatt_03.zip"><TT>ZIP</TT>-Archive</A>
+  </LI>
+</UL>
+heruntergeladen werden. <BR>
+
+<EM>Beachten Sie die <A HREF="../allgemein/hinweise.html">allgemeinen Abgabehinweise</A>!!</EM>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A_07">&nbsp;</A>
+
+   <H2>
+     Aufgabe 07 (4 Punkte, 2 Zusatzpunkte m&ouml;glich)
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi502@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Bernd Seifert)
+   </H3>
+
+Schreiben Sie ein C-/C++-Programm, das Ihnen hilft, die folgenden Aufgaben
+"experimentell" zu l&ouml;sen und die Fragen zu beantworten. Verwenden Sie
+die in der Vorlesung vorgestellten Konstanten <I>nur</I> zur Kontrolle Ihrer
+Experimente.
+
+<OL>
+  <LI>
+    Wie lautet der ungef&auml;hre Wertebereich von <TT>float</TT>-Variablen?    
+    Stellen Sie also fest, welchen Wert die kleinste positive 
+    und die gr&ouml;&szlig;te <TT>float</TT>-Zahl ungef&auml;hr haben. 
+    Dies k&ouml;nnen Sie z.B. durch
+    h&auml;ufige Multiplikation oder Division feststellen.
+    <P>
+  </LI>
+
+  <LI>
+    Wie lautet der ungef&auml;hre Wertebereich von <TT>double</TT>-Variablen?   
+    <P>
+  </LI>
+
+  <LI>
+    Betrachten Sie die folgenden C-Befehle:
+
+    <PRE>
+  float  x_float;
+  double x_double;
+
+  x_float  = 1.0f/8.0f;
+  x_double = 1.0/8.0;
+
+  ...
+
+  x_float  = 1.0f/10.0f;
+  x_double = 1.0/10.0;
+
+  ...
+
+  x_float  = 1.0f/3.0f;
+  x_double = 1.0/3.0;
+
+  ...
+ 
+  x_float  = 1/3;
+  x_double = 1/3;
+
+  ...
+
+  x_float  = 1.0f/3;
+  x_double = 1.0/3;
+
+  ...
+
+  x_float  = 1.0/3.0;
+  x_double = 1.0f/3.0f;
+
+  ...
+
+  x_float  = exp(1.0);
+  x_double = exp(1.0);
+
+  ...
+    </PRE>
+
+<A NAME="A_07_cpp">Geben</A>
+    Sie an den mit "..." markierten Stellen die beiden Variablen aus.
+    Verwenden Sie in C den Formatspezifizierer <TT>"%.20e"</TT>, in C++
+    rufen Sie die Funktion "<TT>ausgabe_exponent()</TT>" auf (verwenden Sie
+    die Funktionen des
+    C++-Files "<A HREF="ausgabe.cpp"><TT>ausgabe.cpp</TT></A>", die Methoden
+    in der Headerdatei "<TT>iomanip</TT>" benutzen) und
+    verwenden Sie vor Ausgabe der entsprechenden Zahl den Ausdruck
+    
+    <BLOCKQUOTE>
+      "<TT>&lt;&lt; setprecision(</TT><I>Anzahl der 
+      Dezimalstellen</I><TT>)</TT>"
+    </BLOCKQUOTE>
+    
+    Beispiel:
+     
+    <BLOCKQUOTE>
+      <TT>ausgabe_exponent(); <BR>
+      cout &lt;&lt; "1.0/3.0 = " &lt;&lt; setprecision(20) 
+           &lt;&lt; 1.0/3.0 &lt;&lt; endl;</TT>
+    </BLOCKQUOTE>
+    
+    Was stellen Sie fest? Warum entsprechen manche Ausgaben den Erwartungen,
+    warum manche nicht?
+  </LI>
+</OL>
+
+Zum Erreichen von bis zu zwei Zusatzpunkten beantworten Sie die Frage 4:
+
+<OL START=4>
+  <LI>
+    Wie lautet die ungef&auml;hre Anzahl der Genauigkeitsstellen von 
+    <TT>float</TT>- bzw. <TT>double</TT>-Variablen? <BR>
+    Machen Sie hierzu den "1 + x"-Test: <BR>
+    Welche <TT>float</TT>- bzw. <TT>double</TT>-Zahl kann man noch zu 1 (als
+    <TT>float</TT>- bzw. <TT>double</TT>-Zahl) addieren, damit etwas ungleich 1 
+    herauskommt?
+  </LI>
+</OL>
+
+<B>Hinweis:</B> Versuchen Sie in den Teilaufgaben 1.-2. (und 4.) erst einmal die 
+Zehnerpotenzen zu ermitteln, die im Wertebereich noch darstellbar sind.
+
+<P>
+Abzugeben ist das Testprogramm sowie die Beantwortung der Fragen mit einer
+Erkl&auml;rung, wie diese Ergebnisse mit dem Testprogramm ermittelt wurden.
+
+<P>
+
+<HR SIZE=5 WIDTH="100%">
+
+<A NAME="A_08">&nbsp;</A>
+
+   <H2>
+     Aufgabe 08
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi511@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Matthias Kohl)
+   </H3>
+
+Rudi Ratlos arbeitet bei der Software-Firma SoftKonto, die f&uuml;r die
+Bank "Fr&auml;nkische Bank" in Hintertupfing den Umstieg des 
+Zahlungsverkehrs von DM auf Euro durchgef&uuml;hrt hat.
+SoftKonto hat bisher die Kontost&auml;nde 
+und den Umrechnungskurs
+
+<BLOCKQUOTE>
+   1 Euro = 1.95583 DM 
+</BLOCKQUOTE>
+in <TT>float</TT>-Variablen abgespeichert. Bei einem Software-Update soll
+nun alles auf <TT>double</TT>-Variablen umgestellt werden.
+
+Da er tief verschuldet ist, schmuggelt er bei dem Software-Update in der
+Umrechnungsfunktion eine kleine Funktion ein, die ihm den Unterschied der 
+<TT>float</TT>- und <TT>double</TT>-Berechnung in Euro auf sein 
+Schweizer Nummernkonto &uuml;berweist.
+
+<P>
+Schreiben Sie daher ein Programm, das
+
+<OL TYPE=a>
+  <LI>
+    den Unterschied beider Berechnungen in Euro ausgibt, wenn Rudi
+    Ratlos seinen Schuldenberg in DM (auf der Tastatur) eingibt und 
+    ihn einmal nur mit <TT>float</TT>- und das andere Mal nur mit
+    <TT>double</TT>-Variablen/Zahlen berechnet.
+    <P>
+  </LI>
+  
+  <LI>
+    ihm berechnet, wieviele Tage er warten mu&szlig;, bis er durch die
+    Umbuchungen auf sein Schweizer Nummernkonto seine 100.000 DM
+    Schulden abbezahlen kann.
+    Die Anzahl der Tage liegen fest, wenn Rudi Ratlos f&uuml;r die betroffene 
+    Bank den durchschnittlichen &Uuml;berweisungsbetrag und die durchschnittliche 
+    Anzahl der &Uuml;berweisungen pro Tag (als <TT>long</TT>-Variable) eingibt.
+  </LI>
+</OL>
+
+<B>Hinweis:</B>
+Sie m&uuml;ssen sowohl beim Einlesen als auch bei jedem Rechenschritt
+<TT>float</TT>- (bzw. <TT>double</TT>-) Zahlen und Variablen
+verwenden, um einen me&szlig;baren Unterschied zu erhalten.
+
+<P>
+Diese Aufgabe soll kein Aufruf zu strafrechtlich relevanten Taten sein!
+
+<P>
+Geben Sie das C-/C++-Programm und einige Resultate verschiedener Eingaben
+ab.
+
+
+<P>
+<HR SIZE=5 WIDTH="100%">
+
+<A NAME="A_09">&nbsp;</A>
+
+   <H2>
+     Aufgabe 09
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi511@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Matthias Kohl)
+   </H3>
+
+<OL TYPE=a>
+  <LI>
+    Berechnen Sie f&uuml;r verschiedene Zehnerpotenzen von
+    
+    <BLOCKQUOTE>
+       <TT>h</TT> = <I>10<SUP>-i</SUP></I>, &nbsp;&nbsp;&nbsp;
+         <I>i = 1,2,3,4,...,22</I>
+    </BLOCKQUOTE>
+    
+    den folgenden Bruch:
+    
+    <BLOCKQUOTE>
+       <TT>(exp(1 + h) - exp(1)) / h </TT>.
+    </BLOCKQUOTE>
+    
+    Dabei ist <CODE>exp()</CODE> der Name der Exponentialfunktion in C.
+    
+    <P>
+    <B>Hintergrund der Aufgabe: </B>
+    Der Bruch stellt die Steigung der Sekante durch die Punkte (1,<TT>exp(1)</TT>)
+    und (1 + h,<TT>exp(1 + h)</TT>) dar und ist eine N&auml;herung f&uuml;r die
+    Ableitung der Exponentialfunktion <TT>exp()</TT> an der Stelle <TT>x = 1</TT>.
+    Durch Analysis-/Numerikkenntnisse wei&szlig; man, da&szlig; der Bruch f&uuml;r
+    immer kleiner werdenes <I>h</I> gegen
+    
+    <BLOCKQUOTE>
+       <TT>exp(1) = 2.718281828459045...</TT>
+    </BLOCKQUOTE>
+    
+    konvergieren mu&szlig;. 
+    
+    <P>
+    Geben Sie daher zur Kontrolle den Fehlerbetrag
+    
+    <BLOCKQUOTE>
+       (*) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+       <TT>| (exp(1 + h) - exp(1)) / h  - exp(1) | </TT>
+    </BLOCKQUOTE>
+    
+    aus.
+    <BR>
+    
+    Benutzen Sie dazu in a) f&uuml;r die Berechnung <I>double</I>-Zahlen und
+    Variablen. 
+    <P>
+  </LI>
+
+  <LI>
+    Testen Sie zum Vergleich <TT>float</TT>-Zahlen und Variablen. Damit die
+    gesamte Rechnung in <TT>float</TT>-Genauigkeit durchgef&uuml;hrt wird,
+    verwenden sie statt der eingebauten Funktion <TT>exp()</TT> die 
+    vorgegebene Funktion <TT>float_exp()</TT> (vgl. C-File 
+    "<A HREF="aufgabe_09.c"><TT>aufgabe_09.c</TT></A>"):
+    
+    <PRE>
+    /* exp-Berechnung im <I>float</I>-Fall */
+    float float_exp(float wert)
+    {
+      return (float) exp(wert);
+    }
+    
+    /* Wenn Sie zur Berechnung von 10^(-i) die Funktion pow() verwendet haben,
+       nehmen Sie fuer float die Funktion float_pow() */
+    float float_pow(float x, float y)
+    {
+      return (float) pow(x, y);
+    }
+    </PRE>
+    
+    Zur Berechnung des Fehlers verwenden Sie statt (*) dann:
+    
+    <BLOCKQUOTE>
+       (**) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+       <TT>| (float_exp(1 + h) - float_exp(1)) / h  - exp(1) | </TT>
+    </BLOCKQUOTE>
+  </LI>
+</OL>
+
+<B>Tip:</B> <BR>
+Die Ausgabe sollte tabellarisch erfolgen (jeweils eine Tabelle f&uuml;r 
+<I>float</I> und eine f&uuml;r <I>double</I>) und in etwa 
+<A HREF="resultat_09.txt">diese Form</A> haben. 
+
+<P>
+Verwenden Sie zur Ausgabe:
+
+<P>
+<TABLE ALIGN="center" BORDER=1 CELLPADDING=5 CELLSPACING=5>
+  <TR>
+    <TH>
+      Variable/Wert
+    </TH>
+    <TH>
+      zu verwendender Formatierstring <BR>
+      f&uuml;r <TT>printf()</TT>
+    </TH>
+    <TH>
+      C++-Befehle <BR>
+      f&uuml;r <TT>cout</TT> (vgl. <A HREF="#A_07_cpp">Aufgabe 07</A>)
+    </TH>
+  </TR>
+
+  <TR>
+    <TD>
+      <I>h</I>
+    </TD>
+    <TD>
+      <TT>"%g"</TT>
+    </TD>
+    <TD>
+      <TT>ausgabe_variabel();</TT> <BR>
+      <TT>set_precision(4);</TT>
+    </TD>
+  </TR>
+
+  <TR>
+    <TD>
+      Bruch mit <TT>float</TT>-Zahlen
+    </TD>
+    <TD>
+      <TT>"%f"</TT>
+    </TD>
+    <TD>
+      <TT>ausgabe_festpunkt();</TT> <BR>
+      <TT>set_precision(7);</TT>
+    </TD>
+  </TR>
+
+  <TR>
+    <TD>
+      Fehler (**)
+    </TD>
+    <TD>
+      <TT>"%f"</TT>
+    </TD>
+    <TD>
+      <TT>ausgabe_festpunkt();</TT> <BR>
+      <TT>set_precision(7);</TT>
+    </TD>
+  </TR>
+
+  <TR>
+    <TD>
+      Bruch mit <TT>double</TT>-Zahlen
+    </TD>
+    <TD>
+      <TT>"%.15f"</TT>
+    </TD>
+    <TD>
+      <TT>ausgabe_festpunkt();</TT> <BR>
+      <TT>set_precision(15);</TT>
+    </TD>
+  </TR>
+
+  <TR>
+    <TD>
+      Fehler (*)
+    </TD>
+    <TD>
+      <TT>"%.15f"</TT>
+    </TD>
+    <TD>
+      <TT>ausgabe_festpunkt();</TT> <BR>
+      <TT>set_precision(15);</TT>
+  </TR>
+</TABLE>
+
+<P>
+
+Abzugeben ist der komplette Source-Code und die ausgegebenen Tabellen als 
+Text-File.
+
+ </BODY>
+</HTML>

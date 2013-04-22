@@ -1,0 +1,450 @@
+<HTML
+><HEAD
+><TITLE
+>Das Verzeichnis mm</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Der physikalische Aufbau der Kernel-Quellen"
+HREF="tour.html"><LINK
+REL="PREVIOUS"
+TITLE="Das Verzeichnis fs"
+HREF="x22826.html"><LINK
+REL="NEXT"
+TITLE="Das Verzeichnis net"
+HREF="x23036.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x22826.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 16. Der physikalische Aufbau der Kernel-Quellen</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x23036.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN22924"
+>Das Verzeichnis mm</A
+></H1
+><P
+>&#13;
+Das letzte wichtigere Verzeichnis der Kernel-Quelldateien hat mit der Speicherverwaltung zu tun. Die Dateien in diesem Verzeichnis
+implementieren all die Datenstrukturen, die im gesamten System
+verwendet werden, um Fragen der Speicherverwaltung zu
+behandeln. Während die Speicherverwaltung in Registern und anderen
+Funktionen der jeweiligen CPU stattfindet, haben wir schon in <A
+HREF="mem.html"
+>Kapitel 13</A
+> gesehen, wie der größte Teil davon plattformunabhängig
+gemacht worden ist. Interessierte Leser können in
+<TT
+CLASS="FILENAME"
+>asm/arch-</TT
+><TT
+CLASS="REPLACEABLE"
+><I
+>arch</I
+></TT
+><TT
+CLASS="FILENAME"
+>/mm</TT
+>
+      nachlesen, wie die jeweils niedrigste Ebene für die einzelnen
+      Computer-Plattformen implementiert wird.&#13;</P
+><P
+>&#13;
+
+
+
+
+Die Allokationsmaschinerie
+    <SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+>/<SPAN
+><I
+CLASS="EMPHASIS"
+>kfree</I
+></SPAN
+> befindet
+    sich in <TT
+CLASS="FILENAME"
+>slab.c</TT
+>. Diese Datei ist eine
+    vollständig neue Implementation, die ersetzt, was vorher in
+    <TT
+CLASS="FILENAME"
+>kmalloc.c</TT
+> war. Letztere Datei existiert in
+    Versionen nach 2.0 nicht mehr.</P
+><P
+>Während die meisten Programmierer damit vertraut sind, wie ein
+Betriebssystem Speicher in Blocks und Seiten verwaltet, greift Linux
+eine Idee aus Solaris von Sun Microsystems auf und verwendet ein
+zusätzliches, flexibleres Konzept namens
+<TT
+CLASS="FILENAME"
+>slab</TT
+>. Jeder Slab ist ein Cache, der mehrere
+Speicherobjekte der gleichen Größe enthält. Manche Slabs sind
+spezialisiert und enthalten Strukturen eines bestimmten Typs, die von
+einem bestimmten Teil des Kernels verwendet werden, während andere
+allgemeiner sind und Speicherbereiche von 32 Bytes, 64 Bytes und so
+weiter enthalten. Der Vorteil von Slabs besteht darin, daß Strukturen
+oder andere Speicherbereiche mit nur wenig Verwaltungsaufwand
+zwischengespeichert und wiederverwendet werden können; die
+aufwendigere Technik des Allozierens und Freigebens von Seiten wird so
+seltener benötigt.</P
+><P
+>&#13;
+Das andere wichtige Allokationswerkzeug, <SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+>,
+sowie die allem zugrundeliegende Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>get_free_pages</I
+></SPAN
+> sind in
+<TT
+CLASS="FILENAME"
+>vmalloc.c</TT
+> und
+<TT
+CLASS="FILENAME"
+>page_alloc.c</TT
+> definiert. Beide sind recht
+einfach strukturiert und interessant zu lesen.</P
+><P
+>&#13;
+Neben den Allokationsdiensten muß ein Speicherverwaltungssystem auch
+das Einblenden von Speicher erlauben. Schließlich liegt
+<SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+> vielen Aktivitäten des Systems, darunter
+auch der Ausführung einer Datei, zugrunde. Die Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>sys_mmap</I
+></SPAN
+> selbst befindet sich aber nicht
+hier, sondern ist tief im architekturspezifischen Code vergraben,
+weil Systemaufrufe mit mehr als fünf Argumenten eine Sonderbehandlung
+in Sachen CPU-Register benötigen. Die Funktion, die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+> für alle Plattformen implementiert, heißt
+<SPAN
+><I
+CLASS="EMPHASIS"
+>do_mmap_pgoff</I
+></SPAN
+> und findet sich in
+<TT
+CLASS="FILENAME"
+>mmap.c</TT
+>. Diese Datei implementiert auch
+<SPAN
+><I
+CLASS="EMPHASIS"
+>sys_sendfile</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>sys_brk</I
+></SPAN
+>. Letztere Funktion mag nicht
+dazugehörig aussehen, weil <SPAN
+><I
+CLASS="EMPHASIS"
+>brk</I
+></SPAN
+> dazu verwendet
+wird, die maximale virtuelle Adresse, die ein Prozeß benutzen kann,
+heraufzusetzen. Linux (und die meisten aktuellen Unix-Systeme)
+erzeugen neuen virtuellen Adreßraum für einen Prozeß, indem sie Seiten aus <TT
+CLASS="FILENAME"
+>/dev/zero</TT
+> einblenden.</P
+><P
+>&#13;Die Mechanismen zum Einblenden einer normalen Datei in den Speicher
+stehen in <TT
+CLASS="FILENAME"
+>filemap.c</TT
+>. Diese Datei arbeitet auf
+Datenstrukturen ziemlich niedriger Ebene im
+Speicherverwaltungssystem. <SPAN
+><I
+CLASS="EMPHASIS"
+>mprotect</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>remap</I
+></SPAN
+> werden in zwei Dateien gleichen Namens
+implementiert; das Sperren von Speicher taucht in
+<TT
+CLASS="FILENAME"
+>mlock.c</TT
+> auf.</P
+><P
+>&#13;
+
+Wenn ein Prozeß mehrere aktive Speichertabellen hat, braucht man eine
+effiziente Möglichkeit, im Adreßraum nach freien Adressen zu
+suchen. Dazu sind alle Speichertabellen eines Prozesses als
+Adelson-Velski-Landis-Baum (AVL-Baum) aufgebaut. Diese
+Software-Struktur wird in <TT
+CLASS="FILENAME"
+>mmap_avl.c</TT
+>
+implementiert.</P
+><P
+>&#13;
+
+Die Initialisierung und Entfernung von Auslagerungsdateien (also die
+Systemaufrufe <SPAN
+><I
+CLASS="EMPHASIS"
+>swapon</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>swapoff</I
+></SPAN
+>) sind in <TT
+CLASS="FILENAME"
+>swapfile.c</TT
+>
+zu finden. <TT
+CLASS="FILENAME"
+>swap_state.c</TT
+> kümmert sich um
+den Auslagerungs-Cache und <TT
+CLASS="FILENAME"
+>swap.c</TT
+> um das Altern
+von Seiten. Das <SPAN
+><I
+CLASS="EMPHASIS"
+>Auslagern</I
+></SPAN
+> selbst ist hier nicht
+definiert, sondern ist ein Bestandteil der Verwaltung von
+Speicherseiten, was durch den Thread <SPAN
+CLASS="APPLICATION"
+>kswapd</SPAN
+>
+implementiert wird.</P
+><P
+>&#13;Die niedrigste Ebene der Seitentabellenverwaltung wird in der Datei
+<TT
+CLASS="FILENAME"
+>memory.c</TT
+> implementiert, die immer noch die
+ursprünglichen Anmerkungen von Linus enthält, als er im Dezember 1991
+die erste echte Speicherverwaltung implementierte. Alles, was sich auf
+noch niedrigeren Ebenen abspielt, befindet sich in
+Architektur-spezifischem Code (oft als Makros in den Header-Dateien
+versteckt).</P
+><P
+>&#13;Der Code zur Verwaltung von hohem Speicher befindet sich in <TT
+CLASS="FILENAME"
+>highmem.c</TT
+>, wie Sie sicherlich unschwer erraten können.(Unter &#8220;hohem Speicher&#8221; versteht man Speicher jenseits der
+Grenze, die der Kernel direkt adressieren kann. Diese Speicheraufteilung wird insbesondere in der
+x86-Welt verwendet, um mehr als 4 GB RAM unterstützen zu können, ohne
+die 32-Bit Architektur aufzugeben).</P
+><P
+>&#13;<TT
+CLASS="FILENAME"
+>vmscan.c</TT
+> implementiert den
+<SPAN
+CLASS="APPLICATION"
+>kswapd</SPAN
+>-Kernel-Thread. Dies ist die
+Prozedur, die nach unbenutzten oder alten Seiten sucht, um diese
+freizugeben oder in den Auslagerungsbereich zu stecken. Die Quelldatei
+ist wohlkommentiert, weil das Fine-Tuning dieser Algorithmen ein
+Schlüsselfaktor für die gesamte System-Performance ist. Hier ist keine
+Entwurfsentscheidung trivial oder unkritisch und alles will gut durchdacht sein, weswegen hier so viele Kommentare stehen.</P
+><P
+>Der Rest der Quelldateien im <TT
+CLASS="FILENAME"
+>mm</TT
+>-Verzeichnis kümmert
+sich um kleinere, aber manchmal wichtige Details wie
+<SPAN
+><I
+CLASS="EMPHASIS"
+>oom_killer</I
+></SPAN
+>, eine Prozedur, die bestimmt,
+welcher Prozeß zwangsweise beendet wird, wenn das System keinen
+Speicher mehr zur Verfügung hat.</P
+><P
+>&#13;Interessanterweise führt die
+<SPAN
+CLASS="APPLICATION"
+>uClinux</SPAN
+>-Portierung des Linux-Kernels auf
+MMU-lose Prozessoren ein weiteres Verzeichnis namens
+<TT
+CLASS="FILENAME"
+>mmnommu</TT
+> ein. Dieses wiederholt den offiziellen
+<TT
+CLASS="FILENAME"
+>mm</TT
+>-Code recht genau, läßt aber allen
+MMU-bezogenen Code weg. Die Entwickler haben sich für diese Lösung
+entschieden, um einen Wust bedingter Kompilierungsanweisungen im
+<TT
+CLASS="FILENAME"
+>mm</TT
+>-Baum zu vermeiden. Weil
+<SPAN
+CLASS="APPLICATION"
+>uClinux</SPAN
+> (noch) nicht in den
+Mainstream-Kernel integriert ist, müssen Sie einen
+<SPAN
+CLASS="APPLICATION"
+>uClinux</SPAN
+>-CVS-Baum oder ein tar-Paket
+herunterladen, wenn Sie die beiden Verzeichnisse vergleichen wollen
+(beide sind im <SPAN
+CLASS="APPLICATION"
+>uClinux</SPAN
+>-Baum enthalten).&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x22826.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x23036.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Das Verzeichnis fs</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="tour.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Das Verzeichnis net</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

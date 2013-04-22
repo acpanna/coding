@@ -1,0 +1,11 @@
+Der Patch "compalg1_11_base6536.patch" verändert die Dateien "compalg1_11.cpp"
+und "rational.h" so, dass nicht mehr im Zehntausendersystem, sondern im 2^16-er
+System gerechnet wird. 
+
+Anwendung des Patches:
+$ cd compalg1_11
+$ patch < compalg1_11_base65536.patch
+
+Anschliessend:
+$ make clean
+$ make test1_11

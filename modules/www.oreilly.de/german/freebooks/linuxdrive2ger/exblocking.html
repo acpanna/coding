@@ -1,0 +1,1785 @@
+<HTML
+><HEAD
+><TITLE
+>Blockierende I/O</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Fortgeschrittene Operationen in Zeichen-Treibern"
+HREF="extra.html"><LINK
+REL="PREVIOUS"
+TITLE="Fortgeschrittene Operationen in Zeichen-Treibern"
+HREF="extra.html"><LINK
+REL="NEXT"
+TITLE="poll und select"
+HREF="exselect.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="extra.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 5. Fortgeschrittene Operationen in Zeichen-Treibern</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="exselect.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="EXBLOCKING"
+>Blockierende I/O</A
+></H1
+><P
+>&#13;
+
+
+Es kann beim Lesen mit <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> zu Problemen kommen,
+wenn <SPAN
+><I
+CLASS="EMPHASIS"
+>noch</I
+></SPAN
+> keine Daten vorliegen, wir aber auch
+noch nicht am Dateiende angekommen sind.&#13;</P
+><P
+>Die Standardantwort in diesem Fall ist: &#8220;Der Prozeß muß schlafen
+gelegt werden, bis Daten da sind&#8221;. In diesem Abschnitt zeigen wir
+Ihnen, wie ein Prozeß schlafen gelegt wird, wie er wieder aufgeweckt
+wird und wie eine Anwendung fragen kann, ob Daten vorliegen, ohne im
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>-Aufruf zu blockieren. Anschließend werden
+wir die gleichen Konzepte auf <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+> anwenden.&#13;</P
+><P
+>Wie üblich erklären wir zunächst einige Konzepte, bevor wir Ihnen
+richtigen Code zeigen.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN6219"
+>Schlafen gehen und wieder aufwachen</A
+></H2
+><P
+>&#13;
+
+
+Wenn ein Prozeß auf ein Ereignis warten muß (seien es Eingabedaten, die
+Beendigung eines Kindprozesses oder irgend etwas anderes), dann sollte
+er schlafen gelegt werden. Dabei hält der Prozeß seine Ausführung an
+          und gibt den Prozessor für andere Aufgaben frei. Zu
+          irgendeinem späteren Zeitpunkt, wenn das erwartete Ereignis
+          eingetreten ist, wird der Prozeß aufgeweckt und macht mit
+          seiner Arbeit weiter. Dieser Abschnitt beschreibt die
+          Maschinerie, die in Linux 2.4 zum Aufwecken und
+          Schlafenlegen von Prozessen zur Verfügung steht. Frühere
+          Versionen werden im Abschnitt &#8220;Abwärtskompatibilität&#8221; später in diesem Kapitel behandelt.</P
+><P
+>Es gibt in Linux mehrere Möglichkeiten zum Schlafenlegen und
+          Aufwachen, die alle andere Bedürfnisse erfüllen. Alle
+          arbeiten aber auf dem gleichen grundlegenden Datentyp, einer
+          Warteschlange (<TT
+CLASS="LITERAL"
+>wait_queue_head_t</TT
+>). Eine
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>Warteschlange</I
+></SPAN
+> (<SPAN
+><I
+CLASS="EMPHASIS"
+>wait
+            queue</I
+></SPAN
+>) ist genau das, was der Name sagt: eine
+          Schlange von Prozessen, die auf ein Ereignis
+          warten. Warteschlangen werden wie folgt deklariert und
+          initialisiert:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; wait_queue_head_t my_queue;
+ init_waitqueue_head (&#38;my_queue);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Wenn eine Warteschlange statisch deklariert wird (also nicht als
+          automatische Variable einer Funktion oder als Bestandteil
+          einer dynamisch allozierten Datenstruktur), dann kann man
+          die Schlange auch zur Kompilierzeit initialisieren:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; DECLARE_WAIT_QUEUE_HEAD (my_queue);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Es wird häufig vergessen, die Warteschlange zu initialisieren
+          (insbesondere, weil das in früheren Kernel-Versionen nicht
+          notwendig war); wenn Sie das vergessen, bekommen Sie oft
+          nicht das erwartete Ergebnis.</P
+><P
+>Wenn die Warteschlange einmal deklariert und initialisiert ist, kann
+          ein Prozeß sie verwenden, um schlafen zu gehen. Das
+          geschieht durch das Aufrufen einer der Varianten von
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>sleep_on</I
+></SPAN
+>, je nachdem, wie tief der
+          Schlaf sein soll.</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>sleep_on(wait_queue_head_t *queue);</TT
+></DT
+><DD
+><P
+>&#13;                Legt den Prozeß in dieser Warteschlange
+                schlafen. <SPAN
+><I
+CLASS="EMPHASIS"
+>sleep_on</I
+></SPAN
+> hat den
+                Nachteil, daß er nicht unterbrochen werden kann; daher kann ein
+                Prozeß in der Schlange feststecken (und auch nicht zu
+                beenden sein), wenn das Ereignis, auf das er wartet, nie eintritt.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>interruptible_sleep_on(wait_queue_head_t *queue);</TT
+></DT
+><DD
+><P
+>&#13;                Die unterbrechbare Variante arbeitet genau wie
+                <SPAN
+><I
+CLASS="EMPHASIS"
+>sleep_on</I
+></SPAN
+>, das Schlafen kann aber
+                durch ein Signal unterbrochen werden. Diese Form haben
+                Gerätetreiber-Autoren seit langem verwendet, bevor
+                <SPAN
+><I
+CLASS="EMPHASIS"
+>wait_event_interruptible</I
+></SPAN
+> (siehe
+                unten) verfügbar war.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>sleep_on_timeout(wait_queue_head_t *queue, long timeout);</TT
+>, <TT
+CLASS="LITERAL"
+>interruptible_sleep_on_timeout(wait_queue_head_t *queue, long timeout);</TT
+></DT
+><DD
+><P
+>&#13;
+Diese beiden Funktionen verhalten sich wie die beiden vorigen, mit der
+                Ausnahme, daß der Schlaf nicht länger als die
+                angegebene Timeout-Zeit dauert. Der Timeout wird in
+                &#8220;Jiffies&#8221; angegeben, die in <A
+HREF="flow.html"
+>Kapitel 6</A
+>&#62;
+                behandelt werden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void wait_event(wait_queue_head_t queue, int condition);</TT
+>, <TT
+CLASS="LITERAL"
+>int wait_event_interruptible(wait_queue_head_t queue, int condition);</TT
+></DT
+><DD
+><P
+>&#13;
+
+Diese Makros sind die bevorzugte Variante, schlafend auf ein Ereignis
+                zu warten. Sie kombinieren das Warten auf ein Ereignis
+                und das Abfragen seines Eintretens auf eine Weise, die
+                Race Conditions vermeidet. Sie schlafen, bis die
+                Bedingung, bei der es sich um einen beliebigen
+                Booleschen C-Ausdruck handeln kann, wahr wird. Die
+                Makros expandieren zu einer
+                <SPAN
+><I
+CLASS="EMPHASIS"
+>while</I
+></SPAN
+>-Schleife, und die Bedingung
+                wird immer wieder ausgewertet. Dieses Verhalten
+                unterscheidet sich von dem eines Funktionsaufrufs oder
+                eines einfachen Makros, wo die Argumente nur zum
+                Aufrufzeitpunkt ausgewertet werden. Das zweite Makro
+                ist als Ausdruck implementiert, der im Erfolgsfall 0
+                zurückgibt, sowie <TT
+CLASS="LITERAL"
+>-ERESTARTSYS</TT
+>,
+                wenn die Schleife durch ein Signal unterbrochen wird.</P
+></DD
+></DL
+></DIV
+><P
+>Es lohnt sich, hier noch einmal darauf hinzuweisen, daß
+          Gerätetreiber-Autoren fast immer die
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>interruptible</I
+></SPAN
+>-Instanzen dieser
+          Funktionen bzw. Makros verwenden sollten. Die nicht
+          unterbrechbaren Versionen existieren nur für die kleine
+          Anzahl von Situationen, in denen Signale nicht behandelt
+          werden können, etwa wenn darauf gewartet wird, daß eine
+          Datenseite aus dem Swap-Space geholt wird. Die meisten
+          Treiber befinden sich gar nicht in solchen speziellen
+          Situationen.</P
+><P
+>&#13;
+Natürlich ist das Schlafen nur die eine Hälfte des Problems;
+          irgendetwas muß den Prozeß irgendwann auch wieder
+          aufwecken. Wenn ein Gerätetreiber direkt schläft, dann gibt
+          es normalerweise an anderer Stelle im Treiber Code, der das
+          Aufwecken erledigt, sobald das Ereignis eingetreten
+          ist. Typischerweise weckt ein Treiber die Schlafenden in
+          seinem Interrupt-Handler auf, wenn neue Daten eingetroffen
+          sind. Es sind aber natürlich auch andere Szenarien möglich.</P
+><P
+>Genau wie es mehr als eine Möglichkeit zu schlafen gibt, so gibt es
+          auch mehr als eine, um aufzuwachen. Der Kernel stellt die folgenden Funktionen hoher Ebene bereit, um Prozesse aufzuwecken:&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>wake_up(wait_queue_head_t *queue);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion weckt alle Prozesse auf, die in dieser Warteschlange
+                warten.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>wake_up_interruptible(wait_queue_head_t *queue);</TT
+></DT
+><DD
+><P
+>&#13;<SPAN
+><I
+CLASS="EMPHASIS"
+>wake_up_interruptible</I
+></SPAN
+> weckt nur die Prozesse auf,
+                die unterbrechbar schlafen. Alle Prozesse, die mit
+                einer nicht-unterbrechbaren Funktion oder einem
+                solchen Makro in der Warteschlange schlafen, werden weiterschlafen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>wake_up_sync(wait_queue_head_t *queue);</TT
+>, <TT
+CLASS="LITERAL"
+>wake_up_interruptible_sync(wait_queue_head_t *queue);</TT
+></DT
+><DD
+><P
+>&#13;
+&#62;
+                Normalerweise kann ein
+                <SPAN
+><I
+CLASS="EMPHASIS"
+>wake_up</I
+></SPAN
+>-Aufruf ein unmittelbares
+                Reschedule verursachen, was bedeutet, daß andere
+                Prozesse gestartet werden können, bevor
+                <SPAN
+><I
+CLASS="EMPHASIS"
+>wake_up</I
+></SPAN
+> zurückkehrt. Die
+                &#8220;synchronen&#8221; Varianten machen die aufgeweckten
+                Prozesse dagegen nur ausführbar, geben aber die CPU
+                nicht ab. Dies wird verwendet, um ein
+                Rescheduling zu vermeiden, wenn der aktuelle Prozeß
+                ohnehin gleich schlafen gelegt wird, was ohnehin ein
+                Rescheduling erzwingt. Beachten Sie, daß die
+                aufgeweckten Prozesse trotzdem sofort auf einem
+                anderen Prozessor ausgeführt werden könnten; Sie
+                sollten sich daher keinen gegenseitigen Ausschluß von
+                diesen Funktionen versprechen.&#13;</P
+></DD
+></DL
+></DIV
+><P
+>Wenn Ihr Treiber <SPAN
+><I
+CLASS="EMPHASIS"
+>interruptible_sleep_on</I
+></SPAN
+>
+          verwendet, gibt es kaum Unterschiede zwischen
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>wake_up</I
+></SPAN
+> und
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>wake_up_interruptible</I
+></SPAN
+>. Es ist aber
+          üblich, letztere Funktion zu verwenden, um die Konsistenz
+          zwischen den beiden Aufrufen zu erhalten.</P
+><P
+>&#13;Stellen Sie sich als Beispiel für die Verwendung von Warteschlangen
+          vor, daß Sie einen Prozeß schlafen legen wollen, wenn er
+          von Ihrem Gerät liest, und ihn wieder aufwecken wollen, wenn
+          jemand anderes darauf schreibt. Der folgende Code tut genau das:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+DECLARE_WAIT_QUEUE_HEAD(wq);
+
+ssize_t sleepy_read (struct file *filp, char *buf, size_t count,
+   loff_t *pos)
+{
+  printk(KERN_DEBUG "process %i (%s) going to sleep\n",
+      current-&#62;pid, current-&#62;comm);
+  interruptible_sleep_on(&#38;wq);
+  printk(KERN_DEBUG "awoken %i (%s)\n", current-&#62;pid, current-&#62;comm);
+  return 0; /* EOF */
+}
+
+ssize_t sleepy_write (struct file *filp, const char *buf, size_t count,
+                loff_t *pos)
+{
+  printk(KERN_DEBUG "process %i (%s) awakening the readers...\n",
+     current-&#62;pid, current-&#62;comm);
+  wake_up_interruptible(&#38;wq);
+  return count; /* Erfolg, erneuten Versuch vermeiden */
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Der Code für dieses Gerät steht unter dem Namen sleepy bei den
+          Beispiel-Programmen bereit und kann wie üblich mit
+          <SPAN
+CLASS="APPLICATION"
+>cat</SPAN
+> und Ein-/Ausgabe-Umleitung
+          getestet werden.</P
+><P
+>Sie sollten beim Arbeiten mit Warteschlangen nicht vergessen, daß das
+          Aufwecken  nicht bedeutet, daß das Ereignis, auf das der
+          Prozeß gewartet hat, auch wirklich eingetroffen ist; ein
+          Prozeß kann auch aus anderen Gründen aufgeweckt werden;
+          hauptsächlich, weil er ein Signal bekommen hat. Wenn Code schläft, sollte er dies  grundsätzlich in einer Schleife tun, die die
+          Bedingung nach der Rückkehr aus der Schleife abfragt, wie
+          das in &#8220;<A
+HREF="exblocking.html#EXIMPL"
+>the Section called <I
+>Eine Beispiel-Implementation: scullpipe</I
+></A
+>&#8221; weiter hinten in diesem
+          Kapitel beschrieben wird.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN6342"
+>Ein genauerer Blick auf Warteschlangen</A
+></H2
+><P
+>&#13;Was wir im vorigen Abschnitt besprochen haben, ist alles, was die
+          meisten Treiber-Autoren jemals über Warteschlangen wissen
+          müssen. Einige möchten aber vielleicht doch tiefer in dieses
+          Thema einsteigen. Dieser Abschnitt versucht, den Neugierigen
+          weiterzuhelfen; alle anderen können zum nächsten Abschnitt
+          vorblättern, ohne viel Wichtiges zu verpassen.</P
+><P
+>&#13;
+
+
+
+
+          Der Typ <TT
+CLASS="LITERAL"
+>wait_queue_head_t</TT
+> ist eine
+          ziemlich einfache Struktur, die in
+          <TT
+CLASS="LITERAL"
+>&#60;linux/wait.h&#62;</TT
+> definiert ist. Sie
+        besteht nur aus einer Sperrvariable und einer verketteten
+        Liste von schlafenden Prozessen. Die individuellen
+        Datenelemente in der Liste sind vom Typ
+        <TT
+CLASS="LITERAL"
+>wait_queue_t</TT
+>, und die Liste ist die
+        generische, in <TT
+CLASS="LITERAL"
+>&#60;linux/list.h&#62;</TT
+>
+        definierte verkette Liste, die in
+"<A
+HREF="judaslist.html"
+>the Section called <I
+>Verkettete Listen</I
+> in Kapitel 10</A
+>&#62;" in <A
+HREF="judas.html"
+>Kapitel 10</A
+>&#62; beschrieben
+        wird. Normalerweise werden die
+<TT
+CLASS="LITERAL"
+>wait_queue_t</TT
+>-Strukturen von Funktionen wie
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>interruptible_sleep_on</I
+></SPAN
+> auf dem Stack
+        erzeugt, weil sie einfach als automatische Variablen in den
+        jeweiligen Funktionen deklariert werden. Normalerweise müssen
+        sich Programmierer nicht damit befassen.</P
+><P
+>&#13;Einige fortgeschrittene Applikationen müssen aber eventuell direkt mit
+<TT
+CLASS="LITERAL"
+>wait_queue_t</TT
+> arbeiten. Für diese lohnt es sich,
+          einen kurzen Blick darauf zu werfen, was in einer Funktion wie
+<SPAN
+><I
+CLASS="EMPHASIS"
+>interruptible_sleep_on</I
+></SPAN
+> vorgeht. Was folgt, ist
+          eine <SPAN
+><I
+CLASS="EMPHASIS"
+>vereinfachte</I
+></SPAN
+> Version der
+          Implementation von
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>interruptible_sleep_on</I
+></SPAN
+>, um einen Prozeß
+          schlafen zu legen:
+
+
+
+
+
+
+
+
+&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; void simplified_sleep_on(wait_queue_head_t *queue)
+ {
+   wait_queue_t wait;
+
+   init_waitqueue_entry(&#38;wait, current);
+   current-&#62;state = TASK_INTERRUPTIBLE;
+
+   add_wait_queue(queue, &#38;wait);
+   schedule();
+   remove_wait_queue (queue, &#38;wait);
+  }</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+
+Der hier gezeigte Code erzeugt eine neue
+          <TT
+CLASS="LITERAL"
+>wait_queue_t</TT
+>-Variable
+          (<TT
+CLASS="LITERAL"
+>wait</TT
+>, auf dem Stack alloziert) und
+          initialisiert sie. Der Zustand des Tasks wird auf
+          <TT
+CLASS="LITERAL"
+>TASK_INTERRUPTIBLE</TT
+> gesetzt, es handelt
+          sich also um ein unterbrechbares Schlafen. Dann wird der
+          Warteschlangen-Eintrag zur Schlange (dem
+          <TT
+CLASS="LITERAL"
+>wait_queue_head_t *</TT
+>-Argument)
+          hinzugefügt. Anschließend wird <SPAN
+><I
+CLASS="EMPHASIS"
+>schedule</I
+></SPAN
+>
+          aufgerufen und damit der Prozessor an jemand anderen
+          abgegeben. <SPAN
+><I
+CLASS="EMPHASIS"
+>schedule</I
+></SPAN
+> kehrt nur zurück,
+          wenn jemand anderes den Prozeß aufgeweckt hat, und setzt
+          dessen Zustand auf
+<TT
+CLASS="LITERAL"
+>TASK_RUNNING</TT
+>. Hier wird der Warteschlangen-Eintrag
+          aus der Schlange entfernt, und das Schlafen ist beendet.
+
+&#13;</P
+><P
+><A
+HREF="exblocking.html#EXTRAWAITFIGURE"
+>Abbildung 5-1</A
+> zeigt die Interna der
+          Datenstrukturen, die in Warteschlangen verwendet werden, und
+          verdeutlicht, wie Prozesse diese benutzen.</P
+><DIV
+CLASS="FIGURE"
+><A
+NAME="EXTRAWAITFIGURE"
+></A
+><P
+><B
+>Abbildung 5-1. Warteschlangen in Linux 2.4</B
+></P
+><P
+><IMG
+SRC="ldr_0501.jpg"></P
+></DIV
+><P
+>&#13;
+Ein schneller Blick in den Kernel zeigt, daß sehr viele Prozeduren
+          &#8220;manuell&#8221; schlafen gelegt werden, mittels Code, der wie im oben stehenden
+          Beispiel aussieht. Die meisten dieser Implementationen
+          stammen aus Kernel-Versionen vor 2.2.3, in der
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>wait_event</I
+></SPAN
+> eingeführt wurde. Wie
+          bereits angedeutet wurde, ist <SPAN
+><I
+CLASS="EMPHASIS"
+>wait_event</I
+></SPAN
+> nun
+          das bevorzugte Verfahren, um schlafend auf ein Ereignis zu
+          warten, weil <SPAN
+><I
+CLASS="EMPHASIS"
+>interruptible_sleep_on</I
+></SPAN
+>
+          einige unangenehme Race Conditions mit sich bringen
+          kann. Eine volle Beschreibung dessen, was passieren kann,
+          muß bis &#8220;<A
+HREF="irqrace.html#IRQBUFFERSLEEP"
+>the Section called <I
+>Schlafen gehen ohne Race Conditions</I
+> in Kapitel 9</A
+>&#62;&#8221; in <A
+HREF="irq.html"
+>Kapitel 9</A
+>&#62; warten; vereinfacht gesagt, können sich die Dinge in der Zeit zwischen der Entscheidung Ihres Treibers, schlafen zu gehen, und dem Aufruf von <SPAN
+><I
+CLASS="EMPHASIS"
+>interruptible_sleep_on</I
+></SPAN
+> selbst noch ändern.</P
+><P
+>&#13;
+
+          Es gibt noch einen weiteren Grund, den Scheduler explizit
+          aufzurufen: das <SPAN
+><I
+CLASS="EMPHASIS"
+>exklusive</I
+></SPAN
+> Warten. Es kann
+          Situationen geben, in denen mehrere Prozesse auf ein
+          Ereignis warten. Wenn <SPAN
+><I
+CLASS="EMPHASIS"
+>wake_up</I
+></SPAN
+>
+          aufgerufen wird, wollen alle diese Prozesse ausgeführt
+          werden. Nehmen wir an, daß ein Ereignis das Eintreffen eines
+          atomaren Stückchens von Daten angezeigt. Nur ein Prozeß ist
+          in der Lage, die Daten zu lesen; der Rest wacht einfach auf,
+          sieht, daß keine Daten da sind, und legt sich wieder
+          schlafen.</P
+><P
+>&#13;Diese Situation wird manchmal als das &#8220;Problem der donnernden Herde&#8221;
+          bezeichnet. In Situationen, bei denen es auf Mikrosekunden
+          ankommt, können donnernde Herden massiv Ressourcen
+          verschwenden. Das Erzeugen einer großen Anzahl von
+          ausführbaren Prozessen, die keine nützliche Arbeit erledigen
+          können, erzeugt eine große Anzahl von Kontextwechseln und
+          Prozessorlast, die zu nichts nütze ist. Es wäre besser, wenn
+          diese Prozesse weiter schlafen würden.</P
+><P
+>&#13;          Aus diesem Grund wurde in der 2.3-Entwicklungsserie das
+          Konzept des <SPAN
+><I
+CLASS="EMPHASIS"
+>exklusiven Schlafens</I
+></SPAN
+>
+          eingeführt. Wenn Prozesse in einem exklusiven Modus
+          schlafen, dann sagen sie damit dem Kernel, daß er nur einen von
+          ihnen aufwecken soll. In manchen Situationen verbessert das die
+          Performance.</P
+><P
+>Der Code zum Ausführen eines exklusiven Schlafens sieht dem für
+          normales Schlafen sehr ähnlich:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; void simplified_sleep_exclusive(wait_queue_head_t *queue)
+ {
+   wait_queue_t wait;
+
+   init_waitqueue_entry(&#38;wait, current);
+   current-&#62;state = TASK_INTERRUPTIBLE | TASK_EXCLUSIVE;
+
+   add_wait_queue_exclusive(queue, &#38;wait);
+   schedule();
+   remove_wait_queue (queue, &#38;wait);
+  }</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+Das Hinzufügen des Flags <TT
+CLASS="LITERAL"
+>TASK_EXCLUSIVE</TT
+> zum Zustand
+          des Tasks zeigt an, daß der Prozeß exklusiv wartet. Auch der
+          Aufruf von <SPAN
+><I
+CLASS="EMPHASIS"
+>add_wait_queue_exclusive</I
+></SPAN
+> ist
+          aber notwendig. Diese Funktion hängt den Prozeß an das
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>Ende</I
+></SPAN
+> der Warteschlange an, hinter alle
+          anderen. Damit bleiben die Prozesse, die nicht exklusiv
+          schlafen, am Anfang, wo sie immer aufgeweckt werden. Sobald
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>wake_up</I
+></SPAN
+> auf den ersten exklusiven
+          Schläfer stößt, weiß die Funktion, daß sie aufhören kann.</P
+><P
+>Aufmerksamen Lesern ist vielleicht noch ein weiterer Grund
+          dafür aufgefallen, Warteschlangen und den Scheduler explizit zu
+          manipulieren. Wo Funktionen wie
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>sleep_on</I
+></SPAN
+> einen Prozeß in genau einer
+          Warteschlange blockieren, erlaubt das direkte Arbeiten mit
+          Warteschlangen auch das Schlafen in mehreren Schlangen. Die
+          meisten Treiber benötigen das nicht, aber wenn Ihr Treiber eine
+          der Ausnahmen ist, dann verwenden Sie Code wie den hier
+          gezeigten.</P
+><P
+>&#13;
+&#62;
+&#62;
+Diejenigen, die sich näher in den Warteschlangen-Code vertiefen
+      wollen, können das in
+<TT
+CLASS="LITERAL"
+>&#60;linux/sched.h&#62;</TT
+> und
+<TT
+CLASS="LITERAL"
+>kernel/sched.c</TT
+> tun.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="EXREENTER"
+>Reentranten Code schreiben</A
+></H2
+><P
+>&#13;
+Wenn ein Prozeß schlafen gelegt wird, ist der Treiber immer noch
+lebendig, und kann von einem anderen Prozeß aufgerufen werden. Nehmen
+wir den Konsolentreiber als Beispiel. Während eine Anwendung auf
+        <TT
+CLASS="LITERAL"
+>tty1</TT
+> auf eine Tastatureingabe wartet, wechselt der Benutzer auf
+        <TT
+CLASS="LITERAL"
+>tty2</TT
+> und startet eine neue Shell. Jetzt warten beide Shells im
+Konsolentreiber auf eine Tastatureingabe, auch wenn sie in verschiedenen
+        Warteschlangen schlafen: einer in der Warteschlange zu
+        <TT
+CLASS="LITERAL"
+>tty1</TT
+>, der andere auf der Warteschlange zu <TT
+CLASS="LITERAL"
+>tty2</TT
+>. Jeder Prozeß ist in
+der Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>interruptible_sleep_on</I
+></SPAN
+>
+angehalten, aber der Treiber kann trotzdem noch Anfragen von anderen
+Terminals entgegennehmen und beantworten.
+      </P
+><P
+>Natürlich können auf SMP-Systemen simultane Aufrufe Ihres Treibers
+        selbst dann vorkommen, wenn Sie nicht schlafen.</P
+><P
+>Solche Situationen können durch das Schreiben von &#8220;reentrantem
+Code&#8221; problemlos gelöst werden. Reentranter Code ist
+solcher Code, der keine Zustandsinformationen in globalen Variablen
+enthält, und daher verschränkt aufgerufen werden kann, ohne daß etwas
+durcheinander kommt. Wenn alle Statusinformationen prozeßspezifisch
+sind, dann kann es zu keiner gegenseitigen Beeinflussung kommen.&#13;</P
+><P
+>&#13;Wenn Statusinformationen benötigt werden, können diese entweder in
+lokalen Variablen in der Treiberfunktion abgelegt werden (jeder Prozeß
+hat eine eigene Stack-Seite im Kernel-Space, in der die lokalen Variablen abgelegt
+werden) oder in der <TT
+CLASS="LITERAL"
+>private_data</TT
+>-Struktur verbleiben, auf die
+der <TT
+CLASS="LITERAL"
+>filp</TT
+> verweist, der auf die Datei zugreift. Sie sollten lokale
+Variablen verwenden, weil manchmal ein und derselbe <TT
+CLASS="LITERAL"
+>filp</TT
+> von zwei
+Prozessen (normalerweise von einem Elternprozeß und einem Kind) gemeinsam genutzt
+wird.&#13;</P
+><P
+>Wenn Sie große Mengen an Zustandsdaten speichern müssen, dann können
+Sie einen Zeiger in einer lokalen Variablen verwalten und mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> den eigentlichen Speicherplatz
+anfordern. In diesem Fall dürfen Sie nicht vergessen, den
+Datenbereich mit <SPAN
+><I
+CLASS="EMPHASIS"
+>kfree</I
+></SPAN
+> freizugeben, denn es gibt
+kein Äquivalent zu der Regel &#8220;alles wird bei Prozeß-Ende wieder
+freigegeben&#8221;, wenn Sie im Kernel-Space arbeiten. Die Verwendung
+        lokaler Variablen für große Datenelemente ist eine schlechte
+        Idee, weil die Daten möglicherweise nicht in die eine
+        Speicherseite passen, die für den Stack bereitsteht.&#13;</P
+><P
+>Sie müssen dafür sorgen, daß alle die Funktionen reentrant sind, die
+        eine von zwei Bedingungen erfüllen: entweder, wenn die Funktion
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>schedule</I
+></SPAN
+> aufruft, möglicherweise
+        via <SPAN
+><I
+CLASS="EMPHASIS"
+>sleep_on</I
+></SPAN
+> oder
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>wake_up</I
+></SPAN
+> - oder wenn sie Daten
+        aus dem oder in den User-Space kopiert, weil der Zugriff auf den
+        User-Space Seitenfehler(<SPAN
+><I
+CLASS="EMPHASIS"
+>Page Faults</I
+></SPAN
+>) verursachen kann und der Prozeß
+        schlafen gelegt wird, während der Kernel die fehlende Seite
+        beschafft.</P
+><P
+>Jede Funktion, die solche Funktionen aufruft, muß selbst reentrant
+        sein. Wenn beispielsweise <SPAN
+><I
+CLASS="EMPHASIS"
+>sample_read</I
+></SPAN
+>
+        die Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>sample_getdata</I
+></SPAN
+> aufruft, die blockieren
+        kann, dann müssen sowohl <SPAN
+><I
+CLASS="EMPHASIS"
+>sample_read</I
+></SPAN
+> als
+        auch <SPAN
+><I
+CLASS="EMPHASIS"
+>sample_getdata</I
+></SPAN
+> reentrant sein, weil
+        nichts einen anderen Prozeß daran hindern könnte, diese
+        Funktionen aufzurufen, während sich diese auch noch im ersten,
+        schlafenden Prozeß befinden.</P
+><P
+>Schließlich sollten Sie auch nicht vergessen, daß sich der Zustand des
+        Systems fast beliebig verändern kann, während ein Prozeß
+        schläft. Der Treiber sollte vorsichtig sein und alle Aspekte
+        seiner Umgebung sorgfältig überprüfen, die sich geändert haben
+        könnten, während er gerade geschlafen hat.
+&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="EXBLOCK"
+>Blockierende und
+nicht-blockierende Operationen</A
+></H2
+><P
+>&#13;
+
+
+
+Wir müssen noch einen weiteren Punkt ansprechen, bevor wir uns die
+Implementation vollständiger <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>- und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>-Methoden anschauen können, und zwar das
+Flag <TT
+CLASS="LITERAL"
+>O_NONBLOCK</TT
+> in
+<TT
+CLASS="LITERAL"
+>filp-&#62;f_flags</TT
+>. Dieser Schalter ist in
+<TT
+CLASS="LITERAL"
+>&#60;linux/fcntl.h&#62;</TT
+> definiert, was wiederum
+in neueren Kerneln von <TT
+CLASS="LITERAL"
+>&#60;linux/fs.h&#62;</TT
+>
+eingebunden wird.&#13;</P
+><P
+>Der Name des Flags kommt von &#8220;open-nonblock&#8221;, weil es
+beim Öffnen der Datei angegeben werden kann (ursprünglich sogar nur
+        da). Manchmal finden Sie auch die Verwendung des Namens
+        <TT
+CLASS="LITERAL"
+>O_NDELAY</TT
+>, dies ist ein alternativer Name,
+        den es zwecks Kompatibilität mit System V-Code gibt.
+Dieses Flag ist default-mäßig nicht gesetzt, weil das normale
+Verhalten eines Prozesses beim Warten auf die Daten einfach nur das
+Schlafengehen ist. Bei blockierenden Operationen sollte das folgende
+Verhalten implementiert werden, um der Standard-Semantik gerecht zu
+        werden:&#13;</P
+><P
+></P
+><UL
+><LI
+STYLE="list-style-type: disc"
+><P
+>Wenn ein Prozeß <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> aufruft,
+aber (noch) keine Daten zum Lesen anstehen, dann muß der Prozeß
+blockieren. Der Prozeß wird aufgeweckt, sobald Daten eintreffen. Diese
+Daten werden dann an den Aufrufer zurückgegeben, auch wenn es weniger
+waren, als im <TT
+CLASS="LITERAL"
+>count</TT
+>-Argument der Methode angegeben
+war.</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>Wenn ein Prozeß <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+> aufruft,
+und im Puffer kein Platz ist, dann muß der Prozeß blockieren, und zwar
+auf einer anderen Warteschlange als der, die beim Lesen verwendet
+wird. Wenn Daten auf das Gerät geschrieben worden sind und im
+Ausgabe-Puffer Platz frei wird, dann wird der Prozeß aufgeweckt, und der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>-Aufruf meldet eine erfolgreiche Operation zurück,
+auch wenn nur ein Teil der Daten geschrieben wurde, weil im Puffer nicht genug
+Platz für die in <TT
+CLASS="LITERAL"
+>count</TT
+> angegebene Anzahl
+an Bytes war.</P
+></LI
+></UL
+><P
+>&#13;
+Beide Anweisungen gehen davon aus, daß es
+sowohl einen Eingabe- als auch einen Ausgabe-Puffer gibt. Das ist
+zulässig, weil fast jeder Gerätetreiber diese Puffer implementiert. Der
+Eingabe-Puffer ist notwendig, um keine Daten zu verlieren, die
+ankommen, wenn sie gerade keiner liest. Dagegen können beim Schreiben
+        keine Daten verloren gehen, weil die nicht vom Systemaufruf
+        akzeptierten Daten ja im User-Space-Buffer
+        verbleiben. Gleichwohl ist ein Ausgabe-Puffer fast immer
+        nützlich, um mehr Performance aus der Hardware zu holen.&#13;</P
+><P
+>&#13;
+Der Performance-Gewinn beim Implementieren eines Ausgabe-Puffers im
+Treiber rührt daher, daß weniger Kontextwechsel und Übergänge zwischen
+dem User-Space und dem Kernel-Space notwendig sind. Ohne
+Ausgabe-Puffer (und unter der Voraussetzung, daß das Gerät langsam
+ist) können mit jedem Systemaufruf nur einige wenige Bytes
+geschrieben werden. Während ein Prozeß im <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>-Systemaufruf schläft, läuft ein anderer Prozeß (ein Kontextwechsel). Wenn der erste
+Prozeß aufgeweckt wird, läuft er weiter (noch ein Kontextwechsel),
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+> kehrt zurück (Übergang vom Kernel-Space in
+den User-Space), und der Prozeß führt den Systemaufruf erneut aus, um
+weitere Daten zu schreiben (noch ein Übergang zwischen User-Space und
+Kernel-Space). Dabei blockiert der Systemaufruf wieder, und alles geht
+von vorn los. Wenn der Ausgabe-Puffer groß genug ist, dann gelingt die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>-Operation auf Anhieb, die Daten werden bei
+einem Interrupt in das Gerät geschrieben, ohne daß die Kontrolle
+jemals in den User-Space zurückgeht. Wie groß ein Ausgabe-Puffer sein
+sollte, ist natürlich gerätespezifisch.&#13;</P
+><P
+>Wir haben in <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> keinen Eingabe-Puffer
+verwendet, weil die Daten auf jeden Fall bereitstehen, wenn
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> aufgerufen wird. Entsprechend wurde auch
+kein Ausgabe-Puffer implementiert, weil die Daten einfach nur in den
+zum Treiber gehörenden Speicherbereich kopiert werden. Im wesentlichen
+        ist das gesamte Gerät ein einziger Puffer, weswegen es keinen
+        Sinn ergeben würde, weitere Puffer hinzuzufügen. Im Abschnitt
+&#8220;<A
+HREF="irqbuffers.html"
+>the Section called <I
+>Interrupt-gesteuerte I/O</I
+> in Kapitel 9</A
+>&#8221; in <A
+HREF="irq.html"
+>Kapitel 9</A
+>
+werden Sie lernen, wie man Puffer verwendet.&#13;</P
+><P
+><SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+> verhalten
+sich anders, wenn <TT
+CLASS="LITERAL"
+>O_NONBLOCK</TT
+> angegeben
+wurde. In diesem Fall geben die Systemaufrufe einfach nur
+<TT
+CLASS="LITERAL"
+>-EAGAIN</TT
+> zurück, wenn ein Prozeß
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> aufruft, ohne daß Daten anliegen, oder
+wenn er <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+> aufruft, wenn im Puffer kein Platz ist.&#13;</P
+><P
+>Wie Sie vermutlich erwarten, kehren nicht-blockierende Operationen
+sofort zurück, so daß Anwendungen wiederholt nach Daten nachfragen
+(&#8220;pollen&#8221;) können. Anwendungsprogramme müssen vorsichtig
+sein, wenn Sie <TT
+CLASS="LITERAL"
+>stdio</TT
+>-Funktionen mit
+nicht-blockierenden Dateien benutzen, weil man leicht einen
+nicht-blockierenden Rücksprung mit dem Dateiende
+(<TT
+CLASS="LITERAL"
+>EOF</TT
+>) verwechseln kann. Sie müssen immer
+<TT
+CLASS="LITERAL"
+>errno</TT
+> überprüfen.&#13;</P
+><P
+>Natürlich kann <TT
+CLASS="LITERAL"
+>O_NONBLOCK</TT
+> auch in der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>-Methode verwendet werden. Das wird gemacht,
+wenn auch dieser Aufruf schon längere Zeit blockieren könnte, also
+beispielsweise, wenn ein FIFO, für den es (noch) keine Schreiber gibt,
+oder eine Datei, die noch gesperrt ist, geöffnet werden
+soll. Normalerweise geht das Öffnen eines Gerätes entweder gut oder
+schlägt sofort fehl, ohne daß man auf externe Ereignisse warten
+müßte. Manchmal ist zum Öffnen eines Gerätes jedoch eine lange
+Initialisierung notwendig. Dann kann es besser sein,
+<TT
+CLASS="LITERAL"
+>O_NONBLOCK</TT
+> zu verwenden, was sofort mit
+<TT
+CLASS="LITERAL"
+>-EAGAIN</TT
+> (&#8220;versuch's noch einmal&#8221;)
+zurückkehrt, nachdem das Öffnen der Datei veranlaßt wurde. Sie könnten
+auch ein blockierendes Öffnen verwenden, um Zugriffs-Policies ähnlich
+den Dateisperren zu implementieren. Wir werden eine solche Operation
+weiter unten in &#8220;<A
+HREF="exaccess.html#EXOBLO"
+>the Section called <I
+>Blockieren im open-Aufruf als Alternative zu EBUSY</I
+></A
+>&#8221; sehen.
+      </P
+><P
+>        Manche Treiber implementieren auch eine spezielle Semantik für
+        <TT
+CLASS="LITERAL"
+>O_NONBLOCK</TT
+>; beispielsweise blockiert das
+        Öffnen eines Bandlaufwerks normalerweise so lange, bis ein Band
+        eingelegt worden ist. Wenn das Bandlaufwerk mit
+        <TT
+CLASS="LITERAL"
+>O_NONBLOCK</TT
+> geöffnet wird, dann ist der
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>-Aufruf unmittelbar erfolgreich,
+        unabhängig davon, ob das Medium vorhanden ist oder nicht.
+      </P
+><P
+><TT
+CLASS="LITERAL"
+>O_NONBLOCK</TT
+> wirkt nur auf die
+Operationen <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>, <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>.
+
+
+
+&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="EXIMPL"
+>Eine Beispiel-Implementation: scullpipe</A
+></H2
+><P
+>&#13;Die <TT
+CLASS="FILENAME"
+>/dev/scullpipe</TT
+>-Geräte (es gibt per
+Default vier davon) sind ein Bestandteil des
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Moduls und dienen zur Demonstration,
+wie blockierende I/O implementiert wird.&#13;</P
+><P
+>Innerhalb eines Treibers wird ein im <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>-Aufruf
+blockierter Prozeß aufgeweckt, wenn Daten eintreffen. Normalerweise
+löst die Hardware einen Interrupt aus, um ein solches Ereignis
+        bekanntzugeben. Der Treiber
+        weckt dann die wartenden Prozesse im Rahmen der
+Behandlung dieses Interrupts. Bei <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>
+sehen die Dinge anders aus, denn Sie sollen
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> ja auf jedem Computer ohne spezielle
+Hardware laufen lassen können &#8212; und ohne jeden
+Interrupt-Handler. Daher verwenden wir einen anderen Prozeß, der die
+Daten erzeugt und den lesenden Prozeß aufweckt; entsprechend wecken
+lesende Prozesse schlafende Schreiber-Prozesse auf. Die daraus
+resultierende Implementation entspricht der eines FIFO (auch
+        <I
+CLASS="FIRSTTERM"
+>benannte Pipe</I
+> genannt) &#8212; daher
+        auch ihr Name.&#13;</P
+><P
+>Der Gerätetreiber verwendet eine Gerätestruktur, die zwei
+Warteschlangen und einen Puffer enthält. Die Größe des Puffers ist wie
+üblich konfigurierbar (zur Kompilierzeit, zur Ladezeit oder zur
+Laufzeit).&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+typedef struct Scull_Pipe {
+  wait_queue_head_t inq, outq;  /* Warteschlangen zum Lesen und Schreiben */
+  char *buffer, *end;       /* Anfang des Puffers, Ende des Puffers */
+  int buffersize;                 /* wird bei der Zeiger-Arithmetik verwendet */
+  char *rp, *wp;                  /* wo gelesen resp. geschrieben
+                                     werden soll */
+  int nreaders, nwriters;         /* Anzahl der open-Aufrufe
+                                     zum Lesen/Schreiben */
+  struct fasync_struct *async_queue; /* asynchrone Leser */
+  struct semaphore sem;      /* Semaphor für gegenseitigen Ausschluß */
+  devfs_handle_t handle;     /* nur bei devfs verwendet */
+} Scull_Pipe;</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die Implementation von <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> behandelt sowohl
+blockierende als auch nicht-blockierende Eingaben und sieht
+folgendermaßen aus (die merkwürdig aussehende erste Zeile der Funktion
+        wird später, in &#8220;&#8221;, erklärt):&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+
+ssize_t scull_p_read (struct file *filp, char *buf, size_t count,
+        loff_t *f_pos)
+{
+  Scull_Pipe *dev = filp-&#62;private_data;
+
+  if (f_pos != &#38;filp-&#62;f_pos) return -ESPIPE;
+
+  if (down_interruptible(&#38;dev-&#62;sem))
+    return -ERESTARTSYS;
+  while (dev-&#62;rp == dev-&#62;wp) { /* nichts zu lesen */
+    up(&#38;dev-&#62;sem); /* Sperre freigeben */
+    if (filp-&#62;f_flags &#38; O_NONBLOCK)
+      return -EAGAIN;
+    PDEBUG("\"%s\" reading: going to sleep\n", current-&#62;comm);
+    if (wait_event_interruptible(dev-&#62;inq, (dev-&#62;rp != dev-&#62;wp)))
+      return -ERESTARTSYS; /* Signal: FS-Schicht soll das bearbeiten */
+    /* ansonsten Schleife durchlaufen, aber zuerst die Sperre holen */
+    if (down_interruptible(&#38;dev-&#62;sem))
+      return -ERESTARTSYS;
+  }
+  /* OK, Daten da, etwas zurueckgeben */
+  if (dev-&#62;wp &#62; dev-&#62;rp)
+    count = min(count, dev-&#62;wp - dev-&#62;rp);
+  else /* der Schreib-Zeiger ist am Ende angekommen, Daten bis
+        dev-&#62;end zurueckgeben */
+    count = min(count, dev-&#62;end - dev-&#62;rp);
+  if (copy_to_user(buf, dev-&#62;rp, count)) {
+    up (&#38;dev-&#62;sem);
+    return -EFAULT;
+  }
+  dev-&#62;rp += count;
+  if (dev-&#62;rp == dev-&#62;end)
+    dev-&#62;rp = dev-&#62;buffer; /* um das Ende herum */
+  up (&#38;dev-&#62;sem);
+
+  /* Alle Schreiber aufwecken und zurueckspringen */
+  wake_up_interruptible(&#38;dev-&#62;outq);
+  PDEBUG("\"%s\" did read %li bytes\n",current-&#62;comm, (long)count);
+  return count;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Sie sehen, daß wir einige <TT
+CLASS="LITERAL"
+>PDEBUG</TT
+>-Anweisungen im
+Code belassen haben. Wenn Sie den Treiber kompilieren, können Sie die
+Meldungen einschalten, um das Verfolgen der Interaktion zwischen den
+verschiedenen Prozessen zu erleichtern.
+      </P
+><P
+>Beachten Sie auch, daß hier wieder einmal Semaphore kritische
+        Code-Abschnitte schützen. Der
+        <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Code darf nicht
+        schlafen gehen, wenn er ein Semaphor hält, ansonsten
+        könnten Schreiber nie Daten hinzufügen, und das Ganze würde in
+        einem Deadlock enden. Dieser Code verwendet
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>wait_event_interruptible</I
+></SPAN
+>, um - falls nötig -
+        auf Daten zu warten. Er muß aber auch nach dem Warten
+        überprüfen, ob Daten vorliegen. Jemand anders hätte sich
+        zwischen dem Aufwachen und dem Zurückgeben der Semaphore die
+        Daten schnappen können.</P
+><P
+>Wir sollten hier noch einmal wiederholen, daß ein Prozeß sowohl
+        schlafen gelegt werden kann, wenn er
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>schedule</I
+></SPAN
+> (direkt oder indirekt) aufruft,
+        als auch, wenn er Daten vom oder in den User-Space kopiert. Im
+        letzteren Fall kann der Prozeß schlafen, wenn sich das Array
+        noch nicht im Hauptspeicher befindet. Wenn
+        <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> schläft, während Daten
+        zwischen dem Kernel und dem User-Space kopiert werden, so
+        geschieht dies mit gehaltenem Geräte-Semaphor. Das Halten des
+        Semaphor ist in diesem Fall gerechtfertigt, weil das System
+        dadurch nicht in einen Deadlock gerät und es wichtig ist, daß
+        sich das Geräte-Speicher-Array nicht ändert, während der
+        Treiber schläft.
+      </P
+><P
+>&#13;Die <TT
+CLASS="LITERAL"
+>if</TT
+>-Anweisung nach dem Aufruf von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>interruptible_sleep_on</I
+></SPAN
+> kümmert sich
+um die Behandlung von Signalen.
+Diese Anweisung stellt sicher, daß
+korrekt und wie erwartet auf die Signale reagiert wird, beispielsweise
+        durch Aufwecken des Prozesses (wenn dieser unterbrechbar
+        geschlafen hat). Wenn ein Signal eingetroffen ist und nicht
+        vom Prozeß blockiert wurde, dann besteht das korrekte Verhalten darin,
+        die oberen Schichten des Kernels dieses Ereignis behandeln zu
+        lassen. Dazu gibt der Kernel <TT
+CLASS="LITERAL"
+>-ERESTARTSYS</TT
+>
+        an den Aufrufer zurück; dieser Wert wird intern vom virtuellen
+        Dateisystem (VFS) verwendet, das den Systemaufruf entweder
+        neu startet oder <TT
+CLASS="LITERAL"
+>-EINTR</TT
+> an den User-Space
+        zurückgibt. Wir verwenden hier die gleiche Anweisung für die Handhabung von Signalen in allen <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>- und
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>-Implementationen. Weil
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>signal_pending</I
+></SPAN
+> erst in der Version 2.1.57
+        des Kernels eingeführt wurde, definiert
+        <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> es für die früheren Kernel, um
+        die Portabilität des Quellcodes sicherzustellen.&#13;</P
+><P
+>Die Implementation von <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+> ist der von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> ziemlich ähnlich (und auch hier wird die
+        erste Zeile später erläutert). Das einzige
+&#8220;merkwürdige&#8221; Merkmal ist die Tatsache, daß der Puffer
+niemals vollständig gefüllt und immer ein Loch von mindestens einem
+Byte freigelassen wird. Wenn der Puffer also leer ist, sind
+<TT
+CLASS="LITERAL"
+>wp</TT
+> und <TT
+CLASS="LITERAL"
+>rp</TT
+> gleich; wenn Daten
+vorliegen, sind diese beiden Zeiger immer verschieden.&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+static inline int spacefree(Scull_Pipe *dev)
+{
+  if (dev-&#62;rp == dev-&#62;wp)
+    return dev-&#62;buffersize - 1;
+  return ((dev-&#62;rp + dev-&#62;buffersize - dev-&#62;wp) % dev-&#62;buffersize) - 1;
+}
+
+ssize_t scull_p_write(struct file *filp, const char *buf, size_t count,
+        loff_t *f_pos)
+{
+  Scull_Pipe *dev = filp-&#62;private_data;
+
+  if (f_pos != &#38;filp-&#62;f_pos) return -ESPIPE;
+
+  if (down_interruptible(&#38;dev-&#62;sem))
+    return -ERESTARTSYS;
+
+  /* Sicherstellen, daß Platz zum Schreiben da ist */
+  while (spacefree(dev) == 0) { /* voll */
+    up(&#38;dev-&#62;sem);
+    if (filp-&#62;f_flags &#38; O_NONBLOCK)
+      return -EAGAIN;
+    PDEBUG("\"%s\" writing: going to sleep\n",current-&#62;comm);
+    if (wait_event_interruptible(dev-&#62;outq, spacefree(dev) &#62; 0))
+      return -ERESTARTSYS; /* Signal: FS-Schicht soll das regeln */
+    if (down_interruptible(&#38;dev-&#62;sem))
+      return -ERESTARTSYS;
+  }
+  /* OK, Platz ist da, etwas entgegennehmen */
+  count = min(count, spacefree(dev));
+  if (dev-&#62;wp &#62;= dev-&#62;rp)
+    count = min(count, dev-&#62;end - dev-&#62;wp); /* bis zum Ende des Puffers */
+  else /* der Schreibzeiger hat das Ende erreicht, bis rp-1 auffuellen */
+    count = min(count, dev-&#62;rp - dev-&#62;wp - 1);
+  PDEBUG("Going to accept %li bytes to %p from %p\n",
+      (long)count, dev-&#62;wp, buf);
+  if (copy_from_user(dev-&#62;wp, buf, count)) {
+    up (&#38;dev-&#62;sem);
+    return -EFAULT;
+  }
+  dev-&#62;wp += count;
+  if (dev-&#62;wp == dev-&#62;end)
+    dev-&#62;wp = dev-&#62;buffer; /* wp vom Ende auf den Anfang setzen */
+  up(&#38;dev-&#62;sem);
+
+  /* alle Leser aufwecken */
+  wake_up_interruptible(&#38;dev-&#62;inq); /* blockiert in read() und select() */
+
+  /* und asynchron lesenden Prozessen Signale schicken - wird spaeter erklärt */
+  if (dev-&#62;async_queue)
+    kill_fasync(&#38;dev-&#62;async_queue, SIGIO, POLL_IN);
+  PDEBUG("\"%s\" did write %li bytes\n",current-&#62;comm, (long)count);
+  return count;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>So, wie wir das Gerät entwickelt haben, implementiert es kein
+blockierendes <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> und ist einfacher als ein
+echter FIFO. Wenn Sie sich die echten FIFOs ansehen wollen, schauen
+Sie in <TT
+CLASS="FILENAME"
+>fs/pipe.c</TT
+> in den Kernel-Quellen.&#13;</P
+><P
+>&#13;
+
+
+Um die blockierende Operation des
+<SPAN
+CLASS="APPLICATION"
+>scullpipe</SPAN
+>-Geräts zu testen, können Sie
+einige Programme darauf arbeiten lassen und wie gewohnt
+die I/O-Umleitung benutzen. Das Testen der nicht-blockierenden Funktion
+ist schwieriger, weil konventionelle Programme keine
+nicht-blockierenden Operationen durchführen. Das Quellverzeichnis
+<TT
+CLASS="FILENAME"
+>misc-progs</TT
+> enthält das folgende einfache Programm
+namens <TT
+CLASS="FILENAME"
+>nbtest</TT
+>, das zum Testen der
+nicht-blockierenden Operationen benutzt werden kann. Es kopiert
+lediglich seine Eingabe auf die Ausgabe, verwendet dafür
+nicht-blockierende I/O und sorgt für eine Verzögerung zwischen den einzelnen
+Versuchen. Die Verzögerungszeit kann auf der Kommandozeile übergeben
+werden und beträgt per Default eine Sekunde.
+&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+
+int main(int argc, char **argv)
+{
+  int delay=1, n, m=0;
+
+  if (argc&#62;1) delay=atoi(argv[1]);
+  fcntl(0, F_SETFL, fcntl(0,F_GETFL) | O_NONBLOCK); /* stdin */
+  fcntl(1, F_SETFL, fcntl(1,F_GETFL) | O_NONBLOCK); /* stdout */
+
+  while (1) {
+    n=read(0, buffer, 4096);
+    if (n&#62;=0)
+      m=write(1, buffer, n);
+    if ((n&#60;0 || m&#60;0) &#38;&#38; (errno != EAGAIN))
+      break;
+    sleep(delay);
+  }
+  perror( n&#60;0 ? "stdin" : "stdout");
+  exit(1);
+}</PRE
+></TD
+></TR
+></TABLE
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="extra.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="exselect.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Fortgeschrittene Operationen in Zeichen-Treibern</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="extra.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>poll und select</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

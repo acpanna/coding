@@ -1,0 +1,658 @@
+<HTML
+><HEAD
+><TITLE
+>Abwärtskompatibilität</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Zeichen-Treiber"
+HREF="char.html"><LINK
+REL="PREVIOUS"
+TITLE="Das Device-Dateisystem"
+HREF="chardevfs.html"><LINK
+REL="NEXT"
+TITLE="Schnellreferenz"
+HREF="x4097.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="chardevfs.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 3. Zeichen-Treiber</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x4097.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN3895"
+>Abwärtskompatibilität</A
+></H1
+><P
+>Wir haben in diesem Kapitel bisher die Programmierschnittstelle der
+Version 2.4 des Linux-Kernels beschrieben. Leider hat sich diese
+Schnittstelle im Laufe der Kernel-Entwicklung deutlich
+verändert. Diese Änderungen sind für sich genommen alle
+Verbesserungen, bringen aber wieder einmal Schwierigkeiten für
+diejenigen mit, die Treiber schreiben wollen, die mit verschiedenen
+Kernel-Versionen kompatibel sind.
+
+&#13;</P
+><P
+>Was dieses Kapitel angeht, so gibt es nur wenige sichtbare Unterschiede
+zwischen den Versionen 2.4 und 2.2. In Version 2.2 wurden allerdings
+viele der Prototypen der <TT
+CLASS="LITERAL"
+>file_operations</TT
+>-Methoden
+im Vergleich zur Version 2.0 geändert; außerdem wurde der Zugriff auf den
+User-Space deutlich verändert (und vereinfacht). Der
+Semaphor-Mechanismus war in Linux 2.0 noch nicht so weit
+entwickelt. Und schließlich wurde in der 2.1-Entwicklungsserie der
+Verzeichniseintrag-Cache (<SPAN
+><I
+CLASS="EMPHASIS"
+>dentry cache</I
+></SPAN
+>)
+eingeführt.</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN3901"
+>Änderungen in der Struktur für die Dateioperationen</A
+></H2
+><P
+>&#13;
+
+Eine Reihe von Faktoren haben die Änderungen in den
+<TT
+CLASS="LITERAL"
+>file_operations</TT
+>-Methoden vorangetrieben. Die seit
+langem bestehende Grenze von 2 GByte für die Dateigröße brachte selbst zu
+Zeiten von Linux 2.0 Probleme mit sich. Daher wurde ab der 2.1-Serie
+der Typ <TT
+CLASS="LITERAL"
+>loff_t</TT
+>, ein 64-Bit-Wert, verwendet, um
+Dateipositionen und Längen anzugeben. Die Unterstützung großer Dateien
+war vor der Version 2.4 noch nicht vollständig in den Kernel
+integriert, aber ein großer Teil der Basisarbeit wurde schon vorher
+erledigt und mußte von Treiber-Entwicklern berücksichtigt werden.</P
+><P
+>&#13;
+
+
+
+Eine weitere in der 2.1-Entwicklung eingeführte Änderung war das
+Hinzufügen des Zeigerarguments <TT
+CLASS="LITERAL"
+>f_pos</TT
+> zu den
+Methoden <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>. Diese Änderung wurde vorgenommen, um die
+POSIX-Systemaufrufe <SPAN
+><I
+CLASS="EMPHASIS"
+>pread</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>pwrite</I
+></SPAN
+> zu unterstützen, die explizit den
+Datei-Offset angeben, von dem Daten gelesen oder zu dem Daten
+geschrieben werden sollen. Ohne diese Systemaufrufe kann es bei
+Multithreading-Programmen zu Race Conditions kommen, wenn Daten in
+Dateien verschoben werden.</P
+><P
+>&#13;Fast alle Methoden in Linux 2.0 erwarteten ein explizites
+Zeigerargument <TT
+CLASS="LITERAL"
+>inode</TT
+>. In der 2.1-Reihe wurde dieser
+Parameter aus mehreren Methoden entfernt, weil er selten benötigt
+wurde. Wenn Sie ihn noch brauchen, können Sie ihn immer noch aus dem
+<TT
+CLASS="LITERAL"
+>filp</TT
+>-Argument gewinnen.</P
+><P
+>Als Ergebnis daraus sahen die Prototypen der häufig verwendeten
+Methoden in <TT
+CLASS="LITERAL"
+>file_operations</TT
+> in 2.0 so aus:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>int (*lseek) (struct inode *, struct file *, off_t, int);</TT
+></DT
+><DD
+><P
+>&#13;
+Beachten Sie, daß diese Methode in Linux 2.0 nicht
+<SPAN
+><I
+CLASS="EMPHASIS"
+>llseek</I
+></SPAN
+>, sondern <SPAN
+><I
+CLASS="EMPHASIS"
+>lseek</I
+></SPAN
+>
+heißt. Die Namensänderung soll anzeigen, daß
+Positionierungsoperationen jetzt mit 64-Bit-Offset-Werten vorgenommen
+werden können.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int (*read) (struct inode *, struct file *, char *, int);</TT
+>, <TT
+CLASS="LITERAL"
+>int (*write) (struct inode *, struct file *, const char *, int);</TT
+></DT
+><DD
+><P
+>&#13;
+Wie erwähnt hatten diese Funktionen in Linux 2.0
+den <TT
+CLASS="LITERAL"
+>inode</TT
+>-Zeiger als Argument, dafür aber kein
+Positionsargument.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void (*release) (struct inode *, struct file *); </TT
+></DT
+><DD
+><P
+>&#13;Im 2.0-Kernel konnte die Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>release</I
+></SPAN
+> nicht
+fehlschlagen und gab deswegen <TT
+CLASS="LITERAL"
+>void</TT
+> zurück.</P
+></DD
+></DL
+></DIV
+><P
+>Es hat noch viele weitere Änderungen an der Struktur
+<TT
+CLASS="LITERAL"
+>file_operations</TT
+> gegeben; wir werden diese in den
+folgenden Kapiteln behandeln, wenn sie für uns relevant werden. Es
+lohnt sich aber gleichwohl auch jetzt schon, sich anzuschauen, wie
+portabler Code geschrieben werden kann, der die bisher geschriebenen
+Änderungen abdeckt. Die Änderungen an diesen Methoden sind umfassend,
+und es gibt keine einfache, elegante Möglichkeit, sie zu behandeln.</P
+><P
+>&#13;Der Beispiel-Code berücksichtigt diese Änderungen mit kleinen
+Wrapper-Funktionen, die zwischen der alten und der neuen API
+&#8220;übersetzen&#8221;. Diese Wrapper werden nur verwendet, wenn mit
+2.0-Header-Dateien kompiliert wird, und ersetzen die &#8220;echten&#8221;
+Geräte-Methoden in der Struktur
+<TT
+CLASS="LITERAL"
+>file_operations</TT
+>. Der folgende Code implementiert
+die Wrapper für den <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Treiber:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+/*
+ * Die folgenden Wrapper bringen den Code mit 2.0-Kerneln zum Laufen
+ */
+#ifdef LINUX_20
+int scull_lseek_20(struct inode *ino, struct file *f,
+    off_t offset, int whence)
+{
+ return (int)scull_llseek(f, offset, whence);
+}
+
+int scull_read_20(struct inode *ino, struct file *f, char *buf,
+   int count)
+{
+ return (int)scull_read(f, buf, count, &#38;f-&#62;f_pos);
+}
+
+int scull_write_20(struct inode *ino, struct file *f, const char *b,
+   int c)
+{
+ return (int)scull_write(f, b, c, &#38;f-&#62;f_pos);
+}
+
+void scull_release_20(struct inode *ino, struct file *f)
+{
+ scull_release(ino, f);
+}
+
+/* "Echte" Namen in 2.0-Namen umdefinieren */
+#define scull_llseek scull_lseek_20
+#define scull_read scull_read_20
+#define scull_write scull_write_20
+#define scull_release scull_release_20
+#define llseek lseek
+#endif /* LINUX_20 */</PRE
+></TD
+></TR
+></TABLE
+><P
+>Das Umdefinieren der Namen auf diese Weise kann auch Struktur-Elemente
+abdecken, deren Namen sich mit der Zeit geändert haben (wie etwa im
+Falle der Änderung von <SPAN
+><I
+CLASS="EMPHASIS"
+>lseek</I
+></SPAN
+> in
+<SPAN
+><I
+CLASS="EMPHASIS"
+>llseek</I
+></SPAN
+>).</P
+><P
+>Wir müssen wahrscheinlich nicht extra sagen, daß Sie solche
+Umdefinitionen von Namen mit Vorsicht vornehmen sollten;
+diese Zeilen sollten vor der Definition der Struktur
+<TT
+CLASS="FILENAME"
+>file_operations</TT
+>, aber nach einer Veränderung
+dieser Namen stehen.
+
+&#13;</P
+><P
+>&#13;
+Es gibt noch zwei weitere Inkompatibilitäten im Zusammenhang mit der
+Struktur <TT
+CLASS="LITERAL"
+>file_operations</TT
+>. So wurde die Methode
+<SPAN
+><I
+CLASS="EMPHASIS"
+>flush</I
+></SPAN
+> während der 2.1-Entwicklung
+hinzugefügt. Treiber-Entwickler müssen sich fast nie um diese Methode
+kümmern, aber ihre reine Anwesenheit mitten in der Struktur kann
+trotzdem noch zu Problemen führen. Sie können es am besten vermeiden,
+sich mit der <SPAN
+><I
+CLASS="EMPHASIS"
+>flush</I
+></SPAN
+>-Methode auseinanderzusetzen,
+wenn Sie die markierte Initialisierungssyntax verwenden, wie wir das
+in allen Beispieldateien getan haben.</P
+><P
+>&#13;
+
+
+
+Der andere Unterschied besteht darin, wie ein
+<TT
+CLASS="LITERAL"
+>inode</TT
+>-Zeiger aus der
+<TT
+CLASS="LITERAL"
+>filp</TT
+>-Struktur geholt wird. Während moderne Kernel
+eine <TT
+CLASS="LITERAL"
+>dentry</TT
+>-Struktur (directory entry,
+Verzeichniseintrag) verwenden, gab es eine solche Struktur im Kernel
+2.0 nicht. Daher definiert <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> ein Makro,
+das für den portablen Zugriff auf <TT
+CLASS="LITERAL"
+>inode</TT
+> von einem
+<TT
+CLASS="LITERAL"
+>filp</TT
+> verwendet werden soll.</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+#ifdef LINUX_20
+# define INODE_FROM_F(filp) ((filp)-&#62;f_inode)
+#else
+# define INODE_FROM_F(filp) ((filp)-&#62;f_dentry-&#62;d_inode)
+#endif</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN4023"
+>Der Verwendungszähler von Modulen</A
+></H2
+><P
+>&#62;
+&#62;
+
+
+
+In 2.2 und früheren Kerneln gab es von seiten des Linux-Kernels keine
+Unterstützung für Module bei der Verwaltung des
+Verwendungszählers. Die Module mußten diese Arbeit selbst
+erledigen. Dieser Ansatz war fehlerträchtig und machte viel doppelte
+Arbeit notwendig.</P
+><P
+>&#13;
+Code, der portabel sein soll, muß aber auch mit dieser alten
+Vorgehensweise zurechtkommen. Das bedeutet, daß der Verwendungszähler
+weiterhin inkrementiert werden muß, wenn eine neue Referenz auf das
+Modul angelegt wird, und daß er dekrementiert werden muß, wenn diese Referenz wieder
+verschwindet. Portabler Code muß auch das Problem umgehen, daß das
+Feld <TT
+CLASS="LITERAL"
+>owner</TT
+> in der Struktur
+<TT
+CLASS="LITERAL"
+>file_operations</TT
+> in früheren Kernel-Versionen nicht
+existiert. Das ist am einfachsten möglich, wenn Sie
+<TT
+CLASS="LITERAL"
+>SET_MODULE_OWNER</TT
+> verwenden, anstatt auf
+das Feld <TT
+CLASS="LITERAL"
+>owner</TT
+> zuzugreifen. In <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+>
+stellen wir eine leere Version von <TT
+CLASS="LITERAL"
+>SET_FILE_OWNER</TT
+>
+für Kernel bereit, die nicht über dieses Feld verfügen.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN4051"
+>Änderungen in der Unterstützung von Semaphoren</A
+></H2
+><P
+>&#13;
+Die Semaphor-Unterstützung war im 2.0-Kernel noch weniger weit
+entwickelt; ganz allgemein war die Unterstützung für SMP-Systeme zu
+diesem Zeitpunkt noch recht primitiv. Treiber, die nur für diese
+Kernel-Version geschrieben wurden, müssen gar keine Semaphore
+verwenden, weil nur jeweils eine CPU Kernel-Code ausführen
+konnte. Dennoch mag es hier die Notwendigkeit für Semaphore geben, und es schadet allemal nicht, den
+vollständigen Schutz späterer Kernel-Versionen zu haben.</P
+><P
+>&#13;
+Die meisten der in diesem Kapitel behandelten Semaphor-Funktionen
+existierten auch schon im Kernel 2.0. Die einzige Ausnahme bildet die Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>sema_init</I
+></SPAN
+>; im Kernel 2.0 mußten
+Entwickler die Semaphore manuell initialisieren. Die Header-Datei
+<TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> deckt dieses Problem durch Definition
+einer Version von <SPAN
+><I
+CLASS="EMPHASIS"
+>sema_init</I
+></SPAN
+> ab, die bei der
+Verwendung eines 2.0-Kernels benutzt wird:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+#ifdef LINUX_20
+# ifdef MUTEX_LOCKED /* Nur, wenn semaphore.h eingebunden ist */
+  extern inline void sema_init (struct semaphore *sem, int val)
+  {
+   sem-&#62;count = val;
+   sem-&#62;waking = sem-&#62;lock = 0;
+   sem-&#62;wait = NULL;
+  }
+# endif
+#endif /* LINUX_20 */</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN4071"
+>Änderungen im Zugriff auf den User-Space</A
+></H2
+><P
+>&#13;
+
+
+Schließlich änderte sich am Anfang der 2.1-Reihe der Zugriff auf
+den User-Space total. Die neue Schnittstelle hat ein besseres Design
+und nutzt die Hardware für den sicheren Zugriff auf User
+Space-Speicher sehr viel besser aus. Aber natürlich hat sich die
+Schnittstelle geändert. Im 2.0-Kernel sahen die Funktionen für den
+Speicherzugriff folgendermaßen aus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; void memcpy_fromfs(void *to, const void *from, unsigned long count);
+ void memcpy_tofs(void *to, const void *from, unsigned long count);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+
+Die Namen dieser Funktionen stammen aus der historischen Verwendung
+des <TT
+CLASS="LITERAL"
+>FS</TT
+>-Segment-Registers auf dem i386. Beachten
+Sie, daß diese Funktionen keinen Rückgabewert haben; wenn der Benutzer
+eine ungültige Adresse angibt, dann schlägt das Kopieren der Daten
+stillschweigend fehl. <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> versteckt die
+Umbenennung und erlaubt Ihnen das portable Aufrufen von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>copy_to_user</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>copy_from_user</I
+></SPAN
+>.
+&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="chardevfs.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x4097.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Das Device-Dateisystem</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="char.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Schnellreferenz</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

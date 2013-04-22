@@ -1,0 +1,14 @@
+zu a)
+
+Bei einem Mausklick in den AppletBereich der HTML-Seite, wird die aktuelle Pixelposition (wo der Mausklick 
+erfolgt ist) innerhalb des AppletBereichs ausgegeben.
+
+zu b)
+
+Unicode_1.class ist eine Applikation, denn bei einer Einbindung als Applet in ein HTML-File erscheint
+die Meldung, das es sich bei dem vorliegenden .class-File um kein lauffähiges Applet handelt.
+--> Applikation
+
+Unicode_2.class ist ein Applet, da es sich per APPLET-Tag in die HTML-Seite einbinden läßt und auch
+ausgeführt wird-
+--> Applet

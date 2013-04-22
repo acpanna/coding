@@ -1,0 +1,241 @@
+<HTML
+><HEAD
+><TITLE
+>Lizenzbedingungen</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Eine Einführung in den Linux-Kernel"
+HREF="anintro.html"><LINK
+REL="PREVIOUS"
+TITLE="Versionsnumerierung"
+HREF="x339.html"><LINK
+REL="NEXT"
+TITLE="Selbst in der Kernel-Entwicklergemeinde tätig werden"
+HREF="x385.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x339.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 1. Eine Einführung in den Linux-Kernel</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x385.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN357"
+>Lizenzbedingungen</A
+></H1
+><P
+>&#13;
+
+Linux wird unter der GNU General Public License (GPL)
+lizenziert, einem Dokument, das für das GNU-Projekt der Free Software
+Foundation entwickelt wurde. Die GPL erlaubt es jedem, ein Produkt
+unter der GPL weiterzuvertreiben und auch unter der GPL lizenzierte Programme zu
+verkaufen, sofern der
+Empfänger eine genaue Kopie der Binärdateien aus den Quellen bauen
+darf. Außerdem muß auch jedes Software-Produkt, das von einem unter der
+GPL stehenden Produkt abgeleitet ist, wieder unter der GPL stehen.&#13;</P
+><P
+>Das Hauptziel einer solchen Lizenz ist es, das allgemeine Wissen zu
+vergrößern, indem jeder die Programme nach Belieben verändern darf,
+und daß gleichzeitig Leute, die Software verkaufen, noch ihrer Arbeit
+nachgehen können. Trotz dieser einfachen Ziele hält die Diskussion
+über die GPL und ihre Verwendung noch an. Falls Sie die Lizenz lesen
+wollen, können Sie sie an verschiedenen Stellen in Ihrem System
+finden, unter anderem im Verzeichnis
+<TT
+CLASS="FILENAME"
+>/usr/src/linux</TT
+> in der Datei
+<TT
+CLASS="FILENAME"
+>COPYING</TT
+>.&#13;</P
+><P
+>Eigene Module und Module Dritter sind kein Bestandteil des
+Linux-Kernels, und Sie sind daher nicht verpflichtet, diese unter der
+GPL freizugeben. Ein Modul <SPAN
+><I
+CLASS="EMPHASIS"
+>benutzt</I
+></SPAN
+> den Kernel
+über eine wohldefinierte Schnittstelle, ist aber kein Bestandteil
+davon, ähnlich wie Benutzerprogramme den Kernel über Systemaufrufe
+benutzen. Beachten Sie, daß diese Ausnahme von der GPL-Lizenzierung nur
+für Module gilt, die ausschließlich die veröffentlichte Modul-Schnittstelle
+verwenden. Module, die tiefer in den Kernel eingreifen, fallen unter
+die Klausel über &#8220;abgeleitete Arbeiten&#8221; in der GPL.&#13;</P
+><P
+>Zusammengefaßt: Wenn Ihr Code in den Kernel aufgenommen wird, müssen
+Sie ihn unter die GPL stellen. Wenn Sie Ihre Veränderungen nur selbst
+verwenden, greift die GPL noch nicht, aber wenn Sie Ihren Code an
+andere weitergeben, müssen Sie den Quellcode in der Distribution
+mitliefern &#8212; Leute, die sich Ihr Paket besorgen, müssen in den
+Lage sein, die Binärdateien beliebig neu zu kompilieren. Wenn Sie aber
+andererseits ein Modul schreiben, dürfen Sie es auch in
+binärer Form vertreiben. Dies ist aber nicht immer besonders
+praktisch, weil Module im allgemeinen für die jeweilige
+Kernel-Version, mit der sie verwendet werden sollen (siehe dazu <A
+HREF="building.html"
+>Kapitel 2</A
+>, Abschnitt &#8220;<A
+HREF="x666.html#BUIVERSION"
+>the Section called <I
+>Versionsabhängigkeit</I
+> in Kapitel 2</A
+>&#8221;
+und <A
+HREF="kerneld.html"
+>Kapitel 11</A
+>, Abschnitt &#8220;<A
+HREF="kerver.html"
+>the Section called <I
+>Versionskontrolle in Modulen</I
+> in Kapitel 11</A
+>&#8221;), neu übersetzt werden
+sollten. Neue Kernel-Versionen &#8212; selbst kleinere stabile
+Versionen &#8212; funktionieren oft nicht mehr mit kompilierten
+Modulen, was ein Neukompilieren erforderlich macht. Linus Torvalds hat
+öffentlich erklärt, daß er mit diesem Verhalten kein Problem hat und
+daß binäre Module nur unter dem Kernel sicher arbeiten, unter dem sie
+kompiliert wurden. Als Modul-Autor sind Sie Ihren Anwendern besser
+behilflich, wenn Sie den Quellcode verfügbar machen.
+
+ </P
+><P
+>Der größte Teil des Codes in diesem Buch kann als Quellcode und in binärer Form frei weitergegeben werden; weder der O&#8216;Reilly Verlag
+noch wir haben Lizenzrechte an daraus abgeleitetem Code. Alle
+Programme sind (in der ursprünglichen englischen Version) per FTP von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ftp.oreilly.de/pub/examples/linux/drivers/</I
+></SPAN
+>
+erhältlich, die genauen Lizenzbedingungen stehen in der Datei
+<SPAN
+><I
+CLASS="EMPHASIS"
+>LICENSE</I
+></SPAN
+> im gleichen Verzeichnis.
+ &#13;</P
+><P
+>Wenn Beispielprogramme Teile des Kernel-Codes enthalten, schlägt aber
+wieder die GPL zu: Die Kommentare zu den Quelltexten geben jeweils genau an,
+was Sache ist. Das trifft aber nur auf einige wenige Quelldateien zu,
+die nur am Rande mit dem Thema dieses Buches zu tun haben.
+&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x339.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x385.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Versionsnumerierung</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="anintro.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Selbst in der Kernel-Entwicklergemeinde tätig werden</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

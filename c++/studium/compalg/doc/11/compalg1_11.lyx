@@ -1,0 +1,1467 @@
+#LyX 1.3 created this file. For more info see http://www.lyx.org/
+\lyxformat 221
+\textclass amsart
+\language ngerman
+\inputencoding auto
+\fontscheme default
+\graphics default
+\paperfontsize default
+\spacing single 
+\papersize a4paper
+\paperpackage a4
+\use_geometry 0
+\use_amsmath 1
+\use_natbib 0
+\use_numerical_citations 0
+\paperorientation portrait
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\defskip medskip
+\quotes_language polish
+\quotes_times 2
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+
+\layout Title
+
+Langzahlarithmetik
+\layout Section
+
+Motivation
+\layout Standard
+
+(Beschränkungen heutiger Computer): Ein 32-Bit Rechner kann lediglich mit
+ ganzen Zahlen rechnen, die eine Länge von 32 Bit nicht übersteigen.
+ Hierbei gibt es jedoch Probleme, da ja bei der Addition zweier 32-Bit Zahlen,
+ das Ergebnis nicht mehr zwangsläufig mit 32 Bits darstellbar sein muss.
+ Bei der Multiplikation zweier 32-Bit Zahlen ist die Situation noch etwas
+ schlimmer, da das Ergebnis bis zu 64 Bits beanspruchen kann.
+ Exakte Ergebnisse kann man also nur erwarten, wenn man die Länge der Operanden
+ auf 16 Bits begrenzt.
+ Mit dieser Begrenzung will man sich aber nicht zufrieden geben, d.h.
+ man sucht nach einer Möglichkeit mit 
+\begin_inset Quotes eld
+\end_inset 
+
+beliebig
+\begin_inset Quotes erd
+\end_inset 
+
+ langen Zahlen zu rechnen.
+\layout Standard
+\added_space_top medskip 
+Hierzu wurden zwei Klassen entworfen, die Klasse LongInt und die Klasse
+ Rational.
+ LongInt dient zur Repräsentation von ganzen Zahlen und Rational zur Repräsentat
+ion von rationalen Zahlen.
+\layout Section
+
+Beschreibung der Klasse LongInt
+\layout Subsection
+
+Aufbau der Klasse
+\layout Standard
+
+Die Klasse LongInt ist abgeleitet von einem Vector (eine Container-Klasse
+ der STL).
+ Durch Ableitung der Klasse LongInt von einem Vector, vererbt man sämtliche
+ Funktionalität, die der Vector besitzt an die Klasse LongInt, d.h.
+ LongInt wird damit quasi selbst zu einem Vector, nur mit dem Unterschied,
+ dass man der Klasse LongInt noch weitere Funktionen hinzufügen kann.
+\layout Remark*
+
+(Notation)
+\layout Remark*
+
+Im folgenden wird desöfteren die Rede sein von:
+\layout Remark*
+
+
+\begin_inset Formula $u=(u_{n-1}|u_{n-2}|...|u_{0})_{\beta}$
+\end_inset 
+
+ (wobei 
+\begin_inset Formula $u_{i}$
+\end_inset 
+
+, 
+\begin_inset Formula $\beta$
+\end_inset 
+
+ ganze Zahlen sind, mit 
+\begin_inset Formula $0\leq u_{i}<\beta,$
+\end_inset 
+
+ 
+\begin_inset Formula $\beta>0$
+\end_inset 
+
+).
+ 
+\layout Remark*
+
+Dies soll einfach heissen, dass 
+\begin_inset Formula $u={\displaystyle \sum_{i=0}^{n-1}u_{i}\beta^{i}}$
+\end_inset 
+
+ ist.
+ 
+\layout Subsection
+
+Abspeicherung von ganzen Zahlen 
+\layout Standard
+
+Nun stellt sich die Frage: Wie kann man denn nun 
+\begin_inset Quotes eld
+\end_inset 
+
+beliebig
+\begin_inset Quotes erd
+\end_inset 
+
+ lange ganze Zahlen abspeichern bzw.
+ repräsentieren?
+\newline 
+Die Antwort lautet: Indem man sie im Zehntausendersystem darstellt und die
+ Stellen, die sich bzgl.
+ dieser Darstellung ergeben sukzessive in den Vector 
+\begin_inset Quotes pld
+\end_inset 
+
+hineinschiebt
+\begin_inset Quotes prd
+\end_inset 
+
+.
+\layout Example*
+
+(Abspeicherung)
+\layout Example*
+
+ausgelassen
+\layout Standard
+
+D.h.
+ man zerteilt die gegebene Dezimalzahl, von rechts beginnend, in Stücke
+ der Länge 4.
+ Die Funktion, die dies bewerkstelligt ist: operator=(char\SpecialChar ~
+const\SpecialChar ~
+*\SpecialChar ~
+const\SpecialChar ~
+src).
+ Übergabeparameter an die Funktion ist die Dezimalzahl in Form eines nulltermini
+erten Strings.
+\layout Remark*
+
+Ich habe mich für eine Darstellung im Zehntausendersystem entschieden, weil
+ das Ganze damit, meiner Meinung nach, etwas anschaulicher wird (man könnte
+ aber auch jede andere beliebige Basis 
+\begin_inset Formula $\beta$
+\end_inset 
+
+ nehmen -- Voraussetzung ist aber, dass sich 
+\begin_inset Formula $\beta-1$
+\end_inset 
+
+ mit maximal 16 Bits darstellen laesst).
+ 
+\layout Standard
+\added_space_top medskip 
+Nun stellt sich als nächstes die Frage: Wie kann man mit diesen LongInts
+ rechnen, d.h.
+ wie implementiert man die elementaren Operationen (+, -, *, /)?
+\layout Subsection
+
+Addition
+\layout Example*
+
+(Addition)
+\layout Example*
+
+ausgelassen
+\layout Standard
+\added_space_top medskip \added_space_bottom medskip 
+Allgemein: Seien 
+\begin_inset Formula $u$
+\end_inset 
+
+, 
+\begin_inset Formula $v$
+\end_inset 
+
+ pos.
+ Zahlen der 
+\begin_inset Formula $\beta$
+\end_inset 
+
+-Länge 
+\begin_inset Formula $n$
+\end_inset 
+
+ bzw.
+ 
+\begin_inset Formula $m$
+\end_inset 
+
+, 
+\begin_inset Formula $n\geq m$
+\end_inset 
+
+ 
+\newline 
+d.h 
+\begin_inset Formula $u=(u_{n-1}|u_{n-2}|...|u_{0})_{\beta}$
+\end_inset 
+
+ und 
+\begin_inset Formula $v=(v_{m-1}|v_{m-2}|...|v_{0})_{\beta}$
+\end_inset 
+
+, dann gewinnt man das Ergebnis 
+\begin_inset Formula $w=u+v$
+\end_inset 
+
+ folgendermassen: 
+\layout LyX-Code
+
+Schritt1: Setze 
+\begin_inset Formula $c=0.$
+\end_inset 
+
+
+\layout LyX-Code
+
+Schritt2: Für alle 
+\begin_inset Formula $i=0$
+\end_inset 
+
+ bis 
+\begin_inset Formula $m-1$
+\end_inset 
+
+, 
+\layout LyX-Code
+
+            setze: 
+\begin_inset Formula $w_{i}=u_{i}+v_{i}+c$
+\end_inset 
+
+.
+\layout LyX-Code
+
+            Falls 
+\begin_inset Formula $w_{i}\geq\beta$
+\end_inset 
+
+, setze 
+\begin_inset Formula $w_{i}=w_{i}-\beta$
+\end_inset 
+
+ und 
+\begin_inset Formula $c=1$
+\end_inset 
+
+, 
+\layout LyX-Code
+
+            ansonsten setze 
+\begin_inset Formula $c=0$
+\end_inset 
+
+.
+\layout LyX-Code
+
+Schritt3: Für alle 
+\begin_inset Formula $i=m$
+\end_inset 
+
+ bis 
+\begin_inset Formula $n-1$
+\end_inset 
+
+, 
+\layout LyX-Code
+
+            setze: 
+\begin_inset Formula $w_{i}=u_{i}+c$
+\end_inset 
+
+.
+\layout LyX-Code
+
+            Falls 
+\begin_inset Formula $w_{i}\geq\beta$
+\end_inset 
+
+, setze 
+\begin_inset Formula $w_{i}=w_{i}-\beta$
+\end_inset 
+
+ und 
+\begin_inset Formula $c=1$
+\end_inset 
+
+, 
+\layout LyX-Code
+
+            ansonsten setze 
+\begin_inset Formula $c=0$
+\end_inset 
+
+.
+\layout LyX-Code
+
+Schritt4: Falls 
+\begin_inset Formula $c=1$
+\end_inset 
+
+, setze 
+\begin_inset Formula $w_{n}=c$
+\end_inset 
+
+.
+\layout Subsection
+
+Subtraktion
+\layout Example*
+
+(Subtraktion)
+\layout Example*
+
+ausgelassen
+\layout Standard
+\added_space_top medskip \added_space_bottom medskip 
+Allgemein: Seien 
+\begin_inset Formula $u$
+\end_inset 
+
+, 
+\begin_inset Formula $v$
+\end_inset 
+
+ wieder pos.
+ Zahlen der 
+\begin_inset Formula $\beta$
+\end_inset 
+
+-Länge 
+\begin_inset Formula $n$
+\end_inset 
+
+ bzw.
+ 
+\begin_inset Formula $m$
+\end_inset 
+
+, 
+\begin_inset Formula $u\geq v$
+\end_inset 
+
+ 
+\newline 
+d.h 
+\begin_inset Formula $u=(u_{n-1}|u_{n-2}|...|u_{0})_{\beta}$
+\end_inset 
+
+ und 
+\begin_inset Formula $v=(v_{m-1}|v_{m-2}|...|v_{0})_{\beta}$
+\end_inset 
+
+, dann gewinnt man das Ergebnis 
+\begin_inset Formula $w=u-v$
+\end_inset 
+
+ folgendermassen: 
+\layout LyX-Code
+
+Schritt1: Setze 
+\begin_inset Formula $c=0$
+\end_inset 
+
+.
+\layout LyX-Code
+
+Schritt2: Für alle 
+\begin_inset Formula $i=0$
+\end_inset 
+
+ bis 
+\begin_inset Formula $m-1$
+\end_inset 
+
+, 
+\layout LyX-Code
+
+            setze: 
+\begin_inset Formula $w_{i}=u_{i}-v_{i}-c$
+\end_inset 
+
+.
+\layout LyX-Code
+
+            Falls 
+\begin_inset Formula $w_{i}<0$
+\end_inset 
+
+, setze 
+\begin_inset Formula $w_{i}=w_{i}+\beta$
+\end_inset 
+
+ und 
+\begin_inset Formula $c=1$
+\end_inset 
+
+, 
+\layout LyX-Code
+
+            ansonsten setze 
+\begin_inset Formula $c=0$
+\end_inset 
+
+.
+\layout LyX-Code
+
+Schritt3: Für alle 
+\begin_inset Formula $i=m$
+\end_inset 
+
+ bis 
+\begin_inset Formula $n-1$
+\end_inset 
+
+, 
+\layout LyX-Code
+
+            setze: 
+\begin_inset Formula $w_{i}=u_{i}-c$
+\end_inset 
+
+.
+\layout LyX-Code
+
+            Falls 
+\begin_inset Formula $w_{i}<0$
+\end_inset 
+
+, setze 
+\begin_inset Formula $w_{i}=w_{i}+\beta$
+\end_inset 
+
+ und 
+\begin_inset Formula $c=1$
+\end_inset 
+
+, 
+\layout LyX-Code
+
+            ansonsten setze 
+\begin_inset Formula $c=0$
+\end_inset 
+
+.
+\layout Subsection
+
+Multiplikation
+\layout Subsubsection
+
+Schulmethode
+\layout Example*
+
+(Schulmultiplikation)
+\layout Example*
+
+ausgelassen
+\layout Standard
+\added_space_top medskip \added_space_bottom medskip 
+Allgemein: Seien u, v pos.
+ Zahlen der 
+\begin_inset Formula $\beta$
+\end_inset 
+
+-Länge n bzw.
+ m,
+\newline 
+d.h 
+\begin_inset Formula $u=(u_{n-1}|u_{n-2}|...|u_{0})_{\beta}$
+\end_inset 
+
+ und 
+\begin_inset Formula $v=(v_{m-1}|v_{m-2}|...|v_{0})_{\beta}$
+\end_inset 
+
+, dann gewinnt man das Ergebnis 
+\begin_inset Formula $w=u*v$
+\end_inset 
+
+ folgendermassen:
+\layout LyX-Code
+
+Schritt1: Setze 
+\begin_inset Formula $w=0$
+\end_inset 
+
+.
+\layout LyX-Code
+
+Schritt2: Für alle 
+\begin_inset Formula $i=0$
+\end_inset 
+
+ bis 
+\begin_inset Formula $m-1$
+\end_inset 
+
+, und 
+\layout LyX-Code
+
+            für alle 
+\begin_inset Formula $j=0$
+\end_inset 
+
+ bis 
+\begin_inset Formula $n-1$
+\end_inset 
+
+, 
+\layout LyX-Code
+
+              setze: 
+\begin_inset Formula $res=u_{j}*v_{i}$
+\end_inset 
+
+
+\layout LyX-Code
+
+              Splitte res in die höherwertige (hi) 
+\layout LyX-Code
+
+              und niedrigwertige (lo) Stelle auf.
+\layout LyX-Code
+
+              Setze 
+\begin_inset Formula $tmp=(hi|lo|\underbrace{0|...|0})_{\beta}$
+\end_inset 
+
+.
+\layout LyX-Code
+
+              Setze 
+\begin_inset Formula $w=w+tmp$
+\end_inset 
+
+.
+\layout Standard
+\added_space_top medskip 
+Die Rechenzeit zur Multiplikation zweier Zahlen der Länge 
+\begin_inset Formula $n$
+\end_inset 
+
+ (nach der Schulmethode) beträgt: 
+\begin_inset Formula $\mathcal{O}(n^{2}).$
+\end_inset 
+
+
+\layout Subsubsection
+
+Karatsuba-Methode
+\layout Standard
+
+Es gibt aber noch eine andere Multiplikationsmethode, die sog.
+ Karatsuba-Multiplikation, die eine geringere Rechenzeit von 
+\begin_inset Formula $\mathcal{O}(n^{\log_{2}(3)})$
+\end_inset 
+
+ benötigt (diese wird aber erst erreicht, wenn die Zahlen eine gewisse Länge
+ übersteigen).
+ 
+\layout Remark*
+
+(Karatsuba) Anatolii Alexeevich Karatsuba war ein russischer Mathematiker,
+ der dieses Multiplikationsverfahren im Jahre 1962 entwickelt hat.
+ 
+\layout Standard
+
+Diese Multiplikation funktioniert nach dem folgendem Prinzip: 
+\layout Standard
+\added_space_top medskip 
+Seien 
+\begin_inset Formula $u$
+\end_inset 
+
+, 
+\begin_inset Formula $v$
+\end_inset 
+
+ pos.
+ Zahlen der 
+\begin_inset Formula $\beta$
+\end_inset 
+
+-Länge 
+\begin_inset Formula $n$
+\end_inset 
+
+ (o.B.d.A.
+ sei 
+\begin_inset Formula $n$
+\end_inset 
+
+ gerade, ansonsten erweitere 
+\begin_inset Formula $u$
+\end_inset 
+
+, 
+\begin_inset Formula $v$
+\end_inset 
+
+ mit führenden Nullen), d.h 
+\begin_inset Formula $u=(u_{n-1}|u_{n-2}|...|u_{0})_{\beta}$
+\end_inset 
+
+ und 
+\begin_inset Formula $v=(v_{n-1}|v_{n-2}|...|v_{0})_{\beta}$
+\end_inset 
+
+, dann lassen sich 
+\begin_inset Formula $u$
+\end_inset 
+
+ und 
+\begin_inset Formula $v$
+\end_inset 
+
+ wie folgt schreiben:
+\layout Standard
+\added_space_top medskip 
+
+\begin_inset Formula $u=a*\beta^{\frac{n}{2}}+b$
+\end_inset 
+
+ und 
+\begin_inset Formula $v=c*\beta^{\frac{n}{2}}+d$
+\end_inset 
+
+, wobei a, b, c, d Zahlen der 
+\begin_inset Formula $\beta$
+\end_inset 
+
+-Länge 
+\begin_inset Formula $\frac{n}{2}$
+\end_inset 
+
+ sind.
+\layout Standard
+
+Somit ergibt sich für das Produkt 
+\begin_inset Formula $u*v:$
+\end_inset 
+
+
+\begin_inset Formula \[
+\begin{array}{c}
+u*v=(a\beta^{\frac{n}{2}}+b)*(c\beta^{\frac{n}{2}}+d)\\
+=\beta^{n}ac+\beta^{\frac{n}{2}}[ad+bc]+bd\end{array}\]
+
+\end_inset 
+
+ Auf den ersten Blick hat man nicht viel gewonnen, man hat eine Multiplikation
+ zweier Zahlen der Länge 
+\begin_inset Formula $n$
+\end_inset 
+
+ durch 4 Multiplikationen mit Zahlen der Länge 
+\begin_inset Formula $\frac{n}{2}$
+\end_inset 
+
+ ersetzt.
+ Der Aufwand ist somit derselbe, da ja 
+\begin_inset Formula $4*(\frac{n}{2})^{2}=n^{2}.$
+\end_inset 
+
+ Man macht sich nun jedoch zunutze, dass 
+\begin_inset Formula $ad+bc=ac+bd+(a-b)*(d-c)$
+\end_inset 
+
+ ist.
+ Man erhält damit:
+\begin_inset Formula \[
+u*v=\beta^{n}ac+\beta^{\frac{n}{2}}[ac+bd+(a-b)(d-c)]+bd\]
+
+\end_inset 
+
+
+\layout Standard
+
+D.h.
+ man kann die Multiplikation zweier 
+\begin_inset Formula $n$
+\end_inset 
+
+-stelliger Zahlen zurückführen auf 3 Multiplikationen von 
+\begin_inset Formula $\frac{n}{2}$
+\end_inset 
+
+-stelligen Zahlen und einigen Additionen.
+ Für den Aufwand 
+\begin_inset Formula $T(n)$
+\end_inset 
+
+ zur Multiplikation zweier 
+\begin_inset Formula $n$
+\end_inset 
+
+-stelliger Zahlen gilt damit folgende Rekursionsformel: 
+\begin_inset Formula $T(n)=3*T(\frac{n}{2})+n$
+\end_inset 
+
+.
+ Setzt man 
+\begin_inset Formula $T(1)=1,$
+\end_inset 
+
+ so erhält man daraus: 
+\begin_inset Formula \[
+T(n)=3n^{\log_{2}(3)}-2n\textrm{ (*)}\]
+
+\end_inset 
+
+ Dies entspricht einer Rechenzeit von 
+\begin_inset Formula $\mathcal{O}(n^{\log_{2}(3)})$
+\end_inset 
+
+.
+\layout Proof
+
+(zu *) per Induktion:
+\layout Proof
+
+ausgelassen
+\layout Example*
+
+(Karatsuba)
+\layout Example*
+
+ausgelassen
+\layout Subsection
+
+Division
+\layout Example*
+
+(Division)
+\layout Example*
+
+ausgelassen
+\layout Standard
+\added_space_top medskip 
+Der erste Schritt besteht darin, für zwei nichtnegative Zahlen 
+\begin_inset Formula $u$
+\end_inset 
+
+, 
+\begin_inset Formula $v$
+\end_inset 
+
+ der Form 
+\begin_inset Formula $u=(u_{m}|u_{m-1}|...|u_{0})_{\beta},$
+\end_inset 
+
+ 
+\begin_inset Formula $v=(v_{m-1}|v_{m-2}|...|v_{0})_{\beta}$
+\end_inset 
+
+ mit 
+\begin_inset Formula $\frac{u}{v}<\beta$
+\end_inset 
+
+ eine Zahl 
+\begin_inset Formula $q$
+\end_inset 
+
+ zu finden, so dass 
+\begin_inset Formula $q=\left\lfloor \frac{u}{v}\right\rfloor $
+\end_inset 
+
+.
+ Insbesondere ist 
+\begin_inset Formula $q$
+\end_inset 
+
+ dann die eindeutige bestimmte Zahl, die 
+\begin_inset Formula $0\leq u-qv<v$
+\end_inset 
+
+ erfüllt.
+ Wie bestimmen wir also dieses 
+\begin_inset Formula $q$
+\end_inset 
+
+\SpecialChar ~
+?
+\newline 
+
+\layout Standard
+
+Ein Versuch basiert darauf, dass man die führenden Stellen 
+\begin_inset Formula $u_{m}$
+\end_inset 
+
+, 
+\begin_inset Formula $u_{m-1}$
+\end_inset 
+
+ von 
+\begin_inset Formula $u$
+\end_inset 
+
+ und 
+\begin_inset Formula $v_{m-1}$
+\end_inset 
+
+ von 
+\begin_inset Formula $v$
+\end_inset 
+
+ betrachtet und definiert:
+\layout Standard
+
+
+\begin_inset Formula \[
+\hat{q}:=\min(\left\lfloor \frac{u_{m}\beta+u_{m-1}}{v_{m-1}}\right\rfloor ,\beta-1)\]
+
+\end_inset 
+
+
+\layout Standard
+\added_space_top medskip 
+Es wird sich herausstellen, dass dieses 
+\begin_inset Formula $\hat{q}$
+\end_inset 
+
+ eine sehr gute Abschätzung für den wahren Wert 
+\begin_inset Formula $q$
+\end_inset 
+
+ liefert, wenn 
+\begin_inset Formula $v_{m-1}$
+\end_inset 
+
+ groß genug ist.
+ Um zu prüfen, wie nahe 
+\begin_inset Formula $\hat{q}$
+\end_inset 
+
+ dem gewünschtem 
+\begin_inset Formula $q$
+\end_inset 
+
+ kommt, wird nun zuerst beweisen, dass 
+\begin_inset Formula $\hat{q}$
+\end_inset 
+
+ niemals zu klein ist.
+\layout Theorem*
+
+Unter der Notation von eben gilt: 
+\begin_inset Formula $\hat{q}\geq q$
+\end_inset 
+
+.
+\layout Proof
+
+Da 
+\begin_inset Formula $q\leq\beta-1$
+\end_inset 
+
+ ist die Behauptung sicherlich wahr, wenn 
+\begin_inset Formula $\hat{q}=\beta-1$
+\end_inset 
+
+.
+ 
+\layout Proof
+
+Andernfalls gilt: 
+\begin_inset Formula $\hat{q}=\left\lfloor \frac{u_{m}\beta+u_{m-1}}{v_{m-1}}\right\rfloor $
+\end_inset 
+
+ Also: 
+\begin_inset Formula $\hat{q}>\frac{u_{m}\beta+u_{m-1}}{v_{m-1}}-1$
+\end_inset 
+
+
+\layout Proof
+
+
+\begin_inset Formula $\Longrightarrow$
+\end_inset 
+
+ 
+\begin_inset Formula $\hat{q}v_{m-1}>u_{m}\beta+u_{m-1}-v_{m-1}$
+\end_inset 
+
+ 
+\begin_inset Formula $\Longrightarrow$
+\end_inset 
+
+ 
+\begin_inset Formula $\hat{q}v_{m-1}\geq u_{m}\beta+u_{m-1}-v_{m-1}+1$
+\end_inset 
+
+
+\layout Proof
+\added_space_top medskip 
+Es folgt, dass:
+\begin_inset Formula \begin{eqnarray*}
+u-\hat{q}v & \leq & u-\hat{q}v_{m-1}\beta^{m-1}\\
+ & \leq & u_{m}\beta^{m}+u_{m-1}\beta^{m-1}+...+u_{1}\beta+u_{0}-(u_{m}\beta^{m}+u_{m-1}\beta^{m-1}-v_{m-1}\beta^{m-1}+\beta^{m-1})\\
+ & = & \underbrace{u_{m-2}\beta^{m-2}+...+u_{1}\beta+u_{0}-\beta^{m-1}}+v_{m-1}\beta^{m-1}<v_{m-1}\beta^{m-1}\leq v\end{eqnarray*}
+
+\end_inset 
+
+ Es gilt also: 
+\begin_inset Formula $u-\hat{q}v<v$
+\end_inset 
+
+.
+ 
+\layout Proof
+
+Da 
+\begin_inset Formula $q$
+\end_inset 
+
+ die eindeutig bestimmte Zahl mit 
+\begin_inset Formula $0\leq u-qv<v$
+\end_inset 
+
+ ist 
+\begin_inset Formula $\Longrightarrow$
+\end_inset 
+
+ 
+\begin_inset Formula $\hat{q}\geq q$
+\end_inset 
+
+
+\layout Theorem*
+
+Wenn 
+\begin_inset Formula $v_{m-1}\geq\left\lfloor \frac{\beta}{2}\right\rfloor $
+\end_inset 
+
+, dann ist 
+\begin_inset Formula $\hat{q}-2\leq q\leq\hat{q}$
+\end_inset 
+
+.
+\layout Proof
+
+Angenommen 
+\begin_inset Formula $\hat{q}\geq q+3$
+\end_inset 
+
+.
+ Dann haben wir:
+\begin_inset Formula \begin{eqnarray*}
+\hat{q} & \leq & \frac{u_{m}\beta+u_{m-1}}{v_{m-1}}=\frac{u_{m}\beta^{m}+u_{m-1}\beta^{m-1}}{v_{m-1}\beta^{m-1}}\\
+ & \leq & \frac{u}{v_{m-1}\beta^{m-1}}<\frac{u}{v-\beta^{m-1}}\textrm{, (weil $v<(v_{m-1}+1)\beta^{m-1}$)}\end{eqnarray*}
+
+\end_inset 
+
+
+\layout Proof
+
+(Der Fall 
+\begin_inset Formula $v=\beta^{m-1}$
+\end_inset 
+
+ ist nicht möglich, weil sonst wäre 
+\begin_inset Formula $v=(1|0|...|0)_{\beta}$
+\end_inset 
+
+,
+\layout Proof
+
+
+\begin_inset Formula $\Longrightarrow$
+\end_inset 
+
+ 
+\begin_inset Formula $\frac{u_{m}\beta+u_{m-1}}{v_{m-1}}=\frac{u_{m}\beta^{m}+u_{m-1}\beta^{m-1}}{v_{m-1}\beta^{m-1}}=\frac{u_{m}\beta^{m}+u_{m-1}\beta^{m-1}}{v}\leq\frac{u}{v}<\beta$
+\end_inset 
+
+,
+\layout Proof
+
+folglich wäre dann 
+\begin_inset Formula $u-\hat{q}v\geq u-u_{m}\beta^{m}-u_{m-1}\beta^{m-1}\geq0$
+\end_inset 
+
+.
+\layout Proof
+
+
+\begin_inset Formula $\Longrightarrow$
+\end_inset 
+
+ 
+\begin_inset Formula $q=\hat{q}$
+\end_inset 
+
+, im Widerspruch zur Annahme)
+\layout Proof
+\added_space_top medskip 
+Weiter gilt: 
+\begin_inset Formula $q=\left\lfloor \frac{u}{v}\right\rfloor $
+\end_inset 
+
+ 
+\begin_inset Formula $\Longrightarrow$
+\end_inset 
+
+ 
+\begin_inset Formula $q>\frac{u}{v}-1$
+\end_inset 
+
+
+\layout Proof
+
+Und somit: 
+\begin_inset Formula $3\leq\hat{q}-q<\frac{u}{v-\beta^{m-1}}-\frac{u}{v}+1=\frac{u}{v}(\frac{\beta^{m-1}}{v-\beta^{m-1}})+1$
+\end_inset 
+
+
+\layout Proof
+
+
+\begin_inset Formula \[
+\Longrightarrow\,\frac{u}{v}>2(\frac{v-\beta^{m-1}}{\beta^{m-1}})\geq2(v_{m-1}-1)\]
+
+\end_inset 
+
+
+\layout Proof
+
+Da 
+\begin_inset Formula $\beta-4\geq\hat{q}-3\geq q=\left\lfloor \frac{u}{v}\right\rfloor \geq2(v_{m-1}-1)$
+\end_inset 
+
+
+\layout Proof
+
+
+\begin_inset Formula $\Longrightarrow$
+\end_inset 
+
+ 
+\begin_inset Formula $v_{m-1}<\left\lfloor \frac{\beta}{2}\right\rfloor \textrm{, (im Widerspruch zur Voraussetzung)}$
+\end_inset 
+
+
+\layout Theorem*
+
+Sei 
+\begin_inset Formula $\beta^{m-1}\leq v<\beta^{m}$
+\end_inset 
+
+.
+ 
+\layout Theorem*
+
+Definiere 
+\begin_inset Formula $u':=u*\left\lfloor \frac{\beta}{v_{m-1}+1}\right\rfloor $
+\end_inset 
+
+ und 
+\begin_inset Formula $v':=v*\left\lfloor \frac{\beta}{v_{m-1}+1}\right\rfloor $
+\end_inset 
+
+.
+\layout Theorem*
+
+Dann gelten:
+\layout Enumerate
+
+
+\begin_inset Formula $\frac{u'}{v'}=\frac{u}{v}$
+\end_inset 
+
+
+\layout Enumerate
+
+
+\begin_inset Formula $\beta^{m-1}\leq v'<\beta^{m}\textrm{ }$
+\end_inset 
+
+
+\layout Enumerate
+
+
+\begin_inset Formula $v'_{m-1}\geq\left\lfloor \frac{\beta}{2}\right\rfloor $
+\end_inset 
+
+
+\layout Proof
+
+zu (1): ist offensichtlich
+\layout Proof
+
+zu (2): 
+\begin_inset Formula \begin{eqnarray*}
+\beta^{m-1} & \leq & v\leq v*\underbrace{\left\lfloor \frac{\beta}{v_{m-1}+1}\right\rfloor }<(v_{m-1}+1)*\beta^{m-1}*\left\lfloor \frac{\beta}{v_{m-1}+1}\right\rfloor \\
+ &  & \leq(v_{m-1}+1)*\beta^{m-1}*(\frac{\beta}{v_{m-1}+1})\leq\beta^{m}\end{eqnarray*}
+
+\end_inset 
+
+
+\layout Proof
+
+
+\begin_inset Formula $\Longrightarrow$
+\end_inset 
+
+ 
+\begin_inset Formula $\beta^{m-1}\leq v'<\beta^{m}$
+\end_inset 
+
+
+\layout Proof
+
+zu (3): Wenn 
+\begin_inset Formula $v_{m-1}\geq\left\lfloor \frac{\beta}{2}\right\rfloor $
+\end_inset 
+
+, dann gilt: 
+\begin_inset Formula $v_{m-1}*\underbrace{\left\lfloor \frac{\beta}{v_{m-1}+1}\right\rfloor }\geq v_{m-1}\geq\left\lfloor \frac{\beta}{2}\right\rfloor $
+\end_inset 
+
+
+\layout Proof
+
+
+\begin_inset Formula $\Longrightarrow$
+\end_inset 
+
+ 
+\begin_inset Formula $v'_{m-1}\geq\left\lfloor \frac{\beta}{2}\right\rfloor $
+\end_inset 
+
+.
+ 
+\layout Proof
+
+Andernfalls, also wenn 
+\begin_inset Formula $1\leq v_{m-1}<\left\lfloor \frac{\beta}{2}\right\rfloor $
+\end_inset 
+
+ (
+\begin_inset Formula $\Longrightarrow$
+\end_inset 
+
+ (**) 
+\begin_inset Formula $1\leq v_{m-1}\leq\frac{\beta}{2}-1)$
+\end_inset 
+
+
+\layout Proof
+
+
+\begin_inset Formula $\Longrightarrow$
+\end_inset 
+
+ 
+\begin_inset Formula $v_{m-1}*\left\lfloor \frac{\beta}{v_{m-1}+1}\right\rfloor >v_{m-1}*(\frac{\beta}{v_{m-1}+1}-1)\geq\frac{\beta}{2}-1\geq\left\lfloor \frac{\beta}{2}\right\rfloor -1$
+\end_inset 
+
+
+\layout Proof
+
+
+\begin_inset Formula $\Longrightarrow$
+\end_inset 
+
+ 
+\begin_inset Formula $v'_{m-1}\geq\left\lfloor \frac{\beta}{2}\right\rfloor $
+\end_inset 
+
+
+\layout Proof
+
+(zu (***): 
+\begin_inset Formula $v_{m-1}*(\frac{\beta}{v_{m-1}+1}-1)-(\frac{\beta}{2}-1)$
+\end_inset 
+
+
+\layout Proof
+
+
+\begin_inset Formula $=\frac{\beta v_{m-1}+(-v_{m-1}-\frac{\beta}{2}+1)(v_{m-1}+1)}{v_{m-1}+1}=\frac{(\frac{\beta}{2}-v_{m-1}-1)(v_{m-1}-1)}{v_{m-1}+1}\geq0$
+\end_inset 
+
+, 
+\layout Proof
+
+wegen (**) und Voraussetzung)
+\layout Standard
+
+Damit sind jetzt sämtliche Vorkehrungen getroffen, um einen geeigneten Divisions
+algorithmus zu formulieren:
+\layout Standard
+\added_space_top medskip 
+Seien 
+\begin_inset Formula $U=(U_{n-1}|U_{n-2}|...|U_{0})_{\beta},$
+\end_inset 
+
+ 
+\begin_inset Formula $v=(v_{m-1}|v_{m-2}|...|v_{0})_{\beta}$
+\end_inset 
+
+ 
+\layout Standard
+
+nicht-negative Zahlen mit: 
+\begin_inset Formula $U\geq v$
+\end_inset 
+
+ und 
+\begin_inset Formula $v_{m-1}\neq0$
+\end_inset 
+
+.
+\layout Standard
+\added_space_bottom medskip 
+Dann lassen sich 
+\begin_inset Formula $q=\left\lfloor \frac{U}{v}\right\rfloor $
+\end_inset 
+
+ und 
+\begin_inset Formula $r=U-qv$
+\end_inset 
+
+ wie folgt berechnen.
+\layout LyX-Code
+
+Schritt1:  Setze 
+\begin_inset Formula $d=\left\lfloor \frac{\beta}{v_{m-1}+1}\right\rfloor $
+\end_inset 
+
+, 
+\layout LyX-Code
+
+           
+\begin_inset Formula $U'=U*d=(U'_{k-1}|U'_{k-2}|...|U_{0})$
+\end_inset 
+
+ und
+\layout LyX-Code
+
+           
+\begin_inset Formula $v'=v*d=(v'_{m-1}|v'_{m-2}|...|v_{0})$
+\end_inset 
+
+.
+\layout LyX-Code
+
+Schritt2:  Falls 
+\begin_inset Formula $\frac{U'_{k-1}\beta+U'_{k-2}}{v'_{m-1}}\geq\beta$
+\end_inset 
+
+, 
+\layout LyX-Code
+
+             erweitere 
+\begin_inset Formula $U'$
+\end_inset 
+
+ mit führender Null und 
+\layout LyX-Code
+
+             setze 
+\begin_inset Formula $k=k+1$
+\end_inset 
+
+.
+ 
+\layout LyX-Code
+
+Schritt3:  Setze 
+\begin_inset Formula $i=0$
+\end_inset 
+
+
+\layout LyX-Code
+
+Schritt4:  Setze         
+\layout LyX-Code
+
+           
+\begin_inset Formula $(u'_{m}|u'_{m-1}|...|u'_{0})=(U'_{k-i-1}|U'_{k-i-2}|...|U'_{k-i-m-1})$
+\end_inset 
+
+
+\layout LyX-Code
+
+Schritt5:  Setze 
+\begin_inset Formula $\hat{q}=\min(\left\lfloor \frac{u'_{m}\beta+u'_{m-1}}{v'_{m-1}}\right\rfloor ,\beta-1)$
+\end_inset 
+
+
+\layout LyX-Code
+
+Schritt6:  Setze 
+\begin_inset Formula $u'=u'-\hat{q}v$
+\end_inset 
+
+
+\layout LyX-Code
+
+Schritt7:  Falls 
+\begin_inset Formula $u'<0$
+\end_inset 
+
+, setze 
+\begin_inset Formula $u'=u'+v$
+\end_inset 
+
+, 
+\begin_inset Formula $\hat{q}=\hat{q}-1$
+\end_inset 
+
+
+\layout LyX-Code
+
+Schritt8:  Falls 
+\begin_inset Formula $u'<0$
+\end_inset 
+
+, setze 
+\begin_inset Formula $u'=u'+v$
+\end_inset 
+
+, 
+\begin_inset Formula $\hat{q}=\hat{q}-1$
+\end_inset 
+
+
+\layout LyX-Code
+
+Schritt9:  Setze
+\layout LyX-Code
+
+           
+\begin_inset Formula $(U'_{k-i-1}|U'_{k-i-2}|...|U'_{k-i-m-1})=(u'_{m}|u'_{m-1}|...|u'_{0})$
+\end_inset 
+
+,
+\layout LyX-Code
+
+           
+\begin_inset Formula $q_{k-m-i-1}=\hat{q}$
+\end_inset 
+
+, 
+\begin_inset Formula $i=i+1$
+\end_inset 
+
+
+\layout LyX-Code
+
+Schritt10: Falls 
+\begin_inset Formula $i\leq k-m-1$
+\end_inset 
+
+ gehe wieder zu Schritt4,
+\layout LyX-Code
+
+           ansonsten gehe zu Schritt11.
+\layout LyX-Code
+
+Schritt11: Setze 
+\begin_inset Formula $r=\left\lfloor \frac{U'}{d}\right\rfloor $
+\end_inset 
+
+.
+\layout Section
+
+Beschreibung der Klasse Rational
+\layout Subsection
+
+Aufbau der Klasse
+\layout Standard
+
+Die Klasse besitzt zwei Elemente vom Datentyp LongInt, einen Zähler und
+ einen Nenner.
+\newline 
+Desweiteren besitzt sie wiederum Funktionen zum Addieren, Subtrahieren,
+ Multiplizieren und Dividieren, sowie einige Hilfsfunktion, etwa zum Kuerzen
+ oder zur Ermittlung des Hauptnenners.
+ 
+\layout Subsection
+
+Abspeicherung von rationalen Zahlen
+\layout Standard
+
+Sei eine rationale Zahl in Form eines nullterminierten Strings gegeben,
+ wobei Zähler und Nenner innerhalb dieses Strings durch ein 
+\begin_inset Quotes pld
+\end_inset 
+
+/
+\begin_inset Quotes prd
+\end_inset 
+
+ voneinander abgetrennt sind.
+\newline 
+Dieser String wird in der Funktion: operator=(const\SpecialChar ~
+char\SpecialChar ~
+*\SpecialChar ~
+const\SpecialChar ~
+src) in seine
+ beiden Bestandteile zerlegt und zaehler bzw.
+ nenner werden damit entprechend initialisiert.
+ 
+\layout Subsection
+
+Kurze Beschreibung der Funktionen
+\layout Standard
+
+Saemtliche Funktionen dieser Klasse werden auf entprechende Funktionen der
+ Klasse LongInt zurückgeführt, weshalb auf die Beschreibung dieser Funktionen
+ verzichtet wird.
+\layout Section
+
+Fazit
+\layout Standard
+
+Nun sind wir in der Lage (fast) alle Algorithmen, die wir in diesem Seminar
+ kennengelernt haben über dem Körper\SpecialChar ~
+
+\begin_inset Formula $\mathbb{Q}$
+\end_inset 
+
+ durchzuführen.
+ Hierzu muss lediglich in der Headerdatei compalg1.h zu anfangs ein 
+\emph on 
+#include\SpecialChar ~
+
+\begin_inset Quotes pld
+\end_inset 
+
+rational.h
+\begin_inset Quotes prd
+\end_inset 
+
+
+\emph default 
+ eingefügt werden und 
+\emph on 
+typedef Fp<5> K
+\emph default 
+ muss durch 
+\emph on 
+typedef Rational K 
+\emph default 
+ersetzt werden.
+\the_end

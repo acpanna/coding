@@ -1,0 +1,352 @@
+<HTML
+><HEAD
+><TITLE
+>Schnellreferenz</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Ein Überblick über die Peripherie-Busse"
+HREF="pci.html"><LINK
+REL="PREVIOUS"
+TITLE="Abwärtskompatibilität"
+HREF="x22325.html"><LINK
+REL="NEXT"
+TITLE="Der physikalische Aufbau der Kernel-Quellen"
+HREF="tour.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x22325.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 15. Ein Überblick über die Peripherie-Busse</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="tour.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN22374"
+>Schnellreferenz</A
+></H1
+><P
+>Dieser Abschnitt faßt wie üblich die in diesem Kapitel
+eingeführten Symbole zusammen.&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/config.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>CONFIG_PCI</TT
+></DT
+><DD
+><P
+>Dieses Makro sollte für die bedingte Kompilation von
+PCI-Code verwendet werden. Wenn ein PCI-Modul in einen
+Nicht-PCI-Kernel geladen wird, beschwert sich
+<SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+> über eine Reihe nicht aufgelöster Symbole.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/pci.h&#62;</TT
+></DT
+><DD
+><P
+>Diese Header-Datei enthält symbolische Namen für die
+PCI-Register und viele Werte für vendor und deviceID.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int pci_present(void);</TT
+></DT
+><DD
+><P
+>Diese Funktion gibt einen Booleschen Wert zurück, der
+bangibt, ob der Rechner einen PCI-Bus hat oder nicht.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct pci_dev;</TT
+>, <TT
+CLASS="LITERAL"
+>struct pci_bus;</TT
+>, <TT
+CLASS="LITERAL"
+>struct pci_driver;</TT
+>, <TT
+CLASS="LITERAL"
+>struct pci_device_id;</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+Diese Strukturen repräsentieren die in der PCI-Verwaltung verwendeten
+Objekte. Das Konzept von <TT
+CLASS="LITERAL"
+>pci_driver</TT
+> ist neu
+in Linux 2.4; <TT
+CLASS="LITERAL"
+>struct pci_device_id</TT
+>
+ist hier ein zentrales Element.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct pci_dev *pci_find_device(unsigned int vendor, unsigned int device, struct pci_dev *from);</TT
+>, <TT
+CLASS="LITERAL"
+>struct pci_dev *pci_find_class(unsigned int class, struct pci_dev *from);</TT
+></DT
+><DD
+><P
+>&#13;
+Diese Funktionen werden dazu verwendet, in der Geräteliste nach
+Geräten mit bestimmten Signaturen oder bestimmten Klassen zu
+suchen. Wenn keine gefunden werden, wird <TT
+CLASS="LITERAL"
+>NULL</TT
+>
+zurückgegeben. <TT
+CLASS="LITERAL"
+>from</TT
+> wird verwendet, um eine
+Suche fortzusetzen; dieser Parameter muß beim ersten Aufruf
+<TT
+CLASS="LITERAL"
+>NULL</TT
+> sein und bei jedem weiteren Aufruf auf das zuletzt
+gefundene Gerät verweisen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int pci_read_config_byte(struct pci_dev *dev, int where, u8 *val);</TT
+>, <TT
+CLASS="LITERAL"
+>int pci_read_config_word(struct pci_dev *dev, int where, u16 *val);</TT
+>, <TT
+CLASS="LITERAL"
+>int pci_read_config_dword(struct pci_dev *dev, int where, u32 *val);</TT
+>, <TT
+CLASS="LITERAL"
+>int pci_write_config_byte (struct pci_dev *dev, int where, u8 *val);</TT
+>, <TT
+CLASS="LITERAL"
+>int pci_write_config_word (struct pci_dev *dev, int where, u16 *val);</TT
+>, <TT
+CLASS="LITERAL"
+>int pci_write_config_dword (struct pci_dev *dev, int where, u32 *val);</TT
+></DT
+><DD
+><P
+>&#13;
+Diese Funktionen werden zum Lesen oder Schreiben eines
+PCI-Konfigurationsregisters verwendet. Auch wenn der Linux-Kernel sich
+um die Byte-Reihenfolge kümmert, muß man als Programmierer vorsichtig
+sein, wenn man mehr-bytige Werte aus einzelnen Bytes zusammensetzt. Der
+PCI-Bus verwendet die Little-Endian-Reihenfolge.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int pci_register_driver(struct pci_driver *drv);</TT
+>, <TT
+CLASS="LITERAL"
+>int pci_module_init(struct pci_driver *drv);</TT
+>, <TT
+CLASS="LITERAL"
+>void pci_unregister_driver(struct pci_driver *drv);</TT
+></DT
+><DD
+><P
+>&#13;
+
+Diese Funktionen unterstützen das Konzept eines
+PCI-Treibers. Einkompilierter Code verwendet
+<SPAN
+><I
+CLASS="EMPHASIS"
+>pci_register_driver</I
+></SPAN
+> (das eine
+Reihe von Geräten zurückgibt, die von diesem Treiber verwaltet
+werden), modularisierter Code sollte statt dessen
+<SPAN
+><I
+CLASS="EMPHASIS"
+>pci_module_init</I
+></SPAN
+> aufrufen (das 0
+zurückgibt, wenn eines oder mehrere Geräte vorhanden sind, sowie
+<TT
+CLASS="LITERAL"
+>-ENODEV</TT
+>, wenn kein passendes Gerät in das System
+eingesteckt ist).</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/usb.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>#include &#60;linux/input.h&#62;</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+Die erste Datei enthält alles zu USB und muß von USB-Gerätetreibern
+eingebunden werden. Die zweite Datei definiert den Kern des
+Eingabe-Subsystems. Keine dieser Dateien gibt es in Linux 2.0.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct usb_driver;</TT
+>, <TT
+CLASS="LITERAL"
+>int usb_register(struct usb_driver *d);</TT
+>, <TT
+CLASS="LITERAL"
+>void usb_deregister(struct usb_driver *d);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+<TT
+CLASS="LITERAL"
+>usb_driver</TT
+> ist der wichtigste Baustein von
+USB-Gerätetreibern. Eine solche Struktur muß beim Laden
+beziehungsweise Entladen des Moduls registriert beziehungsweise
+deregistriert werden.</P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x22325.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="tour.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Abwärtskompatibilität</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="pci.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Der physikalische Aufbau der Kernel-Quellen</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

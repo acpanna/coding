@@ -1,0 +1,792 @@
+<HTML
+><HEAD
+><TITLE
+>Der physikalische Aufbau der Kernel-Quellen</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="PREVIOUS"
+TITLE="Schnellreferenz"
+HREF="x22374.html"><LINK
+REL="NEXT"
+TITLE="Vor dem Booten"
+HREF="x22653.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x22374.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x22653.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="TOUR"
+>Kapitel 16. Der physikalische Aufbau der Kernel-Quellen</A
+></H1
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Inhalt</B
+></DT
+><DT
+><A
+HREF="tour.html#AEN22526"
+>Booten des Kernels</A
+></DT
+><DT
+><A
+HREF="x22653.html"
+>Vor dem Booten</A
+></DT
+><DT
+><A
+HREF="tourinit.html"
+>Der init-Prozeß</A
+></DT
+><DT
+><A
+HREF="x22772.html"
+>Das Verzeichnis kernel</A
+></DT
+><DT
+><A
+HREF="x22826.html"
+>Das Verzeichnis fs</A
+></DT
+><DT
+><A
+HREF="x22924.html"
+>Das Verzeichnis mm</A
+></DT
+><DT
+><A
+HREF="x23036.html"
+>Das Verzeichnis net</A
+></DT
+><DT
+><A
+HREF="x23105.html"
+>ipc und lib</A
+></DT
+><DT
+><A
+HREF="x23127.html"
+>include und arch</A
+></DT
+><DT
+><A
+HREF="x23143.html"
+>Treiber</A
+></DT
+></DL
+></DIV
+><P
+>Bisher haben wir über den Linux-Kernel aus der Perspektive des
+Treiber-Autors geschrieben. Wenn Sie aber einmal anfangen, mit dem
+Kernel herumzuspielen, dann wollen Sie möglicherweise alles wissen. Es
+kann sogar so weit kommen, daß Sie ganze Tage damit zubringen, durch
+den Quellcode zu navigieren und den Quellbaum mit
+<SPAN
+CLASS="APPLICATION"
+>grep</SPAN
+> zu durchsuchen, um die Verbindungen
+zwischen den einzelnen Bestandteilen des Kernels zu entdecken.</P
+><P
+>Dieses massive Durchsuchen mit <SPAN
+CLASS="APPLICATION"
+>grep</SPAN
+> ist
+eine der Aufgaben, die die Autoren dieses Buches regelmäßig
+ausführen. Es handelt sich um eine effiziente Möglichkeit,
+Informationen aus dem Quellcode zu bekommen. Heutzutage können Sie
+auch Internet-Ressourcen ausnutzen, um den Kernel-Quellbaum zu
+verstehen; einige davon stehen in &#62;. Aber trotz dieser Internet-Ressourcen ist der
+sinnvolle Einsatz von <SPAN
+CLASS="APPLICATION"
+>grep</SPAN
+><A
+NAME="AEN22510"
+HREF="#FTN.AEN22510"
+>[1]</A
+>, <SPAN
+CLASS="APPLICATION"
+>less</SPAN
+> und möglicherweise
+<SPAN
+CLASS="APPLICATION"
+>ctags</SPAN
+> oder <SPAN
+CLASS="APPLICATION"
+>etags</SPAN
+>
+immer noch das beste Verfahren, um Informationen aus den Kernel-Quellen
+zu bekommen.</P
+><P
+>Unserer Meinung nach kann es hilfreich sein, sich ein wenig Wissen zu
+verschaffen, bevor man sich vor seine bevorzugte
+Shell-Eingabeaufforderung setzt. Daher enthält dieses Kapitel einen
+kurzen Überblick über die Dateien in den Linux-Kernel-Quellen der
+Version 2.4.2. Wenn Sie mit einer anderen Version arbeiten, dann
+stimmen möglicherweise nicht alle Beschreibungen Wort für Wort. Ganze
+Abschnitte können fehlen (wie das Verzeichnis
+<TT
+CLASS="FILENAME"
+>drivers/media</TT
+>, das durch das Verschieben diverser
+bereits existierender Treiber in 2.4.0-test6 neu entstand). Wir
+hoffen, daß die Informationen in diesem Kapitel hilfreich, wenn auch
+nicht immer maßgeblich für das Durchsuchen anderer Kernel-Versionen
+sind.</P
+><P
+>Alle Pfadnamen sind relativ zur Wurzel des Quellbaums (normalerweise
+<TT
+CLASS="FILENAME"
+>/usr/src/linux</TT
+>) zu lesen, während Dateinamen ohne
+Verzeichnisanteil im &#8220;aktuellen&#8221; Verzeichnis zu suchen sind, also in dem,
+das gerade besprochen wird. Header-Dateien, die in
+<TT
+CLASS="LITERAL"
+>&#60;</TT
+> und <TT
+CLASS="LITERAL"
+>&#62;</TT
+> eingeschlossen
+sind, sind relativ zum <TT
+CLASS="FILENAME"
+>include</TT
+>-Verzeichnis des
+Quellbaums zu suchen. Wir werden das Verzeichnis
+<TT
+CLASS="FILENAME"
+>Documentation</TT
+> hier nicht zerlegen, weil seine
+Rolle selbstverständlich sein sollte.
+&#13;</P
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN22526"
+>Booten des Kernels</A
+></H1
+><P
+>&#13;
+
+Normalerweise schaut man sich ein Programm als erstes dort an, wo die
+Ausführung beginnt. Bei Linux ist das aber schwer zu sagen &#8212; es
+kommt darauf an, wie Sie &#8220;beginnen&#8221; definieren.</P
+><P
+>Der architekturunabhängige Einsprungpunkt ist
+<SPAN
+><I
+CLASS="EMPHASIS"
+>start_kernel</I
+></SPAN
+> in
+<TT
+CLASS="FILENAME"
+>init/main.c</TT
+>. Diese Funktion wird vom
+architekturspezifischen Code aufgerufen und kehrt nie zu diesem
+zurück. Sie bringt das Rad zum Rollen und kann daher als &#8220;Mutter aller
+Funktionen&#8221; betrachtet werden, gewissermaßen als der erste Atemzug im
+Leben des Computers. Vor <SPAN
+><I
+CLASS="EMPHASIS"
+>start_kernel</I
+></SPAN
+> war
+das Chaos.</P
+><P
+>&#13;Wenn <SPAN
+><I
+CLASS="EMPHASIS"
+>start_kernel</I
+></SPAN
+> aufgerufen wird, ist der
+Prozessor bereits initialisiert, befindet sich im geschützten
+Modus<A
+NAME="AEN22546"
+HREF="#FTN.AEN22546"
+>[2]</A
+>und arbeitet auf der Ebene mit den größten
+Zugriffsrechten (manchmal <SPAN
+><I
+CLASS="EMPHASIS"
+>supervisor mode</I
+></SPAN
+>
+genannt). Interrupts sind abgeschaltet. Die Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>start_kernel</I
+></SPAN
+> ist dafür zuständig, alle
+Kernel-Datenstrukturen zu initialisieren. Dies geschieht durch
+Aufrufen externer Funktionen für Unteraufgaben, weil jede
+Initialisierungsfunktion im jeweiligen Subsystem des Kernels definiert
+ist.</P
+><P
+>&#13;
+
+Die erste von <SPAN
+><I
+CLASS="EMPHASIS"
+>start_kernel</I
+></SPAN
+> aufgerufene
+Funktion nach dem Holen der Kernel-Sperre und dem Ausgeben der Start-Meldung
+ist <SPAN
+><I
+CLASS="EMPHASIS"
+>setup_arch</I
+></SPAN
+>. Mit ihr kann
+plattformabhängiger C-Code ausgeführt
+werden. <SPAN
+><I
+CLASS="EMPHASIS"
+>setup_arch</I
+></SPAN
+> bekommt einen Zeiger
+auf den lokalen <TT
+CLASS="LITERAL"
+>command_line</TT
+>-Zeiger in
+<SPAN
+><I
+CLASS="EMPHASIS"
+>start_kernel</I
+></SPAN
+>, kann diesen also auf die
+echte (plattformabhängige) Position der Kommandozeile zeigen
+lassen. Als nächsten Schritt übergibt
+<SPAN
+><I
+CLASS="EMPHASIS"
+>start_kernel</I
+></SPAN
+> die gesamte Kommandozeile an
+<SPAN
+><I
+CLASS="EMPHASIS"
+>parse_options</I
+></SPAN
+> (ebenfalls in
+<TT
+CLASS="FILENAME"
+>init/main.c</TT
+> definiert), damit die Boot-Optionen
+berücksichtigt werden können.</P
+><P
+>Das Parsen der Kommandozeile erfolgt durch das Aufrufen von
+Handler-Funktionen, die zu jedem Kernel-Argument gehören
+(beispielsweise gehört <SPAN
+><I
+CLASS="EMPHASIS"
+>video_setup</I
+></SPAN
+> zu
+<TT
+CLASS="LITERAL"
+>video=</TT
+>). Alle diese Funktionen setzen im
+wesentlichen Variablen, die später, bei der Initialisierung der
+jeweiligen Funktionalität, verwendet werden. Die interne Organisation
+des Parsens der Kommandozeile ähnelt dem Mechanismus zum Aufruf der
+Initialisierungsfunktionen, den wir später besprechen.</P
+><P
+>Nach dem Parsen aktiviert <SPAN
+><I
+CLASS="EMPHASIS"
+>start_kernel</I
+></SPAN
+> die
+diversen grundlegenden Funktionalitäten des Systems. Dazu gehören das
+Einrichten der Interrupt-Tabellen, das Aktivieren des Timer-Interrupts
+und das Initialisieren der Konsolen- und Speicherverwaltung. All dies
+geschieht durch Funktionen, die andernorts im plattformabhängigen
+Code deklariert sind. <SPAN
+><I
+CLASS="EMPHASIS"
+>start_kernel</I
+></SPAN
+> fährt
+dann damit fort, weniger grundlegende Kernel-Subsysteme zu
+initialisieren, darunter die Puffer-Verwaltung, das Signal-System und
+die Verwaltung von Dateien und Inodes.</P
+><P
+>&#13;Schließlich startet <SPAN
+><I
+CLASS="EMPHASIS"
+>start_kernel</I
+></SPAN
+> den
+<SPAN
+CLASS="APPLICATION"
+>init</SPAN
+>-Kernel-Thread (der die Prozeßnummer 1
+bekommt) und führt die <SPAN
+><I
+CLASS="EMPHASIS"
+>idle</I
+></SPAN
+>-Funktion aus (auch
+diese ist wiederum im architekturspezifischen Code definiert).</P
+><P
+>&#13;Die initiale Boot-Sequenz kann also folgendermaßen zusammengefaßt werden:</P
+><P
+></P
+><OL
+TYPE="1"
+><LI
+><P
+>Die Firmware des Systems oder ein Boot-Lader sorgen dafür, daß der
+Kernel an eine passende Stelle im Speicher geladen wird. Dieser Code
+befindet sich normalerweise nicht im Linux-Quellcode.</P
+></LI
+><LI
+><P
+>Architekturspezifischer Assembler-Code erledigt Aufgaben auf
+allerniedrigster Ebene, wie etwa das Initialisieren des Speichers und
+das Einrichten der CPU-Register, so daß C-Code problemlos ausgeführt
+werden kann. Dazu gehören auch die Auswahl eines Stack-Bereichs und das
+korrekte Setzen des Stack-Zeigers. Wieviel Code dafür notwendig ist,
+unterscheidet sich von Plattform zu Plattform: Das kann von einigen
+Dutzend Zeilen bis zu mehreren tausend Zeilen gehen.</P
+></LI
+><LI
+><P
+><SPAN
+><I
+CLASS="EMPHASIS"
+>start_kernel</I
+></SPAN
+> wird aufgerufen. Diese Funktion holt
+sich die Kernel-Sperre, gibt die Start-Meldung aus und ruft
+<SPAN
+><I
+CLASS="EMPHASIS"
+>setup_arch</I
+></SPAN
+> auf.</P
+></LI
+><LI
+><P
+>Architekturspezifischer C-Code vervollständigt die Initialisierung
+auf niedriger Ebene und holt eine Kommandozeile, die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>start_kernel</I
+></SPAN
+> verwenden kann.</P
+></LI
+><LI
+><P
+><SPAN
+><I
+CLASS="EMPHASIS"
+>start_kernel</I
+></SPAN
+> parst die Kommandozeile und ruft die
+Handler auf, die zum jeweiligen Schlüsselwort gehören.</P
+></LI
+><LI
+><P
+><SPAN
+><I
+CLASS="EMPHASIS"
+>start_kernel</I
+></SPAN
+> initialisiert die grundlegenden
+Funktionalitäten und startet den
+<SPAN
+CLASS="APPLICATION"
+>init</SPAN
+>-Thread.</P
+></LI
+></OL
+><P
+>&#13;
+
+Es ist die Aufgabe von <SPAN
+CLASS="APPLICATION"
+>init</SPAN
+>, alle weiteren
+Initialisierungen vorzunehmen. Dieser Thread steht ebenfalls in der
+Datei <TT
+CLASS="FILENAME"
+>init/main.c</TT
+>. Der Großteil der Aufrufe von
+Initialisierungsfunktionen wird von
+<SPAN
+CLASS="APPLICATION"
+>do_basic_setup</SPAN
+> aus
+ausgeführt. Die Funktion initialisiert alle Bus-Subsysteme, die sie
+findet (PCI, SBus usw.). Dann ruft sie
+<SPAN
+><I
+CLASS="EMPHASIS"
+>do_initcalls</I
+></SPAN
+> auf; hier erfolgt auch die
+Initialisierung von Gerätetreibern.</P
+><P
+>&#13;
+Die Idee der init-Aufrufe kam in Version 2.3.13 hinzu und steht in
+älteren Kerneln nicht zur Verfügung. Sie ist dafür gedacht,
+komplizierte <TT
+CLASS="LITERAL"
+>#ifdef</TT
+>-Anweisungen im gesamten
+Initialisierungscode zu vermeiden. Alle optionalen Kernel-Funktionen
+(Gerätetreiber und andere) dürfen nur dann initialisiert werden, wenn
+sie im System konfiguriert sind, weswegen die
+Initialisierungsfunktionen von <TT
+CLASS="LITERAL"
+>#ifdef
+CONFIG_</TT
+><SPAN
+><I
+CLASS="EMPHASIS"
+>FEATURE</I
+></SPAN
+> und
+<TT
+CLASS="LITERAL"
+>#endif</TT
+> umgeben waren. Mit den init-Aufrufen
+deklariert jedes optionale Feature eine eigene
+Initialisierungsfunktion. Während der Kompilation wird dann eine
+Referenz auf die Funktion in einen speziellen ELF-Abschnitt
+gestellt. Beim Booten durchsucht
+<SPAN
+><I
+CLASS="EMPHASIS"
+>do_initcalls</I
+></SPAN
+> dann den ELF-Abschnitt, um
+alle relevanten Initialisierungsfunktionen aufzurufen.</P
+><P
+>Die gleiche Technik wird auch für Kommandozeilenargumente
+verwendet. Jeder Treiber, der beim Booten Kommandozeilenargumente
+entgegennehmen kann, definiert eine Datenstruktur, die das Argument
+mit einer Funktion verknüpft. Ein Zeiger auf die Datenstruktur wird in
+einen separaten ELF-Bereich geschrieben, so daß
+<SPAN
+><I
+CLASS="EMPHASIS"
+>parse_option</I
+></SPAN
+> diesen Abschnitt nach
+Kommandozeilenoptionen durchsuchen und die zugehörigen
+Treiberfunktionen aufrufen kann. Die verbleibenden Argumente landen
+entweder in der Umgebung oder auf der Kommandozeile des
+<SPAN
+CLASS="APPLICATION"
+>init</SPAN
+>-Prozesses. All diese Zauberei mit
+init-Aufrufen und ELF-Abschnitten finden Sie in
+<TT
+CLASS="LITERAL"
+>&#60;linux/init.h&#62;</TT
+>.</P
+><P
+>Unglücklicherweise funktioniert diese Idee mit den init-Aufrufen nur
+dann, wenn unter den diversen Initialisierungsfunktionen keine
+Reihenfolge eingehalten werden muß, so daß sich doch noch einige
+wenige <TT
+CLASS="LITERAL"
+>#ifdef</TT
+>-Konstrukte in
+<TT
+CLASS="FILENAME"
+>init/main.c</TT
+> befinden.</P
+><P
+>Es interessant, wie sehr die Idee der init-Aufrufe und deren Anwendung
+auf die Kommandozeilenargumente die Anzahl der bedingten
+Kompilierungsanweisungen im Code reduziert hat:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>&#13;morgana% <TT
+CLASS="USERINPUT"
+><B
+>grep -c ifdef linux-2.[024]/init/main.c</B
+></TT
+>
+linux-2.0/init/main.c:120
+linux-2.2/init/main.c:246
+linux-2.4/init/main.c:35</PRE
+></TD
+></TR
+></TABLE
+><P
+>Trotz der Vielzahl neuer Features ist die Anzahl bedingter
+Kompilierungsanweisungen in 2.4 dank der init-Aufrufe signifikant
+gefallen. Ein weiterer Vorteil besteht darin, daß
+Gerätetreiber-Autoren nicht mehr für jedes neue Kommandozeilenargument
+<TT
+CLASS="FILENAME"
+>main.c</TT
+> ändern müssen. Durch diese Technik ist das
+Hinzufügen neuer Features zum Kernel deutlich vereinfacht worden, und
+der Boot-Code enthält keine kniffligen Cross-Referenzen mehr. Als
+Nebeneffekt kann 2.4 aber nicht mehr in ältere Dateiformate
+kompiliert werden, die weniger flexibel als ELF sind. Aus diesem Grund
+wechselten die <SPAN
+CLASS="APPLICATION"
+>uClinux</SPAN
+>Entwickler<A
+NAME="AEN22636"
+HREF="#FTN.AEN22636"
+>[3]</A
+> von COFF auf ELF,
+als sie ihr System von 2.0 auf 2.4 portierten.</P
+><P
+>&#13;Ein weiterer Nebeneffekt der massiven Verwendung von ELF-Abschnitten
+ist, daß der letzte Durchlauf beim Kompilieren des Kernels kein
+normaler Linker-Vorgang mehr ist. Alle Plattformen definieren mit
+Hilfe einer <SPAN
+><I
+CLASS="EMPHASIS"
+>ldscript</I
+></SPAN
+>-Datei nun
+genau, wie das Kernel-Image (die <TT
+CLASS="FILENAME"
+>vmlinux</TT
+>-Datei)
+gelinkt werden muß. Im Quellbaum der einzelnen Plattformen heißt diese
+Datei <TT
+CLASS="FILENAME"
+>vmlinux.lds</TT
+>. Die Verwendung von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ld</I
+></SPAN
+>-Skripten wird in der Standarddokumentation
+des <SPAN
+CLASS="APPLICATION"
+>binutils</SPAN
+>-Pakets beschrieben.</P
+><P
+>&#62;
+&#62;
+&#62;
+Es hat noch einen weiteren Vorteil, den Initialisierungscode in einen
+speziellen Abschnitt zu stellen: Sobald die Initialisierung beendet
+ist, wird dieser Code nicht mehr benötigt. Weil er isoliert war, kann
+der Kernel ihn verwerfen und den davon belegten Speicher
+zurückgewinnen.&#13;</P
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN22510"
+HREF="tour.html#AEN22510"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Normalerweise braucht man
+<SPAN
+CLASS="APPLICATION"
+>find</SPAN
+> und <SPAN
+CLASS="APPLICATION"
+>xargs</SPAN
+>,
+um eine Kommandozeile für <SPAN
+CLASS="APPLICATION"
+>grep</SPAN
+>
+zusammenzubauen. Der durchdachte Einsatz von Unix-Werkzeugen ist nicht
+trivial, würde aber den Rahmen dieses Buches sprengen.</P
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN22546"
+HREF="tour.html#AEN22546"
+>[2]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Dieses Konzept gibt es nur auf der
+x86-Architektur. Bessere Architekturen landen nicht erst in einem
+eingeschränkten abwärtskompatiblen Modus, wenn sie eingeschaltet
+werden.</P
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN22636"
+HREF="tour.html#AEN22636"
+>[3]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+><SPAN
+CLASS="APPLICATION"
+>uClinux</SPAN
+>
+ist eine Version des Linux-Kernels, die auf Prozessoren ohne MMU
+funktioniert. Dies ist typisch für eingebettete Systeme; mehrere M68k-
+und ARM-Prozessoren haben keine Speicherverwaltung in der
+Hardware. <SPAN
+CLASS="APPLICATION"
+>uCLinux</SPAN
+> steht für
+Microcontroller-Linux, weil es eher für Microcontroller als für
+vollständige Computer gedacht ist.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x22374.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x22653.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Schnellreferenz</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Vor dem Booten</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

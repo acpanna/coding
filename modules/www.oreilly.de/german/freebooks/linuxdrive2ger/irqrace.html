@@ -1,0 +1,1611 @@
+<HTML
+><HEAD
+><TITLE
+>Race Conditions</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Interrupt-Handler"
+HREF="irq.html"><LINK
+REL="PREVIOUS"
+TITLE="Interrupt-gesteuerte I/O"
+HREF="irqbuffers.html"><LINK
+REL="NEXT"
+TITLE="Abwärtskompatibilität"
+HREF="x12799.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="irqbuffers.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 9. Interrupt-Handler</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x12799.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="IRQRACE"
+>Race Conditions</A
+></H1
+><P
+>Schon in den vorangegangenen Kapiteln sind uns Race Conditions einige
+Male begegnet. Diese können auf SMP-Systemen jederzeit auftreten,
+       auf
+Einzelprozessor-Systemen kommen sie dagegen bisher eher selten vor.<A
+NAME="AEN12226"
+HREF="#FTN.AEN12226"
+>[1]</A
+> Interrupts können aber einen
+völlig neuen Satz an Race Conditions mit sich bringen, selbst auf
+Einzelprozessor-Systemen. Weil ein Interrupt jederzeit auftreten kann,
+kann er auch mitten in beliebigem Treiber-Code ausgeführt
+werden. Jeder Gerätetreiber, der mit Interrupts arbeitet &#8212; und
+das sind fast alle &#8212; muß sich daher mit Race Conditions
+befassen. Aus diesem Grund schauen wir uns in diesem Kapitel Race
+Conditions und deren Verhinderung etwas genauer an.</P
+><P
+>Das Behandeln von Race Conditions ist einer der schwierigsten Aspekte
+der Programmierung, weil die damit verbundenen Fehler subtil und
+schwer zu reproduzieren sind. Es ist sehr schwierig festzustellen, ob
+es eine Race Condition zwischen Interrupt-Code und den Methoden des
+Treibers gibt. Der Programmierer muß große Sorgfalt walten lassen, um
+eine Zerstörung von Daten oder Metadaten zu vermeiden.&#13;</P
+><P
+>&#13;
+
+Es gibt verschiedene Techniken, die Beschädigung von Daten zu vermeiden. Wir
+werden hier die gängigsten vorstellen. Dabei werden wir keinen
+vollständigen Code zeigen, weil der beste Code für eine gegebene
+Situation vom Betriebsmodus des Gerätes und vom Geschmack des
+Programmierers abhängt. Alle Treiber in diesem Buch schützen sich aber
+vor Race Conditions, so daß Sie im Code zu diesem Buch Beispiele
+finden können.&#13;</P
+><P
+>Die am häufigsten verwendeten Möglichkeiten, um Daten vor
+nebenläufigem Zugriff zu schützen, sind:&#13;</P
+><P
+></P
+><UL
+><LI
+STYLE="list-style-type: disc"
+><P
+>das Verwenden eines Ring-Puffers und das Vermeiden gemeinsam
+genutzter Variablen</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>das Verwenden von Spinlocks, um gegenseitigen Ausschluß zu
+erzwingen</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>das Verwenden von Sperrvariablen, die automatisch
+inkrementiert und dekrementiert werden</P
+></LI
+></UL
+><P
+>Beachten Sie, daß Semaphore hier nicht mit aufgeführt sind. Weil das
+Sperren eines Semaphors den Prozeß schlafen legen kann, dürfen
+Semaphore in Interrupt-Handlern nicht verwendet werden.</P
+><P
+>Welchen Ansatz Sie auch verwenden werden, Sie müssen sich immer noch
+entscheiden, was Sie tun wollen, wenn Sie auf eine Variable
+zugreifen, die zur Interrupt-Zeit verändert werden kann. Solche
+Variablen können in einfachen Fällen als <TT
+CLASS="LITERAL"
+>volatile</TT
+>
+deklariert werden,
+damit der Compiler den Zugriff auf diese Variable nicht optimiert
+(beispielsweise wird damit verhindert, daß der Compiler die Variable
+für die gesamte Laufzeit der Funktion in einem Register
+hält). Allerdings erzeugt der Compiler suboptimalen Code, wenn
+<TT
+CLASS="LITERAL"
+>volatile</TT
+> im Spiel ist, so daß Sie vielleicht besser
+auf eine Art von Sperren ausweichen sollten. In komplizierteren
+Situationen gibt es ohnehin keine andere Wahl.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="IRQBUFFERSCIRC"
+>Ring-Puffer verwenden</A
+></H2
+><P
+>&#13;
+
+Die Verwendung eines Ring-Puffers ist eine effektive Möglichkeit,
+Probleme des nebenläufigen Zugriffs zu umgehen: Es ist immer noch am
+besten, überhaupt keinen nebenläufigen Zugriff durchzuführen.&#13;</P
+><P
+>Der Ring-Puffer verwendet einen Algorithmus namens &#8220;Produzent und
+Verbraucher&#8221; &#8212; einer der Beteiligten schiebt Daten in den
+Puffer hinein, und der andere holt Daten heraus. Es gibt keinen
+nebenläufigen Zugriff, wenn es genau einen Produzenten und genau einen
+Verbraucher gibt. Im Modul <SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> gibt es
+zwei Beispiele von Produzenten und Verbrauchern. Im ersten Fall wartet
+der lesende Prozeß darauf, daß er Daten verbrauchen kann, die zur
+Interrupt-Zeit produziert werden, und im zweiten Fall verbraucht die
+untere Hälfte Daten, die von der oberen produziert worden sind.&#13;</P
+><P
+>&#13;
+Ein Ring-Puffer wird über zwei Zeiger angesprochen:
+<TT
+CLASS="LITERAL"
+>head</TT
+> und
+<TT
+CLASS="LITERAL"
+>tail</TT
+>. <TT
+CLASS="LITERAL"
+>head</TT
+> ist die Stelle, an
+der Daten geschrieben werden, und wird nur vom Produzenten
+verändert. Das Lesen der Daten geschieht von <TT
+CLASS="LITERAL"
+>tail</TT
+>,
+was wiederum nur vom Verbraucher verändert wird. Wie wir schon gesagt
+haben, müssen Sie vorsichtig sein, wenn Sie mehrfach auf
+<TT
+CLASS="LITERAL"
+>head</TT
+> zugreifen wollen, wenn Daten zur
+Interrupt-Zeit geschrieben werden. Sie sollten diese Variable dann entweder
+als <TT
+CLASS="LITERAL"
+>volatile</TT
+> deklarieren oder irgendeine Art von
+Sperren verwenden.&#13;</P
+><P
+>Der Ring-Puffer läuft so lange glatt, bis er voll ist. Wenn das
+passiert, wird es knifflig. Sie haben dann verschiedene
+Möglichkeiten: Die Implementation von <SPAN
+CLASS="APPLICATION"
+>short</SPAN
+>
+verliert einfach die Daten; oder es gibt keine Überlaufprüfung, und wenn
+<TT
+CLASS="LITERAL"
+>head</TT
+> hinter <TT
+CLASS="LITERAL"
+>tail</TT
+> läuft, dann ist ein voller Puffer
+an Daten verloren. Alternativen sind das Verwerfen des letzten
+Datenelements, das Überschreiben des Puffer-Endes, wie es
+<SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+> tut (siehe &#8220;<A
+HREF="debug.html#DEBPRINTKLOG"
+>the Section called <I
+>Wie Meldungen protokolliert werden</I
+> in Kapitel 4</A
+>&#8221; in <A
+HREF="debug.html"
+>Kapitel 4</A
+>), das
+Anhalten des Produzenten, wie es <SPAN
+CLASS="APPLICATION"
+>scullpipe</SPAN
+>
+macht, oder das Allozieren eines vorübergehenden zusätzlichen Puffers,
+der für den Haupt-Puffer einspringt. Was die beste Lösung ist, hängt
+davon ab, wie wichtig Ihre Daten sind (und von anderen
+situationsabhängigen Fragen), weswegen wir hier darauf nicht näher
+eingehen werden.&#13;</P
+><P
+>Obwohl der Ring-Puffer das Problem des nebenläufigen Zugriffs zu
+lösen scheint, gibt es immer noch die Möglichkeit, daß eine Race
+Condition auftritt, wenn die Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>
+schlafen geht. Der folgende Code zeigt, wo das Problem in
+<SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> auftritt:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+
+while (short_head == short_tail) {
+    interruptible_sleep_on(&#38;short_queue);
+    /* ... */
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wenn diese Anweisung ausgeführt wird, kann es passieren, daß neue
+Daten eintreffen, <SPAN
+><I
+CLASS="EMPHASIS"
+>nachdem</I
+></SPAN
+> die
+<TT
+CLASS="LITERAL"
+>while</TT
+>-Bedingung als wahr ausgewertet wurde und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>bevor</I
+></SPAN
+> der Prozeß schlafen geht. Informationen,
+die mit dem Interrupt eingetroffen sind, werden vom Prozeß nicht mehr
+gelesen, der schlafen geht, obwohl <TT
+CLASS="LITERAL"
+>head != tail</TT
+> ist,
+und der Prozeß wird nicht mehr aufgeweckt, bis das nächste Datenelement
+eintrifft.&#13;</P
+><P
+>Wir haben in <SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> keine korrekten Sperren
+implementiert, weil die Quellen von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>short_read</I
+></SPAN
+> in &#8220;<A
+HREF="harddigio.html#HARDSAMPLE"
+>the Section called <I
+>Ein Beispiel-Treiber</I
+> in Kapitel 8</A
+>&#8221; in <A
+HREF="hard.html"
+>Kapitel 8</A
+> stehen und es
+sich an dieser Stelle nicht lohnte. Auch lohnen die betroffenen Daten den
+Aufwand nicht.&#13;</P
+><P
+>Obwohl die Daten, die <SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> liest, nicht
+lebensnotwendig sind und die Wahrscheinlichkeit eines Interrupts im
+Zeitraum zwischen den beiden aufeinanderfolgenden Anweisungen oft
+vernachlässigbar gering ist, können Sie es sich manchmal nicht leisten,
+schlafen zu gehen, wenn noch Daten ausstehen.
+Das Problem ist so allgegenwärtig, daß es sich lohnt, es gesondert zu
+behandeln; wir werden das in &#8220;<A
+HREF="irqrace.html#IRQBUFFERSLEEP"
+>the Section called <I
+>Schlafen gehen ohne Race Conditions</I
+></A
+>&#8221; später in diesem Kapitel detailliert
+tun.
+&#13;</P
+><P
+>Es ist interessant, daß nur Produzent-Verbraucher-Szenarien mit
+Ring-Puffern behandelt werden können. Oft sind aber komplexere
+Datenstrukturen notwendig, um das Problem des nebenläufigen Zugriffs
+zu lösen. Die Situation mit einem Produzenten und einem Verbraucher
+ist nur die einfachste Klasse dieser Probleme; andere Strukturen wie
+verkettete Listen sind für eine Implementation
+mit Ring-Puffern einfach nicht geeignet.
+
+&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="IRQSPINLOCK"
+>Spinlocks verwenden</A
+></H2
+><P
+>&#13;
+
+Wir haben Spinlocks schon unter anderem im
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Treiber gesehen. Bisher haben wir uns
+aber auf einige wenige Anwendungsfälle beschränkt; in diesem Abschnitt
+behandeln wir sie detaillierter.</P
+><P
+>Wie Sie sich erinnern werden, arbeitet ein Spinlock mit einer
+gemeinsam genutzten Variable. Eine Funktion kann die Sperre holen,
+indem sie die Variable auf einen bestimmten Wert setzt. Andere
+Funktionen, die die Sperre benötigen, können diese erfragen und
+begeben sich dann, wenn sie merken, daß die Sperre nicht verfügbar
+ist, in eine Busy-Wait-Schleife, bis die Sperre wieder
+zur Verfügung steht. Eine Funktion, die ein Spinlock zu lange hält, kann viel
+Zeit verschwenden, weil andere CPUs zum Warten gezwungen werden.</P
+><P
+>&#13;
+
+Spinlocks werden durch den Typ <TT
+CLASS="LITERAL"
+>spinlock_t</TT
+>
+repräsentiert, der zusammen mit den diversen Spinlock-Funktionen in
+<TT
+CLASS="LITERAL"
+>&#60;asm/spinlock.h&#62;</TT
+> deklariert
+ist. Normalerweise wird ein Spinlock mit etwa folgender Zeile
+deklariert und im ungesperrten Zustand initialisiert:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;spinlock_t my_lock = SPIN_LOCK_UNLOCKED;</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Wenn es notwendig sein sollte, ein Spinlock zur Laufzeit zu
+initialisieren, verwenden Sie
+<SPAN
+><I
+CLASS="EMPHASIS"
+>spin_lock_init</I
+></SPAN
+>:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;spin_lock_init(&#38;my_lock);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Es gibt eine Reihe von Funktionen (oder genauer Makros), die auf
+Spinlocks arbeiten:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>spin_lock(spinlock_t *lock);</TT
+></DT
+><DD
+><P
+>&#13;Holt die angegebene Sperre und läuft in der Warteschleife, wenn diese
+nicht sofort zur Verfügung steht. Nach Rückkehr von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>spin_lock</I
+></SPAN
+> gehört der aufrufenden Funktion
+die Sperre.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>spin_lock_irqsave(spinlock_t *lock, unsigned long flags);</TT
+></DT
+><DD
+><P
+>&#13;Diese Version holt ebenfalls die Sperre, schaltet aber zusätzlich die
+Interrupts im lokalen Prozessor ab und speichert den aktuellen
+Interrupt-Zustand in <TT
+CLASS="LITERAL"
+>flags</TT
+>. Beachten Sie, daß alle
+Spinlock-Primitive als Makros definiert sind und daß das
+<TT
+CLASS="LITERAL"
+>flags</TT
+>-Argument direkt und nicht als Zeiger
+übergeben wird.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>spin_lock_irq(spinlock_t *lock);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion arbeitet wie <SPAN
+><I
+CLASS="EMPHASIS"
+>spin_lock_irqsave</I
+></SPAN
+>,
+speichert aber den aktuellen Interrupt-Zustand nicht ab. Sie ist etwas
+effizienter als <SPAN
+><I
+CLASS="EMPHASIS"
+>spin_lock_irqsave</I
+></SPAN
+>, sollte aber
+nur in Situationen verwendet werden, in denen Sie sicher sind, daß die
+Interrupts noch nicht abgeschaltet sind.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>spin_lock_bh(spinlock_t *lock);</TT
+></DT
+><DD
+><P
+>&#13;Holt die angegebene Sperre und verhindert die Ausführung unterer Hälften.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>spin_unlock(spinlock_t *lock);</TT
+>, <TT
+CLASS="LITERAL"
+>spin_unlock_irqrestore(spinlock_t *lock, unsigned long flags);</TT
+>, <TT
+CLASS="LITERAL"
+>spin_unlock_irq(spinlock_t *lock);</TT
+>, <TT
+CLASS="LITERAL"
+>spin_unlock_bh(spinlock_t *lock);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+Diese Funktionen sind die Gegenstücke zu den diversen Sperrprimitiven,
+die wir gerade besprochen
+haben. <SPAN
+><I
+CLASS="EMPHASIS"
+>spin_unlock</I
+></SPAN
+> entsperrt lediglich die
+angegebene
+Sperre. <SPAN
+><I
+CLASS="EMPHASIS"
+>spin_unlock_irqrestore</I
+></SPAN
+>
+schaltet die Interrupts möglicherweise wieder ein &#8212; je nach dem Wert von
+<TT
+CLASS="LITERAL"
+>flags</TT
+> (der aus
+<SPAN
+><I
+CLASS="EMPHASIS"
+>spin_lock_irqsave</I
+></SPAN
+> stammen
+sollte). <SPAN
+><I
+CLASS="EMPHASIS"
+>spin_unlock_irq</I
+></SPAN
+> schaltet
+Interrupts bedingungslos wieder ein, und
+<TT
+CLASS="LITERAL"
+>spin_unlock_bh</TT
+> schaltet die
+Verarbeitung unterer Hälften wieder ein. In jedem Fall sollte Ihre
+Funktion die Sperre besitzen, bevor sie eine dieser entsperrenden
+Primitive aufruft, weil es sonst zu schwerwiegenden Problemen kommt.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>spin_is_locked(spinlock_t *lock);</TT
+>, <TT
+CLASS="LITERAL"
+>spin_trylock(spinlock_t *lock)</TT
+>, <TT
+CLASS="LITERAL"
+>spin_unlock_wait(spinlock_t *lock);</TT
+></DT
+><DD
+><P
+>&#13;
+
+<SPAN
+><I
+CLASS="EMPHASIS"
+>spin_is_locked</I
+></SPAN
+> fragt den Zustand eines Spinlocks
+ab, ohne dieses zu ändern. Der Rückgabewert ist von 0 verschieden,
+wenn die Sperre gerade belegt ist. Um zu versuchen, eine Sperre zu
+bekommen, ohne zu warten, können Sie
+<SPAN
+><I
+CLASS="EMPHASIS"
+>spin_trylock</I
+></SPAN
+> verwenden, was einen von 0
+verschiedenen Wert zurückgibt, wenn die Operation fehlgeschlagen ist
+(die Sperre also belegt
+war). <SPAN
+><I
+CLASS="EMPHASIS"
+>spin_unlock_wait</I
+></SPAN
+> wartet, bis
+die Sperre frei ist, holt sie sich aber dann nicht.</P
+></DD
+></DL
+></DIV
+><P
+>Viele Benutzer von Spinlocks beschränken sich auf
+<SPAN
+><I
+CLASS="EMPHASIS"
+>spin_lock</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>spin_unlock</I
+></SPAN
+>. Wenn Sie Spinlocks in
+Interrupt-Handlern verwenden, müssen Sie aber die IRQ-abschaltenden
+Versionen (normalerweise
+<SPAN
+><I
+CLASS="EMPHASIS"
+>spin_lock_irqsave</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>spin_unlock_irqsave</I
+></SPAN
+>) im
+Nicht-Interrupt-Code benutzen. Alles andere kann zu einem Deadlock
+führen.</P
+><P
+>Ein Beispiel ist hier sicherlich angebracht. Nehmen Sie an, Ihr
+Treiber führt seine <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>-Methode aus und holt
+sich mit <SPAN
+><I
+CLASS="EMPHASIS"
+>spin_lock</I
+></SPAN
+> eine Sperre. Während
+die <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>-Methode die Sperre hält, löst Ihr Gerät
+einen Interrupt aus, und Ihr Interrupt-Handler wird auf dem gleichen
+Prozessor ausgeführt. Wenn dieser versucht, die gleiche Sperre zu
+bekommen, tritt er in die Busy-Wait-Schleife ein, weil die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>-Methode bereits die Sperre hält. Da aber
+die Interrupt-Routine die Methode in der Benutzung des Prozessors
+abgelöst hat, wird die Sperre nie freigegeben, und der Prozessor ist
+in einem Deadlock, was Sie vermutlich nicht unbedingt wollen.</P
+><P
+>&#13;Dieses Problem kann man durch die Verwendung von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>spin_lock_irqsave</I
+></SPAN
+> vermeiden, womit
+die Interrupts auf dem lokalen Prozessor, auf dem die Sperre gehalten
+wird, abgeschaltet werden. Wenn Sie sich unsicher sind, dann sollten
+Sie immer die <SPAN
+><I
+CLASS="EMPHASIS"
+>_irqsave</I
+></SPAN
+>-Versionen der
+Primitive verwenden, damit Sie sich keine Sorgen über Deadlocks machen
+müssen. Denken Sie aber daran, daß der <TT
+CLASS="LITERAL"
+>flags</TT
+>-Wert
+von <SPAN
+><I
+CLASS="EMPHASIS"
+>spin_lock_irqsave</I
+></SPAN
+> nicht an
+andere Funktionen übergeben werden darf.</P
+><P
+>Reguläre Spinlocks funktionieren in den meisten Situationen, mit denen
+Treiber-Autoren konfrontiert werden, gut. In manchen Fällen gibt es aber
+ein spezielles Muster des Zugriffs auf kritische Daten, das es
+verdient, hier gesondert behandelt zu werden. Wenn Sie eine Situation
+haben, in der mehrere Threads (Prozesse, Interrupt-Handler, untere
+Hälften-Routinen) nur lesenden Zugriff auf kritische Daten benötigen,
+dann machen Sie sich vielleicht über den Overhead durch die Spinlocks
+Gedanken. Mehrere Leser können sich nicht gegenseitig stören; nur ein
+Schreiber kann zu Problemen führen. In solchen Situationen ist es sehr
+viel effizienter, alle Leser gleichzeitig auf die Daten zugreifen zu
+lassen.</P
+><P
+>&#13;
+
+
+Linux kennt für diesen Fall noch einen anderen Typ von Spinlocks, die
+sogenannten <SPAN
+><I
+CLASS="EMPHASIS"
+>Leser-Schreiber-Spinlocks</I
+></SPAN
+>. Diese
+Sperren haben den Typ <TT
+CLASS="LITERAL"
+>rwlock_t</TT
+> und sollten
+mit <TT
+CLASS="LITERAL"
+>RW_LOCK_UNLOCKED</TT
+> initialisiert
+werden. Beliebig viele Threads gleichzeitig können eine solche Sperre zum Lesen
+halten. Wenn aber ein Schreiber ankommt, muß dieser warten, bis er
+alleinigen Zugriff bekommt.</P
+><P
+>Die Funktionen für Leser-Schreiber-Sperren lauten:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>read_lock(rwlock_t *lock);</TT
+>, <TT
+CLASS="LITERAL"
+>read_lock_irqsave(rwlock_t *lock, unsigned long flags);</TT
+>, <TT
+CLASS="LITERAL"
+>read_lock_irq(rwlock_t *lock);</TT
+>, <TT
+CLASS="LITERAL"
+>read_lock_bh(rwlock_t *lock);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+Diese Lesefunktionen funktionieren genauso wie bei normalen Spinlocks.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>read_unlock(rwlock_t *lock);</TT
+>, <TT
+CLASS="LITERAL"
+>read_unlock_irqrestore(rwlock_t *lock, unsigned long flags);</TT
+>, <TT
+CLASS="LITERAL"
+>read_unlock_irq(rwlock_t *lock);</TT
+>, <TT
+CLASS="LITERAL"
+>read_unlock_bh(rwlock_t *lock);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+Diverse Varianten zum Freigeben einer Lesesperre.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>write_lock(rwlock_t *lock);</TT
+>, <TT
+CLASS="LITERAL"
+>write_lock_irqsave(rwlock_t *lock, unsigned long flags);</TT
+>, <TT
+CLASS="LITERAL"
+>write_lock_irq(rwlock_t *lock);</TT
+>, <TT
+CLASS="LITERAL"
+>write_lock_bh(rwlock_t *lock);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+Eine Sperre als Schreiber holen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>write_unlock(rwlock_t *lock);</TT
+>, <TT
+CLASS="LITERAL"
+>write_unlock_irqrestore(rwlock_t *lock, unsigned long flags);</TT
+>, <TT
+CLASS="LITERAL"
+>write_unlock_irq(rwlock_t *lock);</TT
+>, <TT
+CLASS="LITERAL"
+>write_unlock_bh(rwlock_t *lock);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+Eine Sperre, die von einem Schreiber gehalten wurde, freigeben.</P
+></DD
+></DL
+></DIV
+><P
+>Wenn Ihr Interrupt-Handler nur lesende Sperren hält, dann kann Ihr
+gesamter Code lesende Sperren mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read_lock</I
+></SPAN
+> holen und muß die Interrupts nicht
+abschalten. Schreibende Sperren müssen aber weiterhin mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write_lock_irqsave</I
+></SPAN
+> geholt werden,
+um Deadlocks zu vermeiden.</P
+><P
+>&#62;
+&#62;
+&#62;
+In Kerneln, die für Einzelprozessor-Systeme gebaut worden sind,
+expandieren die Spinlock-Funktionen zu nichts. Sie haben also auf
+diesen Systemen, auf denen sie nicht gebraucht werden, keinen Overhead (außer daß sie eventuell die Interrupts
+abschalten).</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="IRQBUFFERLOCK"
+>Sperrvariablen verwenden</A
+></H2
+><P
+>&#13;
+Der Kernel stellt eine Reihe von Funktionen bereit, die für den
+atomaren Zugriff auf Variablen verwendet werden können. Die Verwendung
+dieser Funktionen kann manchmal kompliziertere Sperrsysteme unnötig
+machen, wenn die durchzuführenden Operationen einfach sind. Die
+atomaren Operationen können auch dazu verwendet werden, eine Art
+"Spinlock des armen Mannes" zu implementieren, indem die Variablen
+manuell abgefragt und die Schleifen manuell implementiert
+werden. Normalerweise ist es aber besser, Spinlocks direkt zu
+verwenden, weil diese für diesen Zweck optimiert worden sind.&#13;</P
+><P
+>Der Linux-Kernel exportiert zwei Funktionsbündel, die auf Sperren
+arbeiten: Bitoperationen und den Zugriff auf den Datentyp
+&#8220;atomic&#8221;.&#13;</P
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN12542"
+>Bitoperationen</A
+></H3
+><P
+>&#13;
+Oft hat man Ein-Bit-Sperrvariablen oder man aktualisiert Statusvariablen
+des Gerätes zur Interrupt-Zeit, während ein Prozeß ebenfalls
+darauf zugreifen könnte. Der Kernel stellt eine Menge von Funktionen
+bereit, die Bits atomar modifizieren oder abfragen. Weil die gesamte
+Operation in einem einzigen Schritt geschieht, kann kein Interrupt
+(und kein anderer Prozessor) dazwischenkommen.&#13;</P
+><P
+>Atomare Bitoperationen sind sehr schnell, weil sie normalerweise mit
+einer einzigen Maschinenanweisung erledigt werden können und die
+Interrupts dazu nicht abgeschaltet werden müssen (sofern die
+zugrundeliegende Plattform das unterstützt). Die Funktionen sind
+architekturabhängig und in
+<TT
+CLASS="LITERAL"
+>&#60;asm/bitops.h&#62;</TT
+> deklariert. Sie sind
+selbst auf SMP-Rechnern atomar und daher das empfohlene Mittel, um die
+Kohärenz zwischen mehreren Prozessoren zu sichern.&#13;</P
+><P
+>Unglücklicherweise sind die Datentypen in diesen Funktionen ebenfalls
+architekturabhängig. Das Argument <TT
+CLASS="LITERAL"
+>nr</TT
+> ist meistens
+als <TT
+CLASS="LITERAL"
+>int</TT
+> definiert, auf einigen wenigen
+Architekturen aber als <TT
+CLASS="LITERAL"
+>unsigned long</TT
+>. Ab Kernel 2.1.37 gibt es folgende Bitoperationen:&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>void set_bit(nr, void *addr);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion setzt das Bit Nummer <TT
+CLASS="LITERAL"
+>bnr</TT
+> im
+Datenelement, auf das mit <TT
+CLASS="LITERAL"
+>addr</TT
+> verwiesen
+wird. Diese Funktion arbeitet auf einem <TT
+CLASS="LITERAL"
+>unsigned
+long</TT
+>, auch wenn <TT
+CLASS="LITERAL"
+>addr</TT
+> ein
+<TT
+CLASS="LITERAL"
+>void*</TT
+> ist.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void clear_bit(nr, void *addr);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion löscht das angegebene Bit im <TT
+CLASS="LITERAL"
+>unsigned
+long</TT
+>-Datum an der Adresse <TT
+CLASS="LITERAL"
+>addr</TT
+>. Die
+Semantik ist die gleiche wie bei <SPAN
+><I
+CLASS="EMPHASIS"
+>set_bit</I
+></SPAN
+>.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void change_bit(nr, void *addr);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion wechselt den Wert des Bits.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void test_bit(nr, void *addr);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion ist die einzige Bitoperation, die nicht atomar sein
+muß; sie gibt lediglich den aktuellen Wert des Bits zurück.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int test_and_set_bit(nr, void *addr);</TT
+>, <TT
+CLASS="LITERAL"
+>int test_and_clear_bit(nr, void *addr);</TT
+>, <TT
+CLASS="LITERAL"
+>int test_and_change_bit(nr, void *addr);</TT
+></DT
+><DD
+><P
+>&#13;
+
+Diese Funktionen verhalten sich wie die oben genannten, geben aber
+auch den vorherigen Wert des Bits zurück.</P
+></DD
+></DL
+></DIV
+><P
+>Wenn diese Funktionen verwendet werden, um auf einen gemeinsam
+genutzten Schalter zuzugreifen und diesen zu modifizieren, müssen Sie
+nichts weiter tun, als die Funktionen aufzurufen. Die Verwendung von
+Bitoperationen zur Verwaltung einer Sperrvariablen, die den Zugriff
+auf eine gemeinsam genutzte Variable kontrolliert, ist schwieriger und
+hat ein Beispiel verdient. Moderner Code wird normalerweise keine
+Bitoperationen auf diese Weise verwenden, aber es gibt immer noch
+solchen Code im Kernel.&#13;</P
+><P
+>Ein Code-Abschnitt, der auf ein gemeinsam genutztes Datenelement
+zugreifen muß, versucht, eine Sperre atomar mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>test_and_set_bit</I
+></SPAN
+> oder
+<SPAN
+><I
+CLASS="EMPHASIS"
+>test_and_clear_bit</I
+></SPAN
+> zu bekommen. Die übliche
+Implementation ist unten zu sehen; sie geht davon aus, daß die Sperre
+das Bit <TT
+CLASS="LITERAL"
+>nr</TT
+> an der Adresse <TT
+CLASS="LITERAL"
+>addr</TT
+>
+ist. Außerdem wird vorausgesetzt, daß das Bit 0 ist, wenn die Sperre
+frei ist, und 1, wenn sie belegt ist.&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+
+/* versuche, Sperre zu setzen */
+while (test_and_set_bit(nr, addr) != 0)
+    wait_for_a_while();
+
+/* Arbeit erledigen */
+
+/* Sperre freigeben und ueberpruefen... */
+if (test_and_clear_bit(nr, addr) == 0)
+    something_went_wrong(); /* schon freigegeben: Fehler */</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wenn Sie in den Kernel-Quellen lesen, werden Sie Code finden, der wie
+dieses Beispiel arbeitet. Wie bereits erwähnt, ist es besser, in
+neuem Code Spinlocks zu verwenden, sofern Sie nicht sinnvolle Arbeit erledigen müssen, während Sie auf die Freigabe der Sperre warten
+(wie etwa in der
+<TT
+CLASS="LITERAL"
+>wait_for_a_while()</TT
+>-Anweisung
+in diesem Listing).
+&#13;</P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN12619"
+>Atomare Integer-Operationen</A
+></H3
+><P
+>&#13;Kernel-Programmierer benötigen oft von Interrupt-Handlern und anderen
+Funktionen gemeinsam genutzte Integer-Variablen. Es gibt einen
+weiteren Satz von Funktionen, der diese gemeinsame Nutzung
+erleichtert; definiert ist er in
+<TT
+CLASS="LITERAL"
+>&#60;asm/atomic.h&#62;</TT
+>.</P
+><P
+>&#13;Die in <TT
+CLASS="FILENAME"
+>atomic.h</TT
+> gebotenen Möglichkeiten gehen
+deutlich über die gerade beschriebenen Bitoperationen
+hinaus. <TT
+CLASS="FILENAME"
+>atomic.h</TT
+> definiert einen neuen Datentyp
+namens <TT
+CLASS="LITERAL"
+>atomic_t</TT
+>, auf den nur über atomare
+Operationen zugegriffen werden kann. Ein
+<TT
+CLASS="LITERAL"
+>atomic_t</TT
+> nimmt auf allen unterstützten
+Architekturen einen <TT
+CLASS="LITERAL"
+>int</TT
+>-Wert auf. Aufgrund
+der Arbeitsweise dieses Typs auf manchen Prozessoren steht aber nicht
+immer der volle Integer-Bereich zur Verfügung; Sie sollten sich also
+nicht auf mehr als 24 Bits verlassen. Die folgenden Operationen sind
+für den Typ definiert und sind hinsichtlich aller Prozessoren auf
+einem SMP-System garantiert atomar. Sie sind sehr schnell, da sie, wo
+immer es möglich ist, zu einer einzigen Maschinenanweisung kompiliert werden.</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>void atomic_set(atomic_t *v, int i);</TT
+></DT
+><DD
+><P
+>&#13;Setzt die atomare Variable <TT
+CLASS="LITERAL"
+>v</TT
+> auf den Integer-Wert
+<TT
+CLASS="LITERAL"
+>i</TT
+>.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int atomic_read(atomic_t *v);</TT
+></DT
+><DD
+><P
+>&#13;Gibt den aktuellen Wert von <TT
+CLASS="LITERAL"
+>v</TT
+> zurück.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void atomic_add(atomic_t i, atomic_t *v);</TT
+></DT
+><DD
+><P
+>&#13;Fügt zu der atomaren Variablen, auf die <TT
+CLASS="LITERAL"
+>v</TT
+> verweist,
+den Wert <TT
+CLASS="LITERAL"
+>i</TT
+> hinzu. Der Rückgabewert ist <TT
+CLASS="LITERAL"
+>void</TT
+>, weil
+es sich meistens nicht lohnt, den neuen Wert zu erfahren. Diese
+Funktion wird vom Netzwerk-Code verwendet, um die Statistiken über den
+Speicherverbrauch in Sockets zu aktualisieren.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void atomic_sub(atomic_t i, atomic_t *v);</TT
+></DT
+><DD
+><P
+>&#13;Zieht von der atomaren Variablen <TT
+CLASS="LITERAL"
+>*v</TT
+>
+den Wert <TT
+CLASS="LITERAL"
+>i</TT
+> ab.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void atomic_inc(atomic_t *v);</TT
+>, <TT
+CLASS="LITERAL"
+>void atomic_dec(atomic_t *v);</TT
+></DT
+><DD
+><P
+>&#13;
+Eine atomare Variable inkrementieren oder dekrementieren.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int atomic_inc_and_test(atomic_t *v);</TT
+>, <TT
+CLASS="LITERAL"
+>int atomic_dec_and_test(atomic_t *v);</TT
+>, <TT
+CLASS="LITERAL"
+>int atomic_add_and_test(int i, atomic_t *v);</TT
+>, <TT
+CLASS="LITERAL"
+>int atomic_sub_and_test(int i, atomic_t *v);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+Diese Funktionen verhalten sich wie die obigen Gegenstücke, geben aber
+auch den vorherigen Wert der atomaren Variablen zurück.</P
+></DD
+></DL
+></DIV
+><P
+>Wie bereits erwähnt wurde, darf man auf Daten des Typs
+<TT
+CLASS="LITERAL"
+>atomic_t</TT
+> nur über diese Funktionen
+zugreifen. Wenn Sie eine atomare Variable an eine Funktion übergeben,
+die ein Integer-Argument erwartet, bekommen Sie einen
+Compiler-Fehler.
+&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="IRQBUFFERSLEEP"
+>Schlafen gehen ohne Race Conditions</A
+></H2
+><P
+>&#13;
+
+Eine Race Condition haben wir in dieser Betrachtung bisher
+ausgelassen: das Schlafengehen. Ganz allgemein können diverse Dinge
+zwischen dem Moment geschehen, in dem Ihr Treiber sich entschließt,
+schlafen zu gehen, und dem Moment, in dem
+<SPAN
+><I
+CLASS="EMPHASIS"
+>sleep_on</I
+></SPAN
+> tatsächlich aufgerufen
+wird. Mitunter endet die Bedingung, wegen der Sie schlafen wollen,
+unmittelbar vor dem eigentlichen Schlafengehen, was zu einem
+längeren Schlafen als erwartet führt. Dieses Problem ist sehr
+viel allgemeiner als das der Interrupt-gesteuerten I/O; für eine
+effiziente Lösung braucht man etwas Wissen um die Interna von
+<TT
+CLASS="LITERAL"
+>sleep_on</TT
+>.</P
+><P
+>&#13;
+
+Schauen wir uns als Beispiel wieder einmal Code aus dem
+<SPAN
+CLASS="APPLICATION"
+>short</SPAN
+>-Treiber an:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;while (short_head == short_tail) {
+    interruptible_sleep_on(&#38;short_queue);
+    /* ... */
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>In diesem Fall könnte sich der Wert von
+<TT
+CLASS="LITERAL"
+>short_head</TT
+> zwischen der Abfrage in der
+<TT
+CLASS="LITERAL"
+>while</TT
+>-Anweisung und dem Aufruf von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>interruptible_sleep_on</I
+></SPAN
+> ändern. In diesem Fall
+würde der Treiber schlafen, obwohl neue Daten vorhanden sind. So etwas
+führt bestenfalls zu Verzögerungen und schlimmstenfalls zu einem
+Blockieren des Geräts.</P
+><P
+>&#13;
+
+
+
+Dieses Problem löst man, indem man halb vor dem Test schlafen
+geht. Die Idee besteht darin, daß sich ein Prozeß in die Warteschlange
+stellt, sich selbst als schlafend erklärt und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>dann</I
+></SPAN
+> seine Tests ausführt. Dies ist die typische
+Implementation:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;wait_queue_t wait;
+init_waitqueue_entry(&#38;wait, current);
+
+add_wait_queue(&#38;short_queue, &#38;wait);
+while (1) {
+    set_current_state(TASK_INTERRUPTIBLE);
+    if (short_head != short_tail) /* was immer Ihr Treiber braucht */
+    break;
+    schedule();
+}
+set_current_state(TASK_RUNNING);
+remove_wait_queue(&#38;short_queue, &#38;wait);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Dieser Code verwendet quasi einen Teil der Interna von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>sleep_on</I
+></SPAN
+>; wir besprechen ihn hier Schritt
+für Schritt.</P
+><P
+>Der Code deklariert zunächst eine
+<TT
+CLASS="LITERAL"
+>wait_queue_t</TT
+>-Variable, initialisiert
+sie und fügt sich selbst zur Warteschlange des Treibers hinzu (die,
+wie Sie sich vielleicht erinnern, vom Typ
+<TT
+CLASS="LITERAL"
+>wait_queue_head_t</TT
+> ist). Nach
+dem Ausführen dieser Schritte führt ein Aufruf von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>wake_up</I
+></SPAN
+> auf
+<TT
+CLASS="LITERAL"
+>short_queue</TT
+> zum Aufwachen dieses Prozesses.</P
+><P
+>&#13;
+Der Prozeß schläft aber noch nicht. Mit dem Aufruf von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>set_current_state</I
+></SPAN
+> kommt er diesem
+Zustand näher; hier wird der Zustand des Prozesses auf
+<TT
+CLASS="LITERAL"
+>TASK_INTERRUPTIBLE</TT
+> gesetzt. Der Rest des
+Systems hält den Prozeß jetzt für schlafend, und der Scheduler
+versucht nicht, ihn auszuführen. Dies ist ein wichtiger Schritt beim
+"Schlafengehen", aber wir sind noch nicht fertig.</P
+><P
+>Der Code fragt jetzt nämlich die Bedingung ab, auf die er wartet,
+genauer gesagt, ob Daten im Puffer sind. Wenn das nicht der Fall ist,
+ruft er <SPAN
+><I
+CLASS="EMPHASIS"
+>schedule</I
+></SPAN
+> auf, übergibt damit den
+Staffelstab an einen anderen Prozeß und legt sich selbst
+schlafen. Wenn der Prozeß aufgeweckt worden ist, fragt er die
+Bedingung erneut ab und beendet möglicherweise die Schleife.</P
+><P
+>&#13;Nach der Schleife muß nur ein wenig aufgeräumt werden. Der aktuelle
+Zustand wird auf <TT
+CLASS="LITERAL"
+>TASK_RUNNING</TT
+> gesetzt, um
+anzuzeigen, daß der Prozeß nicht mehr schläft; dies ist notwendig,
+denn wenn wir die Schleife beenden, ohne jemals geschlafen zu haben,
+könnte der Zustand immer noch
+<TT
+CLASS="LITERAL"
+>TASK_INTERRUPTIBLE</TT
+> sein. Dann wird
+<SPAN
+><I
+CLASS="EMPHASIS"
+>remove_wait_queue</I
+></SPAN
+> verwendet, um den
+Prozeß aus der Warteschlange zu nehmen.</P
+><P
+>Warum hat dieser Code also keine Race Conditions? Wenn neue Daten
+eintreffen, ruft der Interrupt-Handler
+<SPAN
+><I
+CLASS="EMPHASIS"
+>wake_up</I
+></SPAN
+> an der
+<TT
+CLASS="LITERAL"
+>short_queue</TT
+> auf, was dazu führt, daß der
+Zustand jedes in der Warteschlange schlafenden Prozesses auf
+<TT
+CLASS="LITERAL"
+>TASK_RUNNING</TT
+> gesetzt wird. Wenn
+<SPAN
+><I
+CLASS="EMPHASIS"
+>wake_up</I
+></SPAN
+> aufgerufen wird, nachdem der
+Puffer überprüft worden ist, wird der Zustand des Tasks geändert, und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>schedule</I
+></SPAN
+> führt dazu, daß der aktuelle Prozeß nach
+einer kurzen Pause weiterläuft (wenn nicht sogar sofort).</P
+><P
+>Dieses &#8220;im Halbschlaf testen&#8221; ist im Kernel so gängig, daß in der
+2.1-Entwicklung sogar ein Paar von Makros eingeführt wurde, um sich das
+Leben einfacher zu machen:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>wait_event(wq, condition);</TT
+>, <TT
+CLASS="LITERAL"
+>wait_event_interruptible(wq, condition);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+
+
+
+
+
+
+Beide Makros implementieren den gerade besprochenen Code und fragen
+<TT
+CLASS="LITERAL"
+>condition</TT
+> &#8220;während des Schlafengehens&#8221; ab (was,
+weil es sich um ein Makro handelt, bei jedem
+Schleifendurchlauf passiert).</P
+></DD
+></DL
+></DIV
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN12226"
+HREF="irqrace.html#AEN12226"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Beachten Sie aber, daß die
+          Kernel-Entwickler ernsthaft erwägen,
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>sämtlichen</I
+></SPAN
+> Kernel-Code zu fast jedem
+          Zeitpunkt unterbrechbar zu machen, was die Verwendung von
+          Sperren auch auf Einzelprozessor-Systemen obligatorisch
+          machen würde.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="irqbuffers.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x12799.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Interrupt-gesteuerte I/O</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="irq.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Abwärtskompatibilität</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

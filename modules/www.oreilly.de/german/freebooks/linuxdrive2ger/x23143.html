@@ -1,0 +1,1359 @@
+<HTML
+><HEAD
+><TITLE
+>Treiber</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Der physikalische Aufbau der Kernel-Quellen"
+HREF="tour.html"><LINK
+REL="PREVIOUS"
+TITLE="include und arch"
+HREF="x23127.html"><LINK
+REL="NEXT"
+TITLE="Bibliographie"
+HREF="biblio.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x23127.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 16. Der physikalische Aufbau der Kernel-Quellen</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="biblio.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN23143"
+>Treiber</A
+></H1
+><P
+>Aktuelle Linux-Kernel unterstützen eine große Anzahl von
+Geräten. Gerätetreiber füllen etwa die Hälfte des gesamten Quellbaums
+(oder sogar zwei Drittel, wenn Sie den architekturspezifischen Code,
+den Sie nicht verwenden, nicht mitrechnen). Sie bestehen zusammen aus
+fast 1500 C-Dateien und mehr als 800 Header-Dateien.</P
+><P
+>Das Verzeichnis <TT
+CLASS="FILENAME"
+>drivers</TT
+> selbst enthält keine
+einzige Quelldatei, sondern nur Unterverzeichnisse (und natürlich ein Makefile).</P
+><P
+>Die Strukturierung einer großen Menge von Quellcode ist nicht einfach,
+und die Entwickler sind keinen strikten Regeln gefolgt. Die
+ursprüngliche Aufteilung zwischen <TT
+CLASS="FILENAME"
+>drivers/char</TT
+>
+und <TT
+CLASS="FILENAME"
+>drivers/block</TT
+> ist heutzutage uneffizient. Es
+sind außerdem weitere Verzeichnisse angelegt worden, um diverse
+Anforderungen zu erfüllen. Die generischsten Zeichen- und
+Block-Treiber stehen aber weiterhin in
+<TT
+CLASS="FILENAME"
+>drivers/char</TT
+> und
+<TT
+CLASS="FILENAME"
+>drivers/block</TT
+>, weswegen wir dort anfangen.</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN23153"
+>drivers/char</A
+></H2
+><P
+>&#13;Das Verzeichnis <TT
+CLASS="FILENAME"
+>drivers/char</TT
+> ist wahrscheinlich
+das wichtigste in der ganzen <TT
+CLASS="FILENAME"
+>drivers</TT
+>-Hierarchie,
+weil es eine Menge treiberunabhängigen Codes enthält.</P
+><P
+>&#13;
+
+
+
+Die generische TTY-Schicht (wie auch die Line Disciplines, die
+TTY-Software-Treiber und ähnliche Features) ist in diesem Verzeichnis
+implementiert. Die Datei <TT
+CLASS="FILENAME"
+>console.c</TT
+> definiert den
+Terminal-Typ <TT
+CLASS="FILENAME"
+>linux</TT
+> (indem sie die speziellen
+Fluchtsequenzen und die Tastatur-Encodierung implementiert). <TT
+CLASS="FILENAME"
+>vt.c</TT
+> definiert die
+virtuellen Konsolen und enthält auch den Code, um von einer virtuellen
+Konsole auf eine andere zu wechseln. Die Unterstützung der
+Zwischenablage auf der Linux-Text-Konsole ist in
+<TT
+CLASS="FILENAME"
+>selection.c</TT
+> implementiert, die Default-Line
+Discipline in <TT
+CLASS="FILENAME"
+>n_tty.c</TT
+>.</P
+><P
+>&#13;
+
+
+
+Es gibt noch weitere Dateien, die  wahrscheinlich entgegen Ihrer
+Erwartung, geräteunabhängig sind. <TT
+CLASS="FILENAME"
+>lp.c</TT
+>
+implementiert einen generischen Parallel-Port-Druckertreiber, der auch
+die Console-on-line-printer-Fähigkeit enthält. Dieser ist
+geräteunabhängig, weil der <SPAN
+><I
+CLASS="EMPHASIS"
+>parport</I
+></SPAN
+>-Gerätetreiber
+die Operationen auf die eigentliche Hardware abbildet (wie Sie in
+<A
+HREF="x956.html#BUISTACKING"
+>Abbildung 2-2</A
+> sehen können). Entsprechend implementiert
+<TT
+CLASS="FILENAME"
+>keyboard.c</TT
+> die höheren Ebenen der
+Tastatursteuerung; diese Datei exportiert die Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>handle_scancode</I
+></SPAN
+>, so daß
+plattformspezifische Tastaturtreiber (wie
+<TT
+CLASS="FILENAME"
+>pc_keyb.c</TT
+> im gleichen Verzeichnis) von der
+verallgemeinerten Verwaltung profitieren
+können. <TT
+CLASS="FILENAME"
+>mem.c</TT
+> implementiert
+<TT
+CLASS="FILENAME"
+>/dev/mem</TT
+>, <TT
+CLASS="FILENAME"
+>/dev/null</TT
+> und
+<TT
+CLASS="FILENAME"
+>/dev/zero</TT
+>: grundlegende Ressourcen, ohne die man
+nicht auskommt.</P
+><P
+>Übrigens wird <TT
+CLASS="FILENAME"
+>mem.c</TT
+> immer mitkompiliert, weil es
+auch das Zuhause von <SPAN
+><I
+CLASS="EMPHASIS"
+>chr_dev_init</I
+></SPAN
+>
+ist, was wiederum mehrere andere Treiber initialisiert, sofern diese
+mitkompiliert werden.</P
+><P
+>Es gibt noch andere geräte- und plattformunabhängige Quelldateien in
+<TT
+CLASS="FILENAME"
+>drivers/char</TT
+>. Wenn Sie sich die Aufgaben der
+einzelnen Dateien anschauen wollen, dann beginne Sie am besten im
+Makefile dieses Verzeichnisses, einer interessanten und weitgehend
+selbsterklärenden Datei.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN23203"
+>drivers/block</A
+></H2
+><P
+>&#13;Wie das gerade beschriebene Verzeichnis
+<TT
+CLASS="FILENAME"
+>drivers/char</TT
+>, so gibt es auch
+<TT
+CLASS="FILENAME"
+>drivers/block</TT
+> schon seit langem in der
+Linux-Entwicklung. Hier fanden sich früher alle Block-Gerätetreiber,
+weswegen hier auch immer noch einiger geräteunabhängiger Code zu
+finden ist.</P
+><P
+>&#13;Die wichtigste Datei ist
+<TT
+CLASS="FILENAME"
+>ll_rw_blk.c</TT
+> (low-level read-write
+block). Sie implementiert alle Anfrage-Verwaltungsfunktionen, die wir
+in <A
+HREF="lock.html"
+>Kapitel 12</A
+>&#62; beschrieben haben.</P
+><P
+>&#13;
+
+Relativ neu in diesem Verzeichnis ist
+<TT
+CLASS="FILENAME"
+>blkpg.c</TT
+> (kam mit 2.3.3 hinzu). Diese Datei
+implementiert generischen Code für die Partitions- und
+Geometrie-Verwaltung in Block-Geräten. Der hiesige Code ersetzt
+gemeinsam mit dem oben beschriebenen Verzeichnis
+<TT
+CLASS="FILENAME"
+>fs/partitions</TT
+> das, was früher &#8220;generic hard
+disk&#8221;-Unterstützung hieß. Die Datei namens
+<TT
+CLASS="FILENAME"
+>genhd.c</TT
+> existiert immer noch, enthält heutzutage
+aber nur noch die generischen Initialisierungsfunktionen für
+Block-Treiber (ähnlich derjenigen für Zeichen-Treiber in
+<TT
+CLASS="FILENAME"
+>mem.c</TT
+>). Eine der von <TT
+CLASS="FILENAME"
+>blkpg.c</TT
+>
+exportierten öffentlichen Funktionen ist
+<SPAN
+><I
+CLASS="EMPHASIS"
+>blk_ioctl</I
+></SPAN
+>, die wir in &#8220;&#62;&#8221; in <A
+HREF="lock.html"
+>Kapitel 12</A
+>&#62; behandelt haben.</P
+><P
+>&#13;Die letzte geräteunabhängige Datei in
+<TT
+CLASS="FILENAME"
+>drivers/block</TT
+> ist
+<TT
+CLASS="FILENAME"
+>elevator.c</TT
+>. Diese Datei implementiert den
+Mechanismus zur Änderung der Fahrstuhl-Funktion eines
+Block-Gerätetreibers. Diese Funktionalität kann durch die in &#8220;&#62;&#8221; kurz eingeführten
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Befehle ausgenutzt werden.</P
+><P
+>&#13;
+
+Neben den Hardware-abhängigen Gerätetreibern, die Sie in
+<TT
+CLASS="FILENAME"
+>drivers/block</TT
+> sicher erwarten, enthält dieses
+Verzeichnis auch Software-Gerätetreiber, die von Haus aus
+plattformunabhängig sind, genau wie die Treiber
+<SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> und <SPAN
+CLASS="APPLICATION"
+>spull</SPAN
+>,
+die wir in diesem Buch eingeführt haben. Es handelt sich um die
+RAM-Disk in <TT
+CLASS="FILENAME"
+>rd.c</TT
+>, das &#8220;Network Block Device&#8221; in
+<TT
+CLASS="FILENAME"
+>nbd.c</TT
+> und das Loopback-Block-Gerät in
+<TT
+CLASS="FILENAME"
+>loop.c</TT
+>. Letzteres wird dazu verwendet, Dateien so
+einzuhängen, als wären es Block-Geräte. (Siehe dazu die Man-Page
+von <SPAN
+CLASS="APPLICATION"
+>mount</SPAN
+>, wo die <SPAN
+><I
+CLASS="EMPHASIS"
+>-o
+loop</I
+></SPAN
+>-Option beschrieben wird.) Das Network Block Device
+kann für den Zugriff auf entfernte Ressourcen als Block-Gerät
+verwendet werden (und ermöglicht so beispielsweise ein entferntes
+Swap-Gerät).&#13;</P
+><P
+>Andere Dateien in diesem Verzeichnis implementieren Treiber für
+bestimmte Hardware, darunter verschiedene Diskettenlaufwerke, den
+altmodischen x86-XT-Festplatten-Controller und einige weitere. Die
+wichtigsten Familien von Block-Treibern sind in separate Verzeichnisse
+verschoben worden.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN23253"
+>drivers/ide</A
+></H2
+><P
+>&#13;
+Die Familie der IDE-Gerätetreiber befand sich früher in
+<TT
+CLASS="FILENAME"
+>drivers/block</TT
+>, ist aber so gewachsen, daß sie in
+ein eigenes Verzeichnis verschoben wurde. Die IDE-Schnittstelle ist
+mit der Zeit immer mehr erweitert und verbessert worden, um mehr als
+nur konventionelle Festplatten zu unterstützen. Beispielsweise werden
+inzwischen auch IDE-Bandlaufwerke unterstützt.</P
+><P
+>Das Verzeichnis <TT
+CLASS="FILENAME"
+>drivers/ide</TT
+> ist eine Welt
+für sich, mit ein wenig allgemeinem Code und einer eigenen
+Programmierschnittstelle. Sie werden bemerken, daß einige Dateien in
+diesem Verzeichnis nur einige wenige Kilobytes lang sind. Diese
+enthalten nur den Code zur Erkennung des IDE-Controllers und verwenden
+dann den verallgemeinerten IDE-Treiber für alles andere &#8212; ein
+interessanter Lesestoff, wenn Sie an IDE-Treibern interessiert sind.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN23263"
+>drivers/md</A
+></H2
+><P
+>&#13;
+
+In diesem Verzeichnis geht es um die RAID-Funktionalität und die
+Abstraktion des Logical Volume Managers. Der Code registriert seine
+eigenen Major-Nummern für Zeichen- und Block-Treiber, kann also als
+Treiber wie die traditionellen Treiber angesehen werden. Trotzdem wird
+der Code davon getrennt gehalten, weil er nichts mit direktem
+Hardware-Zugriff zu tun hat.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN23274"
+>drivers/cdrom</A
+></H2
+><P
+>&#13;
+
+
+
+Dieses Verzeichnis enthält die generische CD-ROM-Schnittstelle. Sowohl
+die IDE- als auch die SCSI-<SPAN
+><I
+CLASS="EMPHASIS"
+>cdrom</I
+></SPAN
+>-Treiber benutzen
+<TT
+CLASS="FILENAME"
+>drivers/cdrom/cdrom.c</TT
+> für einen Teil ihrer
+Funktionalität. Die Haupteinsprungpunkte in der Datei sind
+<SPAN
+><I
+CLASS="EMPHASIS"
+>register_cdrom</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>unregister_cdrom</I
+></SPAN
+>; der Aufrufer übergibt
+diesen Funktionen einen Zeiger auf eine <TT
+CLASS="LITERAL"
+>struct
+cdrom_device_info</TT
+>, das wichtigste Objekt in
+der CD-ROM-Verwaltung.</P
+><P
+>Andere Dateien in diesem Verzeichnis kümmern sich um bestimmte
+Hardware-Laufwerke, die weder IDE noch SCSI verwenden. Diese Geräte
+sind heutzutage reichlich selten, weil sie in Anbetracht moderner
+IDE-Controller als veraltet angesehen werden können.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN23293"
+>drivers/scsi</A
+></H2
+><P
+>&#13;
+Alles rund um den SCSI-Bus befindet sich traditionell in diesem
+Verzeichnis. Dazu gehören die Controller-unabhängige Unterstützung für
+bestimmte Geräte (wie Festplatten und Bandlaufwerke) sowie Treiber
+für bestimmte SCSI-Controller.</P
+><P
+>&#13;
+
+Die Verwaltung der SCSI-Schnittstelle ist über mehrere Dateien
+verteilt: <TT
+CLASS="FILENAME"
+>scsi.c</TT
+>, <TT
+CLASS="FILENAME"
+>hosts.c</TT
+>,
+<TT
+CLASS="FILENAME"
+>scsi_ioctl.c</TT
+> und ein Dutzend weitere. Wenn
+Sie an der gesamten Liste interessiert sind, schauen Sie besser in das
+Makefile, wo <TT
+CLASS="FILENAME"
+>scsi_mod-objs</TT
+> definiert
+ist. Alle öffentlichen Einsprungpunkte in diese Dateiengruppe sind in
+<TT
+CLASS="FILENAME"
+>scsi_syms.c</TT
+> zusammengefaßt.</P
+><P
+>&#13;Code, der eine bestimmte Art von Hardware-Laufwerken unterstützt, wird
+über den Aufruf von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>scsi_register_module</I
+></SPAN
+> mit dem
+Argument <TT
+CLASS="LITERAL"
+>MODULE_SCSI_DEV</TT
+> in das
+SCSI-System eingebunden. So werden die Festplattenunterstützung von
+<TT
+CLASS="FILENAME"
+>sd.c</TT
+>, die CD-ROM-Unterstützung von
+<TT
+CLASS="FILENAME"
+>sr.c</TT
+> (die intern wiederum die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>cdrom_</I
+></SPAN
+>-Funktionen verwendet), die
+Bandlaufwerk-Unterstützung von <TT
+CLASS="FILENAME"
+>st.c</TT
+> und die
+generischen Geräte von <TT
+CLASS="FILENAME"
+>sg.c</TT
+> implementiert.</P
+><P
+>Der &#8220;generische&#8221; Treiber wird verwendet, um User-Space-Programmen
+direkten Zugriff auf SCSI-Geräte zu geben. Das zugrundeliegende Gerät
+kann so ziemlich alles sein; sowohl CD-Brenner als auch Scanner
+verwenden das generische SCSI-Gerät, um auf die angesteuerte Hardware
+zuzugreifen. Durch Öffnen der <TT
+CLASS="FILENAME"
+>/dev/sg</TT
+>-Geräte kann
+ein User-Space-Treiber alles Notwendige selbst machen, ohne
+Unterstützung vom Kernel zu benötigen.</P
+><P
+>&#13;
+Host-Adapter (also die SCSI-Controller-Hardware) können durch den Aufruf von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>scsi_register_module</I
+></SPAN
+> mit dem
+Argument <TT
+CLASS="LITERAL"
+>MODULE_SCSI_HA</TT
+> in das
+Kern-System eingebaut werden. Die meisten Treiber tun das einfach
+durch die in <TT
+CLASS="FILENAME"
+>scsi_module.c</TT
+> bereitgestellte
+Registrierungsfähigkeit: Die Quelldatei des Treibers definiert ihre
+statischen Datenstrukturen und bindet dann
+<TT
+CLASS="FILENAME"
+>scsi_module.c</TT
+> ein. Diese Datei definiert
+Standard-Initialisierungs- und Aufräum-Funktionen, basierend auf
+<TT
+CLASS="LITERAL"
+>&#60;linux/init.h&#62;</TT
+> und dem Mechanismus der
+init-Aufrufe. Diese Technik erlaubt es Treibern, ganz ohne
+<TT
+CLASS="LITERAL"
+>#ifdef</TT
+>s entweder als Module oder als
+einkompilierte Funktionen verwendet zu werden.</P
+><P
+>Interessanterweise ist einer der in <TT
+CLASS="FILENAME"
+>drivers/scsi</TT
+>
+unterstützten Host-Adapter der Code für die IDE-SCSI-Emulation, ein
+Software-Host-Adapter, der auf IDE-Geräte abbildet. Dieser wird zum
+Beispiel für das CD-Mastering verwendet: Das System sieht alle
+Laufwerke als SCSI-Geräte, und das User-Space-Programm muß nichts als
+SCSI verstehen.</P
+><P
+>Beachten Sie bitte, daß mehrere SCSI-Treiber in Linux von den
+Herstellern zur Verfügung gestellt wurden und nicht aus Ihrer
+bevorzugten Hacker-Gemeinde stammen; daher sind nicht alle besonders
+amüsant zu lesen.&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN23339"
+>drivers/net</A
+></H2
+><P
+>&#13;
+
+Wie Sie vielleicht erwarten, befinden sich in diesem Verzeichnis die
+meisten Schnittstellen-Adapter. Im Gegensatz zu
+<TT
+CLASS="FILENAME"
+>drivers/scsi</TT
+> enthält dieses Verzeichnis nicht die
+Kommunikationsprotokolle selbst. Diese liegen in
+<TT
+CLASS="FILENAME"
+>net</TT
+> im Top-Level-Verzeichnis. Trotzdem ist in
+<TT
+CLASS="FILENAME"
+>drivers/net</TT
+> ein Stückchen Software-Abstraktion zu
+finden, insbesondere die Implementation der verschiedenen Line
+Disciplines, die bei der Netzwerk-Kommunikation über serielle Leitungen
+verwendet werden.</P
+><P
+>Die Line Discipline ist die Software-Schicht, die für die Daten
+zuständig ist, die über die Kommunikationsleitung übertragen
+werden. Jedes TTY-Gerät hat eine zugehörige Line Discipline. Jede Line
+Discipline wird durch eine Nummer identifiziert, die wie üblich als
+symbolischer Name angegeben wird. Die
+Default-Line Discipline in Linux ist <TT
+CLASS="LITERAL"
+>N_TTY</TT
+>,
+damit sind die normalen TTY-Verwaltungsroutinen als
+<TT
+CLASS="FILENAME"
+>drivers/char/n_tty.c</TT
+> gemeint.</P
+><P
+>Bei PPP, SLIP oder anderen Kommunikationsprotokollen muß die
+Default-Line Discipline aber ersetzt werden. User-Space-Programme
+ändern die Line Discipline in <TT
+CLASS="LITERAL"
+>N_PPP</TT
+> oder
+<TT
+CLASS="LITERAL"
+>N_SLIP</TT
+>. Wenn das Gerät abschließend
+geschlossen wird, wird der Default wieder eingesetzt. Genau deswegen
+beenden sich <SPAN
+CLASS="APPLICATION"
+>pppd</SPAN
+>  und
+<SPAN
+CLASS="APPLICATION"
+>slattach</SPAN
+> auch nicht nach dem Einrichten der
+Verbindung: Sobald sie sich beenden würden, würde das Gerät
+geschlossen und die Default-Line Discipline restauriert werden.</P
+><P
+>Die Aufgabe der Initialisierung von Netzwerk-Treibern ist noch nicht
+auf den init-Aufruf-Mechanismus übergegangen, weil es einige subtile
+technische Details gibt, die das verhindern. Die Initialisierung
+geschieht daher immer noch auf die alte Art und Weise: Die Datei
+<TT
+CLASS="FILENAME"
+>Space.c</TT
+> führt die Initialisierung durch, indem sie
+eine Liste mit bekannter Hardware und Suchen nach den
+jeweiligen Geräten durchsucht. Die Liste wird durch
+<TT
+CLASS="LITERAL"
+>#ifdef</TT
+>-Anweisungen gesteuert, die bestimmen, welche
+Geräte überhaupt einkompiliert sind.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN23363"
+>drivers/sound</A
+></H2
+><P
+>&#13;
+
+
+Wie <TT
+CLASS="FILENAME"
+>drivers/scsi</TT
+> und
+<TT
+CLASS="FILENAME"
+>drivers/net</TT
+> enthält dieses Verzeichnis alle
+Treiber für Soundkarten. Der Inhalt des Verzeichnisses ähnelt dem des
+SCSI-Verzeichnisses: Einige wenige Dateien bilden den Kern des
+Sound-Systems; individuelle Gerätetreiber bauen darauf auf. Das
+Kern-Sound-System kümmert sich darum, die Major-Nummer
+<TT
+CLASS="LITERAL"
+>SOUND_MAJOR</TT
+> anzufordern und alle Aufrufe an
+die zugrundeliegenden Gerätetreiber weiterzuleiten. Ein
+Hardware-Treiber meldet sich beim Kern-System an, indem er die in
+<TT
+CLASS="FILENAME"
+>dev_table.c</TT
+> definierte Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>sound_install_audiodrv</I
+></SPAN
+> aufruft.</P
+><P
+>Die Liste der geräteunabhängigen Dateien in diesem Verzeichnis ist
+ziemlich lang, weil sie auch die generische Unterstützung für Mixer,
+Sequencer usw. enthält. Wenn Sie darin weiterforschen wollen, sollten
+Sie mit dem Makefile anfangen, um zu sehen, was was ist.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN23380"
+>drivers/video</A
+></H2
+><P
+>&#13;
+
+Hier finden Sie alle Framebuffer-Video-Geräte. Das Verzeichnis kümmert
+sich um die Video-Ausgabe, nicht um die Video-Eingabe. Wie in
+<TT
+CLASS="FILENAME"
+>drivers/sound</TT
+> implementiert auch hier das gesamte
+Verzeichnis einen einzigen Zeichen-Gerätetreiber; ein
+Kern-Framebuffer-System leitet die Zugriffe auf die diversen auf dem
+Computer jeweils verfügbaren Framebuffer weiter.</P
+><P
+>&#13;
+
+Der Einsprungpunkt in <TT
+CLASS="FILENAME"
+>/dev/fb</TT
+>-Geräte befindet
+sich in <TT
+CLASS="FILENAME"
+>fbmem.c</TT
+>. Die Datei registriert die
+Major-Nummer und pflegt eine interne Liste, welches Framebuffer-Gerät
+für welche Minor-Nummer zuständig ist. Ein Hardware-Treiber
+registriert sich selbst durch Aufrufen von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>register_framebuffer</I
+></SPAN
+>, wobei ein Zeiger auf
+eine <TT
+CLASS="LITERAL"
+>struct fb_info</TT
+> übergeben wird. Diese
+Datenstruktur enthält alles, was zur Verwaltung der Geräte notwendig
+ist, darunter die Methoden <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>release</I
+></SPAN
+>, aber keine <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>-,
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>- und <SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+>-Methoden;
+diese werden verallgemeinert in <TT
+CLASS="FILENAME"
+>fbmem.c</TT
+> selbst
+implementiert.</P
+><P
+>&#13;Neben dem Framebuffer-Speicher kümmert sich dieses Verzeichnis auch um
+Framebuffer-Konsolen. Weil das Layout der Pixel im Framebuffer zu einem
+gewissen Grad standardisiert ist, konnten die Kernel-Entwickler eine
+generische Konsolen-Unterstützung für diverse Layouts von
+Video-Speicher implementieren. Sobald ein Hardware-Treiber seine eigene
+<TT
+CLASS="LITERAL"
+>struct fb_info</TT
+> registriert, bekommt er
+automatisch eine Text-Konsole zugewiesen, die dem deklarierten Layout
+des Video-Speichers entspricht.</P
+><P
+>&#13;Leider gibt es in diesem Bereich keine wirkliche Standardisierung, so
+daß der Kernel derzeit 17 unterschiedliche Bildschirm-Layouts
+unterstützt, die von den ziemlich gängigen 16-Bit- und 32-Bit-Farb-Displays
+bis zu den haarigen Pixel-Plazierungen unter VGA und auf
+dem Mac reichen. Die Dateien, die Text in Framebuffer schreiben, heißen
+<TT
+CLASS="FILENAME"
+>fbcon-</TT
+><TT
+CLASS="REPLACEABLE"
+><I
+>name</I
+></TT
+><TT
+CLASS="FILENAME"
+>.c</TT
+>.</P
+><P
+>&#13;
+Wenn das erste Framebuffer-Gerät registriert wird, ruft die Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>register_framebuffer</I
+></SPAN
+>
+<SPAN
+><I
+CLASS="EMPHASIS"
+>take_over_console</I
+></SPAN
+> auf (was von
+<TT
+CLASS="FILENAME"
+>drivers/char/console.c</TT
+> exportiert wird), um den
+aktuellen Framebuffer als System-Konsole einzurichten. Beim Booten,
+also vor der Initialisierung der Framebuffer, ist die Konsole entweder
+der native Textbildschirm oder, wenn es einen solchen nicht gibt, die
+erste serielle Schnittstelle. Die Kommandozeile, die den Kernel
+startet, kann den Default natürlich überschreiben, indem sie ein bestimmtes
+Konsolen-Gerät auswählt. Die Kernel-Entwickler haben
+<SPAN
+><I
+CLASS="EMPHASIS"
+>take_over_console</I
+></SPAN
+> geschrieben, um
+Framebuffer-Konsolen unterstützen zu können, ohne den Boot-Code zu
+verkomplizieren. (Framebuffer-Treiber benötigen normalerweise PCI-
+oder eine andere Unterstützung und können daher nicht zu früh im
+Boot-Vorgang aktiv sein.)
+<SPAN
+><I
+CLASS="EMPHASIS"
+>take_over_console</I
+></SPAN
+> ist aber nicht
+auf Framebuffer beschränkt, sondern steht jedem Code für jede Hardware
+zur Verfügung. Wenn Sie Kernel-Meldungen über einen Morse-Telegraphen
+oder UDP-Netzwerkpakete verschicken wollen, dann können Sie das tun, indem Sie
+<SPAN
+><I
+CLASS="EMPHASIS"
+>take_over_console</I
+></SPAN
+> von
+Ihrem Kernel-Modul aus aufrufen.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN23429"
+>drivers/input</A
+></H2
+><P
+>&#13;
+
+Die Eingabeverwaltung ist eine weitere Funktionalität, die dazu gedacht
+ist, Aktivitäten, die mehreren Treibern gemein sind, zu vereinfachen
+und zu standardisieren. Die zentrale Datei hier heißt
+<TT
+CLASS="FILENAME"
+>input.c</TT
+>. Sie registriert sich selbst als
+Zeichen-Treiber mit der Major-Nummer
+<TT
+CLASS="LITERAL"
+>INPUT_MAJOR</TT
+>. Ihre Aufgabe besteht darin,
+Ereignisse von den Gerätetreibern zu sammeln und diese
+Ereignisse an die höheren Schichten weiterzuleiten.</P
+><P
+>&#13;Die Eingabe-Schnittstelle wird in
+<TT
+CLASS="LITERAL"
+>&#60;linux/input.h&#62;</TT
+> definiert. Alle Treiber
+registrieren sich selbst durch Aufruf von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>input_register_device</I
+></SPAN
+>. Nach der
+Registrierung können Benutzer durch Aufrufen
+von <SPAN
+><I
+CLASS="EMPHASIS"
+>input_event</I
+></SPAN
+> neue Ereignisse in das
+System einspeisen.</P
+><P
+>&#13;Module höherer Ebene können sich bei <TT
+CLASS="FILENAME"
+>input.c</TT
+>
+registrieren, indem sie
+<SPAN
+><I
+CLASS="EMPHASIS"
+>input_register_handler</I
+></SPAN
+> aufrufen und die Art von Ereignissen angeben, an denen sie interessiert sind. Auf diese Weise meldet beispielsweise
+<TT
+CLASS="FILENAME"
+>keybdev.c</TT
+> sein Interesse an Tastaturereignissen
+an (die in dieser Datei am Ende dann an
+<TT
+CLASS="FILENAME"
+>driver/char/keyboard.c</TT
+> weitergeleitet werden).</P
+><P
+>Ein Modul höherer Ebene kann auch eigene Minor-Nummern registrieren,
+um eigene Datei-Operationen zu verwenden und der Eigentümer einer
+Eingabe-Gerätedatei in <TT
+CLASS="FILENAME"
+>/dev</TT
+> zu werden. Derzeit
+ist es aber für Dritt-Module nicht leicht, Minor-Nummern zu
+registrieren, weswegen dieses Feature derzeit nur von den Dateien in
+<TT
+CLASS="FILENAME"
+>drivers/input</TT
+> verläßlich verwendet werden
+kann. Minor-Nummern werden derzeit zur Unterstützung von Mäusen,
+Joysticks und generischen Ereigniskanälen im User-Space verwendet.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN23456"
+>drivers/media</A
+></H2
+><P
+>&#13;
+
+Dieses Verzeichnis wurde mit der Version 2.4.0-test7 eingeführt und
+faßt diverse Kommunikationsmedien zusammen; derzeit handelt es sich
+dabei um Radio- und Video-Eingabe. Sowohl die
+<TT
+CLASS="FILENAME"
+>media/radio</TT
+>- als auch die
+<TT
+CLASS="FILENAME"
+>media/video</TT
+>-Treiber bauen auf der Datei
+<TT
+CLASS="FILENAME"
+>video/videodev.c</TT
+> auf, die wiederum die &#8220;Video
+For Linux&#8221;-API implementiert.</P
+><P
+>&#13;
+<TT
+CLASS="FILENAME"
+>video/videodev.c</TT
+> ist ein generischer
+Container. Er fordert eine Major-Nummer an und stellt diese den
+Hardware-Treibern zur Verfügung. Die einzelnen Treiber niedrigerer
+Ebene registrieren sich durch Aufruf von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>video_register_device</I
+></SPAN
+>. Sie
+übergeben dabei einen Zeiger auf ihre eigene <TT
+CLASS="LITERAL"
+>struct
+video_device</TT
+> sowie einen Integer-Wert, der den Typ
+des Geräts angibt. Derzeit unterstützt werden Framegrabber
+(<TT
+CLASS="LITERAL"
+>VFL_TYPE_GRABBER</TT
+>), Radios
+(<TT
+CLASS="LITERAL"
+>VFL_TYPE_RADIO</TT
+>), Teletext-Geräte
+(<TT
+CLASS="LITERAL"
+>VFL_TYPE_VTX</TT
+>) sowie undecodierte
+Informationen in der vertikalen Austastlücke
+(<TT
+CLASS="LITERAL"
+>VFL_TYPE_VBI</TT
+>).</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN23480"
+>Bus-spezifische Verzeichnisse</A
+></H2
+><P
+>&#13;Einige der Unterverzeichnisse im Verzeichnis
+<TT
+CLASS="FILENAME"
+>drivers</TT
+> werden nur für Geräte verwendet, die an
+eine bestimmte Bus-Architektur angeschlossen werden. Diese sind von
+den generischen Verzeichnissen <TT
+CLASS="FILENAME"
+>char</TT
+> und
+<TT
+CLASS="FILENAME"
+>block</TT
+> getrennt worden, weil ein recht großer Teil
+des Codes Bus-Architektur-spezifisch (und nicht gerätespezifisch) ist.</P
+><P
+>&#13;Das Unterverzeichnis mit den wenigsten Einträgen ist
+<TT
+CLASS="FILENAME"
+>drivers/pci</TT
+>. Es enthält nur den Code, der
+mit den PCI-Controllern (oder dem System-BIOS) kommuniziert,
+wohingegen die PCI-Hardware-Treiber über den ganzen Kernel verteilt
+sind. Der PCI-Bus ist so weit verbreitet, daß es nicht sinnvoll ist,
+alle PCI-Karten an einer Stelle zu sammeln.</P
+><P
+>Falls Sie sich fragen, ob es ein spezielles Verzeichnis für ISA gibt,
+dann lautet die Antwort nein. Es gibt keine ISA-spezifischen
+Hilfsdateien, weil der Bus keine Ressourcen-Verwaltung oder
+Standardisierung kennt, auf der man eine Software-Schicht aufbauen
+könnte. ISA-Hardware-Treiber passen am besten nach
+<TT
+CLASS="FILENAME"
+>drivers/char</TT
+>, <TT
+CLASS="FILENAME"
+>drivers/sound</TT
+>
+oder in ein ähnliches Verzeichnis.</P
+><P
+>Die anderen Bus-spezifischen Verzeichnisse enthalten alles von weniger
+bekannten internen Computer-Bussen bis hin zu weit verbreiteten externen
+Schnittstellen-Standards.</P
+><P
+>&#13;Zu den ersteren gehören <TT
+CLASS="FILENAME"
+>drivers/sbus</TT
+>,
+<TT
+CLASS="FILENAME"
+>drivers/nubus</TT
+>,
+<TT
+CLASS="FILENAME"
+>drivers/zorro</TT
+> (der in Amiga-Computern verwendete
+Bus), <TT
+CLASS="FILENAME"
+>drivers/dio</TT
+> (der Bus der HP300-Computer)
+und <TT
+CLASS="FILENAME"
+>drivers/tc</TT
+> (Turbo Channel, verwendet in MIPS
+DECstations).  Während <TT
+CLASS="FILENAME"
+>sbus</TT
+> sowohl
+SBus-Hilfsfunktionen als auch Treiber für einige SBus-Geräte
+enthalten, enthält die anderen nur Hilfsfunktionen. Hardware-Treiber
+auf der Basis aller dieser Busse finden Sie in
+<TT
+CLASS="FILENAME"
+>drivers/net</TT
+>, <TT
+CLASS="FILENAME"
+>drivers/scsi</TT
+>,
+oder welches Verzeichnis auch immer auf die jeweilige Hardware paßt. Einige wenige
+dieser Busse werden derzeit sogar nur von einem einzigen Treiber
+verwendet.</P
+><P
+>&#13;
+Zu den Verzeichnissen für externe Busse gehören
+<TT
+CLASS="FILENAME"
+>drivers/usb</TT
+>, <TT
+CLASS="FILENAME"
+>drivers/pcmcia</TT
+>,
+<TT
+CLASS="FILENAME"
+>drivers/parport</TT
+> (generische
+Cross-Plattform-Unterstützung für den Parallel-Port, definiert eine
+ganz neue Klasse von Gerätetreibern),
+<TT
+CLASS="FILENAME"
+>drivers/isdn</TT
+> (alle von Linux unterstützten
+ISDN-Controller und deren gemeinsame Hilfsfunktionen),
+<TT
+CLASS="FILENAME"
+>drivers/atm</TT
+> (desgleichen für
+ATM-Netzwerk-Verbindungen) sowie <TT
+CLASS="FILENAME"
+>drivers/ieee1394</TT
+>
+(FireWire).</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN23523"
+>Plattform-spezifische Verzeichnisse</A
+></H2
+><P
+>&#13;Manche Computer-Plattformen haben einen eigenen Verzeichnisbaum in der
+<TT
+CLASS="FILENAME"
+>drivers</TT
+>-Hierarchie. Solche Plattform-spezifischen Verzeichnisbäume findet man immer dann, wenn die Kernel-Entwicklung für eine Plattform eine Zeitlang
+neben dem Haupt-Quellbaum hergelaufen ist, ohne mit diesem wieder
+synchronisiert worden zu sein. In diesen Fällen helfen die separaten
+Verzeichnisbäume bei der Pflege. Dazu gehören beispielsweise
+<TT
+CLASS="FILENAME"
+>drivers/acorn</TT
+> (alte ARM-basierte Computer),
+<TT
+CLASS="FILENAME"
+>drivers/macintosh</TT
+>,
+<TT
+CLASS="FILENAME"
+>drivers/sgi</TT
+> (Silicon Graphics-Workstations) und
+<TT
+CLASS="FILENAME"
+>drivers/s390</TT
+> (IBM-Mainframes). Es lohnt sich
+nicht sehr, sich diesen Code anzuschauen, sofern Sie nicht an einer
+dieser Plattformen interessiert sind.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN23533"
+>Andere Unterverzeichnisse</A
+></H2
+><P
+>&#13;
+Es gibt in <TT
+CLASS="FILENAME"
+>drivers</TT
+> noch andere
+Unterverzeichnisse, die aber unserer Meinung nach sehr spezifisch und
+nicht allgemein interessant sind. <TT
+CLASS="FILENAME"
+>drivers/mtd</TT
+>
+implementiert eine Memory Technology Device-Schicht, mit der Solid
+State-Festplatten (Flash-Speicher und andere Arten von EEPROMs)
+angesteuert werden können. <TT
+CLASS="FILENAME"
+>drivers/i2c</TT
+> enthält
+eine Implementation des i2c-Protokolls. i2c ist der &#8220;Inter Integrated
+Circuit&#8221;, ein zweidrahtiger Bus, der intern von mehreren modernen
+Peripherie-Geräten verwendet wird, besonders von
+Framebuffern. <TT
+CLASS="FILENAME"
+>drivers/i2o</TT
+> kümmert sich
+entsprechend um I2O-Geräte (ein proprietärer
+Hochgeschwindigkeitskommunikationsstandard für bestimmte PCI-Geräte,
+der unter Druck der Bewegung für freie Software veröffentlicht worden
+ist). <TT
+CLASS="FILENAME"
+>drivers/pnp</TT
+> ist eine Ansammlung von
+allgemeinem ISA-Plug-and-Play-Code aus diversen Treibern, aber
+glücklicherweise verwenden die meisten Hersteller den PnP-Hack
+heutzutage nicht mehr.</P
+><P
+>Unter <TT
+CLASS="FILENAME"
+>drivers/</TT
+> finden Sie auch die Anfänge der
+Unterstützung neuer Geräte-Klassen, die derzeit nur in sehr wenigen
+Geräten zu finden sind.</P
+><P
+>Dies ist der Fall mit der Fiber Channel-Unterstützung
+(<TT
+CLASS="FILENAME"
+>drivers/fc4</TT
+>) und mit
+<TT
+CLASS="FILENAME"
+>drivers/telephony</TT
+>. Es gibt sogar ein leeres
+Verzeichnis namens <TT
+CLASS="FILENAME"
+>drivers/misc</TT
+>, das für &#8220;diverse
+Geräte, die nirgendwo anders hinpassen&#8221; gedacht ist. Der Verzeichnis
+enthält keinen Code, aber ein leeres Makefile, das das gerade genannte
+Zitat im englischen Original als Kommentar enthält.</P
+><P
+>&#13;Der Linux-Kernel ist so riesig, daß es unmöglich ist, alles auf
+einigen wenigen Seiten zu behandeln. Außerdem verändert er sich
+ständig, und immer, wenn man denkt, daß man fertig ist, haben die
+Hacker schon wieder einen Patch veröffentlicht, der viel neues
+Material enthält. Es kann gut sein, daß das
+<TT
+CLASS="FILENAME"
+>misc</TT
+>-Verzeichnis in 2.4 nicht mehr leer ist, wenn
+Sie dies lesen.</P
+><P
+>Obwohl wir das nicht für wahrscheinlich halten, kann es doch sein, daß
+die Kernel-Versionen 2.6 oder 3.0 deutlich anders als 2.4 sein wird; leider aktualisiert
+sich die Auflage dieses Buches nicht automatisch, um neue Versionen zu
+behandeln, so daß es mit der Zeit veralten wird. Obwohl wir uns sowohl
+in diesem Kapitel als auch im Rest des Buches bemüht haben, die
+aktuelle Kernel-Version zu behandeln, gibt es doch keinen Ersatz für
+das direkte Lesen des Quellcodes.
+
+
+
+&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x23127.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="biblio.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>include und arch</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="tour.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Bibliographie</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

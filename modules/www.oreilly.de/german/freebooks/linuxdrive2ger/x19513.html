@@ -1,0 +1,1538 @@
+<HTML
+><HEAD
+><TITLE
+>Die Struktur net_device im Detail</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Netzwerk-Treiber"
+HREF="net.html"><LINK
+REL="PREVIOUS"
+TITLE="Mit dem Kernel verbinden"
+HREF="netsetup.html"><LINK
+REL="NEXT"
+TITLE="Öffnen und Schließen"
+HREF="onoff.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="netsetup.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 14. Netzwerk-Treiber</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="onoff.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN19513"
+>Die Struktur net_device im Detail</A
+></H1
+><P
+>&#13;Die <TT
+CLASS="LITERAL"
+>net_device</TT
+>-Struktur ist der innerste Kern der
+Netzwerk-Treiber-Schicht und verdient es daher, vollständig beschrieben zu
+werden. Beim ersten Lesen können Sie diesen Abschnitt allerdings
+überspringen, weil Sie die Struktur nicht vollständig verstehen
+müssen, um loslegen zu können. In dieser Liste werden alle Felder
+beschrieben, aber mehr in der Absicht, eine Referenz zu bieten, als
+daß die Felder auswendig gelernt werden sollten. Der Rest des Kapitels
+beschreibt kurz jedes Feld, sobald es im Beispiel-Code vorkommt, so daß
+Sie nicht jedesmal zu diesem Abschnitt hier zurückspringen müssen.&#13;</P
+><P
+><TT
+CLASS="LITERAL"
+>struct net_device</TT
+> kann vollständig in zwei Teile
+aufgeteilt werden, den &#8220;sichtbaren&#8221; und den
+&#8220;unsichtbaren&#8221;. Der sichtbare Teil der Struktur besteht
+aus den Feldern wie den beiden in <SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+>
+oben gezeigten, die in statischen <TT
+CLASS="LITERAL"
+>net_device</TT
+>-Strukturen
+explizit zugewiesen werden. Alle Strukturen in
+<TT
+CLASS="FILENAME"
+>drivers/net/Space.c</TT
+> werden so initialisiert, ohne
+Verwendung der Tag-Syntax zur Initialisierung von Strukturen. Die
+verbleibenden Felder werden intern vom Netzwerk-Code verwendet und
+normalerweise nicht während des Kompilierens initialisiert, nicht
+einmal mit der Tag-Syntax. Manche der Felder werden von Treibern
+verwendet (etwa solche, die zur Initialisierung zugewiesen werden),
+während andere nicht angefaßt werden sollten.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN19524"
+>Der sichtbare Anfang</A
+></H2
+><P
+>Der erste Teil von <TT
+CLASS="LITERAL"
+>struct net_device</TT
+> besteht aus
+den folgenden Feldern in der angegebenen Reihenfolge:&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>char name[IFNAMSIZ];</TT
+></DT
+><DD
+><P
+>Der Name des Geräts. Wenn der Name einen
+<TT
+CLASS="LITERAL"
+>%d</TT
+>-Format-String enthält, dann wird der
+erste verfügbare Geräte-Name mit der angegebenen Basis verwendet; die
+zugewiesenen Nummern fangen mit 0 an.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long rmem_end;</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned long rmem_start;</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned long mem_end;</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned long mem_start;</TT
+></DT
+><DD
+><P
+>Geräte-Speicher-Informationen. Diese Felder enthalten die
+Anfangs- und Endadressen des vom
+        Gerät gemeinsam genutzten Speichers. Wenn das Gerät
+        unterschiedliche Speicherbereiche zum Senden und Empfangen
+        verwendet, dann enthalten die <TT
+CLASS="LITERAL"
+>mem</TT
+>-Felder den
+        Bereich zum Senden und die <TT
+CLASS="LITERAL"
+>rmem</TT
+>-Felder den zum
+        Empfangen. <TT
+CLASS="LITERAL"
+>mem_start</TT
+> und
+        <TT
+CLASS="LITERAL"
+>mem_end</TT
+> können beim Hochfahren des
+        Systems auf der Kommandozeile des Kernels angegeben und mit
+        <SPAN
+CLASS="APPLICATION"
+>ifconfig</SPAN
+> abgefragt werden. Die Felder
+        <TT
+CLASS="LITERAL"
+>rmem</TT
+> werden nie außerhalb des Treibers
+        verwendet. Per Konvention werden die <TT
+CLASS="LITERAL"
+>end</TT
+>-Felder
+        so belegt, daß <TT
+CLASS="LITERAL"
+>end - start</TT
+> die Menge des
+        verfügbaren Speichers auf der Karte angibt.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long base_addr;</TT
+></DT
+><DD
+><P
+>Die I/O-Basisadresse der Netzwerk-Schnittstelle. Dieses
+Feld wird wie die vorigen
+        beim Suchen des Gerätes belegt. Mit
+        <SPAN
+CLASS="APPLICATION"
+>ifconfig</SPAN
+> kann der aktuelle Wert
+        angezeigt und verändert
+        werden. <TT
+CLASS="LITERAL"
+>base_addr</TT
+> kann auf der
+        Kommandozeile des Kernels beim Booten oder beim Laden des Moduls
+        explizit angegeben werden. Das Feld wird wie die oben genannten
+Speicherfelder nicht vom Kernel verwendet.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned char irq;</TT
+></DT
+><DD
+><P
+>Die zugewiesene Interrupt-Nummer. Der Wert von
+        <TT
+CLASS="LITERAL"
+>dev-&#62;irq</TT
+> wird von
+        <SPAN
+CLASS="APPLICATION"
+>ifconfig</SPAN
+> ausgegeben, wenn die
+        Schnittstellen aufgeführt werden. Dieser Wert kann üblicherweise
+        beim Hochfahren oder Laden gesetzt und später mit
+        <SPAN
+CLASS="APPLICATION"
+>ifconfig</SPAN
+> modifiziert werden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned char if_port;</TT
+></DT
+><DD
+><P
+>Gibt an welcher Port auf Geräten mit mehreren Ports verwendet wird. Dieses
+Feld wird beispielsweise bei Geräten verwendet, die sowohl Koax-
+(<TT
+CLASS="LITERAL"
+>IF_PORT_10BASE2-</TT
+>) als
+auch Twisted-Pair-Ethernet-(<TT
+CLASS="LITERAL"
+>IF_PORT_10BASET</TT
+>)-
+Verbindungen unterstützen. Die bekannten Port-Typen sind in
+<TT
+CLASS="LITERAL"
+>&#60;linux/netdevice.h&#62;</TT
+> definiert.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned char dma;</TT
+></DT
+><DD
+><P
+>Der vom Gerät allozierte DMA-Kanal. Das Feld ist nur bei einigen
+Peripherie-Bus-Systemen wie ISA sinnvoll. Es wird außerhalb des
+Gerätetreibers selbst nur zu Informationszwecken (in
+<SPAN
+CLASS="APPLICATION"
+>ifconfig</SPAN
+>) verwendet.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long state;</TT
+></DT
+><DD
+><P
+>Der Gerätezustand. Dieses Feld enthält mehrere Flags. Treiber
+manipulieren diese Flags normalerweise nicht direkt, sondern verwenden
+statt dessen eine Reihe von Hilfsfunktionen. Wir sprechen über diese
+Funktionen weiter unten, wenn wir auf den Treiber-Betrieb eingehen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct net_device *next;</TT
+></DT
+><DD
+><P
+>Ein Zeiger auf das nächste Gerät in der globalen verketteten
+Liste; der Treiber sollte dieses Feld nicht benutzen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int (*init)(struct net_device *dev);</TT
+></DT
+><DD
+><P
+>Die weiter oben beschriebene Initialisierungsfunktion.</P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN19598"
+>Die versteckten Felder</A
+></H2
+><P
+>Die Struktur <TT
+CLASS="LITERAL"
+>net_device</TT
+> enthält mehrere zusätzliche
+Felder, die normalerweise bei der Initialisierung des Geräts
+zugewiesen werden. Einige dieser Felder enthalten Informationen über
+die Schnittstelle, während andere nur für den Treiber existieren
+(d. h., sie werden nicht vom Kernel verwendet). Es gibt auch noch
+weitere Felder, vor allem die Geräte-Methoden, die ein Bestandteil der
+Schnittstelle zwischen Kernel und Treiber sind.&#13;</P
+><P
+>Wir werden hier die drei Gruppen separat aufführen und dabei die
+eigentliche Reihenfolge der Felder, die nicht relevant ist, außer acht
+lassen.&#13;</P
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN19603"
+>Schnittstellen-Informationen</A
+></H3
+><P
+>&#13;Die größte Teil der Informationen über die Schnittstelle wird schon von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ether_setup</I
+></SPAN
+> korrekt
+ausgefüllt. Ethernet-Karten können sich bei den meisten Feldern auf
+diese allgemein verwendbare Funktion verlassen, aber die Felder
+<TT
+CLASS="LITERAL"
+>flags</TT
+> und <TT
+CLASS="LITERAL"
+>dev_addr</TT
+> sind
+gerätespezifisch und müssen bei der Initialisierung explizit
+zugewiesen werden.&#13;</P
+><P
+>&#13;
+Auch einige Nicht-Ethernet-Schnittstellen können auf ähnliche
+Hilfsfunktionen wie <SPAN
+><I
+CLASS="EMPHASIS"
+>ether_setup</I
+></SPAN
+>
+zurückgreifen.
+<TT
+CLASS="FILENAME"
+>driver/net/net_init.c</TT
+> exportiert
+eine Reihe solcher Funktionen, darunter:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>void ltalk_setup(struct net_device *dev);</TT
+></DT
+><DD
+><P
+>&#13;
+Richtet die Felder für ein LocalTalk-Gerät ein.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void fc_setup(struct net_device *dev);</TT
+></DT
+><DD
+><P
+>&#13;
+Initialisierung für Fiber Channel-Geräte.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void fddi_setup(struct net_device *dev);</TT
+></DT
+><DD
+><P
+>&#13;
+Konfiguriert eine Schnittstelle für ein Fiber Distributed Data
+Interface-(FDDI)Netzwerk.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void hippi_setup(struct net_device *dev);</TT
+></DT
+><DD
+><P
+>&#13;
+Bereitet die Felder für einen Treiber für den High-Performance
+Parallel Interface-(HIPPI)Standard vor.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void tr_configure(struct net_device *dev);</TT
+></DT
+><DD
+><P
+>&#13;
+Erledigt das Einrichten von Token
+Ring-Netzwerk-Schnittstellen. Beachten Sie, daß es im 2.4-Kernel auch
+eine Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>tr_setup</I
+></SPAN
+> gibt, die
+interessanterweise gar nichts macht.</P
+></DD
+></DL
+></DIV
+><P
+>&#13;Die meisten Geräte werden in einer dieser Klassen enthalten sein. Wenn
+Ihres radikal neu und anders ist, müssen Sie aber alle Felder von
+Hand belegen.&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned short hard_header_len;</TT
+></DT
+><DD
+><P
+>Die Hardware-Header-Länge ist die Anzahl der
+        Oktetts, die im übertragenen Paket vor dem IP-Header oder anderen
+        Protokoll-Informationen stehen. Bei Ethernet-Schnittstellen ist
+        dieser Wert 14.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned short mtu;</TT
+></DT
+><DD
+><P
+>Die Maximum Transfer Unit. Dieses Feld wird von
+        der Netzwerk-Schicht während der Paket-Übertragung
+        verwendet. Ethernet hat eine MTU von 1500 Oktetten
+(<TT
+CLASS="LITERAL"
+>ETH_DATA_LEN</TT
+>).</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long tx_queue_len;</TT
+></DT
+><DD
+><P
+>Die maximale Anzahl der Frames, die in der
+        Übertragungswarteschlange des Geräts abgelegt werden können. Dieser
+        Wert wird von <SPAN
+><I
+CLASS="EMPHASIS"
+>ether_setup</I
+></SPAN
+> auf 100
+        gesetzt, kann aber von Ihnen geändert
+        werden. <SPAN
+CLASS="APPLICATION"
+>plip</SPAN
+> verwendet beispielsweise
+        10, um die Verschwendung von Systemspeicher zu vermeiden
+        (<SPAN
+CLASS="APPLICATION"
+>plip</SPAN
+> hat einen geringeren Durchsatz
+        als eine echte Ethernet-Schnittstelle).</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned short type;</TT
+></DT
+><DD
+><P
+>Der Hardware-Typ der Schnittstelle. Dieses Feld wird von ARP
+        benutzt, um festzustellen, welche Art von Hardware-Adressen die
+        Schnittstelle unterstützt. Der korrekte Wert für
+Ethernet-Schnittstellen ist <TT
+CLASS="LITERAL"
+>ARPHRD_ETHER</TT
+>,
+was auch von <SPAN
+><I
+CLASS="EMPHASIS"
+>ether_setup</I
+></SPAN
+> gesetzt wird. Die
+bekannten Typen sind in
+<TT
+CLASS="LITERAL"
+>&#60;linux/if_arp.h&#62;</TT
+> definiert.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned char addr_len;</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned char broadcast[MAX_ADDR_LEN];</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned char dev_addr[MAX_ADDR_LEN];</TT
+></DT
+><DD
+><P
+>Hardware-(MAC-)Adreßlänge und
+Geräte-Hardware-Adressen. Die Ethernet-Adreßlänge beträgt sechs
+Oktetts (hier geht es
+        um die Hardware-ID der Schnittstellen-Karte), und die
+        Broadcast-Adresse besteht aus sechs <TT
+CLASS="LITERAL"
+>0xff</TT
+>-
+        Oktetten. <SPAN
+><I
+CLASS="EMPHASIS"
+>ether_setup</I
+></SPAN
+> initialisiert
+        diese Werte korrekt. Die Geräte-Adresse muß dagegen aus der
+        Schnittstellen-Karte ausgelesen und nach
+        <TT
+CLASS="LITERAL"
+>dev_addr</TT
+> geschrieben werden. Das
+        Auslesen ist gerätespezifisch. Die Hardware-Adresse wird
+        verwendet, um korrekte Ethernet-Header zusammenzustellen, bevor
+        das Paket an den Treiber zur Übertragung übergeben
+        wird. <SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> verwendet keine
+        physikalische Schnittstelle und denkt sich daher eine eigene
+        Hardware-Adresse aus.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned short flags;</TT
+></DT
+><DD
+><P
+>Flags für das Interface; werden gleich ausführlich besprochen.</P
+></DD
+></DL
+></DIV
+><P
+>Das Feld <TT
+CLASS="LITERAL"
+>flags</TT
+> ist eine Bitmaske, die sich unter anderem
+aus den im
+        Folgenden aufgeführten Bit-Werten zusammensetzt. Das Präfix
+        <TT
+CLASS="LITERAL"
+>IFF_</TT
+> steht dabei für &#8220;InterFace
+        Flags&#8221;. Einige Flags werden vom Kernel verwaltet, andere
+        werden von der Schnittstelle bei der Initialisierung gesetzt, um
+        diverse Capabilities (und andere Merkmale) der Schnittstelle
+        bekanntzugeben. Die zulässigen Flags sind in
+<TT
+CLASS="LITERAL"
+>&#60;linux/if.h&#62;</TT
+> definiert und lauten:&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>IFF_UP</TT
+></DT
+><DD
+><P
+>&#13;Der Treiber kann dieses Flag nur lesen. Der Kernel setzt es, wenn die
+Schnittstelle aktiv ist und Pakete übertragen kann.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>IFF_BROADCAST</TT
+></DT
+><DD
+><P
+>Dieses Flag teilt mit, daß die Schnittstelle das Broadcasting
+zuläßt. Ethernet-Karten unterstützen das Broadcasting.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>IFF_DEBUG</TT
+></DT
+><DD
+><P
+>Debug-Modus. Dieses Flag kann gesetzt werden, um die
+        Ausführlichkeit Ihrer <SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+>-Ausgaben zu
+        steuern oder andere Debugging-Möglichkeiten einzuschalten. Auch
+        wenn derzeit kein offizieller Treiber dieses Flag unterstützt,
+        kann es doch von Benutzerprogrammen via <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>
+        gesetzt und gelesen und von Ihrem Treiber verwendet werden. Mit
+        dem Programm <TT
+CLASS="FILENAME"
+>misc-progs/netifdebug</TT
+> kann
+        dieses Flag ein- und ausgeschaltet werden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>IFF_LOOPBACK</TT
+></DT
+><DD
+><P
+>Dieses Flag sollte nur in Loopback-Schnittstellen
+        gesetzt werden. Der Kernel überprüft dieses Flag anstelle des
+        hartcodierten Namens <TT
+CLASS="LITERAL"
+>lo</TT
+>.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>IFF_POINTOPOINT</TT
+></DT
+><DD
+><P
+>Dieses Flag kennzeichnet, daß die Schnittstelle mit einer
+Punkt-zu-Punkt-Verbindung verbunden ist. Es wird von
+<SPAN
+CLASS="APPLICATION"
+>ifconfig</SPAN
+> gesetzt, beispielsweise bei
+<SPAN
+CLASS="APPLICATION"
+>plip</SPAN
+> und dem PPP-Treiber.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>IFF_NOARP</TT
+></DT
+><DD
+><P
+>Dieses Flag besagt, daß die Schnittstelle kein ARP
+beherrscht. Beispielsweise
+        verwenden Point-to-Point-Schnittstellen kein ARP, weil das nur zu
+        zusätzlichem Datenverkehr führen würde, ohne nützliche
+        Informationen zu bringen. <SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> hat
+        keine ARP-Fähigkeiten, setzt also dieses Flag.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>IFF_PROMISC</TT
+></DT
+><DD
+><P
+>Dieses Flag wird gesetzt, um den sogenannten
+        &#8220;Promiscuous&#8221;-Modus zu aktivieren. Default-mäßig
+        verwenden Ethernet-Schnittstellen einen Hardware-Filter, der
+        sicherstellt, daß sie nur Broadcast- und an sie selbst gerichtete
+        Pakete empfangen. Paket-Überwachungsprogramme wie
+        <SPAN
+CLASS="APPLICATION"
+>tcpdump</SPAN
+> schalten den
+        &#8220;Promiscuous&#8221;-Modus ein, um alle Pakete zu bekommen,
+        die über das Übertragungsmedium der Schnittstelle übertragen
+        werden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>IFF_MULTICAST</TT
+></DT
+><DD
+><P
+>Dieses Flag wird von solchen Schnittstellen gesetzt, die
+        Multicast-Übertragungen
+        beherrschen. <SPAN
+><I
+CLASS="EMPHASIS"
+>ether_setup</I
+></SPAN
+> setzt dieses
+        Flag default-mäßig; wenn Ihr Treiber also kein Multicasting
+        unterstützt, dann müssen Sie bei der Initialisierung dieses
+        Flag löschen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>IFF_ALLMULTI</TT
+></DT
+><DD
+><P
+>Dieses Flag weist der Schnittstelle an, alle
+        Multicast-Pakete zu empfangen. Der Kernel setzt es, wenn der Host
+        ein Multicast-Routing durchführt, aber nur dann, wenn
+        <TT
+CLASS="LITERAL"
+>IFF_MULTICAST</TT
+> gesetzt
+        ist. <TT
+CLASS="LITERAL"
+>IFF_ALLMULTI</TT
+> kann von der
+        Schnittstelle nur gelesen werden. Wir werden das im Abschnitt
+"<A
+HREF="netmulti.html"
+>the Section called <I
+>Multicasting</I
+></A
+>" weiter hinten in diesem Kapitel noch
+zeigen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>IFF_MASTER</TT
+>, <TT
+CLASS="LITERAL"
+>IFF_SLAVE</TT
+></DT
+><DD
+><P
+>Diese Flags werden vom Lastausgleichscode verwendet. Der
+        Schnittstellen-Treiber muß sie nicht benutzen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>IFF_PORTSEL</TT
+>, <TT
+CLASS="LITERAL"
+>IFF_AUTOMEDIA</TT
+></DT
+><DD
+><P
+>Diese Flags signalisieren, daß das Gerät zwischen verschiedenen
+Medientypen wie etwa ungeschütztem Twisted Pair (UTP) und koaxialen
+Ethernet-Kabeln wechseln kann. Wenn
+<TT
+CLASS="LITERAL"
+>IFF_AUTOMEDIA</TT
+> gesetzt ist, wählt das Gerät
+das korrekte Medium automatisch aus.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>IFF_DYNAMIC</TT
+></DT
+><DD
+><P
+>Dieses Flag zeigt an, daß sich die Adresse dieser Schnittstelle ändern
+kann; es wird bei Dialup-Geräten benutzt.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>IFF_RUNNING</TT
+></DT
+><DD
+><P
+>Dieses Flag zeigt an, daß die Schnittstelle betriebsbereit ist. Es
+existiert hauptsächlich für die BSD-Kompatibilität; der Kernel benutzt
+es kaum. Die meisten Netzwerk-Treiber müssen sich über
+<TT
+CLASS="LITERAL"
+>IFF_RUNNING</TT
+> keine Gedanken machen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>IFF_NOTRAILERS</TT
+></DT
+><DD
+><P
+>Dieses Flag wird unter Linux nicht verwendet und ist
+        nur für die BSD-Kompatibilität vorhanden.</P
+></DD
+></DL
+></DIV
+><P
+>Wenn ein Programm <TT
+CLASS="LITERAL"
+>IFF_UP</TT
+> ändert,
+wird die Gerätemethode <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> oder
+<SPAN
+><I
+CLASS="EMPHASIS"
+>close</I
+></SPAN
+> aufgerufen. Wird
+<TT
+CLASS="LITERAL"
+>IFF_UP</TT
+> oder irgendein anderes Flag
+geändert, dann wird die Methode
+<SPAN
+><I
+CLASS="EMPHASIS"
+>set_multicast_list</I
+></SPAN
+> aufgerufen. Wenn
+der Treiber bei der Modifikation eines der Flags bestimmte Aufgaben
+durchführen muß, dann muß er dies in
+<SPAN
+><I
+CLASS="EMPHASIS"
+>set_multicast_list</I
+></SPAN
+>
+tun. Beispielsweise muß der Hardware-Filter auf der Karte informiert
+werden, wenn <TT
+CLASS="LITERAL"
+>IFF_PROMISC</TT
+> gesetzt oder
+zurückgesetzt wird. Die Aufgaben dieser Gerätemethode werden später
+im Abschnitt &#8220;<A
+HREF="netmulti.html"
+>the Section called <I
+>Multicasting</I
+></A
+>&#8221; beschrieben.</P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN19820"
+>Die Gerätemethoden</A
+></H3
+><P
+>&#13;Wie auch die Zeichen- und Block-Treiber deklariert jedes
+Netzwerk-Gerät die Funktionen, die auf ihm arbeiten. Die unten
+stehende Liste enthält die Operationen, die auf Netzwerk-Geräten
+definiert sind. Einige der Operationen können auch auf
+<TT
+CLASS="LITERAL"
+>NULL</TT
+> gelassen werden, andere wiederum werden
+normalerweise nicht angefaßt, weil
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ether_setup</I
+></SPAN
+> bereits passende Methoden
+bereitstellt.&#13;</P
+><P
+>Die Gerätemethoden einer Netzwerk-Schnittstelle können in zwei Gruppen
+eingeteilt werden: fundamentale Methoden und optionale Methoden. Die
+fundamentalen Methoden sind diejenigen, die  gebraucht werden, um die
+Schnittstelle zu benutzen; optionale Methoden implementieren
+fortgeschrittenere Funktionalitäten, die streng genommen nicht
+benötigt werden. Die folgenden Methoden sind fundamental:&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>int (*open)(struct net_device *dev);</TT
+></DT
+><DD
+><P
+>&#13;Öffnen der Schnittstelle. Eine Schnittstelle wird geöffnet, wenn sie
+von <SPAN
+CLASS="APPLICATION"
+>ifconfig</SPAN
+> aktiviert wird. Die Methode
+sollte alle benötigten Systemressourcen (I/O-Ports, IRQ, DMA usw.)
+registrieren, die Hardware aktivieren und den Verwendungszähler des
+Moduls inkrementieren.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int (*stop)(struct net_device *dev);</TT
+></DT
+><DD
+><P
+>&#13;Hält die Schnittstelle an. Das geschieht, wenn die Schnittstelle
+deaktiviert wird. Hier sollten alle beim Öffnen vorgenommenen
+Operationen rückgängig gemacht werden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int (*hard_start_xmit) (struct sk_buff *skb, struct net_device *dev);</TT
+></DT
+><DD
+><P
+>&#13;Diese Methode fordert die Übertragung
+eines Pakets an. Das vollständige Paket (mit Headern und allem) ist in
+einer Socket-Buffer-
+(<TT
+CLASS="LITERAL"
+>sk_buff</TT
+>-)Struktur enthalten. Socket-Buffer
+werden weiter unten eingeführt.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int (*hard_header) (struct sk_buff *skb, struct net_device *dev, unsigned short type, void *daddr, void *saddr, unsigned len);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion baut den Hardware-Header aus den
+vorher geholten Quell- und Ziel-Hardware-Adressen auf. Sie hat die
+Aufgabe, die in den Argumenten übergebene Information
+in Form eines passenden, gerätespezifischen Hardware-Headers
+aufzubereiten. In Ethernet-ähnlichen Schnittstellen wird
+<SPAN
+><I
+CLASS="EMPHASIS"
+>eth_header</I
+></SPAN
+> default-mäßig verwendet und von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ether_setup</I
+></SPAN
+> entsprechend hier
+eingetragen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int (*rebuild_header) (struct sk_buff *skb);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion wird verwendet, um den Hardware-Header neu aufzubauen,
+bevor ein Paket übertragen wird. Die Default-Funktion, die in
+Ethernet-Geräten benutzt wird, verwendet ARP, um die fehlende
+Information einzutragen. Die Methode
+<SPAN
+><I
+CLASS="EMPHASIS"
+>rebuild_header</I
+></SPAN
+> wird im 2.4-Kernel selten
+verwendet, statt dessen wird <SPAN
+><I
+CLASS="EMPHASIS"
+>hard_header</I
+></SPAN
+>
+benutzt.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void (*tx_timeout)(struct net_device *dev);</TT
+></DT
+><DD
+><P
+>&#13;
+Diese Methode wird aufgerufen, wenn eine Paket-Übertragung innerhalb
+einer angemessenen Periode nicht durchgeführt werden kann. Dabei wird
+angenommen, daß ein Interrupt verpaßt wurde oder die Schnittstelle
+blockiert ist. Die Methode sollte das Problem beheben und die
+Paket-Übertragung fortsetzen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct net_device_stats* (*get_stats)(struct net_device *dev);</TT
+></DT
+><DD
+><P
+>&#13;
+Immer wenn eine Applikation Statistiken über eine Schnittstelle
+benötigt, wird diese Methode aufgerufen. Das geschieht beispielsweise
+beim Aufruf von <SPAN
+CLASS="APPLICATION"
+>ifconfig</SPAN
+> und
+<SPAN
+CLASS="APPLICATION"
+>netstat &#8211;i</SPAN
+>. Eine
+Beispiel-Implementation für <SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> finden
+Sie weiter unten in &#8220;<A
+HREF="netstats.html"
+>the Section called <I
+>Statistische Informationen</I
+></A
+>&#8221;.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int (*set_config)(struct net_device *dev, struct ifmap *map);</TT
+></DT
+><DD
+><P
+>&#13;
+Ändert die Konfigurationsinformation. Diese Methode ist der
+Einsprungpunkt für die Konfiguration des Treibers. Die I/O-Adresse
+und die Interrupt-Nummer eines Geräts können zur Laufzeit mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>set_config</I
+></SPAN
+> geändert werden. Diese
+Fähigkeit wird vom Systemadministrator verwendet, wenn das Gerät vom
+Treiber sonst nicht gefunden wird. Treiber für moderne Hardware müssen
+diese Methode normalerweise nicht implementieren.</P
+></DD
+></DL
+></DIV
+><P
+>Es verbleiben noch die Geräte-Operationen, die wir für optional
+halten:&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>int (*do_ioctl) (struct net_device *dev, struct ifreq *ifr, int cmd);</TT
+></DT
+><DD
+><P
+>&#13;
+Führt schnittstellenspezifische <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Befehle
+aus. Die Implementation dieser Befehle wird weiter unten in
+&#8220;<A
+HREF="netioctl.html"
+>the Section called <I
+>Eigene ioctl-Befehle</I
+></A
+>&#8221; beschrieben. Das
+entsprechende Feld in <TT
+CLASS="LITERAL"
+>struct net_device</TT
+> kann auf
+<TT
+CLASS="LITERAL"
+>NULL</TT
+> gelassen werden, wenn die Schnittstelle keine
+schnittstellenspezifischen Befehle kennt.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void (*set_multicast_list)(struct net_device *dev);</TT
+></DT
+><DD
+><P
+>&#13;Diese Methode wird aufgerufen, wenn sich die Multicast-Liste des
+Geräts ändert oder die Flags sich ändern. In &#8220;<A
+HREF="netmulti.html"
+>the Section called <I
+>Multicasting</I
+></A
+>&#8221;
+finden Sie nähere Beispiele und eine Implementation.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int (*set_mac_address)(struct net_device *dev, void *addr);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion kann implementiert werden, wenn die Schnittstelle in
+der Lage ist, ihre Hardware-Adresse zu ändern. Viele
+Schnittstellen sind dazu nicht in der Lage. Andere verwenden die
+Default-Implementation
+<SPAN
+><I
+CLASS="EMPHASIS"
+>eth_mac_addr</I
+></SPAN
+> (aus
+<TT
+CLASS="FILENAME"
+>drivers/net/net_init.c</TT
+>).
+<SPAN
+><I
+CLASS="EMPHASIS"
+>eth_mac_addr</I
+></SPAN
+> kopiert nur die neue
+Adresse nach <TT
+CLASS="LITERAL"
+>dev-&#62;dev_addr</TT
+>, und das auch
+nur, wenn die Schnittstelle nicht in Betrieb ist. Treiber, die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>eth_mac_addr</I
+></SPAN
+> verwenden, sollten die
+Hardware-MAC-Adresse bei der Konfiguration anhand von
+<TT
+CLASS="LITERAL"
+>dev-&#62;dev_addr</TT
+> setzen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int (*change_mtu)(struct net_device *dev, int new_mtu);</TT
+></DT
+><DD
+><P
+>&#13;
+Diese Funktion erledigt alles Notwendige, wenn sich die MTU (Maximum
+Transfer Unit) des Gerätes ändert. Falls der Treiber etwas
+Besonderes machen muß, wenn die MTU verändert wird, sollte er eine
+eigene Funktion deklarieren, ansonsten macht die Default-Version das
+Richtige. Wenn es Sie interessiert, können Sie ein Muster für diese
+Funktion in <SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> finden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int (*header_cache) (struct neighbour *neigh, struct hh_cache *hh);</TT
+></DT
+><DD
+><P
+>&#13;<SPAN
+><I
+CLASS="EMPHASIS"
+>header_cache</I
+></SPAN
+> wird aufgerufen, um die
+<TT
+CLASS="LITERAL"
+>hh_cache</TT
+>-Struktur mit dem Ergebnis einer
+ARP-Anfrage zu füllen. Fast alle Treiber können die
+Default-Implementation
+<SPAN
+><I
+CLASS="EMPHASIS"
+>eth_header_cache</I
+></SPAN
+> verwenden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int (*header_cache_update) (struct hh_cache *hh, struct net_device *dev, unsigned char *haddr);</TT
+></DT
+><DD
+><P
+>&#13;Diese Methode aktualisiert nach einer Änderung die Zieladresse in der Struktur
+<TT
+CLASS="LITERAL"
+>hh_cache</TT
+>. Ethernet-Geräte verwenden
+<SPAN
+><I
+CLASS="EMPHASIS"
+>eth_header_cache_update</I
+></SPAN
+>.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int (*hard_header_parse) (struct sk_buff *skb, unsigned char *haddr);</TT
+></DT
+><DD
+><P
+>&#13;&#62;
+&#62;
+Die Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>hard_header_parse</I
+></SPAN
+> extrahiert die
+Quell-Adresse des in <TT
+CLASS="LITERAL"
+>skb</TT
+> enthaltenen Pakets und
+kopiert sie in einen Puffer ab <TT
+CLASS="LITERAL"
+>haddr</TT
+>. Der
+Rückgabewert der Funktion ist die Länge dieser
+Adresse. Ethernet-Geräte verwenden normalerweise
+<SPAN
+><I
+CLASS="EMPHASIS"
+>eth_header_parse</I
+></SPAN
+>.</P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN19989"
+>Hilfsfelder</A
+></H3
+><P
+>Die Datenfelder, die in <SPAN
+CLASS="APPLICATION"
+>struct
+net_device</SPAN
+> noch übrig sind, werden von der Schnittstelle zum Abspeichern von
+Status-Informationen verwendet. Einige dieser Felder werden von
+<SPAN
+CLASS="APPLICATION"
+>ifconfig</SPAN
+> und
+<SPAN
+CLASS="APPLICATION"
+>netstat</SPAN
+> verwendet, um dem Benutzer
+Informationen über die aktuelle Konfiguration zu liefern. Eine
+Schnittstelle sollte daher diesen Feldern passende Werte zuweisen.&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long trans_start;</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned long last_rx;</TT
+></DT
+><DD
+><P
+>Diese beiden Felder sollten einen Jiffy-Wert enthalten. Der
+Treiber muß diese
+        Werte beim Start einer Übertragung und beim Empfang eines Paketes
+        aktualisieren. Das Feld <TT
+CLASS="LITERAL"
+>trans_start</TT
+> kann
+        darüber hinaus vom Netzwerk-Subsystem verwendet werden, um
+Blockaden des Transmitters zu
+entdecken. <TT
+CLASS="LITERAL"
+>last_rx</TT
+> wird derzeit nicht
+verwendet, der Treiber sollte dieses Feld aber trotzdem pflegen, um
+auf zukünftige Versionen vorbereitet zu sein.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int watchdog_timeo;</TT
+></DT
+><DD
+><P
+>&#13;
+Die Minimumzeit (in Jiffies), die vergehen sollte, bevor die
+Netzwerk-Schicht entscheidet, daß ein Übertragungs-Timeout aufgetreten
+ist und die <SPAN
+><I
+CLASS="EMPHASIS"
+>tx_timeout</I
+></SPAN
+>-Funktion des
+Treibers aufruft.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void *priv;</TT
+></DT
+><DD
+><P
+>Das Äquivalent von
+        <TT
+CLASS="LITERAL"
+>filp-&#62;private_data</TT
+>. Der Treiber kann
+        über diesen Zeiger nach Belieben verfügen. Üblicherweise enthält
+        die private Datenstruktur ein <TT
+CLASS="LITERAL"
+>struct
+        net_device_stats</TT
+>-Element. Das Feld wird
+        weiter unten in &#8220;<A
+HREF="netsetup.html#NETINIT"
+>the Section called <I
+>Jedes Gerät initialisieren</I
+></A
+>&#8221; beschrieben.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct dev_mc_list *mc_list;</TT
+>, <TT
+CLASS="LITERAL"
+>int mc_count;</TT
+></DT
+><DD
+><P
+>Diese beiden Felder werden in Multicast-Übertragungen
+        benutzt. <TT
+CLASS="LITERAL"
+>mc_count</TT
+> enthält die Anzahl der
+        Elemente in <TT
+CLASS="LITERAL"
+>mc_list</TT
+>. Ausführliche Informationen finden Sie in
+        in&#8220;<A
+HREF="netmulti.html"
+>the Section called <I
+>Multicasting</I
+></A
+>&#8221;.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>spinlock_t xmit_lock;</TT
+>, <TT
+CLASS="LITERAL"
+>int xmit_lock_owner;</TT
+></DT
+><DD
+><P
+>&#13;Das <TT
+CLASS="LITERAL"
+>xmit_lock</TT
+> wird verwendet, um mehrfache
+gleichzeitige Aufrufe der Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>hard_start_xmit</I
+></SPAN
+> des Treibers zu
+verhindern. <TT
+CLASS="LITERAL"
+>xmit_lock_owner</TT
+> ist die
+Nummer der CPU, die die Sperre <TT
+CLASS="LITERAL"
+>xmit_lock</TT
+>
+hält. Der Treiber sollte diese Felder nicht verändern.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct module *owner;</TT
+></DT
+><DD
+><P
+>Das Modul, das diese Geräte-Struktur &#8220;besitzt&#8221;. Dieses Feld wird verwendet, um den
+Verwendungszähler des Moduls zu pflegen.</P
+></DD
+></DL
+></DIV
+><P
+>Es gibt noch weitere Felder in <TT
+CLASS="LITERAL"
+>struct
+net_device</TT
+>, die aber nicht von Treibern verwendet werden.
+
+
+&#13;</P
+></DIV
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="netsetup.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="onoff.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Mit dem Kernel verbinden</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="net.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Öffnen und Schließen</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

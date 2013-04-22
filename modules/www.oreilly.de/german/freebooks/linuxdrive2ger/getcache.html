@@ -1,0 +1,545 @@
+<HTML
+><HEAD
+><TITLE
+>Lookaside-Caches</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Speicher ergattern"
+HREF="get.html"><LINK
+REL="PREVIOUS"
+TITLE="Speicher ergattern"
+HREF="get.html"><LINK
+REL="NEXT"
+TITLE="get_&#8201;free_&#8201;page und Freunde"
+HREF="getgfp.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="get.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 7. Speicher ergattern</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="getgfp.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="GETCACHE"
+>Lookaside-Caches</A
+></H1
+><P
+>&#13;
+
+
+
+Ein Gerätetreiber muß oft immer wieder viele Objekte der gleichen
+Größe allozieren. Da der Kernel ohnehin schon eine Reihe von
+Speicher-Pools mit Objekten verwaltet, die alle die gleiche Größe haben,
+liegt es ja nahe, noch einige Spezial-Pools für diese in
+großer Zahl vorkommenden Objekte hinzuzufügen. Dies tut der Kernel
+durch <SPAN
+><I
+CLASS="EMPHASIS"
+>Lookaside-Caches</I
+></SPAN
+>. Gerätetreiber haben
+normalerweise kein Verhalten, das die Verwendung eines
+Lookaside-Caches rechtfertigen würde, es gibt jedoch Ausnahmen: Die USB-
+und ISDN-Treiber in Linux 2.4.</P
+><P
+>&#13;
+Linux-Speicher-Caches sind vom Typ <TT
+CLASS="LITERAL"
+>kmem_cache_t</TT
+> und
+werden durch das Aufrufen von <SPAN
+><I
+CLASS="EMPHASIS"
+>kmem_cache_create</I
+></SPAN
+> erzeugt:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; kmem_cache_t * kmem_cache_create(const char *name, size_t size,
+    size_t offset, unsigned long flags,
+    void (*constructor)(void *, kmem_cache_t *,
+       unsigned long flags),
+    void (*destructor)(void *, kmem_cache_t *,
+       unsigned long flags) );</PRE
+></TD
+></TR
+></TABLE
+><P
+>Diese Funktion erzeugt ein neues Cache-Objekt, das eine beliebige
+Anzahl von Speicherbereichen der gleichen Größe (angegeben durch das
+Argument <TT
+CLASS="LITERAL"
+>size</TT
+>) aufnehmen kann. Das Argument
+<TT
+CLASS="LITERAL"
+>name</TT
+> wird mit diesem Cache verbunden und dient als
+Verwaltungsinformation, die man sich beim Aufspüren von Problemen zunutze machen kann; normalerweise wird hier der Name des Strukturtyps,
+der gecacht werden soll, verwendet. Der Name darf maximal zwanzig
+Zeichen lang sein (einschließlich des abschließenden Null-Bytes).</P
+><P
+>Der <TT
+CLASS="LITERAL"
+>offset</TT
+> ist der Versatz des ersten Objekts in der
+Seite; dies kann dazu verwendet werden, um eine bestimmte Ausrichtung
+der allozierten Objekte zu erreichen; normalerweise werden Sie aber den Defaultwert 0 verwenden. <TT
+CLASS="LITERAL"
+>flags</TT
+>
+steuert, wie die Allozierung vorgenommen wird, und ist eine Bitmaske
+aus den folgenden Flags:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>SLAB_NO_REAP</TT
+></DT
+><DD
+><P
+>&#13;Das Setzen dieses Flags schützt den Cache davor, verkleinert zu
+werden, wenn das System auf der Suche nach Speicher ist. Normalerweise
+brauchen Sie dieses Flag nicht.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>SLAB_HWCACHE_ALIGN</TT
+></DT
+><DD
+><P
+>&#13;Dieses Flag erzwingt, daß jedes Datenobjekt auf einer Cache-Zeile
+ausgerichtet wird; die tatsächliche Ausrichtung hängt vom Cache-Layout
+auf der Host-Plattform ab. Dieses Flag ist oft sehr nützlich.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>SLAB_CACHE_DMA</TT
+></DT
+><DD
+><P
+>&#13;
+Dieses Flag erzwingt, daß jedes Datenobjekt in DMA-fähigem Speicher
+alloziert wird.</P
+></DD
+></DL
+></DIV
+><P
+>&#13;
+Die Argumente <TT
+CLASS="LITERAL"
+>constructor</TT
+> und
+<TT
+CLASS="LITERAL"
+>destructor</TT
+> sind optionale Funktionen (es kann aber
+keinen Destruktor ohne einen Konstruktor geben); der Konstruktor kann
+dazu verwendet werden, frisch allozierte Objekte zu initialisieren, der
+Destruktor dazu, Objekte &#8220;aufzuräumen&#8221;, bevor ihr Speicher insgesamt
+an das System zurückgegeben wird.</P
+><P
+>&#13;Konstruktoren und Destruktoren können nützlich sein, aber es gibt
+einige Einschränkungen, die Sie im Hinterkopf behalten sollten. Ein
+Konstruktor wird aufgerufen, wenn der Speicher für einen Satz von
+Objekten alloziert wird; weil dieser Speicher mehrere Objekte enthalten
+kann, kann der Konstruktor auch mehrfach aufgerufen werden. Sie können
+nicht davon ausgehen, daß der Konstruktor als unmittelbare Folge der
+Objekt-Allozierung aufgerufen wird. Entsprechend können Destruktoren
+zu irgendeinem zukünftigen Zeitpunkt aufgerufen werden, nicht unbedingt
+unmittelbar nachdem ein Objekt freigegeben worden ist. Konstruktoren
+oder Destruktoren können schlafen gelegt werden oder nicht, je
+nachdem, ob das Flag <TT
+CLASS="LITERAL"
+>SLAB_CTOR_ATOMIC</TT
+> gesetzt ist
+oder nicht (wobei <TT
+CLASS="LITERAL"
+>CTOR</TT
+> eine Abkürzung für
+<SPAN
+><I
+CLASS="EMPHASIS"
+>constructor</I
+></SPAN
+> ist).</P
+><P
+>&#13;Aus Gründen der Bequemlichkeit können Programmierer die gleiche
+Funktion für den Konstruktor und den Destruktor verwenden; der
+Allokator übergibt immer <TT
+CLASS="LITERAL"
+>SLAB_CTOR_CONSTRUCTOR</TT
+>,
+wenn es sich um einen Konstruktor handelt.</P
+><P
+>&#13;Sobald ein Objekt-Cache erzeugt worden ist, können Sie darin
+mit <SPAN
+><I
+CLASS="EMPHASIS"
+>kmem_cache_alloc</I
+></SPAN
+> Objekte allozieren.</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; void *kmem_cache_alloc(kmem_cache_t *cache, int flags);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Das Argument <TT
+CLASS="LITERAL"
+>cache</TT
+> gibt den vorher erzeugten Cache
+an; die Flags sind die gleichen wie die, die an
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> übergeben werden, und werden verwendet,
+wenn <SPAN
+><I
+CLASS="EMPHASIS"
+>kmem_cache_alloc</I
+></SPAN
+> selbst mehr Speicher
+allozieren muß.</P
+><P
+>&#13;Um ein Objekt wieder freizugeben, verwenden Sie
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kmem_cache_free</I
+></SPAN
+>.</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; void kmem_cache_free(kmem_cache_t *cache, const void *obj);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Wenn der Treiber-Code den Cache nicht mehr benötigt (was normalerweise
+der Fall ist, wenn das Modul entladen wird), dann sollte der Cache
+folgendermaßen freigegeben werden:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; int kmem_cache_destroy(kmem_cache_t *cache);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Dies funktioniert nur, wenn alle in diesem Cache allozierten Objekte
+auch wieder freigegeben worden sind. Module sollte also den
+Rückgabewert von <SPAN
+><I
+CLASS="EMPHASIS"
+>kmem_cache_destroy</I
+></SPAN
+> abfragen; ein
+Fehler zeigt hier ein Speicherleck im Modul an (da manche der
+Objekte nicht wieder freigegeben worden sind).</P
+><P
+>&#13;
+Ein weiterer Vorteil der Verwendung von Lookaside-Caches besteht
+darin, daß der Kernel Statistiken über die Cache-Verwaltung
+unterhält. Es gibt sogar eine Kernel-Konfigurationsoption, die das
+Einsammeln zusätzlicher statischer Informationen ermöglicht,
+allerdings merklich auf Kosten der Performance. Die Cache-Statistiken finden Sie
+in <TT
+CLASS="FILENAME"
+>/proc/slabinfo</TT
+>.</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN9485"
+>Ein scull mit Slab-Caches: scullc</A
+></H2
+><P
+>&#13;Es ist Zeit für ein Beispiel. <SPAN
+CLASS="APPLICATION"
+>scullc</SPAN
+> ist
+eine kürzere Version des <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Moduls, die
+nur das rohe Gerät implementiert, also den persistenten
+Speicherbereich. Im Gegensatz zu <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>,
+das <SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> verwendet, benutzt
+<SPAN
+CLASS="APPLICATION"
+>scullc</SPAN
+> Speicher-Caches. Die Größe des
+Quantums kann zur Compile- und zur Ladezeit geändert werden, aber
+nicht zur Laufzeit. Letzteres würde das Erzeugen eines neuen
+Speicher-Caches erfordern, ein Detail, mit dem wir uns hier
+auseinandersetzen wollten. Dieses Modul kann nicht mit 2.0-Kerneln
+kompiliert werden, weil es damals noch keine Speicher-Caches gab, wie
+wir in  &#8220;<A
+HREF="getdep.html"
+>the Section called <I
+>Abwärtskompatibilität</I
+></A
+>&#62;&#8221; noch erläutern werden.</P
+><P
+><SPAN
+CLASS="APPLICATION"
+>scullc</SPAN
+> ist ein vollständiges Beispiel, das
+zum Testen verwendet werden kann. Es unterscheidet sich von
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> nur durch einige wenige
+Code-Zeilen. Hier ist der Code zum Allozieren von Speicher-Quanta:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+ /* Ein Quantum in dem Speicher-Cache allozieren */
+ if (!dptr-&#62;data[s_pos]) {
+     dptr-&#62;data[s_pos] =
+         kmem_cache_alloc(scullc_cache, GFP_KERNEL);
+     if (!dptr-&#62;data[s_pos])
+         goto nomem;
+     memset(dptr-&#62;data[s_pos], 0, scullc_quantum);
+ }</PRE
+></TD
+></TR
+></TABLE
+><P
+>Und hier wird der Speicher wieder freigegeben:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+for (i = 0; i &#60; qset; i++)
+    if (dptr-&#62;data[i])
+        kmem_cache_free(scullc_cache, dptr-&#62;data[i]);
+kfree(dptr-&#62;data);</PRE
+></TD
+></TR
+></TABLE
+><P
+><TT
+CLASS="LITERAL"
+>scullc_cache</TT
+> benötigt noch einige weitere Zeilen,
+die an den entsprechenden Stellen in der Datei eingefügt sind:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+/* einen Cache-Zeiger deklarieren; wird für alle Geraete verwendet */
+kmem_cache_t *scullc_cache;
+
+    /* init_module: einen Cache für unsere Quanten erzeugen */
+    scullc_cache =
+        kmem_cache_create("scullc", scullc_quantum,
+                          0, SLAB_HWCACHE_ALIGN,
+                          NULL, NULL); /* kein Ctor/Dtor */
+    if (!scullc_cache) {
+        result = -ENOMEM;
+        goto fail_malloc2;
+    }
+
+    /* cleanup_module: den Cache für unsere Quanta wieder freigeben */
+    kmem_cache_destroy(scullc_cache);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#62;
+&#62;
+&#62;
+&#62;
+&#62;
+Die wichtigsten Unterschiede zwischen <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>
+und <SPAN
+CLASS="APPLICATION"
+>scullc</SPAN
+> sind eine geringefügige Verbesserung
+der Geschwindigkeit und eine bessere Ausnutzung des Speichers. Weil
+die Quanta aus einem Pool von Speicher-Fragmenten mit genau der
+richtigen Größe alloziert werden, liegen sie so dicht wie
+es nur geht im Speicher, im Gegensatz zu den Quanten in
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>, die eine unvorhersagbare
+Fragmentierung des Speichers mit sich bringen können.&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="get.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="getgfp.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Speicher ergattern</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="get.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>get_&#8201;free_&#8201;page und Freunde</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

@@ -1,0 +1,279 @@
+<HTML>
+ <HEAD>
+   <TITLE>
+     &Uuml;bungsblatt 13, 15.02.2000
+   </TITLE>
+ </HEAD>
+ <BODY>
+   <H1>
+     &Uuml;bungsblatt 13, 15.02.2000
+   </H1>
+   <H2>
+     Abgabetermin: Mo, 21.02.2000, 23:59 Uhr
+   </H2>
+
+<P>
+<DIV ALIGN="right">
+  <A HREF="mailto:Robert.Baier@uni-bayreuth.de">R. Baier</A> <BR>
+  <A HREF="mailto:hiwi512@btcipmatx1.cip.uni-bayreuth.de">M. Butscher</A> <BR>
+  <A HREF="mailto:hiwi501@btcipmatx1.cip.uni-bayreuth.de">P. Lerner</A>
+  <BR CLEAR="all">
+</DIV>
+</P>
+
+Das &Uuml;bungsblatt besteht aus der Aufgabe <A HREF="#A32">32</A> und
+der Teamaufgabe <A HREF="#A33">33</A> mit jeweils 4 Punkten. <BR>
+Das &Uuml;bungsblatt inkl. aller Sourcecodes, Bilder, HTML-Seiten, ... kann auch
+als
+
+<UL>
+  <LI><A HREF="blatt_13.tar.gz"><TT>gzip</TT>'tes <TT>tar</TT>-Archive</A>
+  </LI>
+  <LI>
+      <A HREF="blatt_13.zip"><TT>ZIP</TT>-Archive</A>
+  </LI>
+</UL>
+heruntergeladen werden. <BR>
+<EM>Beachten Sie die <A HREF="http://www.uni-bayreuth.de/departments/math/~rbaier/lectures/java/uebung/allgemein/hinweise.html">allgemeinen Abgabehinweise</A>!!</EM>
+
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A32">&nbsp;</A>
+
+   <H2>
+     Aufgabe 32 <BR>
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi501@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Peter Lerner)
+   </H3>
+
+<P>
+  Schreiben Sie ein Java-Applet, das es erlaubt, umrahmte oder ausgef&uuml;llte
+  Rechtecke, Kreise und Ellipsen in verschiedenen Farben zu zeichnen. 
+  In einer Statuszeile soll jeweils
+  die momentane Zeichenaktion kurz beschrieben sein.
+</P>
+
+<P>
+  Die Auswahl des zu zeichnenden Grafikobjekts (Rechteck, Kreis oder Ellipse)
+  soll durch Dr&uuml;cken eines Buttons erfolgen, der Zeichenstil
+  (umrahmt oder ausgef&uuml;llt) soll durch eine <TT>CheckBox</TT> 
+  ausw&auml;hlbar sein. Die Bestimmung der Zeichenfarbe (blau, gelb, gr&uuml;n, 
+  rot, schwarz oder wei&szlig;) soll mit einem <TT>Choice</TT>-Objekt realisiert
+  werden. Gezeichnet werden soll auf die Zeichenfl&auml;che eines
+  <TT>Canvas</TT>-Objekts. 
+</P>
+
+<P>
+  Verzichten Sie darauf, dass alle bisher
+  gezeichneten Grafikobjekte erneuert werden, wenn das Applet teilweise
+  &uuml;berdeckt wird durch andere Fenster oder durch die Auswahl im
+  <TT>Choice</TT>-Objekt bzw. durch sonstige Events zum Neuzeichnen aufgefordert
+  wird. Dies ist nur mit dem Swing-Toolkit einfach zu erledigen und w&uuml;rde
+  ein Ablegen aller bisher gezeichneten Grafikobjekte erfordern. 
+</P>
+
+<P>
+  Vergleichen Sie zur Aufgabe folgendes L&ouml;sungsapplet mit XOR-Modus (vgl.
+  Teil 3):
+
+  <HR>
+  <APPLET ARCHIVE="ZeichenArchiv.jar" CODE="ZeichenApplet.class" 
+          HEIGHT=400 WIDTH=500>
+     Dieser WWW-Browser kann entweder keine Java-Applets starten
+     oder es ist ihm durch die Einstellungen untersagt worden.
+  </APPLET>
+  <HR>
+
+</P>
+
+<P>
+  <B>Vorgehen:</B>
+
+  <UL>
+    <LI>
+      <P>
+  Legen Sie in einem ersten Schritt das passende Layout fest und erzeugen
+  Sie alle ben&ouml;tigten GUI-Komponenten. Welche Events muss man abfangen
+  durch welche Listener?
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+  Versuchen Sie sich in einem 2. Schritt an dem endg&uuml;ltigen Zeichnen
+  der Grafikobjekte.
+</P>
+
+<P>
+  Die 1. Ecke des Rechtecks soll durch Klicken der linken Maustaste und 
+  anschlie&szlig;endes Halten festgelegt werden, die 2. Ecke durch 
+  Loslassen der linken Maustaste nach der Mousebewegung.
+</P>
+
+<P>
+  Der Mittelpunkt des Kreises soll analog durch Klicken und 
+  anschlie&szlig;endes Halten der linken Maustaste
+  festgelegt werden, der Radius soll dadurch bestimmt werden, dass beim
+  Loslassen der linken Maustaste nach der Mousebewegung ein Randpunkt
+  festgelegt wird (Kreis bl&auml;ht sich vom Mittelpunkt aus auf).
+</P>
+
+<P>
+  Die Ellipse soll wie im Fall des Rechtecks festgelegt werden. Das 
+  umschlie&szlig;ende Rechteck bestimmt hier den Rahmen der Ellipse 
+  (die Breite des Rechtecks also die eine Hauptachse, die H&ouml;he des 
+  Rechtecks die andere).
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+  <B>2 Sonderpunkte:</B> <BR>
+  Versuchen Sie in einem 3. Schritt, auch den momentanen Umriss des
+  Grafikobjekts w&auml;hrend der gedr&uuml;ckten linken Mousetaste zu
+  zeichnen (nur den Rahmen, auch im Fall, dass endg&uuml;ltig das Grafikobjekt
+  ausgef&uuml;llt gezeichnet werden soll).
+</P>
+
+<P>
+  Die Idee sollte hierbei sein, sich auch den alten Umriss des jeweiligen
+  Grafikobjekts zu merken (Speichern der bestimmenden Datenelemente) und den
+  alten Umriss in der Hintergrundfarbe zu zeichnen (also zu l&ouml;schen).
+  Danach sollte der neue Umriss in der aktuellen Zeichenfarbe gezeichnet
+  werden.
+</P>
+
+<P>
+  Um h&auml;ssliches L&ouml;schen und tempor&auml;re Restzeichnungen
+  w&auml;hrend des
+  Zeichnens des momentanen Umrisses bei &Uuml;berlagerung von Grafikobjekten
+  zu vermeiden wie im folgendem Bild, 
+
+  <BLOCKQUOTE>
+    <IMG SRC="ZeichenApplet.gif" WIDTH=568 HEIGHT=257 
+         ALT="Screenshot des Applets ohne XOR-Modus">
+  </BLOCKQUOTE>
+
+  kann man den Zeichenmodus zeitweise
+  auf XOR-Modus einstellen. So stellen z.B. die folgenden Anweisungen
+
+  <PRE>
+    g.setColor(Color.red);           // aktuelle Zeichenfarbe
+    g.setXORMode(getBackground());   // XOR-Modus mit Hintergrundfarbe
+
+    ...
+
+    // g.setPaintMode();             // Zurueckstellen auf normalen Paint-Modus
+  </PRE>
+
+  in einer <TT>paint()</TT>-Methode mit einem <TT>Graphics</TT>-Objekt 
+  <TT>g</TT> die aktuelle Zeichenfarbe auf rot ein und aktivieren den
+  XOR-Modus. Zeichnet man jetzt im XOR-Modus &uuml;ber rote Pixel ein 2. Mal
+  mit der Zeichenfarbe rot, werden die Pixel in der Hintergrundfarbe 
+  (und nicht in rot!) dargestellt (also gel&ouml;scht). 
+  Zeichnet man &uuml;ber Pixel in der
+  Hintergrundfarbe im XOR-Modus, werden die Pixel in rot dargestellt. Dies
+  vermeidet die oben beschriebenen unerw&uuml;nschten Effekte.
+      </P>
+    </LI>
+</UL>
+</P>
+
+<P>
+  <B>Abzugeben</B> sind der Java-Sourcecode und der Java-Bytecode des Applets
+  sowie das zugeh&ouml;rige HTML-File.
+</P>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A33">&nbsp;</A>
+
+   <H2>
+     Teamaufgabe 33 <BR>
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi512@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Michael Butscher)
+   </H3>
+
+<P>
+  Schreiben Sie eine Java-Applikation, die f&uuml;r die Aufgabe
+  <A HREF="#A32">32</A> die Auswahl der Grafikobjekte,
+  des Zeichenstils und der Zeichenfarbe mit Men&uuml;s in einer Men&uuml;leiste
+  gestaltet. Verzichten Sie f&uuml;r diese Aufgabe auf den 2. und 3. Teil 
+  (Zeichnen der Objekte bzw. den Aufgabenteil f&uuml;r die Sonderpunkte).
+</P>
+
+<P>
+  Ein Anlegen einer Men&uuml;leiste kann nur f&uuml;r ein <TT>Frame</TT>-Objekt
+  erfolgen durch die Methode <TT>setMenuBar()</TT>. Zu einer Men&uuml;leiste
+  werden durch die Methode <TT>add()</TT> Men&uuml;s hinzugef&uuml;gt, in
+  Java Objekte der Klasse <TT>Menu</TT>. F&uuml;r diese Aufgabe soll es ein
+  Men&uuml; namens "<TT>Grafikobjekte</TT>" und eines namens
+  "<TT>Zeichenstil</TT>" geben.
+</P>
+
+<P>
+  Das erste soll als Men&uuml;(auswahl)punkte
+  (in Java z.B. Objekte der Klasse <TT>MenuItem</TT>) die Formen
+  Rechteck, Kreis und Ellipse anbieten. 
+
+  <BLOCKQUOTE>
+    <IMG SRC="ZeichenMenu_1.gif" WIDTH=606 HEIGHT=410 
+         ALT="Screenshot des 1. Men&uuml;s der Applikation">
+  </BLOCKQUOTE>
+
+  Das zweite Men&uuml; soll als Men&uuml;(auswahl)punkte eine Checkbox
+  besitzen f&uuml;r die Entscheidung umrahmt/ausgef&uuml;llt
+  (in Java ein Objekt der Klasse <TT>CheckboxMenuItem</TT>) sowie ein
+  Untermen&uuml; namens "<TT>Zeichenfarbe</TT>" (in Java wieder ein
+  Objekt der Klasse <TT>Menu</TT>) zur Auswahl der Zeichenfarbe.
+
+  <BLOCKQUOTE>
+    <IMG SRC="ZeichenMenu_2.gif" WIDTH=606 HEIGHT=410 
+         ALT="Screenshot des 2. Men&uuml;s der Applikation">
+  </BLOCKQUOTE>
+
+  Die Men&uuml;(auswahl)punkte, die Checkbox sowie das Untermen&uuml;
+  werden an das Men&uuml; durch die Methode <TT>add()</TT> angeh&auml;ngt.
+</P>
+
+<P>
+  Um auf die Auswahl der Men&uuml;punkte zu reagieren, muss man f&uuml;r
+  <I>alle</I> Men&uuml;(auswahl)punkte einen <TT>ActionListener</TT>
+  implementieren, die Anwahl der Checkbox im Men&uuml; muss mit einem
+  <TT>ItemListener</TT> beobachtet werden. Die Selektion der Men&uuml;s selbst
+  kann man nicht so einfach im JDK 1.1 beobachten. Es soll statt der Aktionen
+  in Aufgabe <A HREF="#A32">32</A> einfach nur die durchzuf&uuml;hrende
+  Aktion ausgegeben und in der Statuszeile angezeigt werden. Implementieren
+  Sie auch einen <TT>WindowListener</TT>, der das Schlie&szlig;en des 
+  Frames erlaubt.
+</P>
+
+<P>
+  <B>2 Sonderpunkte:</B> <BR>
+  Versuchen Sie, f&uuml;r Men&uuml;(auswahl)punkte auch Shortcuts zu 
+  definieren, also Tastaturabk&uuml;rzungen. Dies erfolgt durch Objekte
+  der Klasse <TT>MenuShortcut</TT>, die man beim Konstruktoraufruf von
+  Objekten der Klasse <TT>MenuItem</TT> hinzuf&uuml;gen kann. Erzeugt man
+  Objekte der Klasse <TT>MenuShortcut</TT>, muss man den Tastaturcode als
+  <TT>int</TT>-Wert spezifizieren, also entweder einfach den <TT>char</TT>-Wert
+  <TT>'g'</TT> oder die Konstante <TT>KeyEvent.VK_G</TT>, um mit
+  <TT>Ctrl + g</TT> (bzw. <TT>Strg + g</TT>) den Unterpunkt zu aktivieren.
+  Den Rest macht die JVM alleine ... .
+</P>
+
+<P>
+  Mir ist es nicht gelungen, ein Untermen&uuml; bzw. das Men&uuml; selbst
+  mit solchen Shortcuts zu selektieren. Wer findet eine L&ouml;sung?
+  Kann man auch die Checkbox mit einer Tastaturabk&uuml;rzung belegen?
+</P>
+
+<P>
+  <B>Abzugeben</B> sind der Java-Sourcecode und der Java-Bytecode
+  der Applikation.
+</P>
+
+ </BODY>
+</HTML>

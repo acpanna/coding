@@ -1,0 +1,31 @@
+\documentclass[11pt]{article}
+\usepackage{amscd,amssymb,amsmath}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx} %extended version vom package 'graphics'
+\DeclareGraphicsRule{.tif}{bmp}{jpg}{}
+\usepackage{ngerman}
+\usepackage{enumerate}
+
+\pagestyle{empty}
+\parindent=0pt
+\setlength{\topmargin}{-1cm} \setlength{\headsep}{0cm}
+\setlength{\headheight}{2.5cm} \setlength{\oddsidemargin}{0cm}
+\setlength{\textwidth}{16cm} \setlength{\textheight}{24cm}
+
+\begin{document}
+
+\centerline{\large \bf Abstract}
+\vspace{5mm}
+This dissertation describes the mathematical subject concerned with lattice basis reduction and analyzes several algorithms which are involved in solving lattice based problems.\\
+\\
+Stacked on the scientific findings of the diploma thesis “Gitterbasenreduktion mit Random Sampling” several modifications of the famous LLL-algorithm and the generalized BKZ-reduction are introduced: C. Schnorr's method for extending the Lov$\acute{\mbox{a}}$sz step with deep insertions and a modified basis replacement routine for the enumeration step, which was first described by H. Hörner. Further, two different cutting techniques are explained, which allow to decrease the size of the enumeration tree. These techniques originate from A. Wassermann and P. Nguyen.\\
+\\
+Schnorr's Random Sampling strategy is modified in order to deal with lattices, which have a bad GSA behaviour and an approach from Buchmann and Ludwig is implemented where the GSA behaviour gets totally irrelevant.\\
+\\
+Finally a heuristical evaluation concept for lattice vectors is developed and implemented in form of a modified sieve algorithm, which originates from Ajtaj, Kumar, Sivakumar (AKS) and has been extensively examined by T. Vidick and P. Nguyen afterwards.\\
+\\
+Regarding the quality of the achieved lattice reductions for hard market split problems in dimensions $\approx 120$ these new methods produce excellent results in short time (about 5 hours on a machine with 3 GHz). Even for problem dimensions $>500$ the findings are still quite satisfying, though the computation amount ($>7$ days) is not negligible anymore.\\
+\\
+In comparison with the commercial program CPLEX, which uses completely different methods for solving integer linear programs, the results are remarkably very good and motivate further investigations in the field of lattice reduction.
+
+\end{document}

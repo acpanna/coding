@@ -1,0 +1,54 @@
+<html>
+<body>
+<pre>
+<h1>Erstellungsprotokoll</h1>
+<h3>
+--------------------Konfiguration: Menü - Win32 Debug--------------------
+</h3>
+<h3>Befehlszeilen</h3>
+Creating command line "rc.exe /l 0x407 /fo"Debug/Menü.res" /d "_DEBUG" /d "_AFXDLL" "C:\C-Files\Projekte\Menü\Menü.rc"" 
+Erstellen der temporären Datei  "C:\TEMP\RSP6362.TMP" mit Inhalten
+[
+/nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_AFXDLL" /D "_MBCS" /Fp"Debug/Menü.pch" /Yu"stdafx.h" /Fo"Debug/" /Fd"Debug/" /FD /GZ   /c 
+"C:\C-Files\Projekte\Menü\Menü.cpp"
+"C:\C-Files\Projekte\Menü\MainFrm.cpp"
+"C:\C-Files\Projekte\Menü\MenüDoc.cpp"
+"C:\C-Files\Projekte\Menü\MenüView.cpp"
+]
+Creating command line "cl.exe @C:\TEMP\RSP6362.TMP" 
+Erstellen der temporären Datei  "C:\TEMP\RSP6363.TMP" mit Inhalten
+[
+/nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_AFXDLL" /D "_MBCS" /Fp"Debug/Menü.pch" /Yc"stdafx.h" /Fo"Debug/" /Fd"Debug/" /FD /GZ   /c 
+"C:\C-Files\Projekte\Menü\StdAfx.cpp"
+]
+Creating command line "cl.exe @C:\TEMP\RSP6363.TMP" 
+Erstellen der temporären Datei  "C:\TEMP\RSP6364.TMP" mit Inhalten
+[
+/nologo /subsystem:windows /incremental:yes /pdb:"Debug/Menü.pdb" /debug /machine:I386 /out:"Debug/Menü.exe" /pdbtype:sept 
+".\Debug\Menü.obj"
+".\Debug\StdAfx.obj"
+".\Debug\MainFrm.obj"
+".\Debug\MenüDoc.obj"
+".\Debug\MenüView.obj"
+".\Debug\Menü.res"
+]
+Erstellen der Befehlzeile "link.exe @C:\TEMP\RSP6364.TMP"
+<h3>Ausgabefenster</h3>
+Ressourcen werden kompiliert...
+Kompilierung läuft...
+StdAfx.cpp
+Kompilierung läuft...
+Menü.cpp
+MainFrm.cpp
+MenüDoc.cpp
+MenüView.cpp
+Generieren von Code...
+Linker-Vorgang läuft...
+
+
+
+<h3>Ergebnisse</h3>
+Menü.exe - 0 Fehler, 0 Warnung(en)
+</pre>
+</body>
+</html>

@@ -1,0 +1,467 @@
+<HTML
+><HEAD
+><TITLE
+>Die Header-Datei blk.h</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Das Laden von Block-Treibern"
+HREF="lock.html"><LINK
+REL="PREVIOUS"
+TITLE="Das Laden von Block-Treibern"
+HREF="lock.html"><LINK
+REL="NEXT"
+TITLE="Anfragen bearbeiten: Eine einfache Einführung"
+HREF="x14882.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="lock.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 12. Das Laden von Block-Treibern</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x14882.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="LOCKBLKH"
+>Die Header-Datei blk.h</A
+></H1
+><P
+>&#13;
+
+Alle Block-Treiber sollten die Header-Datei
+<TT
+CLASS="LITERAL"
+>&#60;linux/blk.h&#62;</TT
+> einbinden. Diese Datei
+definiert einen großen Teil des gemeinsamen Codes, der in
+Block-Treibern verwendet wird, und stellt die Funktionen zum
+Bearbeiten der I/O-Anfrage-Warteschlange zur Verfügung.</P
+><P
+>&#13;
+
+Die Header-Datei <TT
+CLASS="FILENAME"
+>blk.h</TT
+> unterscheidet sich
+von anderen dadurch, daß sie mehrere Symbole auf der Basis des
+Symbols <TT
+CLASS="LITERAL"
+>MAJOR_NR</TT
+> definiert, das vom
+Treiber <SPAN
+><I
+CLASS="EMPHASIS"
+>vor</I
+></SPAN
+> dem Einbinden des Headers deklariert
+werden muß. Diese Konvention stammt aus der Frühzeit von Linux, als
+alle Block-Geräte von vornherein zugewiesene Major-Nummern hatten und
+modulare Block-Treiber nicht unterstützt waren.</P
+><P
+>Wenn Sie sich <TT
+CLASS="FILENAME"
+>blk.h</TT
+> ansehen, werden Sie
+feststellen, daß mehrere geräteabhängige Symbole abhängig vom Wert
+von <TT
+CLASS="LITERAL"
+>MAJOR_NR</TT
+> deklariert werden, der also im
+voraus bekannt sein muß. Wenn die Major-Nummer aber dynamisch
+zugewiesen wird, kann der Treiber die zugewiesene Nummer im voraus
+nicht kennen und daher <TT
+CLASS="LITERAL"
+>MAJOR_NR</TT
+> nicht
+korrekt definieren. Wenn <TT
+CLASS="LITERAL"
+>MAJOR_NR</TT
+> aber
+undefiniert ist,
+kann <TT
+CLASS="FILENAME"
+>blk.h</TT
+> einige der Makros, die mit der
+Anfrage-Warteschlange verwendet werden, nicht
+definieren. Glücklicherweise kann <TT
+CLASS="LITERAL"
+>MAJOR_NR</TT
+>
+als Integer-Variable definiert werden, womit alles für zusätzliche
+Block-Treiber bestens funktioniert.&#13;</P
+><P
+><TT
+CLASS="FILENAME"
+>blk.h</TT
+> verwendet auch einige andere vordefinierte,
+treiberspezifische Symbole. Die folgende Liste beschreibt die Symbole
+in <TT
+CLASS="LITERAL"
+>&#60;linux/blk.h&#62;</TT
+>, die im voraus definiert
+werden müssen; am Ende der Liste sehen Sie den in
+<SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> verwendeten Code.&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>MAJOR_NR</TT
+></DT
+><DD
+><P
+>Dieses Symbol wird für den Zugriff auf einige Arrays, insbesondere
+<TT
+CLASS="LITERAL"
+>blk_dev</TT
+> und
+<TT
+CLASS="LITERAL"
+>blksize_size</TT
+>, verwendet. Ein
+benutzerdefinierter Treiber wie <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+>, der
+dem Symbol keinen konstanten Wert zuweisen kann, sollte ihm mittels
+<TT
+CLASS="LITERAL"
+>#define</TT
+> eine Variable zuweisen, die dann die
+Major-Nummer enthalten wird. In <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> ist
+das <TT
+CLASS="LITERAL"
+>sbull_major</TT
+>.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>DEVICE_NAME</TT
+></DT
+><DD
+><P
+>&#13;Der Name des zu erzeugenden Gerätes.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>DEVICE_NR(kdev_t device)</TT
+></DT
+><DD
+><P
+>&#13;
+Dieses Symbol wird benutzt, um die Ordinalzahl des physikalischen
+Gerätes aus der Gerätenummer des Typs <TT
+CLASS="LITERAL"
+>kdev_t</TT
+>
+zu extrahieren. Das Symbol wird wiederum verwendet, um
+<TT
+CLASS="LITERAL"
+>CURRENT_DEV</TT
+> zu deklarieren, das in der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion verwendet werden kann, um
+herauszufinden, welchem Hardware-Gerät die in einer
+Übertragungsanfrage vorkommende Minor-Nummer gehört.
+ Der Wert dieses Makros kann entweder
+<TT
+CLASS="LITERAL"
+>MINOR(device)</TT
+> oder ein anderer Ausdruck sein, je
+nach der Konvention, mit der Minor-Nummern an Geräte und Partitionen
+vergeben werden. Das Makro sollte für alle Partitionen auf dem
+gleichen physikalischen Gerät die gleiche Gerätenummer zurückgeben,
+<TT
+CLASS="LITERAL"
+>DEVICE_NR</TT
+> repräsentiert also die
+Plattennummer und nicht die Partitionsnummer. Partitionierbare Geräte
+werden im Abschnitt
+&#8220;<A
+HREF="lockgenhd.html"
+>the Section called <I
+>Partitionierbare Geräte</I
+></A
+>&#8221; verwendet.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>DEVICE_INTR</TT
+></DT
+><DD
+><P
+>&#13;Dieses Symbol wird benutzt, um eine Zeiger-Variable zu deklarieren,
+die auf den aktuellen Handler der unteren Hälfte verweist. Die
+Variable wird mit den Makros <TT
+CLASS="LITERAL"
+>SET_INTR(intr)</TT
+>
+und <TT
+CLASS="LITERAL"
+>CLEAR_INTR</TT
+> zugewiesen. Die Verwendung
+mehrerer Handler ist praktisch, wenn das Gerät Interrupts mit
+verschiedenen Bedeutungen auslösen kann.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>DEVICE_ON(kdev_t device)</TT
+>, <TT
+CLASS="LITERAL"
+>DEVICE_OFF(kdev_t device)</TT
+></DT
+><DD
+><P
+>&#13;
+Diese Makros sollten Geräten helfen, die vor oder nach einem
+Satz von Übertragungen weitere Dinge erledigen müssen; beispielsweise
+könnte ein Floppy-Treiber den Laufwerksmotor starten, bevor die I/O
+geschieht, und ihn danach wieder anhalten. Moderne Treiber verwenden
+diese Makros nicht mehr, und <TT
+CLASS="LITERAL"
+>DEVICE_ON</TT
+> wird
+sogar nicht einmal mehr aufgerufen. Portable Treiber sollten sie aber
+(als leere Symbole) definieren, sonst kommt es zu Kompilationsfehlern
+in 2.0- und 2.2-Kerneln.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>DEVICE_NO_RANDOM</TT
+></DT
+><DD
+><P
+>&#13;Die Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>end_request</I
+></SPAN
+> trägt
+defaultmäßig zur System-Entropie bei (also der gesammelten &#8220;Zufälligkeiten&#8221;) bei, die von
+<TT
+CLASS="FILENAME"
+>/dev/random</TT
+> benutzt wird. Wenn das Gerät
+aber nicht in der Lage ist, hier hinreichend zufällige Werte zu
+liefern, sollte <TT
+CLASS="LITERAL"
+>DEFINE_NO_RANDOM</TT
+>
+definiert werden. <TT
+CLASS="FILENAME"
+>/dev/random</TT
+> wurde in
+&#8220;<A
+HREF="irqinstall.html"
+>the Section called <I
+>Einen Interrupt-Handler installieren</I
+> in Kapitel 9</A
+>&#8221; in <A
+HREF="irq.html"
+>Kapitel 9</A
+>
+vorgestellt, als das Symbol
+<TT
+CLASS="LITERAL"
+>SA_SAMPLE_RANDOM</TT
+> erklärt wurde.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>DEVICE_REQUEST</TT
+></DT
+><DD
+><P
+>&#13;Wird dazu verwendet, den Namen der vom Treiber verwendeten
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion anzugeben. Die Definition von
+<TT
+CLASS="LITERAL"
+>DEVICE_REQUEST</TT
+> führt nur zu einer
+Forward-Deklaration der <SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion; dies
+ist ein Relikt früherer Zeiten; die meisten (oder alle) Treiber können
+es weglassen.</P
+></DD
+></DL
+></DIV
+><P
+>Der <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+>-Treiber deklariert diese Symbole
+folgendermaßen:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+#define MAJOR_NR sbull_major /* Definitionen in blk.h einschalten */
+int sbull_major; /* muss vor der Deklaration von blk.h deklariert werden */
+
+#define DEVICE_NR(device) MINOR(device) /* hat keine Partitions-Bits */
+#define DEVICE_NAME "sbull"             /* Name für Meldungen */
+#define DEVICE_INTR sbull_intrptr       /* Zeiger auf die untere Haelfte */
+#define DEVICE_NO_RANDOM                /* traegt nicht zum Zufallspool bei */
+#define DEVICE_REQUEST sbull_request
+#define DEVICE_OFF(d) /* tut nichts */
+
+#include &#60;linux/blk.h&#62;
+
+#include "sbull.h"        /* lokale Definitionen */</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die Header-Datei <TT
+CLASS="FILENAME"
+>blk.h</TT
+> verwendet die oben
+aufgeführten Makros, um einige weitere Makros zu definieren, die auch
+der Treiber verwenden kann. Wir werden diese Makros in den folgenden
+Abschnitten beschreiben.
+
+&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="lock.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x14882.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Das Laden von Block-Treibern</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="lock.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Anfragen bearbeiten: Eine einfache Einführung</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

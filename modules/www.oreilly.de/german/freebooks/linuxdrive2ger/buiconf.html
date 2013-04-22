@@ -1,0 +1,491 @@
+<HTML
+><HEAD
+><TITLE
+>Automatische und manuelle
+Konfiguration</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Module erstellen und starten"
+HREF="building.html"><LINK
+REL="PREVIOUS"
+TITLE="Ressourcen verwenden"
+HREF="buiresource.html"><LINK
+REL="NEXT"
+TITLE="Im User-Space arbeiten"
+HREF="x1670.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="buiresource.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 2. Module erstellen und starten</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x1670.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="BUICONF"
+>Automatische und manuelle
+Konfiguration</A
+></H1
+><P
+>&#13;
+Einige der Parameter, die ein Treiber benötigt, können von System zu
+System unterschiedlich sein. Beispielsweise muß ein Treiber die
+verwendeten I/O-Adressen oder Speicherbereiche kennen (dies ist
+bei gut durchdachten Bus-Interfaces kein Problem und betrifft nur
+ISA-Geräte). Manchmal müssen Sie Parameter an einen Treiber übergeben,
+um diesem dabei zu helfen, sein eigenes Gerät zu finden oder bestimmte
+Features ein- oder auszuschalten.&#13;</P
+><P
+>Je nach Gerät können auch noch andere Parameter außer der
+I/O-Adresse das Verhalten des Treibers beeinflussen,
+beispielsweise die Gerätemarke und die Versionsnummer. Ein Treiber muß
+die Werte dieser Parameter kennen, um korrekt arbeiten zu
+können. Einen Treiber mit den korrekten Werten zu versorgen (also ihn
+zu konfigurieren) ist eine der kniffligen Aufgaben, die während der
+Treiber-Initialisierung vollbracht werden müssen.&#13;</P
+><P
+>Im Grunde genommen gibt es nur zwei Möglichkeiten, an die korrekten
+Werte heranzukommen: entweder gibt der Benutzer sie explizit an oder
+der Treiber ermittelt sie selbst
+(<SPAN
+><I
+CLASS="EMPHASIS"
+>Auto-Detection</I
+></SPAN
+>). Während Auto-Detection
+zweifellos die beste Variante ist, ist die Konfiguration durch den
+Benutzer deutlich einfacher zu implementieren. Eine sinnvolle Wahl
+könnte es sein, die automatische Konfiguration wo immer möglich zu
+implementieren, es aber zu erlauben, daß vom Benutzer übergebene Werte
+die Auto-Detection überschreiben. Dieser Ansatz hat noch den
+zusätzlichen Vorteil, daß der Treiber zunächst ohne Auto-Detection
+entwickelt werden kann, indem die Parameter zur Ladezeit angegeben
+werden. Die Auto-Detection kann dann später implementiert werden.&#13;</P
+><P
+>Viele Treiber haben auch Konfigurationsoptionen, die andere Aspekte
+ihrer Arbeit steuern. Beispielsweise gibt es in Treibern für
+SCSI-Adapter oft Optionen zur Steuerung des Tagged Command Queueings,
+und IDE-Treiber (Integrated Device Electronics) erlauben dem Benutzer die Steuerung der
+Hardware-Operationen. Selbst wenn Ihr Treiber vollständig
+autokonfigurierbar ist, kann es also sinnvoll sein, andere
+Konfigurationsoptionen für den Benutzer verfügbar zu machen.</P
+><P
+>&#13;Parameterwerte können von <SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+> oder
+<SPAN
+CLASS="APPLICATION"
+>modprobe</SPAN
+> zur Ladezeit
+zugewiesen werden; letzteres kann die Parameter auch aus einer
+Konfigurationsdatei (normalerweise
+<TT
+CLASS="FILENAME"
+>/etc/modules.conf</TT
+>) auslesen. Die Befehle nehmen
+Integer- und
+String-Werte auf der Kommandozeile entgegen. Wenn Ihr Modul also
+einen Integer-Parameter namens <SPAN
+><I
+CLASS="EMPHASIS"
+>skull_ival</I
+></SPAN
+> und
+einen String-Parameter namens <SPAN
+><I
+CLASS="EMPHASIS"
+>skull_sval</I
+></SPAN
+> haben
+soll, könnten die Parameter beim Laden des Moduls mit etwa folgendem
+<SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+>-Befehl angegeben werden:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+
+insmod skull skull_ival=666 skull_sval="das Biest"</PRE
+></TD
+></TR
+></TABLE
+><P
+>Bevor <SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+> aber die Modulparameter
+verändern kann, muß das Modul diese verfügbar machen. Parameter werden
+mit dem in <TT
+CLASS="FILENAME"
+>module.h</TT
+> definierten Makro
+<TT
+CLASS="LITERAL"
+>MODULE_PARM</TT
+>
+deklariert. <TT
+CLASS="LITERAL"
+>MODULE_PARM</TT
+> erwartet zwei Parameter:
+den Namen der Variablen und einen String, der den Typ angibt. Das
+Makro sollte außerhalb aller Funktionen stehen und gehört
+normalerweise in die Nähe des Anfangs der Quelldatei. Die beiden oben
+erwähnten Parameter könnten mit den folgenden Zeilen deklariert werden:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+
+int skull_ival=0;
+char *skull_sval;
+
+MODULE_PARM (skull_ival, "i");
+MODULE_PARM (skull_sval, "s");</PRE
+></TD
+></TR
+></TABLE
+><P
+>Es werden derzeit fünf Typen von Modulparametern unterstützt:
+<TT
+CLASS="LITERAL"
+>b</TT
+>, ein Byte; <TT
+CLASS="LITERAL"
+>h</TT
+>, ein Short-Wert
+(zwei Bytes); <TT
+CLASS="LITERAL"
+>i</TT
+>, ein Integer-Wert;
+<TT
+CLASS="LITERAL"
+>l</TT
+>, ein Long-Wert, und <TT
+CLASS="LITERAL"
+>s</TT
+>, ein
+String. Im Falle von String-Werten sollte eine Zeiger-Variable
+deklariert werden; <SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+> alloziert den
+Speicher für den vom Benutzer angegebenen Parameter und setzt die
+Variable entsprechend um. Ein dem Typ vorangestellter Integer-Wert gibt ein
+Array der angegebenen Länge an; zwei Zahlen, die von einem Bindestrich
+getrennt sind, geben eine minimale und eine maximale Anzahl von Werten
+an. Wenn Sie die Beschreibung dieses Features durch den Autor lesen
+möchten, verweisen wir Sie auf die Header-Datei
+<TT
+CLASS="FILENAME"
+>&#60;linux/module.h&#62;</TT
+>.</P
+><P
+>Als Beispiel könnte ein Array, das wenigstens zwei und maximal vier
+Werte haben muß, folgendermaßen deklariert werden:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; int skull_array[4];
+ MODULE_PARM (skull_array, "2-4i");</PRE
+></TD
+></TR
+></TABLE
+><P
+>Es gibt auch noch das Makro
+<TT
+CLASS="LITERAL"
+>MODULE_PARM_DESC</TT
+>, mit dem der Programmierer eine
+Beschreibung des Parameters angeben kann. Diese Beschreibung wird in
+der Objektdatei gespeichert und kann dort mit einem Hilfsprogramm wie
+<SPAN
+CLASS="APPLICATION"
+>objdump</SPAN
+> oder automatisierten Werkzeugen zur
+Systemverwaltung angezeigt werden. Auch hierzu ein Beispiel:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; int base_port = 0x300;
+ MODULE_PARM (base_port, "i");
+ MODULE_PARM_DESC (base_port, "Der Basis-I/O-Port (Default 0x300)");</PRE
+></TD
+></TR
+></TABLE
+><P
+>Alle Modulparameter sollten einen Default-Wert haben;
+<SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+> ändert den Wert nur, wenn der
+Benutzer das ausdrücklich anfordert. Das Modul kann explizite
+Parameter finden, indem es Parameter mit deren Default-Werten
+vergleicht. Entsprechend kann eine automatische Konfiguration
+folgendermaßen funktionieren: Wenn die Konfigurationsvariablen den
+Default-Wert haben, führe die automatische Erkennung durch; ansonsten
+behalte den aktuellen Wert. Damit diese Technik funktioniert, sollte
+der &#8220;Default&#8221;-Wert immer ein Wert sein, den der Benutzer nie selbst
+angeben würde.</P
+><P
+>Der folgende Code zeigt, wie <SPAN
+CLASS="APPLICATION"
+>skull</SPAN
+> Port-Adressen
+eines Gerätes automatisch ermittelt. In diesem Beispiel wird
+die Auto-Detection verwendet, um nach mehreren Geräten zu suchen, während
+die manuelle Konfiguration auf ein einziges Gerät beschränkt
+ist. Beachten Sie, daß wir die Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>skull_detect</I
+></SPAN
+> schon oben gezeigt haben,
+während <SPAN
+><I
+CLASS="EMPHASIS"
+>skull_init_board</I
+></SPAN
+> die
+treiberspezifische Initialisierung vornimmt und deswegen nicht
+gezeigt wird.&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+/*
+ * Port-Bereiche: das Geraet kann in Schritten von 0x10 zwischen 0x280
+ * und 0x300 liegen. Es verwendet 0x10 Bytes große Ports.
+ */
+#define SKULL_PORT_FLOOR 0x280
+#define SKULL_PORT_CEIL  0x300
+#define SKULL_PORT_RANGE 0x010
+
+/*
+ * Die folgende Funktion führt die Auto-Detection durch, wenn der
+ * Variablen "skull_port_base" von insmod kein
+ * Wert zugewiesen worden ist.
+ */
+
+static int skull_port_base=0; /* 0 erzwingt Auto-Detection */
+MODULE_PARM (skull_port_base, "i");
+MODULE_PARM_DESC (skull_port_base, "Base I/O port for skull");
+
+static int skull_find_hw(void) /* gibt die Anzahl der Geraete zurück */
+{
+    /* base ist entweder der Wert, der beim Laden uebergeben wurde,
+     * oder der erste Versuch */
+    int base = skull_port_base ? skull_port_base
+                             : SKULL_PORT_FLOOR;
+    int result = 0;
+
+    /* Schleife einmal durchlaufen, wenn ein Wert zugewiesen wurde,
+     * ansonsten bei der Auto-Detection alle probieren */
+    do {
+        if (skull_detect(base, SKULL_PORT_RANGE) == 0) {
+            skull_init_board(base);
+            result++;
+        }
+        base += SKULL_PORT_RANGE; /* für naechsten Versuch vorbereiten */
+    }
+    while (skull_port_base == 0 &#38;&#38; base &#60; SKULL_PORT_CEIL);
+
+    return result;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wenn die Konfigurationsvariablen nur im Treiber verwendet werden (also
+nicht in der Symboltabelle des Kernels veröffentlicht werden), dann
+kann der Treiber-Autor dem Benutzer das Leben etwas einfacher machen,
+indem er das Präfix der Variablennamen (hier
+<TT
+CLASS="LITERAL"
+>skull_</TT
+>) wegläßt. Die Präfixe haben für den Benutzer
+außer zusätzlicher Schreibarbeit normalerweise keine Bedeutung.</P
+><P
+>&#13;Aus Gründen der Vollständigkeit führen wir hier noch die drei anderen
+Makros auf, die Dokumentation in die Objektdatei schreiben:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>MODULE_AUTHOR (name)</TT
+></DT
+><DD
+><P
+>&#13;Schreibt den Namen des Autors in die Objektdatei.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>MODULE_DESCRIPTION (desc)</TT
+></DT
+><DD
+><P
+>&#13;Schreibt eine Beschreibung des Moduls in die Objektdatei.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>MODULE_SUPPORTED_DEVICE (dev)</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+Schreibt einen Eintrag, der angibt, welche Geräte unterstützt werden,
+in das Modul. Kommentare in den Kernel-Quellen legen nahe, daß dieser
+Parameter irgendwann einmal zum automatischen Laden von Modulen
+verwendet werden könnte; davon wird aber derzeit noch kein Gebrauch
+gemacht.</P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="buiresource.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x1670.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Ressourcen verwenden</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="building.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Im User-Space arbeiten</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

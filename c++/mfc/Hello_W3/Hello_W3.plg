@@ -1,0 +1,73 @@
+<html>
+<body>
+<pre>
+<h1>Erstellungsprotokoll</h1>
+<h3>
+--------------------Konfiguration: Hello_W3 - Win32 Debug--------------------
+</h3>
+<h3>Befehlszeilen</h3>
+Creating command line "rc.exe /l 0x407 /fo"Debug/Hello_W3.res" /d "_DEBUG" /d "_AFXDLL" "C:\MyFiles\C\Projekte\Hello_W3\Hello_W3.rc"" 
+Erstellen der temporären Datei  "c:\temp\RSPF075.TMP" mit Inhalten
+[
+/nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_AFXDLL" /D "_MBCS" /Fp"Debug/Hello_W3.pch" /Yu"stdafx.h" /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"C:\MyFiles\C\Projekte\Hello_W3\Hello_W3.cpp"
+"C:\MyFiles\C\Projekte\Hello_W3\Hello_W3Doc.cpp"
+"C:\MyFiles\C\Projekte\Hello_W3\Hello_W3View.cpp"
+"C:\MyFiles\C\Projekte\Hello_W3\MainFrm.cpp"
+]
+Creating command line "cl.exe @c:\temp\RSPF075.TMP" 
+Erstellen der temporären Datei  "c:\temp\RSPF076.TMP" mit Inhalten
+[
+/nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_AFXDLL" /D "_MBCS" /Fp"Debug/Hello_W3.pch" /Yc"stdafx.h" /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"C:\MyFiles\C\Projekte\Hello_W3\StdAfx.cpp"
+]
+Creating command line "cl.exe @c:\temp\RSPF076.TMP" 
+Erstellen der temporären Datei  "c:\temp\RSPF077.TMP" mit Inhalten
+[
+/nologo /subsystem:windows /incremental:yes /pdb:"Debug/Hello_W3.pdb" /debug /machine:I386 /out:"Debug/Hello_W3.exe" /pdbtype:sept 
+.\Debug\Hello_W3.obj
+.\Debug\Hello_W3Doc.obj
+.\Debug\Hello_W3View.obj
+.\Debug\MainFrm.obj
+.\Debug\StdAfx.obj
+.\Debug\Hello_W3.res
+]
+Erstellen der Befehlzeile "link.exe @c:\temp\RSPF077.TMP"
+<h3>Ausgabefenster</h3>
+Ressourcen werden kompiliert...
+Kompilierung läuft...
+StdAfx.cpp
+Kompilierung läuft...
+Hello_W3.cpp
+c:\myfiles\c\projekte\hello_w3\hello_w3view.h(21) : error C2143: Syntaxfehler : Fehlendes ';' vor '*'
+c:\myfiles\c\projekte\hello_w3\hello_w3view.h(21) : error C2501: 'CHello_W1Doc' : Fehlende Speicherklasse oder Typbezeichner
+c:\myfiles\c\projekte\hello_w3\hello_w3view.h(21) : error C2501: 'GetDocument' : Fehlende Speicherklasse oder Typbezeichner
+C:\MyFiles\C\Projekte\Hello_W3\Hello_W3.cpp(78) : error C2653: 'CHello_W3View' : Keine Klasse oder Namespace
+C:\MyFiles\C\Projekte\Hello_W3\Hello_W3.cpp(78) : error C2065: 'classCHello_W3View' : nichtdeklarierter Bezeichner
+Hello_W3Doc.cpp
+Hello_W3View.cpp
+c:\myfiles\c\projekte\hello_w3\hello_w3view.h(21) : error C2143: Syntaxfehler : Fehlendes ';' vor '*'
+c:\myfiles\c\projekte\hello_w3\hello_w3view.h(21) : error C2501: 'CHello_W1Doc' : Fehlende Speicherklasse oder Typbezeichner
+c:\myfiles\c\projekte\hello_w3\hello_w3view.h(21) : error C2501: 'GetDocument' : Fehlende Speicherklasse oder Typbezeichner
+C:\MyFiles\C\Projekte\Hello_W3\Hello_W3View.cpp(58) : error C2065: 'CHello_W1Doc' : nichtdeklarierter Bezeichner
+C:\MyFiles\C\Projekte\Hello_W3\Hello_W3View.cpp(58) : error C2065: 'pDoc' : nichtdeklarierter Bezeichner
+C:\MyFiles\C\Projekte\Hello_W3\Hello_W3View.cpp(58) : error C2440: '=' : 'int *' kann nicht in 'int' konvertiert werden
+        Diese Konvertierung erfordert einen reinterpret_cast-Operator oder eine Typumwandlung im C- oder Funktionsformat
+C:\MyFiles\C\Projekte\Hello_W3\Hello_W3View.cpp(97) : error C2143: Syntaxfehler : Fehlendes ';' vor '*'
+C:\MyFiles\C\Projekte\Hello_W3\Hello_W3View.cpp(97) : error C2501: 'CHello_W1Doc' : Fehlende Speicherklasse oder Typbezeichner
+C:\MyFiles\C\Projekte\Hello_W3\Hello_W3View.cpp(98) : error C2501: 'GetDocument' : Fehlende Speicherklasse oder Typbezeichner
+C:\MyFiles\C\Projekte\Hello_W3\Hello_W3View.cpp(99) : error C2653: 'CHello_W1Doc' : Keine Klasse oder Namespace
+C:\MyFiles\C\Projekte\Hello_W3\Hello_W3View.cpp(99) : error C2065: 'classCHello_W1Doc' : nichtdeklarierter Bezeichner
+C:\MyFiles\C\Projekte\Hello_W3\Hello_W3View.cpp(100) : error C2059: Syntaxfehler : ')'
+C:\MyFiles\C\Projekte\Hello_W3\Hello_W3View.cpp(101) : warning C4035: 'GetDocument' : Kein Rueckgabewert
+MainFrm.cpp
+Generieren von Code...
+Fehler beim Ausführen von cl.exe.
+
+
+
+<h3>Ergebnisse</h3>
+Hello_W3.exe - 17 Fehler, 1 Warnung(en)
+</pre>
+</body>
+</html>

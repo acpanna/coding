@@ -1,0 +1,368 @@
+<HTML
+><HEAD
+><TITLE
+>Vor dem Booten</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Der physikalische Aufbau der Kernel-Quellen"
+HREF="tour.html"><LINK
+REL="PREVIOUS"
+TITLE="Der physikalische Aufbau der Kernel-Quellen"
+HREF="tour.html"><LINK
+REL="NEXT"
+TITLE="Der init-Prozeß"
+HREF="tourinit.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="tour.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 16. Der physikalische Aufbau der Kernel-Quellen</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="tourinit.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN22653"
+>Vor dem Booten</A
+></H1
+><P
+>&#13;Im vorigen Abschnitt haben wir angenommen, daß
+<SPAN
+><I
+CLASS="EMPHASIS"
+>start_kernel</I
+></SPAN
+> die erste Kernel-Funktion
+ist. Sie sind aber möglicherweise auch daran interessiert, was
+<SPAN
+><I
+CLASS="EMPHASIS"
+>vor</I
+></SPAN
+> dieser Funktion passiert. Deswegen gehen wir jetzt
+einen Schritt zurück und schauen uns das kurz an. Falls Sie das nicht
+interessiert, können Sie direkt zum nächsten Abschnitt weiterblättern.</P
+><P
+>Wie bereits erwähnt wurde, ist der vor
+<SPAN
+><I
+CLASS="EMPHASIS"
+>start_kernel</I
+></SPAN
+> ausgeführte Code größtenteils
+in Assembler geschrieben. Es werden aber auf mehreren Plattformen auch
+Funktionen der C-Bibliothek aufgerufen (vor allem
+<SPAN
+><I
+CLASS="EMPHASIS"
+>inflate</I
+></SPAN
+>, der Kern von
+<SPAN
+CLASS="APPLICATION"
+>gunzip</SPAN
+>).</P
+><P
+>Auf den meisten Plattformen ist der Code, der vor
+<SPAN
+><I
+CLASS="EMPHASIS"
+>start_kernel</I
+></SPAN
+> ausgeführt wird, vor allem
+dazu da, den Kernel herumzuschieben, nachdem die Firmware des
+Computers ihn (möglicherweise mit Hilfe eines Boot-Laders) von einem
+anderen Speicher (wie einer lokalen Festplatte oder über das Netzwerk
+von einem entfernten Server) in das RAM geladen hat.</P
+><P
+>Es ist aber auch nicht ungewöhnlich, rudimentären Boot-Ladecode im
+<TT
+CLASS="FILENAME"
+>boot</TT
+>-Verzeichnis architekturspezifischer Bäume
+zu finden. Beispielsweise enthält <TT
+CLASS="FILENAME"
+>arch/i386/boot</TT
+>
+Code, der den Rest des Kernels von einer Diskette laden und aktivieren
+kann. Die Datei <TT
+CLASS="FILENAME"
+>bootsect.S</TT
+>, die Sie dort finden,
+kann aber nur von einer Diskette aus ausgeführt werden und ist auf gar
+keinen Fall ein vollständiger Boot-Lader (beispielsweise kann keine
+Kommandozeile an den geladenen Kernel übergeben werden). Gleichwohl
+ist das Kopieren auf eine Diskette eines neuen Kernels eine bequeme Möglichkeit,
+ihn auf PCs zu booten.</P
+><P
+>&#13;
+
+
+Es ist eine bekannte Einschränkung der x86-Plattform, daß die CPU nach
+dem Einschalten nur 640 KByte Systemspeicher sehen kann, egal wieviel
+Speicher Sie installiert haben. Um diese Einschränkung zu umgehen, muß
+der Kernel komprimiert werden. Den dafür notwendigen Code finden Sie
+in <TT
+CLASS="FILENAME"
+>arch/i386/boot</TT
+>, zusammen mit anderem Code wie
+etwa zur Einstellung des VGA-Modus. Aufgrund dieser Einschränkung kann
+man auf PCs nichts mit dem <TT
+CLASS="FILENAME"
+>vmlinux</TT
+>-Kernel-Image
+anfangen, weswegen die gebootete Datei in Wirklichkeit
+<TT
+CLASS="FILENAME"
+>zImage</TT
+> oder <TT
+CLASS="FILENAME"
+>bzImage</TT
+> heißt;
+der oben beschriebene Boot-Sektor wird in Wirklichkeit vor diese Datei
+und nicht vor <TT
+CLASS="FILENAME"
+>vmlinux</TT
+> geschrieben. Wir werden
+hier nicht mehr Zeit mit dem Boot-Vorgang auf der x86-Plattform
+verschwenden, weil mehrere Boot-Lader zur Verfügung stehen und sich
+darüber anderenorts genug Dokumentation findet.&#13;</P
+><P
+>&#13;
+
+
+Auf manchen Plattformen unterscheiden sich das Layout des Boot-Codes
+massiv vom PC. Manchmal muß dieser Code mit mehreren Varianten der
+gleichen Architektur umgehen können. Das ist beispielsweise bei ARM,
+MIPS und M68k der Fall. Diese Plattformen decken eine große Vielfalt
+von CPU- und Systemtypen ab, von mächtigen Servern und Workstations
+bis zu PDAs und eingebetteten Systemen. Unterschiedliche Umgebungen
+verlangen unterschiedlichen Boot-Code und manchmal sogar
+unterschiedliche <SPAN
+CLASS="APPLICATION"
+>ld</SPAN
+>-Skripten, um das
+Kernel-Image zu kompilieren. Ein Teil dieser Unterstützung ist noch
+nicht im offiziellen, von Linus veröffentlichten Kernel-Baum
+vorhanden und steht nur in Concurrent Versions System-(CVS-)Bäumen
+Dritter zur Verfügung, die dem offiziellen Baum folgen, aber noch
+nicht mit diesem zusammengeführt worden sind. Dazu gehören derzeit
+etwa der SGI-CVS-Baum für MIPS-Workstations und der LinuxCE-CVS-Baum
+für MIPS-basierte Taschen-Computer. Wir möchten gleichwohl ein paar
+Zeilen über dieses Thema verlieren, weil wir es für interessant
+halten. Alles, was ab <SPAN
+><I
+CLASS="EMPHASIS"
+>start_kernel</I
+></SPAN
+>
+passiert, basiert auf dieser zusätzlichen Komplexität, merkt aber
+nichts davon.</P
+><P
+>&#13;
+Besonders für eingebettete Systeme, und hier wiederum speziell für
+Varianten ohne MMU, die von <SPAN
+><I
+CLASS="EMPHASIS"
+>uClinux</I
+></SPAN
+> unterstützt
+werden, braucht man spezielle <SPAN
+CLASS="APPLICATION"
+>ld</SPAN
+>-Skripten
+und Makefile-Regeln. Wenn Sie keine Hardware-MMU haben, die virtuelle
+Adressen auf physikalische abbildet, dann müssen Sie den Kernel so
+linken, daß er an der physikalischen Adresse ausgeführt wird, an die
+er von der Ziel-Plattform geladen wird. Auf kleinen Systemen ist es
+nicht ungewöhnlich, den Kernel in nur lesbaren Speicher (oft
+Flash-Speicher) zu laden, von wo er beim Einschalten direkt und ohne
+jede Hilfe eines Boot-Laders aktiviert wird.</P
+><P
+>&#13;
+Wenn der Kernel direkt aus dem Flash-Speicher ausgeführt wird,
+arbeiten die Makefiles, die <SPAN
+CLASS="APPLICATION"
+>ld</SPAN
+>-Skripten und
+der Boot-Code eng zusammen. Die <SPAN
+CLASS="APPLICATION"
+>ld</SPAN
+>-Regeln
+stellen den Code und die nur lesbaren Segmente (wie etwa die
+Informationen über die init-Aufrufe) in den Flash-Speicher, die
+Datensegmente (Daten und BSS (Block started by symbol) aber in das
+System-RAM. Als Folge davon hängen die beiden Bereiche nicht
+zusammen. Im Makefile gibt es spezielle Regeln, die all diese
+Abschnitte an aufeinanderfolgendende Adressen zwingen und in ein
+Format konvertieren, das für das Hochladen auf das Zielsystem geeignet
+ist. Das Zusammenfügen ist unbedingt notwendig, weil das Datensegment
+initialisierte Datenstrukturen enthält, die in nur lesbaren Speicher
+geschrieben werden müssen, weil sie sonst verlorengehen. Schließlich
+muß Assembler-Code, der vor <SPAN
+><I
+CLASS="EMPHASIS"
+>start_kernel</I
+></SPAN
+>
+ausgeführt wird, das Datensegment aus dem Flash-Speicher in das RAM (an
+die vom Linker vorgesehene Stelle) kopieren und den zum BSS-Segment
+gehörenden Adreßbereich mit Nullen füllen. Erst danach darf C-Code
+ausgeführt werden.</P
+><P
+>&#62;
+Wenn Sie einen neuen Kernel auf das Zielsystem hochladen, holt sich
+die dortige Firmware die Datendatei über das Netzwerk oder eine
+serielle Verbindung und schreibt es in den Flash-Speicher. Das zum
+Hochladen verwendete Zwischenformat unterscheidet sich von System zu
+System, weil es davon abhängig ist, wie das Hochladen durchgeführt
+wird. In allen Fällen ist dieses Format aber ein generischer Container
+für binäre Daten, der für das Übertragen des kompilierten Images mit
+Standardwerkzeugen verwendet wird. Beispielsweise ist das BIN-Format
+dafür gedacht, über ein Netzwerk übertragen zu werden, während das
+S3-Format eine hexadezimale ASCII-Datei ist, die über ein serielles
+Kabel an das Zielsystem übertragen wird.<A
+NAME="AEN22719"
+HREF="#FTN.AEN22719"
+>[1]</A
+> Meistens kann der Benutzer beim Einschalten des
+Systems auswählen, ob Linux gebootet oder Firmware-Befehle ausgeführt
+werden sollen.&#13;</P
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN22719"
+HREF="x22653.html#AEN22719"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Wir beschreiben diese Formate und Werkzeuge hier
+nicht, weil es dazu genug Informationsquellen gibt.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="tour.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="tourinit.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Der physikalische Aufbau der Kernel-Quellen</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="tour.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Der init-Prozeß</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

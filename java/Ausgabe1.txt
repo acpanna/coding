@@ -1,0 +1,19 @@
+1.Tag: Am liebsten tue ich Java programmieren.
+1.Tag: Am liebsten tue ich in der Mensa essen.
+1.Tag: Am liebsten tue ich schlafen.
+2.Tag: Am liebsten tue ich Java programmieren.
+2.Tag: Am liebsten tue ich in der Mensa essen.
+2.Tag: Am liebsten tue ich schlafen.
+3.Tag: Am liebsten tue ich Java programmieren.
+3.Tag: Am liebsten tue ich in der Mensa essen.
+3.Tag: Am liebsten tue ich schlafen.
+4.Tag: Am liebsten tue ich Java programmieren.
+4.Tag: Am liebsten tue ich in der Mensa essen.
+4.Tag: Am liebsten tue ich schlafen.
+5.Tag: Am liebsten tue ich Java programmieren.
+5.Tag: Am liebsten tue ich in der Mensa essen.
+5.Tag: Am liebsten tue ich schlafen.
+
+Reihenfolge der Abarbeitung:  2  3  1
+
+Priorität   der Abarbeitung:  4  3  1

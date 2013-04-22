@@ -1,0 +1,243 @@
+<HTML
+><HEAD
+><TITLE
+>Das Verzeichnis kernel</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Der physikalische Aufbau der Kernel-Quellen"
+HREF="tour.html"><LINK
+REL="PREVIOUS"
+TITLE="Der init-Prozeß"
+HREF="tourinit.html"><LINK
+REL="NEXT"
+TITLE="Das Verzeichnis fs"
+HREF="x22826.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="tourinit.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 16. Der physikalische Aufbau der Kernel-Quellen</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x22826.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN22772"
+>Das Verzeichnis kernel</A
+></H1
+><P
+>&#13;Einige Kernel-Funktionalitäten &#8212; alles was zu Dateisystemen,
+Speicherverwaltung und Netzwerken gehört &#8212; haben eigene
+Verzeichnisbäume. Das Verzeichnis <TT
+CLASS="FILENAME"
+>kernel</TT
+> enthält
+alle anderen grundlegenden Funktionalitäten.</P
+><P
+>&#13;
+
+Die wichtigste dieser Funktionalitäten ist das
+Scheduling. <TT
+CLASS="FILENAME"
+>sched.c</TT
+> und
+<TT
+CLASS="LITERAL"
+>&#60;linux/sched.h&#62;</TT
+> können daher als wichtigste
+Quelldateien im Linux-Kernel angesehen werden. Neben dem Scheduler
+selbst, der von <SPAN
+><I
+CLASS="EMPHASIS"
+>schedule</I
+></SPAN
+> implementiert wird,
+definiert diese Datei die Systemaufrufe, mit denen die Prioritäten der
+Prozesse gesteuert werden, sowie außerdem die Mechanismen zum Schlafen
+und Aufwachen.</P
+><P
+>&#13;
+Die Systemaufrufe <SPAN
+><I
+CLASS="EMPHASIS"
+>fork</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>exit</I
+></SPAN
+> werden von zwei gleichnamigen Dateien
+implementiert. Es handelt sich um umfassende und wohlstrukturierte
+Dateien, die sich um alles kümmern, was mit dem Erzeugen und Zerstören von
+Prozessen zu tun hat.</P
+><P
+>&#13;Die Ausgabe von Kernel-Meldungen ist in <TT
+CLASS="FILENAME"
+>printk.c</TT
+>
+implementiert, wo Sie auch die Konsolenverwaltung finden. Der
+Konsolen-Code ist nicht trivial, denn das Konzept einer &#8220;Konsole&#8221; ist
+heutzutage alles andere als trivial und umfaßt den Textbildschirm
+(entweder nativ oder Framebuffer-basiert), die serielle Schnittstelle
+und sogar die Drucker-Schnittstelle.</P
+><P
+>&#13;
+
+
+
+
+
+Weitere in diesem Verzeichnis implementierte Funktionalitäten sind das Zeit-Management
+(<TT
+CLASS="FILENAME"
+>time.c</TT
+>), der Kernel-Timer
+(<TT
+CLASS="FILENAME"
+>timer.c</TT
+>), die Auslieferung von und der Umgang mit
+Signalen (<TT
+CLASS="FILENAME"
+>signal.c</TT
+>), das Modul-System
+(<TT
+CLASS="FILENAME"
+>module.c</TT
+>), der
+<SPAN
+CLASS="APPLICATION"
+>kmod</SPAN
+>-Thread (<TT
+CLASS="FILENAME"
+>kmod.c</TT
+>),
+das systemweite Power Management (<TT
+CLASS="FILENAME"
+>pm.c</TT
+>), Tasklets
+(<TT
+CLASS="FILENAME"
+>softirq.c</TT
+>) und die Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>panic</I
+></SPAN
+> (<TT
+CLASS="FILENAME"
+>panic.c</TT
+>).&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="tourinit.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x22826.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Der init-Prozeß</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="tour.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Das Verzeichnis fs</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

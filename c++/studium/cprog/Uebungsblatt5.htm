@@ -1,0 +1,471 @@
+<HTML>
+ <HEAD>
+   <TITLE>
+     &Uuml;bungsblatt 05, 08.06.1999
+   </TITLE>
+ </HEAD>
+ <BODY>
+
+  <H1>
+     &Uuml;bungsblatt 05, 08.06.1999
+   </H1>
+   <H2>
+     Abgabetermin: Di, 15.06.1999, 10<SUP>00</SUP> Uhr
+   </H2>
+
+<DIV ALIGN="right">
+  <A HREF="mailto:Robert.Baier@uni-bayreuth.de">R. Baier</A> <BR>
+  <A HREF="mailto:Anton.Betten@uni-bayreuth.de">A. Betten</A> <BR>
+  <A HREF="mailto:hiwi511@btcipmatx1.cip.uni-bayreuth.de">M. Kohl</A> <BR>
+  <A HREF="mailto:hiwi502@btcipmatx1.cip.uni-bayreuth.de">B. Seifert</A>
+  <BR CLEAR="all">
+</DIV>
+<P>
+
+Das &Uuml;bungsblatt besteht aus den Aufgaben <A HREF="#A_13">13</A>,
+<A HREF="#A_14">14</A> und <A HREF="#A_15">15</A>.
+Das &Uuml;bungsblatt inkl. aller Sourcecodes, Bilder, HTML-Seiten, ... kann auch
+als
+<UL>
+  <LI><A HREF="blatt_05.tar.gz"><TT>gzip</TT>'tes <TT>tar</TT>-Archive</A>
+  </LI>
+  <LI>
+      <A HREF="blatt_05.zip"><TT>ZIP</TT>-Archive</A>
+  </LI>
+</UL>
+heruntergeladen werden. <BR>
+
+<EM>Beachten Sie die <A HREF="../allgemein/hinweise.html">allgemeinen Abgabehinweise</A>!!</EM>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A_13">&nbsp;</A>
+
+   <H2>
+     Aufgabe 13 (4 Punkte, 2 Zusatzpunkte m&ouml;glich)
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi502@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Bernd Seifert)
+   </H3>
+
+<OL TYPE=a>
+  <LI>
+    Schreiben Sie ein Programm, das Kommentare in MSDOS-Batch-Dateien,
+    Unix-Shell-Skripten und in Windows-INI-Dateien &uuml;berlesen kann
+    und nur die nichtkommentierten Zeilen dieser Files ausgibt. <BR>
+ 
+    Kommentare in diesen Files werden wie folgt am Zeilenanfang eingeleitet:
+    <P>
+
+    <TABLE ALIGN="center" BORDER=1 CELLPADDING=5>
+      <TR>
+        <TH>
+          Dateiart
+        </TH>
+        <TH>
+          Kommentarstring
+        </TH>
+      </TR>
+
+      <TR>
+        <TD ALIGN="center">
+          MSDOS-Batch-Datei <BR>
+          oder "<TT>config.sys</TT>"
+        </TD>
+        <TD>
+          "<TT>REM </TT>" oder "<TT>rem </TT>" 
+        </TD>
+      </TR>
+
+      <TR>
+        <TD>
+          Unix-Shell-Skript
+        </TD>
+        <TD>
+          "<TT>#</TT>"
+        </TD>
+      </TR>
+
+      <TR>
+        <TD>
+          Windows-INI-Datei
+        </TD>
+        <TD>
+          "<TT>;</TT>" oder
+          mehrfache Strichpunkte wie z.B. "<TT>;;</TT>"
+        </TD>
+      </TR>
+    </TABLE>
+
+    <P> 
+    Verwenden Sie als Beispiel folgende Files:
+    <P>
+
+    <TABLE ALIGN="center" BORDER=1 CELLPADDING=5>
+      <TR>
+        <TH>
+          Dateiname
+        </TH>
+        <TH>
+          Bedeutung
+        </TH>
+      </TR>
+
+      <TR>
+        <TD>
+          "<A HREF="autoexec.bat"><TT>autoexec.bat</TT></A>"
+        </TD>
+        <TD>
+          Startdatei f&uuml;r DOS/Windows 3.1/Windows 95
+        </TD>
+      </TR>
+
+
+      <TR>
+        <TD>
+          "<A HREF="config.sys"><TT>config.sys</TT></A>"
+        </TD>
+        <TD>
+          Konfigurationsdatei f&uuml;r Ger&auml;tetreiber unter 
+          DOS/Windows 3.1/Windows 95
+        </TD>
+      </TR>
+
+      <TR>
+        <TD>
+          "<A HREF=".profile"><TT>.profile</TT></A>"
+        </TD>
+        <TD>
+          Unix-Startskript f&uuml;r die Bash-Shell, Korn-Shell, ...
+        </TD>
+      </TR>
+
+      <TR>
+        <TD>
+          "<A HREF="miktex.ini"><TT>miktex.ini</TT></A>"
+        </TD>
+        <TD>
+          Windows-INI-Datei f&uuml;r das Programmpaket MikTeX
+          (globales Konfigurationsfile)
+        </TD>
+      </TR>
+
+      <TR>
+        <TD>
+          "<A HREF="printer.ini"><TT>printer.ini</TT></A>"
+        </TD>
+        <TD>
+          Windows-INI-Datei f&uuml;r das Programm GSview (Druckereigenschaften)
+        </TD>
+      </TR>
+
+      <TR>
+        <TD>
+          "<A HREF="userdef.ini"><TT>userdef.ini</TT></A>"
+        </TD>
+        <TD>
+          Windows-INI-Datei f&uuml;r das Programm CoolView von Netscape (Default
+          User Profile) 
+        </TD>
+      </TR>
+    </TABLE>
+
+    <P>
+    <B>Hinweise zu a):</B> <BR>
+    Schreiben Sie eine Funktion, die einen logischen Wert zur&uuml;ckgibt
+    und der sie die aktuell eingelesene Zeile und den Kommentaranfang
+    &uuml;bergeben. Der R&uuml;ckgabewert entscheidet dann, ob die eingelesene
+    Zeile ein Kommentar ist oder nicht. Durch die &Uuml;bergabe des
+    Kommentaranfangs braucht man nur eine Funktion zur Behandlung mehrerer 
+    verschiedener Files schreiben.
+
+    <P>
+  </LI>
+
+  <LI>
+    Schreiben Sie ein Programm, das einzelne Datens&auml;tze
+    mit Nachname, Vorname, Benutzernummer und Geburtsdatum
+    aus der Datei 
+    "<A HREF="aufg_13b.txt"><TT>aufg_13b.txt</TT></A>"
+    einliest. 
+
+    <P>
+    Allerdings ist das Format der Datens&auml;tze nicht sehr
+    einheitlich, d.h. die einzelnen Bestandteile des Datensatzes sind
+    durch ein oder mehrere Whitespaces (Leerzeichen, horizontaler Tabulator,
+    ...) voneinander getrennt und belegen ein oder zwei Zeilen der Datei pro
+    Datensatz.
+    Nach dem Nachnamen kommt jedoch stets (ohne Leerzeichen dazwischen)
+    ein Komma,
+    dann kommen ein oder zwei Vornamen, dann die dreistellige Benutzernummer
+    (f&uuml;hrender Buchstabe '<TT>c</TT>', zwei Ziffern), danach ohne
+    Whitespaces ein Strichpunkt und dann ohne oder mit Whitespaces davon
+    getrennt das Geburtsdatum.
+
+    <P>
+    &Uuml;berlegen Sie sich, welche Einlesestrategie Sie w&auml;hlen, damit
+    Sie unabh&auml;ngig vom Datensatz immer einheitlich die einzelnen
+    Bestandteile des Datensatzes einlesen k&ouml;nnen, ohne die Eingabedatei
+    zu ver&auml;ndern.
+
+    <P>
+    <B>Zusatzfrage</B>: Warum wird u.U. ein Datensatz zu oft eingelesen und wie
+    kann man dies verhindern?
+
+    <P>
+    <B>Zusatzpunkte</B> kann man erreichen, wenn man obige Frage beantwortet
+    und beim Einlesen strikt darauf achtet, die vorhandene L&auml;nge der 
+    Strings bei Eingaben nicht zu &uuml;berschreiten.
+
+    <P>
+    <B>Hinweise zu b):</B>
+    
+    <UL>
+      <LI>
+        Aus einer <TT>while</TT>-Schleife (vgl. Hinweise f&uuml;r beide
+        Teilaufgaben) kann man mit der Anweisung
+    
+        <PRE>
+           break;
+        </PRE>
+    
+        herausspringen, der Rest der <TT>while</TT>-Schleife, d.h. alle
+        Anweisungen im Block danach weden nicht mehr ausgef&uuml;hrt.
+        <P>
+      </LI>
+
+      <LI>
+        &Uuml;berlegen Sie sich, wie sie aus einem zusammenh&auml;ngenden
+        String der Form <TT>"c08;01.05.78"</TT> den Benutzernamen und das
+        Geburtsdatum extrahieren k&ouml;nnen und wie Sie feststellen
+        k&ouml;nnen, ob ein/mehrere Whitespace(s) zwischen dem Strichpunkt nach
+        dem Benutzernamen und dem Geburtsdatum vorhanden sind oder nicht.
+      </LI>
+    </UL>
+  </LI>
+
+</OL>
+
+<P>
+<B>Hinweise f&uuml;r beide Teilaufgaben:</B>
+
+<UL>
+  <LI>
+    Verwenden Sie in C/C++ eine <TT>while</TT>-Schleife der Form
+
+    <PRE>
+   /* C++:
+
+     while (!cin.eof())
+     {
+       ...
+     }
+
+   */
+
+   /* in C: */
+   while (!feof(stdin))
+   {
+     /* Einlesen der einzelnen Bestandteile des Datensatzes */
+     ...
+   }
+    </PRE>
+  </LI>
+
+  <LI>
+    Lesen Sie alles von der Tastatur aus ein und arbeiten Sie mit
+    Dateieingabeumlenkung, d.h. in der Form
+    
+    <P>
+    
+    <TABLE ALIGN="center" BORDER=1 CELLPADDING=5>
+      <TR>
+        <TH>
+          Betriebssystem
+        </TH>
+        <TH>
+          Eingabeumlenkung
+        </TH>
+      </TR>
+    
+      <TR>
+        <TD>
+          Windows 95/NT <BR>
+          (in einer MSDOS-Box)
+        </TD>
+        <TD>
+          <TT>lsg_13a.exe < autoexec.bat</TT> <BR>
+          <TT>lsg_13b.exe < aufg_13b.ein</TT>
+        </TD>
+      </TR>
+    
+      <TR>
+        <TD VALIGN="top">
+          Linux
+        </TD>
+        <TD>
+          <TT>a.out < autoexec.bat</TT> <BR>
+          <TT>a.out < aufg_13b.ein</TT>
+        </TD>
+      </TR>
+    </TABLE>
+    
+    <P>
+    Damit werden alle Eingaben aus dem File genommen, die nach dem
+    Dateiumlenkungszeichen "<TT>&lt;</TT>" angegeben wurde. Alle im Programm
+    von der Tastatur angeforderten und eingelesenen Werte werden stattdessen
+    Zeile f&uuml;r Zeile von diesem File eingelesen. Damit erspart man sich
+    das Arbeiten mit Fileein- und ausgabebefehlen.
+  </LI>
+</UL>
+
+<P>
+Abzugeben sind die C-/C++-Programme f&uuml;r beide Teilaufgaben sowie 
+ggf. die Beantwortung der Zusatzfrage.
+
+<P>
+
+<HR SIZE=5 WIDTH="100%">
+
+<A NAME="A_14">&nbsp;</A>
+
+   <H2>
+     Aufgabe 14
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi511@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Matthias Kohl)
+   </H3>
+
+Rudi Ratlos findet auf seinem Rechner ein
+C-Programm namens "<A HREF="aufg_14.c"><TT>aufg_14.c</TT></A>" 
+(bzw. ein C++-Programm namens "<A HREF="aufg_14.cpp"><TT>aufg_14.cpp</TT></A>")
+von seinem Kollegen Horst Hastig, das dieser am Freitag nachmittag noch 
+schnell vor seinem Urlaub geschrieben hat. 
+Rudi Ratlos soll dieses Programm zum Laufen bringen und es austesten.
+
+<P>
+10 Minuten nach dem ersten Hinschauen rauft er sich bereits die Haare und
+schimpft auf den schwierigen Umgang mit C-Strings,
+denn sein Kollege scheint elementare Fehler beim Umgang mit Strings gemacht
+zu haben. Das Programm l&auml;&szlig;t sich auf Anhieb nicht compilieren
+und auch nach einigen Ausbesserungen bringt es an einigen Stellen 
+unverst&auml;ndliche Ausgaben. 
+
+<P>
+Versuchen Sie, mit Rudi Ratlos alle Fehler 
+zu finden und verbessern Sie diese. <BR>
+Welche Fehler hat Horst Hastig gemacht und warum findet der Compiler nicht alle
+automatisch?
+
+<P>
+Geben Sie das verbesserte C-/C++-Programm und eine Erkl&auml;rung zu den
+gefundenen Fehlern ab.
+
+<P>
+<HR SIZE=5 WIDTH="100%">
+
+<A NAME="A_15">&nbsp;</A>
+
+   <H2>
+     Aufgabe 15
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi511@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Matthias Kohl)
+   </H3>
+
+Bei Aufz&auml;hlungstypen gibt es noch ein paar Feinheiten zu ,,entdecken´´:
+
+<OL>
+  <LI>
+    Die internen <TT>int</TT>-Werte der Aufz&auml;hlungskonstanten 
+    beginnen normalerweise bei 0. Durch Initialisierungswerte (die Syntax
+    ist vergleichbar zur Initialisierung von <TT>int</TT>-Variablen)
+    kann man diese internen <TT>int</TT>-Werte &auml;ndern. <BR>
+    Angelegt werden soll ein Aufz&auml;hlungsdatentyp zur 
+    Fehlerbeschreibung, der die folgenden Fehlerwerte beginnend bei 
+    100 besitzt: 
+
+    <P>
+    
+    <TABLE ALIGN="center" BORDER=1>
+      <TR>
+        <TH>
+          Fehlernummer
+        </TH>
+        <TH>
+          Fehlerbeschreibung
+        </TH>
+      </TR>
+      <TR>
+        <TD ALIGN="center">
+          100
+        </TD>
+        <TD>
+          Datei nicht gefunden
+        </TD>
+      </TR>
+      <TR>
+        <TD ALIGN="center">
+          101
+        </TD>
+        <TD>
+          Datei nicht lesbar
+        </TD>
+      </TR>
+      <TR>
+        <TD ALIGN="center">
+          102
+        </TD>
+        <TD>
+          Datei nicht beschreibbar
+        </TD>
+      </TR>
+      <TR>
+        <TD ALIGN="center">
+          103
+        </TD>
+        <TD>
+          Datei leer
+        </TD>
+      </TR>
+    </TABLE>
+    <P CLEAR="all">
+    Wie lautet die korrekte Definition des Aufz&auml;hlungstyps? <BR>
+    Testen Sie durch Ausgabe aller von Ihnen definierten symbolischen
+    Konstanten die festgelegten Werte.
+    <P>
+  </LI>
+
+  <LI>
+    Testen Sie im Programm, welchen Wert eine symbolische Konstante 
+    in einem Aufz&auml;hlungstyp hat, wenn sie auf einem mit 100 initialisierten 
+    Wert folgt und selbst nicht initialisiert wird. <BR>
+    Wie kann man in obigem Datentyp zus&auml;tzlich die Konstante f&uuml;r
+    ,,keinen Fehler´´ mit dem Wert 0 einbauen?
+    <P>
+  </LI>
+
+  <LI>
+    Bei Aufz&auml;hlungstypen gibt es durchaus die M&ouml;glichkeit,
+    mehreren symbolischen Konstanten denselben internen <TT>int</TT>-Wert
+    zuzuweisen. <BR>
+    Definieren Sie sinnvoll einen Aufz&auml;hlungstyp <TT>schalter</TT>, 
+    der die Zust&auml;nde <TT>aus</TT> und <TT>ein</TT> besitzt. 
+    Zus&auml;tzlich soll er noch die analog definierten Zust&auml;nde 
+    <TT>off</TT> und <TT>on</TT> besitzen mit denselben Werten.
+    <P>
+  </LI>
+
+  <LI>
+    Stellen Sie durch ein C-Programm fest, mit welchem Datentyp Ihr
+    Compiler einen Aufz&auml;hlungstyp realisiert.
+  </LI>
+</OL>
+
+Abzugeben ist das C-/C++-Programm  mit den Definitionen und den Tests sowie
+die Programmausgaben zur Beantwortung der Fragen.
+
+ </BODY>
+</HTML>

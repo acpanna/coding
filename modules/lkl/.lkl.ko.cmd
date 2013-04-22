@@ -1,0 +1,1 @@
+cmd_/home/haaner/hacking/lkl/lkl.ko := ld -r -m elf_x86_64 -T /usr/src/linux-2.6.34-gentoo-r12/scripts/module-common.lds --build-id -o /home/haaner/hacking/lkl/lkl.ko /home/haaner/hacking/lkl/lkl.o /home/haaner/hacking/lkl/lkl.mod.o

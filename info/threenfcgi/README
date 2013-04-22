@@ -1,0 +1,34 @@
+ThreeNF
+=======
+
+Zum Kompilieren werden benötigt:
+
+ - Standard C - Bibliotheken
+ - Standard C++ - Bibliotheken
+
+ - C++ - Compiler
+
+Falls der g++ (gcc C++ Compiler) vorhanden ist, so reicht ein
+
+ make all
+
+um die Datei threenf.cgi zu erzeugen.
+
+
+Zum Start des Programms wird benötigt:
+ 
+ - CGI-fähiger WebServer 
+ 
+Falls ein WebServer auf dem localhost vorhanden ist und die Standardpfade des Apache-Webserver nutzt,
+d.h /usr/local/httpd/htdocs ist der Pfad für die HTML-Dokumente und /usr/local/httpd/cgi-bin für die CGI-Skripte, so reicht ein
+
+ make install
+
+(evt. mit root-Rechten) um die Dateien in die jeweiligen Verzeichnisse zu kopieren.
+
+
+Nun lediglich in einen Browser die URL http://localhost/threenf.html eintippen und man gelangt ins Eingabe-Interface von ThreeNF.
+
+
+Natürlich kann man das Ganze nicht nur auf dem localhost, sondern auf jedem CGI-fähigen WebServer
+(solange man Schreibrechte fürs cgi-bin bzw. htdocs - Verzeichnis besitzt) installieren.

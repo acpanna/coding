@@ -1,0 +1,30 @@
+<html>
+<body>
+<pre>
+<h1>Erstellungsprotokoll</h1>
+<h3>
+--------------------Konfiguration: InternetCash - Win32 Release--------------------
+</h3>
+<h3>Befehlszeilen</h3>
+Creating command line "rc.exe /l 0x407 /fo"Release/InternetCash.res" /d "NDEBUG" /d "_AFXDLL" "E:\C-Files\Projekte\InternetCash\InternetCash.rc"" 
+Erstellen der temporären Datei  "c:\temp\RSP9010.TMP" mit Inhalten
+[
+/nologo /subsystem:windows /incremental:no /pdb:"Release/InternetCash.pdb" /machine:I386 /out:"Release/InternetCash.exe" 
+".\Release\InternetCash.obj"
+".\Release\InternetCashDlg.obj"
+".\Release\StdAfx.obj"
+".\Release\Tarif.obj"
+".\Release\InternetCash.res"
+]
+Erstellen der Befehlzeile "link.exe @c:\temp\RSP9010.TMP"
+<h3>Ausgabefenster</h3>
+Ressourcen werden kompiliert...
+Linker-Vorgang läuft...
+
+
+
+<h3>Ergebnisse</h3>
+InternetCash.exe - 0 Fehler, 0 Warnung(en)
+</pre>
+</body>
+</html>

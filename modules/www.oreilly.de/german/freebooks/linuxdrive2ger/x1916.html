@@ -1,0 +1,543 @@
+<HTML
+><HEAD
+><TITLE
+>Schnellreferenz</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Module erstellen und starten"
+HREF="building.html"><LINK
+REL="PREVIOUS"
+TITLE="Abwärtskompatibilität"
+HREF="x1736.html"><LINK
+REL="NEXT"
+TITLE="Zeichen-Treiber"
+HREF="char.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x1736.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 2. Module erstellen und starten</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="char.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN1916"
+>Schnellreferenz</A
+></H1
+><P
+>Dieser Abschnitt faßt die Kernel-Funktionen, -Variablen, -Makros und
+<TT
+CLASS="FILENAME"
+>/proc</TT
+>-Dateien zusammen, die wir in diesem
+Kapitel angesprochen haben. Er soll als Referenz dienen. Jedes
+Element ist nach der entsprechenden Header-Datei (sofern vorhanden)
+aufgeführt. Sie werden von nun an nach jedem Kapitel solche Abschnitte
+vorfinden, die die im jeweiligen Kapitel neu eingeführten Symbole
+zusammenfassen.&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>_&#8201;_KERNEL_&#8201;_</TT
+>, <TT
+CLASS="LITERAL"
+>MODULE</TT
+></DT
+><DD
+><P
+>Präprozessor-Symbole, die beide definiert sein müssen, um
+        modularisierten Kernel-Code kompilieren zu können.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>_&#8201;_SMP_&#8201;_</TT
+></DT
+><DD
+><P
+>&#13;Ein Präprozessor-Symbol, das definiert werden muß, wenn Module für
+symmetrische Multiprozessorsysteme kompiliert werden sollen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int init_module(void);</TT
+>, <TT
+CLASS="LITERAL"
+>void cleanup_module(void);</TT
+></DT
+><DD
+><P
+>Einsprungpunkte in Module, die in der Objektdatei des Moduls
+        definiert sein müssen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/init.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>module_init(init_function);</TT
+>, <TT
+CLASS="LITERAL"
+>module_exit(cleanup_function);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+Der moderne Mechanismus zum Kennzeichnen der Initialisierungs- und
+Aufräumfunktionen eines Moduls.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/module.h&#62;</TT
+></DT
+><DD
+><P
+>&#13;
+        Benötigte Header-Datei. Muß in jede Modul-Quelldatei eingebunden
+        werden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>MOD_INC_USE_COUNT;</TT
+>, <TT
+CLASS="LITERAL"
+>MOD_DEC_USE_COUNT;</TT
+>, <TT
+CLASS="LITERAL"
+>MOD_IN_USE</TT
+></DT
+><DD
+><P
+>Makros, die den Verwendungszähler beeinflussen oder abfragen.</P
+></DD
+><DT
+>/proc/modules</DT
+><DD
+><P
+>Die Liste der aktuell geladenen Module. Die einzelnen
+        Einträge enthalten den Modulnamen, die belegte Speichermenge
+jedes Moduls und
+        den Verwendungszähler. An jede Zeile können zusätzliche Strings
+        angehängt werden, die die für das jeweilige Modul gültigen
+        Schalter angeben.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>EXPORT_SYMTAB;</TT
+></DT
+><DD
+><P
+>&#13;Präprozessor-Makro, erforderlich in Modulen, die Symbole exportieren.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>EXPORT_NO_SYMBOLS;</TT
+></DT
+><DD
+><P
+>&#13;Makro, das angibt, daß das Modul keine Symbole in den Kernel
+exportiert.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>EXPORT_SYMBOL (symbol);</TT
+>, <TT
+CLASS="LITERAL"
+>EXPORT_SYMBOL_NOVERS (symbol);</TT
+></DT
+><DD
+><P
+>&#13;
+Makro zum Exportieren eines Symbols in den Kernel. Die zweite Version
+exportiert ohne Versionsinformationen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int register_symtab(struct symbol_table *);</TT
+></DT
+><DD
+><P
+>Eine Funktion, die verwendet wird, um die Menge der
+        öffentlichen Symbole des Moduls anzugeben. Wird nur in
+2.0-Kerneln verwendet.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/symtab_begin.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>X(symbol),</TT
+>, <TT
+CLASS="LITERAL"
+>#include &#60;linux/symtab_end.h&#62;</TT
+></DT
+><DD
+><P
+>Header-Dateien und Präprozessor-Makro, mit denen eine
+        Symboltabelle im 2.0-Kernel deklariert wird.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>MODULE_PARM(variable, type);</TT
+>, <TT
+CLASS="LITERAL"
+>MODULE_PARM_DESC (variable, description);</TT
+></DT
+><DD
+><P
+>&#13;
+Makros, die eine Modul-Variable als Parameter verfügbar machen, der vom
+Benutzer während des Ladens des Moduls verändert werden kann.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>MODULE_AUTHOR(author);</TT
+>, <TT
+CLASS="LITERAL"
+>MODULE_DESCRIPTION(description);</TT
+>, <TT
+CLASS="LITERAL"
+>MODULE_SUPPORTED_DEVICE(device);</TT
+></DT
+><DD
+><P
+>&#13;
+
+Schreiben Dokumentation über das Modul in die Objektdatei.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/version.h&#62;</TT
+></DT
+><DD
+><P
+>&#13;
+Benötigte Header-Datei. Sie wird von
+<TT
+CLASS="LITERAL"
+>&#60;linux/module.h</TT
+> eingebunden, es sei denn,
+<TT
+CLASS="LITERAL"
+>__NO_VERSION__</TT
+>
+ist definiert (siehe unten).</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>LINUX_VERSION_CODE </TT
+></DT
+><DD
+><P
+>Integer-Makro, nützlich, um Versionsabhängigkeiten mit
+        <TT
+CLASS="LITERAL"
+>#ifdef</TT
+> abzufragen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>char kernel_version[] = UTS_RELEASE;</TT
+></DT
+><DD
+><P
+>In jedem Kernel-Modul benötigte Variable. Wird in
+        <TT
+CLASS="LITERAL"
+>&#60;linux/module.h&#62;</TT
+> definiert, wenn
+        <TT
+CLASS="LITERAL"
+>__NO_VERSION__</TT
+> nicht definiert ist
+        (siehe unten).</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>__NO_VERSION__</TT
+></DT
+><DD
+><P
+>Präprozessor-Symbol. Verhindert die Deklaration von
+        <TT
+CLASS="LITERAL"
+>kernel_version</TT
+> in
+        <TT
+CLASS="LITERAL"
+>&#60;linux/module.h&#62;</TT
+>.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/sched.h&#62;</TT
+></DT
+><DD
+><P
+>&#13;
+Eine der wichtigsten Header-Dateien. Diese Datei enthält Definitionen
+eines großen Teils der von Treibern verwendeten Kernel-API, darunter
+Funktionen zum Schlafen sowie diverse Variablendeklarationen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct task_struct *current;</TT
+></DT
+><DD
+><P
+>Der aktuelle Prozeß.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>current-&#62;pid</TT
+>, <TT
+CLASS="LITERAL"
+>current-&#62;comm</TT
+></DT
+><DD
+><P
+>Die Prozeß-ID und der Befehlsname des aktuellen Prozesses.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/kernel.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>int printk(const char * fmt, ...);</TT
+></DT
+><DD
+><P
+>Die Entsprechung zu <SPAN
+><I
+CLASS="EMPHASIS"
+>printf</I
+></SPAN
+> im
+        Kernel-Code.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/malloc.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>void *kmalloc(unsigned int size, int priority);</TT
+>, <TT
+CLASS="LITERAL"
+>void kfree(void *obj);</TT
+></DT
+><DD
+><P
+>Die Entsprechung zu <SPAN
+><I
+CLASS="EMPHASIS"
+>malloc</I
+></SPAN
+> und
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>free</I
+></SPAN
+> im Kernel-Code. Verwenden Sie die
+        Konstante <TT
+CLASS="LITERAL"
+>GFP_KERNEL</TT
+> als
+        Priorität.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/ioport.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>int check_region(unsigned long from, unsigned long extent);</TT
+>, <TT
+CLASS="LITERAL"
+>struct resource *request_region(unsigned long from, unsigned long extent, const char *name);</TT
+>, <TT
+CLASS="LITERAL"
+>void release_region(unsigned long from, unsigned long extent);</TT
+></DT
+><DD
+><P
+>Funktionen, mit denen I/O-Ports registriert und wieder
+        freigegeben werden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int check_mem_region (unsigned long start, unsigned long extent);</TT
+>, <TT
+CLASS="LITERAL"
+>struct resource *request_mem_region (unsigned long start, unsigned long extent, const char *name);</TT
+>, <TT
+CLASS="LITERAL"
+>void release_mem_region (unsigned long start, unsigned long extent);</TT
+></DT
+><DD
+><P
+>&#13;
+
+Makros zum Registrieren und Freigeben von I/O-Speicherbereichen.</P
+></DD
+><DT
+>/proc/ksyms</DT
+><DD
+><P
+>Die öffentliche Kernel-Symboltabelle.</P
+></DD
+><DT
+>/proc/ioports</DT
+><DD
+><P
+>Die Liste der Ports, die von installierten Geräten benutzt werden.</P
+></DD
+><DT
+>/proc/iomem</DT
+><DD
+><P
+>&#13;
+Die Liste der allozierten Speicherbereiche.</P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x1736.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="char.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Abwärtskompatibilität</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="building.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Zeichen-Treiber</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

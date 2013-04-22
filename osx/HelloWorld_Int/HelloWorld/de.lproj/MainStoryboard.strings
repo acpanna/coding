@@ -1,0 +1,12 @@
+
+/* Class = "IBUITextField"; accessibilityHint = "Type your name here"; ObjectID = "Ap9-Ag-JkR"; */
+"Ap9-Ag-JkR.accessibilityHint" = "Type your name here";
+
+/* Class = "IBUITextField"; placeholder = "Your Name"; ObjectID = "Ap9-Ag-JkR"; */
+"Ap9-Ag-JkR.placeholder" = "Your Name";
+
+/* Class = "IBUILabel"; text = "Your Name:"; ObjectID = "LSo-GH-r2J"; */
+"LSo-GH-r2J.text" = "Your Name:";
+
+/* Class = "IBUIButton"; normalTitle = "Hello"; ObjectID = "epR-jF-8Ow"; */
+"epR-jF-8Ow.normalTitle" = "Hello";

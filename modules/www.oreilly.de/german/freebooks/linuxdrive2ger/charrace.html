@@ -1,0 +1,462 @@
+<HTML
+><HEAD
+><TITLE
+>Ein kurze Einführung in Race Conditions</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Zeichen-Treiber"
+HREF="char.html"><LINK
+REL="PREVIOUS"
+TITLE="Die Verwendung von
+Speicher in scull"
+HREF="charscullmem.html"><LINK
+REL="NEXT"
+TITLE="read und write"
+HREF="charrdwr.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="charscullmem.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 3. Zeichen-Treiber</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="charrdwr.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="CHARRACE"
+>Ein kurze Einführung in Race Conditions</A
+></H1
+><P
+>&#13;
+
+
+Da Sie jetzt verstehen, wie die Speicherverwaltung von
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> funktioniert, sollten Sie sich einmal
+das folgende Szenario anschauen: Zwei Prozesse, A und B, haben beide das
+gleiche <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Gerät zum Schreiben
+geöffnet. Beide versuchen gleichzeitig, Daten auf das Gerät zu
+schreiben. Damit diese Operation durchgeführt werden kann, ist ein
+neues Quantum notwendig, also alloziert jeder Prozeß den benötigten
+Speicher und legt einen Zeiger darauf in der Quantum-Menge ab.</P
+><P
+>Das gibt Ärger. Weil beide Prozesse das gleiche
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Gerät sehen, legen sie auch beide den
+neuen Speicher an der gleichen Stelle in der Quantum-Menge ab. Wenn A
+seinen Zeiger zuerst ablegt, dann überschreibt B diesen Zeiger
+danach. Der von A allozierte Speicher und die darin enthaltenen Daten
+gehen also verloren.</P
+><P
+>Dies ist eine klassische <I
+CLASS="FIRSTTERM"
+>Race Condition</I
+>: Das
+Ergebnis hängt davon ab, wer als erstes zum Zug kommt; und
+normalerweise passiert etwas Unerfreuliches. Auf
+Einprozessor-Linux-Systemen muß sich der
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Code nicht mit solchen Problemen
+auseinandersetzen, weil Prozesse, die Kernel-Code ausführen, nicht
+gezwungen werden können, die CPU abzugeben. Auf SMP-Systemen ist die
+Sache leider komplizierter. Die beiden Prozesse A und B können gut und
+gern auf verschiedenen Prozessoren laufen und sich so wie beschrieben
+ins Gehege kommen.</P
+><P
+>Der Linux-Kernel stellt mehrere Mechanismen bereit, um Race Conditions
+zu vermeiden und mit ihnen umzugehen. Eine vollständige Beschreibung
+dieser Mechanismen müssen wir auf <A
+HREF="irq.html"
+>Kapitel 9</A
+>&#62; verschieben,
+aber ein wenig können wir hier schon darauf eingehen.</P
+><P
+>&#13;
+
+Ein <I
+CLASS="FIRSTTERM"
+>Semaphor</I
+> ist ein allgemeiner Mechanismus
+zur Steuerung des Zugriffs auf Ressourcen. In seiner einfachsten Form
+kann ein Semaphor für <SPAN
+><I
+CLASS="EMPHASIS"
+>gegenseitigen Ausschluß</I
+></SPAN
+>
+(<SPAN
+><I
+CLASS="EMPHASIS"
+>mutual exclusion</I
+></SPAN
+>) verwendet werden; Prozesse,
+die Semaphore im Mutual Exclusion-Modus verwenden, werden daran
+gehindert, gleichzeitig den gleichen Code auszuführen oder auf die
+gleichen Daten zuzugreifen. Solche Semaphore nennt man oft
+<I
+CLASS="FIRSTTERM"
+>mutex</I
+>, was von &#8220;mutual exclusion&#8221; kommt.</P
+><P
+>&#13;
+Semaphore in Linux werden in
+<TT
+CLASS="LITERAL"
+>&#60;asm/semaphore.h&#62;</TT
+> definiert. Ihr Typ ist
+<TT
+CLASS="LITERAL"
+>struct semaphore</TT
+>, und Treiber sollten auf sie nur über
+das definierte Interface zugreifen. In
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> wird ein Semaphor pro Gerät in der
+Struktur <TT
+CLASS="LITERAL"
+>Scull_Dev</TT
+> alloziert. Weil die Geräte
+vollständig unabhängig voneinander sind, ist es nicht notwendig,
+einen gegenseitigen Ausschluß über Gerätegrenzen hinweg zu erzwingen.</P
+><P
+>&#13;
+
+Semaphore müssen vor der ersten Verwendung durch Übergabe eines
+numerischen Arguments an <SPAN
+><I
+CLASS="EMPHASIS"
+>sema_init</I
+></SPAN
+> initialisiert
+werden. Wenn es um einen gegenseitigen Ausschluß geht (also darum, Threads
+vom gleichzeitigen Zugriff auf die gleichen Daten abzuhalten), dann
+kann das Semaphor mit dem Wert 1 initialisiert werden, was bedeutet,
+daß das Semaphor zur Verfügung steht. Der folgende Code aus der
+Initialisierungsfunktion des <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Moduls
+(<SPAN
+><I
+CLASS="EMPHASIS"
+>scull_init</I
+></SPAN
+>) zeigt, wie die Semaphore im Zuge der
+Einrichtung des Geräts initialisiert werden.</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+ for (i=0; i &#60; scull_nr_devs; i++) {
+  scull_devices[i].quantum = scull_quantum;
+  scull_devices[i].qset = scull_qset;
+  sema_init(&#38;scull_devices[i].sem, 1);
+ }</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+Ein Prozeß, der in einen von einem Semaphor geschützten Code-Bereich
+eintreten möchte, muß zunächst sicherstellen, daß sich darin noch kein
+anderer Prozeß befindet. In der klassischen Informatik heißt die
+Funktion zum Erwerb eines Semaphors oft <SPAN
+><I
+CLASS="EMPHASIS"
+>P</I
+></SPAN
+>, aber
+unter Linux müssen Sie <SPAN
+><I
+CLASS="EMPHASIS"
+>down</I
+></SPAN
+> oder
+<SPAN
+><I
+CLASS="EMPHASIS"
+>down_interruptible</I
+></SPAN
+> aufrufen. Diese Funktionen
+fragen den Wert des Semaphors ab, um festzustellen, ob er größer als 0 ist; wenn das der
+Fall ist, dann wird das Semaphor dekrementiert, und die Funktion kehrt
+zurück. Ist das Semaphor dagegen 0, dann legen sich die Funktionen
+schlafen und versuchen es noch einmal, nachdem ein anderer Prozeß, der
+vermutlich das Semaphor freigegeben hat, sie aufgeweckt hat.</P
+><P
+>&#13;
+Die Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>down_interruptible</I
+></SPAN
+> kann von einem
+Signal unterbrochen werden, während <SPAN
+><I
+CLASS="EMPHASIS"
+>down</I
+></SPAN
+> es nicht
+zuläßt, daß zwischendrin Signale ausgeliefert werden. In fast allen
+Fällen sollten Sie Signale zulassen; ansonsten riskieren Sie
+nicht-beendbare Prozesse und anderes unerwünschtes Verhalten. Das
+Zulassen von Signalen verkompliziert allerdings die Lage dahingehend,
+daß Sie immer abfragen müssen, ob die Funktion (hier
+<SPAN
+><I
+CLASS="EMPHASIS"
+>down_interruptible</I
+></SPAN
+>) unterbrochen wurde. Wie
+üblich gibt die Funktion 0 im Erfolgsfall und einen von Null
+verschiedenen Wert im Fehlerfall zurück. Wenn der Prozeß unterbrochen
+wurde, dann hat die Funktion auch keine Semaphore erworben, weswegen
+Sie auch nicht <SPAN
+><I
+CLASS="EMPHASIS"
+>up</I
+></SPAN
+> aufrufen müssen. Ein typischer
+Aufruf zum Erwerben eines Semaphors sieht daher normalerweise so aus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; if (down_interruptible (&#38;sem))
+        return -ERESTARTSYS;</PRE
+></TD
+></TR
+></TABLE
+><P
+>Der Rückgabewert <TT
+CLASS="LITERAL"
+>-ERESTARTSYS</TT
+> teilt dem System mit,
+daß die Operation von einem Signal unterbrochen wurde. Die
+Kernel-Funktion, die die Gerätemethode aufgerufen hat, wird entweder
+einen erneuten Aufruf versuchen oder <TT
+CLASS="LITERAL"
+>-EINTR</TT
+> an die
+Applikation zurückgeben &#8212; je nachdem, wie die Applikation den Umgang
+mit Signalen konfiguriert hat. Natürlich kann es sein, daß Ihr Code
+vor dem Rücksprung erst etwas aufräumen muß, wenn er in diesem Modus
+unterbrochen wurde.</P
+><P
+>&#13;
+
+Ein Prozeß, der einen Semaphor erwirbt, muß diesen danach immer wieder
+freigeben. Die dafür zuständige Funktion heißt in der Informatik
+<SPAN
+><I
+CLASS="EMPHASIS"
+>V</I
+></SPAN
+>; Linux nennt sie aber
+<SPAN
+><I
+CLASS="EMPHASIS"
+>up</I
+></SPAN
+>. Ein einfacher Aufruf wie</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; up (&#38;sem);</PRE
+></TD
+></TR
+></TABLE
+><P
+>inkrementiert den Wert des Semaphors und weckt alle Prozesse auf, die
+darauf warten, daß das Semaphor verfügbar wird.</P
+><P
+>&#13;Bei der Arbeit mit Semaphoren muß man sich vorsehen. Die vom Semaphor
+geschützten Daten müssen genau definiert sein, und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>sämtlicher</I
+></SPAN
+> Code, der auf diese Daten zugreift,
+muß zuerst das Semaphor erwerben. Code, der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>down_interruptible</I
+></SPAN
+> verwendet, um das Semaphor zu
+erwerben, darf keine andere Funktion aufrufen, die ebenfalls
+versucht, diesen Semaphor zu erwerben; ansonsten kommt es zu einem
+Deadlock. Wenn es eine Routine in Ihrem Treiber versäumt, ein
+gehaltenes Semaphor wieder freizugeben (z.B. als Folge eines
+Rücksprungs nach einem Fehler), dann werden alle weiteren Versuche,
+das Semaphor zu erwerben, blockieren. Gegenseitiger Ausschluß ist
+immer ein kniffliges Problem und bedarf einer wohldefinierten und
+methodischen Herangehensweise.
+
+&#13;</P
+><P
+>In <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> wird der gerätespezifische
+Semaphor dazu verwendet, die gespeicherten Daten vor unangemessenem
+Zugriff zu schützen. Sämtlicher Code, der auf das Feld
+<TT
+CLASS="LITERAL"
+>data</TT
+> der Struktur <TT
+CLASS="LITERAL"
+>Scull_Dev</TT
+>
+zugreift, muß zunächst das Semaphor erworben haben. Um Deadlocks zu
+vermeiden, sollten nur Funktionen, die Geräte-Methoden implementieren,
+das Semaphor anfordern. Interne Routinen wie das oben gezeigte
+<SPAN
+><I
+CLASS="EMPHASIS"
+>scull_trim</I
+></SPAN
+> gehen davon aus, daß das Semaphor
+bereits erworben wurde. Solange dies gewährleistet ist, ist der
+Zugriff auf die Datenstruktur <TT
+CLASS="LITERAL"
+>Scull_Dev</TT
+> vor Race
+Conditions geschützt.&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="charscullmem.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="charrdwr.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Die Verwendung von
+Speicher in scull</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="char.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>read und write</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

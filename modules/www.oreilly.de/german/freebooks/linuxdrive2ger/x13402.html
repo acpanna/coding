@@ -1,0 +1,591 @@
+<HTML
+><HEAD
+><TITLE
+>Andere Portabilitätsfragen</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Überlegte Verwendung von Datentypen"
+HREF="judas.html"><LINK
+REL="PREVIOUS"
+TITLE="Schnittstellenspezifische Typen"
+HREF="judasif.html"><LINK
+REL="NEXT"
+TITLE="Verkettete Listen"
+HREF="judaslist.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="judasif.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 10. Überlegte Verwendung von Datentypen</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="judaslist.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN13402"
+>Andere Portabilitätsfragen</A
+></H1
+><P
+>&#13;Außer den Datentypen gibt es noch einige andere Punkte, die Sie im
+Hinterkopf behalten sollten, wenn Sie einen Treiber schreiben, der
+portabel über die Linux-Plattformen sein soll.</P
+><P
+>Eine allgemeine Regel lautet, daß man bei expliziten konstanten Werten
+mißtrauisch sein sollte. Normalerweise ist der Code mit
+Präprozessor-Makros parametrisiert worden. Dieser Abschnitt nennt die
+wichtigsten Portabilitätsprobleme. Immer wenn Sie auf andere Werte
+stoßen, die parametrisiert worden sind, können Sie Hinweise in den
+Header-Dateien und den mit dem offiziellen Kernel ausgelieferten
+Gerätetreibern finden.</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN13408"
+>Zeit-Intervalle</A
+></H2
+><P
+>&#13;
+
+
+Gehen Sie nicht davon aus, daß immer 100 Jiffies in einer Sekunde
+sind. Obwohl das derzeit für Linux-x86 gilt, läuft nicht jede andere
+Linux-Plattform mit 100 Hz (im 2.4-Kernel finden sich Werte zwischen 20
+und 1200; 20 wird aber nur im IA64-Simulator verwendet). Selbst unter
+x86  kann diese Annahme falsch
+sein, wenn Sie den Wert von <TT
+CLASS="LITERAL"
+>HZ</TT
+> ändern (wie manche
+Leute das tun). Und was in
+zukünftigen Kerneln passiert, weiß ohnehin keiner.  Wann immer Sie
+Zeit-Intervalle mit Jiffies berechnen, sollten Sie die Zeiten mit
+<TT
+CLASS="LITERAL"
+>HZ</TT
+> (der Anzahl der Timer-Interrupts pro Sekunde)
+skalieren. Wenn Sie beispielsweise einen Timeout
+von einer halben Sekunde überprüfen wollen, dann vergleichen Sie die
+verstrichene Zeit mit <TT
+CLASS="LITERAL"
+>HZ/2</TT
+>. Allgemein gesagt
+liegen in <TT
+CLASS="LITERAL"
+>msec</TT
+> Millisekunden immer
+<TT
+CLASS="LITERAL"
+>msec*HZ/1000</TT
+>
+Jiffies. Dieses Problem mußte in vielen Netzwerktreibern behoben
+werden, als sie auf die Alpha-Plattform portiert wurden; manche Treiber
+funktionierten auf dieser Plattform nicht, weil sie erwarteten, daß
+<TT
+CLASS="LITERAL"
+>HZ</TT
+> 100 ist.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN13427"
+>Seitengröße</A
+></H2
+><P
+>&#13;
+
+Wenn Sie mit dem Speicher herumspielen, dann denken Sie daran, daß
+eine Speicherseite eine Größe von <TT
+CLASS="LITERAL"
+>PAGE_SIZE</TT
+>
+Bytes und nicht von 4 KByte hat. Es ist ein typischer Fehler von
+PC-Programmierern anzunehmen, daß die Seitengröße 4 KByte beträgt, und
+diesen Wert hart zu codieren &#8212; die Seitengröße schwankt auf den
+unterstützten Plattformen zwischen 4 KByte und 64 KByte; manchmal gibt es
+sogar Unterschiede zwischen unterschiedlichen Implementierungen auf
+der gleichen Plattform. Die relevanten Makros sind
+<TT
+CLASS="LITERAL"
+>PAGE_SIZE</TT
+> und
+<TT
+CLASS="LITERAL"
+>PAGE_SHIFT</TT
+>. Das zweite
+Makro enthält die Anzahl von Bits, mit der eine Adresse verschoben
+werden muß, um die Seitennummer zu ermitteln. Derzeit sind das 12 oder
+mehr für 4 KByte- oder größere Seiten. Diese Makros sind in
+<TT
+CLASS="LITERAL"
+>&#60;asm/page.h&#62;</TT
+> definiert; User
+Space-Programme können <SPAN
+><I
+CLASS="EMPHASIS"
+>getpagesize</I
+></SPAN
+> verwenden,
+falls sie diese Information jemals benötigen sollten.
+
+
+
+
+    </P
+><P
+>Schauen wir uns eine nicht-triviale Situation an. Wenn ein Treiber
+16 KByte für temporäre Daten benötigt, dann sollte bei
+<SPAN
+><I
+CLASS="EMPHASIS"
+>get_free_pages</I
+></SPAN
+> kein
+<TT
+CLASS="LITERAL"
+>order</TT
+>-Wert von 2 verwendet werden. Sie brauchen
+eine portable Lösung. Die Verwendung von diversen
+<TT
+CLASS="LITERAL"
+>#ifdef</TT
+>-Ausdrücken mag zwar derzeit funktionieren,
+hilft aber nur bei Plattformen, an die Sie gerade denken, und kommt nicht mehr
+hin, wenn weitere Plattformen unterstützt werden. Daher sollten Sie
+besser diesen Code verwenden:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+int order = (14 - PAGE_SHIFT &#62; 0) ? 14 - PAGE_SHIFT : 0;
+buf = get_free_pages(GFP_KERNEL, order, 0 /*dma*/);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Diese Lösung basiert darauf, daß 16 KByte gleich
+<TT
+CLASS="LITERAL"
+>1&#60;&#60;14</TT
+> ist. Der Quotient der beiden Zahlen ist
+die Differenz ihrer Logarithmen (Potenzen), und sowohl
+<TT
+CLASS="LITERAL"
+>14</TT
+> als auch <TT
+CLASS="LITERAL"
+>PAGE_SHIFT</TT
+>
+sind ja Potenzen. Der
+Wert von <TT
+CLASS="LITERAL"
+>order</TT
+> wird zur Kompilierzeit ohne weiteren
+Verwaltungsaufwand berechnet. Diese Implementation ist eine sichere
+Möglichkeit, Speicher für eine beliebige Zweierpotenz zu allozieren,
+unabhängig davon, welchen Wert <TT
+CLASS="LITERAL"
+>PAGE_SIZE</TT
+> hat.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN13459"
+>Byte-Reihenfolge</A
+></H2
+><P
+>&#13;
+
+Achten Sie darauf, keine Annahmen über die Byte-Reihenfolge zu
+machen. PCs speichern aus mehreren Bytes bestehende Werte mit dem
+niedrigerwertigen Byte zuerst (Little-Endian), die meisten
+leistungsfähigeren Plattformen arbeiten andersherum
+(Big-Endian). Moderne Prozessoren können in beiden Modi arbeiten, aber
+die meisten ziehen es vor, im Big-Endian-Modus zu arbeiten; die
+Unterstützung für Little-Endian-Speicherzugriff wurde hinzufügt, um
+mit PC-Daten umgehen zu können. Linux arbeitet aber normalerweise im
+nativen Modus des Prozessors. Ihr Code sollte nach Möglichkeit so
+geschrieben sein, daß er sich nicht um die Byte-Reihenfolge der
+manipulierten Daten kümmert. Manchmal muß ein Treiber aber eine
+Integer-Zahl aus einzelnen Bytes zusammensetzen (oder das Gegenteil
+tun).</P
+><P
+>&#13;
+
+
+Sie müssen sich beispielsweise mit der Endian-Eigenschaft
+auseinandersetzen, wenn Sie Header in Netzwerk-Paketen ausfüllen oder
+wenn Sie es mit einem Peripherie-Gerät zu tun haben, das mit einer
+bestimmten Byte-Reihenfolge arbeitet. In diesem Fall sollte der Code
+<TT
+CLASS="LITERAL"
+>&#60;asm/byteorder.h&#62;</TT
+> enthalten und abfragen, ob
+diese Header-Datei <TT
+CLASS="LITERAL"
+>_&#8201;_BIG_ENDIAN</TT
+> oder
+<TT
+CLASS="LITERAL"
+>_&#8201;_LITTLE_ENDIAN</TT
+> definiert.</P
+><P
+>&#13;
+Sie könnten eine Reihe von <TT
+CLASS="LITERAL"
+>#ifdef
+_&#8201;_LITTLE_ENDIAN</TT
+>-Ausdrücken verwenden, aber es gibt
+auch noch eine bessere Möglichkeit. Der Linux-Kernel definiert einen
+Satz Makros, die Konvertierungen zwischen der Byte-Reihenfolge des
+Prozessors und der Byte-Reihenfolge der Daten durchführen, wenn Sie die Daten in einer bestimmten
+Reihenfolge laden oder speichern müssen. Ein Beispiel:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;u32 _&#8201;_cpu_to_le32 (u32);
+u32 _&#8201;_le32_to_cpu (u32);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Diese beiden Makros konvertieren einen Wert von der Darstellung, die
+die CPU verwendet, in einen vorzeichenlosen, 32 Bit breiten Little-Endian-Wert und zurück. Dieses funktioniert unabhängig davon, ob
+die CPU Little-Endian oder Big-Endian ist, und auch unabhängig davon,
+ob es sich um einen 32-Bit-Prozessor oder nicht handelt. Die Makros
+geben ihr Argument unverändert zurück, wenn nichts zu tun ist. Mit
+diesen Makros ist es einfach, portablen Code zu schreiben, ohne
+besonders viele bedingte Kompilierungsanweisungen zu verwenden.</P
+><P
+>Es gibt Dutzende solcher Routinen; die vollständige Liste finden Sie in
+<TT
+CLASS="LITERAL"
+>&#60;linux/byteorder/big_endian.h&#62;</TT
+> und
+<TT
+CLASS="LITERAL"
+>&#60;linux/byteorder/little_endian.h&#62;</TT
+>. Nach einer
+Weile erschließt sich das Muster leicht.
+<SPAN
+><I
+CLASS="EMPHASIS"
+>_&#8201;_be64_to_cpu</I
+></SPAN
+> konvertiert einen
+vorzeichenlosen, 64 Bit breiten Big-Endian-Wert in die interne
+CPU-Repräsentation.
+<SPAN
+><I
+CLASS="EMPHASIS"
+>_&#8201;_le16_to_cpus</I
+></SPAN
+> dagegen kümmert sich um
+vorzeichenbehaftete, 16 Bit breite Little-Endian-Werte. Wenn Sie es
+mit Zeigern zu tun haben, können Sie ebenfalls Funktionen wie
+<SPAN
+><I
+CLASS="EMPHASIS"
+>_&#8201;_cpu_to_le32p</I
+></SPAN
+> verwenden, die einen
+Zeiger auf den zu konvertierenden Wert anstelle des Wertes selbst
+erwarten. Die Header-Datei enthält alle weiteren Informationen.</P
+><P
+>Nicht alle Linux-Versionen definieren alle Makros, die mit der
+Byte-Reihenfolge zu tun haben. Insbesondere erschien das Verzeichnis
+<TT
+CLASS="FILENAME"
+>linux/byteorder</TT
+> in der Version 2.1.72, um Ordnung
+in die diversen
+<TT
+CLASS="LITERAL"
+>&#60;asm/byteorder.h&#62;</TT
+>-Dateien zu bringen und
+doppelte Definitionen zu entfernen. Wenn Sie unsere Header-Datei
+<TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> verwenden, dann können Sie alle in Linux
+2.4 vorhandenen Makros auch mit den 2.0- und 2.2-Kerneln verwenden.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN13499"
+>Datenausrichtung</A
+></H2
+><P
+>&#13;
+Das letzte Problem, um das wir uns beim Schreiben von portablem Code
+kümmern müssen, ist der Zugriff auf nicht ausgerichtete Daten, also
+beispielsweise, wie man einen 4-Byte-Wert an einer Adresse speichert,
+die kein Vielfaches von 4 ist. PC-Benutzer greifen oft auf
+nicht-ausgerichtete Datenelemente zu, aber nur wenige Architekturen
+erlauben das. Die meisten modernen Architekturen erzeugen jedesmal
+eine Ausnahme, wenn das Programm nicht ausgerichtete Datenübertragungen
+ausführen will; die Datenübertragung wird dann unter großem
+Performance-Verlust von der Ausnahmebehandlungsroutine erledigt. Wenn
+Sie auf nicht-ausgerichtete Daten zugreifen
+müssen, sollten Sie die folgenden Makros verwenden:
+
+    </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+#include &#60;asm/unaligned.h&#62;
+get_unaligned(ptr);
+put_unaligned(val, ptr);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Diese Makros sind typenlos und funktionieren mit jedem Datenelement,
+egal ob es 1, 2, 4 oder 8 Byte lang ist. Diese Makros sind in allen
+Kernel-Versionen vorhanden.</P
+><P
+>&#13;Bei der Ausrichtung spielt auch die Portabilität von
+Datenstrukturen über Plattformen hinweg eine Rolle. Die gleiche Datenstruktur
+(wie sie in einer C-Quelldatei definiert ist) kann auf
+unterschiedlichen Plattformen unterschiedlich kompiliert werden. Der
+Compiler ordnet die Felder der Struktur so an, daß sie entsprechend
+den Konventionen der jeweiligen Plattform ausgerichtet
+sind. Theoretisch kann der Compiler sogar die Reihenfolge der Felder
+einer Struktur umstellen, um den Speicherverbrauch zu
+optimieren.<A
+NAME="AEN13512"
+HREF="#FTN.AEN13512"
+>[1]</A
+></P
+><P
+>&#13;Um Datenstrukturen für Datenelemente entwickeln zu können, die
+portabel über Architekturen hinweg sind, sollten Sie immer die
+natürliche Ausrichtung der Datenelemente erzwingen (neben der
+Standardisierung auf eine bestimmte
+Endian-Eigenschaft). <SPAN
+><I
+CLASS="EMPHASIS"
+>Natürliche Ausrichtung</I
+></SPAN
+> nennt
+man das Speichern der Datenelemente an einer Adresse, die ein
+Vielfaches ihrer Größe beträgt (8 Byte große Elemente gehören also an
+eine Adresse, die ein Vielfaches von 8 ist). Um die natürliche Ausrichtung
+zu erzwingen und den Compiler daran zu hindern, Felder
+umherzuschieben, sollten Sie Füllfelder verwenden, die es vermeiden,
+Löcher in der Datenstruktur zu lassen.</P
+><P
+>&#13;
+
+Um Ihnen zu zeigen, wie der Compiler die Ausrichtung erzwingt, finden
+Sie im Verzeichnis <TT
+CLASS="FILENAME"
+>misc-progs</TT
+> im Beispiel-Code
+das Programm <SPAN
+CLASS="APPLICATION"
+>dataalign</SPAN
+> sowie das
+äquivalente Modul <SPAN
+CLASS="APPLICATION"
+>kdataalign</SPAN
+>. Hier sehen sie
+die Ausgabe des Programms auf mehreren Plattformen sowie die Ausgabe
+des Moduls auf SPARC64:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>arch  Align:  char  short  int  long   ptr long-long  u8 u16 u32 u64
+i386            1     2     4     4     4     4        1   2   4   4
+i686            1     2     4     4     4     4        1   2   4   4
+alpha           1     2     4     8     8     8        1   2   4   8
+armv4l          1     2     4     4     4     4        1   2   4   4
+ia64            1     2     4     8     8     8        1   2   4   8
+mips            1     2     4     4     4     8        1   2   4   8
+ppc             1     2     4     4     4     8        1   2   4   8
+sparc           1     2     4     4     4     8        1   2   4   8
+sparc64         1     2     4     4     4     8        1   2   4   8
+
+kernel: arch  Align: char short int long  ptr long-long u8 u16 u32 u64
+kernel: sparc64        1    2    4    8    8     8       1   2   4   8</PRE
+></TD
+></TR
+></TABLE
+><P
+>Interessanterweise richten nicht alle Plattformen 64-Bit-Werte an
+durch 64 teilbaren Adressen aus, so daß Sie Füllfelder brauchen, um
+die Ausrichtung zu erzwingen und die Portabilität sicherzustellen.&#13;</P
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN13512"
+HREF="x13402.html#AEN13512"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Das Umstellen von Feldern geschieht auf den
+derzeit unterstützten Architekturen nicht, weil es die
+Interoperabilität mit existierendem Code zerstören könnte; eine neue
+Architektur könnte aber durch aus Umstellregeln für Strukturen
+vorsehen, die dann auch Löcher aufgrund von Ausrichtungsanforderungen
+enthalten könnten.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="judasif.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="judaslist.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Schnittstellenspezifische Typen</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="judas.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Verkettete Listen</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

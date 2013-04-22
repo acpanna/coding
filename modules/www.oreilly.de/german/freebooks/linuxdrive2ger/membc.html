@@ -1,0 +1,666 @@
+<HTML
+><HEAD
+><TITLE
+>Abwärtskompatibilität</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="mmap und DMA"
+HREF="mem.html"><LINK
+REL="PREVIOUS"
+TITLE="Direct Memory Access und Bus Mastering"
+HREF="memdma.html"><LINK
+REL="NEXT"
+TITLE="Schnellreferenz"
+HREF="x18853.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="memdma.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 13. mmap und DMA</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x18853.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="MEMBC"
+>Abwärtskompatibilität</A
+></H1
+><P
+>Wie anderen Kernel-Bestandteile haben sich auch das Einblenden
+von Speicher und DMA über die Jahre verändert. Dieser Abschnitt
+beschreibt, was ein Autor von Gerätetreibern beachten muß, um portablen Code zu
+schreiben.</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN18691"
+>Änderungen in der Speicherverwaltung</A
+></H2
+><P
+>&#13;
+In der 2.3-Entwicklungsserie wurden massive Veränderungen an der
+Speicherverwaltung vorgenommen. Der 2.2-Kernel war hinsichtlich der
+Menge verwendbaren Speichers sehr eingeschränkt, insbesondere auf
+32-Bit-Prozessoren. In 2.4 sind diese Einschränkungen aufgehoben
+worden; Linux kann nun sämtlichen Speicher ansprechen, den der
+Prozessor adressieren kann. Manches mußte verändert werden, um dies
+möglich zu machen; insgesamt gesehen ist die Anzahl der Änderungen auf
+API-Ebene aber überraschend klein.</P
+><P
+>Wie Sie gesehen haben, macht der 2.4-Kernel intensiven Gebrauch von
+Zeigern auf <TT
+CLASS="LITERAL"
+>struct page</TT
+>, um auf bestimmte Seiten im
+Speicher zu verweisen. Diese Struktur hat es in Linux schon lange
+gegeben, aber bisher ist sie nicht dazu verwendet worden, um auf die
+Seiten selbst zu verweisen; der Kernel verwendete vielmehr logische
+Adressen.</P
+><P
+>&#13;Daher gab etwa <SPAN
+><I
+CLASS="EMPHASIS"
+>pte_page</I
+></SPAN
+>  einen
+<TT
+CLASS="LITERAL"
+>unsigned long</TT
+>-Wert anstelle eines <TT
+CLASS="LITERAL"
+>struct
+page*</TT
+> zurück. Das Makro
+<SPAN
+><I
+CLASS="EMPHASIS"
+>virt_to_page</I
+></SPAN
+> existierte überhaupt
+nicht; wenn Sie den <TT
+CLASS="LITERAL"
+>struct page</TT
+>-Eintrag
+herausfinden mußten, mußten Sie sich diesen direkt aus der
+Speichertabelle holen. Das Makro <TT
+CLASS="LITERAL"
+>MAP_NR</TT
+>
+wandelte eine logische Adresse in einen Eintrag in
+<TT
+CLASS="LITERAL"
+>mem_map</TT
+> um. Daher könnte das aktuelle Makro
+<SPAN
+><I
+CLASS="EMPHASIS"
+>virt_to_page</I
+></SPAN
+> folgendermaßen
+definiert werden (und in <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+>
+im Beispiel-Code wird es auch so definiert):</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+#ifdef MAP_NR
+#define virt_to_page(page) (mem_map + MAP_NR(page))
+#endif</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Das Makro <TT
+CLASS="LITERAL"
+>MAP_NR</TT
+> verschwand, als
+<SPAN
+><I
+CLASS="EMPHASIS"
+>virt_to_page</I
+></SPAN
+> eingeführt
+wurde. <SPAN
+><I
+CLASS="EMPHASIS"
+>get_page</I
+></SPAN
+> existierte vor 2.4 nicht,
+weswegen <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> es folgendermaßen definiert:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+#ifndef get_page
+#  define get_page(p) atomic_inc(&#38;(p)-&#62;count)
+#endif</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;<TT
+CLASS="LITERAL"
+>struct page</TT
+> hat sich also mit der Zeit geändert,
+insbesondere gibt es das Feld <TT
+CLASS="LITERAL"
+>virtual</TT
+> erst ab Linux 2.4.</P
+><P
+>&#13;<TT
+CLASS="LITERAL"
+>page_table_lock</TT
+> wurde in 2.3.10 eingeführt. Davor
+holte sich der Code die &#8220;große Kernel-Sperre&#8221; (durch Aufrufen von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>lock_kernel</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>unlock_kernel</I
+></SPAN
+>), bevor Seitentabellen
+traversiert wurden.</P
+><P
+>&#13;Die <TT
+CLASS="LITERAL"
+>vm_area_struct</TT
+> erfuhr in der
+2.3-Entwicklungsserie eine Reihe von Änderungen und in 2.1 sogar noch
+mehr. Dazu gehören:</P
+><P
+></P
+><UL
+><LI
+><P
+>Das Feld <TT
+CLASS="LITERAL"
+>vm_pgoff</TT
+> hieß in 2.2 und davor
+<TT
+CLASS="LITERAL"
+>vm_offset</TT
+> und war ein Offset in Bytes, nicht
+in Seiten.</P
+></LI
+><LI
+><P
+>&#13;Das Feld <TT
+CLASS="LITERAL"
+>vm_private_data</TT
+> existierte in Linux 2.2 noch
+nicht, so daß Treiber keine Möglichkeiten hatten, ihre eigenen
+Informationen in der VMA unterzubringen. Einige taten das trotzdem und
+verwendeten dafür das Feld <TT
+CLASS="LITERAL"
+>vm_pte</TT
+>, aber es
+wäre sicherer gewesen, sich die Minor-Nummer aus
+<TT
+CLASS="LITERAL"
+>vm_file</TT
+> zu holen und anhand dieser die
+gewünschte Information aufzufinden.</P
+></LI
+><LI
+><P
+>Der 2.4-Kernel initialisiert den
+<TT
+CLASS="LITERAL"
+>vm_file</TT
+>-Zeiger vor dem Aufruf der Methode
+<SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+>. In 2.2 mußten Treiber diesen Wert unter
+Verwendung der als Argument übergebenen
+<TT
+CLASS="LITERAL"
+>file</TT
+>-Struktur selbst zuweisen.</P
+></LI
+><LI
+><P
+>Der Zeiger <TT
+CLASS="LITERAL"
+>vm_file</TT
+> existierte in den 2.0-Kerneln
+überhaupt nicht; statt dessen gab es einen
+<TT
+CLASS="LITERAL"
+>vm_inode</TT
+>-Zeiger, der auf eine
+<TT
+CLASS="LITERAL"
+>inode</TT
+>-Struktur verwies. Dieses Feld mußte vom
+Treiber zugewiesen werden; es war außerdem notwendig,
+<TT
+CLASS="LITERAL"
+>inode-&#62;i_count</TT
+> in
+<SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+> zu inkrementieren.</P
+></LI
+><LI
+><P
+>Das Flag <TT
+CLASS="LITERAL"
+>VM_RESERVED</TT
+> wurde im Kernel
+2.4.0-test10 hinzugefügt.</P
+></LI
+></UL
+><P
+>Es hat auch Änderungen an den diversen in der VMA gespeicherten
+<TT
+CLASS="LITERAL"
+>vm_ops</TT
+>-Methoden gegeben:</P
+><P
+></P
+><UL
+><LI
+><P
+>2.2 und frühere Kernel hatten eine Methode namens
+<SPAN
+><I
+CLASS="EMPHASIS"
+>advise</I
+></SPAN
+>, die nie vom Kernel verwendet
+wurde. Außerdem gab es eine Methode namens
+<SPAN
+><I
+CLASS="EMPHASIS"
+>swapin</I
+></SPAN
+>, mit der Speicher aus der Auslagerung
+zurückgeholt wurde; diese war für Treiber-Autoren nicht interessant.</P
+></LI
+><LI
+><P
+>&#13;
+Die Methoden <SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>wppage</I
+></SPAN
+> gaben in 2.2 <TT
+CLASS="LITERAL"
+>unsigned
+long</TT
+> (also eine logische Adresse) anstelle von
+<TT
+CLASS="LITERAL"
+>struct page*</TT
+> zurück.</P
+></LI
+><LI
+><P
+>Die Rückgabe-Codes <TT
+CLASS="LITERAL"
+>NOPAGE_SIGBUS</TT
+>
+und <TT
+CLASS="LITERAL"
+>NOPAGE_OOM</TT
+> von <SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+>
+existierten nicht. <SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+> gab einfach 0 zurück,
+um ein Problem anzuzeigen und ein Bus-Signal an den betroffenen Prozeß
+zu schicken.</P
+></LI
+></UL
+><P
+>Weil <SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+> <TT
+CLASS="LITERAL"
+>unsigned
+long</TT
+> zurückzugeben pflegte, wurde die logische Adresse der
+betroffenen Seite anstelle von deren
+<TT
+CLASS="LITERAL"
+>mem_map</TT
+>-Eintrag zurückgegeben.</P
+><P
+>&#13;
+Natürlich gab es in älteren Kerneln keine Unterstützung für hohen
+Speicher. Sämtlicher Speicher hatte logische Adressen, und die
+Funktionen <SPAN
+><I
+CLASS="EMPHASIS"
+>kmap</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>kunmap</I
+></SPAN
+>
+gab es nicht.</P
+><P
+>Im 2.0-Kernel wurde die Struktur <TT
+CLASS="LITERAL"
+>init_mm</TT
+>
+nicht an Module exportiert. Daher mußte ein Modul, das auf
+<TT
+CLASS="LITERAL"
+>init_mm</TT
+> zugreifen wollte, die Task-Tabelle
+durchsuchen, um die Struktur zu finden (als Bestandteil des
+<SPAN
+CLASS="APPLICATION"
+>init</SPAN
+>-Prozesses). Auf einem 2.0-Kernel
+findet <SPAN
+CLASS="APPLICATION"
+>scullp</SPAN
+>
+<TT
+CLASS="LITERAL"
+>init_mm</TT
+> mit folgendem Stückchen Code:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+static struct mm_struct *init_mm_ptr;
+#define init_mm (*init_mm_ptr) /* spaetere ifdefs vermeiden */
+
+static void retrieve_init_mm_ptr(void)
+{
+    struct task_struct *p;
+
+    for (p = current ; (p = p-&#62;next_task) != current ; )
+        if (p-&#62;pid == 0)
+            break;
+
+    init_mm_ptr = p-&#62;mm;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+Die 2.0-Kernel unterschieden nicht zwischen logischen und
+physikalischen Adressen, weswegen es die Makros
+<SPAN
+><I
+CLASS="EMPHASIS"
+>__va</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>__pa</I
+></SPAN
+> nicht gab &#8212; man brauchte
+sie damals einfach nicht.</P
+><P
+>Die 2.0-Kernel pflegten auch den Verwendungszähler von Modulen im
+Zusammenhang mit in den Speicher eingeblendeten Bereichen
+nicht. Treiber, die <SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+> unter 2.0
+implementierten, mußten <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>- und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>close</I
+></SPAN
+>-VMA-Operationen implementieren, um den
+Verwendungszähler selbst anzupassen. Die Beispiel-Module, die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+> implementieren, stellen diese Operationen
+bereit.</P
+><P
+>&#62;
+&#62;
+Schließlich hatte die Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+> in den
+2.0-Versionen wie die meisten anderen ein <TT
+CLASS="LITERAL"
+>struct
+inode</TT
+>-Argument und damit folgenden Prototyp:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;int (*mmap)(struct inode *inode, struct file *filp,
+            struct vm_area_struct *vma);</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN18836"
+>DMA-Änderungen</A
+></H2
+><P
+>&#13;
+
+Die oben beschriebene PCI-DMA-Schnittstelle gibt es erst seit Kernel
+2.3.41. Vorher wurde DMA direkter und damit auch systemabhängiger
+durchgeführt. Puffer wurden durch Aufruf von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>virt_to_bus</I
+></SPAN
+> &#8220;eingeblendet&#8221;; es gab
+keine allgemeine Schnittstelle für Bus-Einblendungsregister.</P
+><P
+>Für diejenigen von Ihnen, die portable PCI-Treiber schreiben müssen,
+enthält <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> im Beispiel-Code eine einfache
+Implementation der 2.4-DMA-Schnittstelle, die auf älteren Kerneln
+verwendet werden kann.
+&#13;</P
+><P
+>Die ISA-Schnittstelle ist dagegen seit Linux 2.0 fast unverändert
+geblieben. ISA ist schließlich eine alte Architektur, bei der es nicht
+viele Änderungen mehr gegeben hat, um die man sich hätte kümmern
+müssen. Die einzige Änderung war das DMA-Spinlock in 2.2; vorher gab
+es keine Möglichkeit, sich gegen nebenläufige Zugriffe auf den
+DMA-Controller zu schützen. Versionen dieser Funktionen sind in
+<TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> definiert; sie schalten Interrupts ein
+und aus, machen aber nichts anderes.
+&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="memdma.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x18853.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Direct Memory Access und Bus Mastering</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="mem.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Schnellreferenz</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

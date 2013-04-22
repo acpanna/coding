@@ -1,0 +1,415 @@
+<HTML
+><HEAD
+><TITLE
+>Interrupt-gesteuerte Block-Treiber</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Das Laden von Block-Treibern"
+HREF="lock.html"><LINK
+REL="PREVIOUS"
+TITLE="Partitionierbare Geräte"
+HREF="lockgenhd.html"><LINK
+REL="NEXT"
+TITLE="Abwärtskompatibilität"
+HREF="x16318.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="lockgenhd.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 12. Das Laden von Block-Treibern</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x16318.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="LOCKBH"
+>Interrupt-gesteuerte Block-Treiber</A
+></H1
+><P
+>&#13;
+
+Wenn ein Treiber ein echtes Hardware-Gerät ansteuert, dann findet der
+Betrieb normalerweise Interrupt-gesteuert statt. Die Verwendung von
+Interrupts steigert die System-Performance, weil der Prozessor während
+der I/O-Operationen freigegeben wird. Damit die
+Interrupt-gesteuerte I/O funktioniert, muß das angesteuerte Gerät
+in der Lage sein, Daten asynchron zu übertragen und Interrupts
+generieren zu können.&#13;</P
+><P
+>Wenn der Treiber Interrupt-gesteuert ist, dann startet die
+Anfrage-Funktion eine Datenübertragung und kehrt unmittelbar
+zurück, ohne <SPAN
+><I
+CLASS="EMPHASIS"
+>end_request</I
+></SPAN
+> aufzurufen. Der
+Kernel akzeptiert eine Anfrage aber nicht als erfüllt, bevor nicht
+<SPAN
+><I
+CLASS="EMPHASIS"
+>end_request</I
+></SPAN
+> (oder die Bestandteile dieser
+Funktion) aufgerufen worden sind. Daher
+muß die obere oder untere Hälfte des Interrupt-Handlers
+<SPAN
+><I
+CLASS="EMPHASIS"
+>end_request</I
+></SPAN
+> aufrufen, wenn das Gerät
+meldet, daß die Datenübertragung vollständig abgearbeitet worden ist.
+&#13;</P
+><P
+>Weder <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> noch
+<SPAN
+CLASS="APPLICATION"
+>spull</SPAN
+> können Daten ohne den
+System-Prozessor übertragen, <SPAN
+CLASS="APPLICATION"
+>spull</SPAN
+> kann
+aber einen Interrupt-gesteuerten Betrieb vortäuschen, indem beim Laden die
+Option <TT
+CLASS="LITERAL"
+>irq=1</TT
+> angegeben wird. Wenn
+<TT
+CLASS="LITERAL"
+>irq</TT
+> nicht Null ist, dann verwendet der Treiber
+einen Kernel-Timer, um das vollständige Bearbeiten der aktuellen
+Anfrage zu verzögern. Die Länge der Verzögerung wird durch den Wert
+von <TT
+CLASS="LITERAL"
+>irq</TT
+> angegeben: Je größer der Wert, desto größer
+die Verzögerung.
+&#13;</P
+><P
+>&#13;Wie auch sonst beginnen Block-Übertragungen, wenn der Kernel die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion des Treibers aufruft. Die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion eines Interrupt-gesteuerten
+Geräts instruiert
+die Hardware, die Übertragung auszuführen, und kehrt dann zurück. Sie wartet also nicht darauf, daß die Übertragung beendet wird. Die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion in
+<SPAN
+CLASS="APPLICATION"
+>spull</SPAN
+> unternimmt die üblichen
+Fehlerkontrollen und ruft dann
+<SPAN
+><I
+CLASS="EMPHASIS"
+>spull_transfer</I
+></SPAN
+> auf, um die
+Daten zu transportieren (das ist genau die Aufgabe, die ein echter
+Treiber asynchron durchführt). Dann verzögert sie die Bestätigung bis
+zur Interrupt-Zeit:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+void spull_irqdriven_request(request_queue_t *q)
+{
+    Spull_Dev *device;
+    int status;
+    long flags;
+
+    /* Wenn wir bereits Anfragen verarbeiten, keine weiteren mehr annehmen. */
+    if (spull_busy)
+            return;
+
+    while(1) {
+        INIT_REQUEST;  /* springt zurueck, wenn die Warteschlange leer ist */
+
+        /* Welches "Geraet" verwenden wir? */
+        device = spull_locate_device (CURRENT);
+        if (device == NULL) {
+            end_request(0);
+            continue;
+        }
+        spin_lock_irqsave(&#38;device-&#62;lock, flags);
+
+        /* Uebertragung durchfuehren und aufraeumen. */
+        status = spull_transfer(device, CURRENT);
+        spin_unlock_irqrestore(&#38;device-&#62;lock, flags);
+        /* ... und darauf warten, daß der Time ablaeuft -- kein end_request(1) */
+        spull_timer.expires = jiffies + spull_irq;
+        add_timer(&#38;spull_timer);
+        spull_busy = 1;
+        return;
+    }
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Neue Anfragen können sich ansammeln, während das Gerät mit der
+aktuellen Anfrage beschäftigt ist. Weil reentrante Aufrufe in diesem Szenario
+fast schon garantiert sind, setzt die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion das Flag
+<TT
+CLASS="LITERAL"
+>spull_busy</TT
+>, damit nur jeweils eine Übertragung stattfindet. Weil die gesamte Funktion bei gehaltener
+<TT
+CLASS="LITERAL"
+>io_request_lock</TT
+>-Sperre abläuft
+(erinnern Sie sich, daß der Kernel diese Sperre erwirbt, bevor er die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion aufruft), ist es nicht
+notwendig, beim Abfragen und Setzen dieses Flags besondere Vorsicht
+walten zu lassen. Ansonsten hätte ein
+<TT
+CLASS="LITERAL"
+>atomic_t</TT
+> anstelle einer
+<TT
+CLASS="LITERAL"
+>int</TT
+>-Variable verwendet werden müssen, um Race
+Conditions zu vermeiden.</P
+><P
+>Der Interrupt-Handler hat eine Reihe von Aufgaben. Zunächst muß er
+natürlich den Status der ausstehenden Übertragung abfragen und die
+Anfrage aufräumen. Wenn dann noch weitere Anfragen anstehen, muß sich
+der Interrupt-Handler auch darum kümmern, daß die nächste abgearbeitet
+wird. Um eine Code-Duplikation zu vermeiden, ruft der Handler normalerweise
+einfach die <SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion auf, um die nächste
+Übertragung einzuleiten. Denken Sie daran, daß diese Funktion
+erwartet, daß die Sperre
+<TT
+CLASS="LITERAL"
+>io_request_lock</TT
+> gehalten wird; der
+Interrupt-Handler muß die Sperre daher erst erwerben. Die Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>end_request</I
+></SPAN
+> benötigt diese Sperre
+natürlich auch.</P
+><P
+>In unserem Beispiel-Modul wird die Rolle des Interrupt-Handlers von
+der Funktion übernommen, die aufgerufen wird, wenn der Timer
+abläuft. Diese Funktion ruft <SPAN
+><I
+CLASS="EMPHASIS"
+>end_request</I
+></SPAN
+>
+auf und merkt die nächste Datenübertragung durch Aufrufen der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion vor. Im Interesse der
+Einfachheit des Codes führt der Interrupt-Handler von
+<SPAN
+CLASS="APPLICATION"
+>spull</SPAN
+> all diese Aufgaben zur
+"Interrupt-Zeit" durch; ein echter Treiber würde ziemlich sicher einen
+großen Teil dieser Aufgaben verzögern und sie in einer
+Task-Warteschlange oder einem Tasklet ausführen.&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+/* diese Funktion wird beim Ablauf des Timers aufgerufen */
+void spull_interrupt(unsigned long unused)
+{
+    unsigned long flags
+
+    spin_lock_irqsave(&#38;io_request_lock, flags);
+    end_request(1);    /* Anfrage erledigt - immer erfolgreich */
+
+    spull_busy = 0;  /* Wir haben io_request_lock, keine Konflikte moeglich */
+    if (! QUEUE_EMPTY) /* noch mehr? */
+        spull_irqdriven_request(NULL);  /* Naechste Uebertragung einleiten */
+    spin_unlock_irqrestore(&#38;io_request_lock, flags);
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wenn Sie versuchen, die Interrupt-gesteuerte Variante von
+<SPAN
+CLASS="APPLICATION"
+>spull</SPAN
+> auszuprobieren, werden Sie die
+zusätzliche Verzögerung kaum bemerken. Das Gerät ist fast genauso
+schnell wie vorher, weil der Buffer-Cache die meisten
+Datenübertragungen zwischen dem Speicher und dem physikalischen Gerät
+vermeidet. Wenn Sie beobachten wollen, wie sich ein langsames Gerät
+verhält, können Sie beim Laden von <SPAN
+CLASS="APPLICATION"
+>spull</SPAN
+>
+einen größeren Wert für <TT
+CLASS="LITERAL"
+>irq=</TT
+> angeben.
+
+
+&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="lockgenhd.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x16318.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Partitionierbare Geräte</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="lock.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Abwärtskompatibilität</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

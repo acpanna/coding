@@ -1,0 +1,605 @@
+<HTML
+><HEAD
+><TITLE
+>Schnellreferenz</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Interrupt-Handler"
+HREF="irq.html"><LINK
+REL="PREVIOUS"
+TITLE="Abwärtskompatibilität"
+HREF="x12799.html"><LINK
+REL="NEXT"
+TITLE="Überlegte Verwendung von Datentypen"
+HREF="judas.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x12799.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 9. Interrupt-Handler</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="judas.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN12869"
+>Schnellreferenz</A
+></H1
+><P
+>Die folgenden Symbole aus dem Bereich der Interrupt-Verwaltung wurden
+in diesem Kapitel eingeführt:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/sched.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>int request_irq(unsigned int irq, void (*handler)(), unsigned long flags, const char *dev_name, void *dev_id);</TT
+>, <TT
+CLASS="LITERAL"
+>void free_irq(unsigned int irq, void *dev_id);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+Diese Aufrufe werden verwendet, um einen Interrupt-Handler
+zu registrieren und abzumelden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>SA_INTERRUPT</TT
+>, <TT
+CLASS="LITERAL"
+>SA_SHIRQ</TT
+>, <TT
+CLASS="LITERAL"
+>SA_SAMPLE_RANDOM</TT
+></DT
+><DD
+><P
+>&#13;
+
+Flags für
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request_irq</I
+></SPAN
+>.
+<TT
+CLASS="LITERAL"
+>SA_INTERRUPT</TT
+> fordert die Installation eines
+schnellen Handlers (im Gegensatz zu einem
+langsamen). <TT
+CLASS="LITERAL"
+>SA_SHIRQ</TT
+> installiert einen
+gemeinsam genutzten Handler, und das dritte Flag zeigt an, daß
+Interrupt-Zeitstempel zur Erzeugung der System-Entropie verwendet
+werden können.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>/proc/interrupts</TT
+>, <TT
+CLASS="LITERAL"
+>/proc/stat</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+Diese Dateisystem-Einträge werden verwendet, um Informationen über
+Hardware-Interrupts und installierte Handler zu melden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long probe_irq_on(void);</TT
+>, <TT
+CLASS="LITERAL"
+>int probe_irq_off(unsigned long);</TT
+></DT
+><DD
+><P
+>&#13;
+Diese Funktion gibt eine Bitmaske nicht zugewiesener Interrupts
+zurück. Der Treiber muß sich diese Bitmaske merken und später an
+<SPAN
+><I
+CLASS="EMPHASIS"
+>probe_irq_off</I
+></SPAN
+> weitergeben. Nach
+diesem Aufruf sollte der Treiber veranlassen, daß sein Gerät
+mindestens einen Interrupt erzeugt. Der Rückgabewert von <SPAN
+><I
+CLASS="EMPHASIS"
+>probe_irq_off</I
+></SPAN
+> ist der gefundene Interrupt-Wert.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void disable_irq(int irq);</TT
+>, <TT
+CLASS="LITERAL"
+>void disable_irq_nosync(int irq);</TT
+>, <TT
+CLASS="LITERAL"
+>void enable_irq(int irq);</TT
+></DT
+><DD
+><P
+>&#13;
+
+Ein Treiber kann das Melden von Interrupts ein- und ausschalten. Wenn
+die Hardware versucht, einen Interrupt auszulösen, während die
+Interrupts abgeschaltet sind, dann ist der Interrupt für immer
+verloren. Ein Treiber, der einen gemeinsam genutzten Handler
+verwendet, darf diese Funktionen nicht benutzen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>DECLARE_TASKLET(name, function, arg);</TT
+>, <TT
+CLASS="LITERAL"
+>tasklet_schedule(struct tasklet_struct *);</TT
+></DT
+><DD
+><P
+>&#13;
+Hilfsfunktionen für die Arbeit mit
+Tasklets. <SPAN
+><I
+CLASS="EMPHASIS"
+>DECLARE_TASKLETS</I
+></SPAN
+> deklariert ein
+Tasklet mit dem Namen <TT
+CLASS="LITERAL"
+>name</TT
+>; bei der Ausführung wird
+die angegebene <TT
+CLASS="LITERAL"
+>function</TT
+> mit <TT
+CLASS="LITERAL"
+>arg</TT
+>
+aufgerufen. Mit <SPAN
+><I
+CLASS="EMPHASIS"
+>tasklet_schedule</I
+></SPAN
+> wird ein
+Tasklet zur Ausführung vorgemerkt.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/interrupt.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>void mark_bh(int nr);</TT
+></DT
+><DD
+><P
+>&#13;
+
+Diese Funktion merkt eine untere Hälfte zur Ausführung vor.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/spinlock.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>spinlock_t my_lock = SPINLOCK_UNLOCKED;</TT
+>, <TT
+CLASS="LITERAL"
+>spin_lock_init(spinlock_t *lock);</TT
+>, <TT
+CLASS="LITERAL"
+>spin_lock(spinlock_t *lock);</TT
+>, <TT
+CLASS="LITERAL"
+>spin_lock_irqsave(spinlock_t *lock, unsigned long flags);</TT
+>, <TT
+CLASS="LITERAL"
+>spin_lock_irq(spinlock_t *lock);</TT
+>, <TT
+CLASS="LITERAL"
+>spin_lock_bh(spinlock_t *lock);</TT
+>, <TT
+CLASS="LITERAL"
+>spin_unlock(spinlock_t *lock);</TT
+>, <TT
+CLASS="LITERAL"
+>spin_unlock_irqrestore(spinlock_t *lock, unsigned long flags);</TT
+>, <TT
+CLASS="LITERAL"
+>spin_unlock_irq(spinlock_t *lock);</TT
+>, <TT
+CLASS="LITERAL"
+>spin_unlock_bh(spinlock_t *lock);</TT
+>, <TT
+CLASS="LITERAL"
+>spin_is_locked(spinlock_t *lock);</TT
+>, <TT
+CLASS="LITERAL"
+>spin_trylock(spinlock_t *lock)</TT
+>, <TT
+CLASS="LITERAL"
+>spin_unlock_wait(spinlock_t *lock);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+
+
+
+
+
+
+
+
+
+
+
+Diverse Funktionen und Symbole für die Arbeit mit Spinlocks.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>rwlock_t my_lock = RW_LOCK_UNLOCKED;</TT
+>, <TT
+CLASS="LITERAL"
+>read_lock(rwlock_t *lock);</TT
+>, <TT
+CLASS="LITERAL"
+>read_lock_irqsave(rwlock_t *lock, unsigned long flags);</TT
+>, <TT
+CLASS="LITERAL"
+>read_lock_irq(rwlock_t *lock);</TT
+>, <TT
+CLASS="LITERAL"
+>read_lock_bh(rwlock_t *lock);</TT
+>, <TT
+CLASS="LITERAL"
+>read_unlock(rwlock_t *lock);</TT
+>, <TT
+CLASS="LITERAL"
+>read_unlock_irqrestore(rwlock_t *lock, unsigned long flags);</TT
+>, <TT
+CLASS="LITERAL"
+>read_unlock_irq(rwlock_t *lock);</TT
+>, <TT
+CLASS="LITERAL"
+>read_unlock_bh(rwlock_t *lock);</TT
+>, <TT
+CLASS="LITERAL"
+>write_lock(rwlock_t *lock);</TT
+>, <TT
+CLASS="LITERAL"
+>write_lock_irqsave(rwlock_t *lock, unsigned long flags);</TT
+>, <TT
+CLASS="LITERAL"
+>write_lock_irq(rwlock_t *lock);</TT
+>, <TT
+CLASS="LITERAL"
+>write_lock_bh(rwlock_t *lock);</TT
+>, <TT
+CLASS="LITERAL"
+>write_unlock(rwlock_t *lock);</TT
+>, <TT
+CLASS="LITERAL"
+>write_unlock_irqrestore(rwlock_t *lock, unsigned long flags);</TT
+>, <TT
+CLASS="LITERAL"
+>write_unlock_irq(rwlock_t *lock);</TT
+>, <TT
+CLASS="LITERAL"
+>write_unlock_bh(rwlock_t *lock);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Verschiedene Möglichkeiten zum Sperren und Entsperren bei Leser-Schreiber-Spinlocks.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;asm/bitops.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>void set_bit(nr, void *addr);</TT
+>, <TT
+CLASS="LITERAL"
+>void clear_bit(nr, void *addr);</TT
+>, <TT
+CLASS="LITERAL"
+>void change_bit(nr, void *addr);</TT
+>, <TT
+CLASS="LITERAL"
+>test_bit(nr, void *addr);</TT
+>, <TT
+CLASS="LITERAL"
+>int test_and_set_bit(nr, void *addr);</TT
+>, <TT
+CLASS="LITERAL"
+>int test_and_clear_bit(nr, void *addr);</TT
+>, <TT
+CLASS="LITERAL"
+>int test_and_change_bit(nr, void *addr);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+
+
+
+
+
+Diese Funktionen greifen atomar auf Bit-Werte zu; sie können für Flags
+oder Sperr-Variablen verwendet werden. Die Verwendung dieser
+Funktionen verhindert Race Conditions im nebenläufigen Zugriff auf
+das Bit.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;asm/atomic.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>void atomic_add(atomic_t i, atomic_t *v);</TT
+>, <TT
+CLASS="LITERAL"
+>void atomic_sub(atomic_t i, atomic_t *v);</TT
+>, <TT
+CLASS="LITERAL"
+>void atomic_inc(atomic_t *v);</TT
+>, <TT
+CLASS="LITERAL"
+>void atomic_dec(atomic_t *v);</TT
+>, <TT
+CLASS="LITERAL"
+>int atomic_dec_and_test(atomic_t *v);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+
+
+
+Diese Funktionen greifen atomar auf Integer-Variablen zu. Damit sauber
+kompiliert werden kann, darf nur über diese Funktionen auf
+<TT
+CLASS="LITERAL"
+>atomic_t</TT
+>-Variablen zugegriffen werden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/sched.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>TASK_RUNNING</TT
+>, <TT
+CLASS="LITERAL"
+>TASK_INTERRUPTIBLE</TT
+>, <TT
+CLASS="LITERAL"
+>TASK_UNINTERRUPTIBLE</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+
+Die am häufigsten verwendeten Werte für den Zustand des aktuellen
+Tasks. Diese werden als Hinweise für <SPAN
+><I
+CLASS="EMPHASIS"
+>schedule</I
+></SPAN
+>
+verwendet.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>set_current_state(int state);</TT
+></DT
+><DD
+><P
+>&#13;Setzt den Zustand des aktuellen Tasks auf den angegebenen Wert.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void add_wait_queue(struct wait_queue ** p, struct wait_queue * wait)</TT
+>, <TT
+CLASS="LITERAL"
+>void remove_wait_queue(struct wait_queue ** p, struct wait_queue * wait)</TT
+>, <TT
+CLASS="LITERAL"
+>void _&#8201;_add_wait_queue(struct wait_queue ** p, struct wait_queue * wait)</TT
+>, <TT
+CLASS="LITERAL"
+>void _&#8201;_remove_wait_queue(struct wait_queue ** p, struct wait_queue * wait)</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+Die Funktionen niederster Ebene, die Warteschlangen verwenden. Die
+führenden Unterstriche weisen auf eine Funktionalität niederer Ebene hin. In
+diesem Fall muß die Meldung von Interrupts bereits im Prozessor
+abgeschaltet sein.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>wait_event(wait_queue_head_t queue, condition);</TT
+>, <TT
+CLASS="LITERAL"
+>wait_event_interruptible(wait_queue_head_t queue, condition);</TT
+></DT
+><DD
+><P
+>&#13;
+
+Diese Makros warten in der angegebenen Warteschlange, bis die
+angegebene Bedingung wahr ist.</P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x12799.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="judas.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Abwärtskompatibilität</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="irq.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Überlegte Verwendung von Datentypen</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

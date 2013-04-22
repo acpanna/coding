@@ -1,0 +1,90 @@
+<HTML>
+<HEAD>
+<TITLE>ThreeNF --  Eine Web-Applikation zur Berechnung der 3. Normalform eines Relationenschemas</TITLE>
+
+<script language="javascript">
+<!--
+
+function beispiel1()
+{
+  document.formular.fd.value="H>A,G\r\nA>B\r\nA,B,C>D\r\nA>F,G\r\nG,C>A\r\nG,H>F";
+}
+
+function beispiel2()
+{
+  document.formular.fd.value="A,B,C>D\r\nB,D>F,A\r\nF,A>B\r\nG,C>H,B\r\nB>F,E,A\r\nC>E,A,B";
+}
+
+function beispiel3()
+{
+  document.formular.fd.value="A>C\r\nA,B>C\r\nC,D>I,A\r\nE,C>A,B\r\nE,I>C\r\nA,C>E,B";
+}
+
+-->
+</script>
+
+</HEAD>
+
+<BODY bgcolor="#ffffff">
+<div align="center">
+
+<h1>ThreeNF</h1>
+<hr align="center" width="500">
+
+<p>Diese Web-Applikation erm&ouml;glicht es, ein relationales Schema,
+<br>mittels der zugeh&ouml;rigen FD-Menge, in die 3. Normalform zu bringen.</p>
+
+<p>Geben Sie nun die FD-Menge des Relationenschemas in untenstehendes Textfeld ein.</p>
+<p><i>Folgender Formalismus ist dabei zu beachten:</i></p>
+
+<table border=1 bgcolor="#CCCCCC" width="500">
+<tr><td align=center>1. Gross- und Kleinschreibung wird unterschieden.</td></tr>
+<tr><td align=center>2. Attribute k&ouml;nnen aus beliebig vielen Buchstaben bestehen.</td></tr>
+<tr><td align=center>3. Ein Attribut darf keines der Sonderzeichen:  , &gt; space  enthalten.</td></tr>
+<tr><td align=center>4. Attribute werden durch ein Komma (,) voneinander getrennt.</td></tr>
+<tr><td align=center>5. Linke und rechte Seite einer FD werden durch ein Gr&ouml;sser-Zeichen (&gt;) getrennt.</td></tr>
+<tr><td align=center>6. FDs werden durch einmaliges Dr&uuml;cken von RETURN getrennt.</td></tr>
+</table>
+
+
+<p><i>Beispiele für formal korrekte FDs:</i></p>
+<code>MATNR&gt;STUDENT,GEBDATUM<br>
+FLUGNUMMER,ZEIT&gt;FLUGZEUG<br>
+PROF,FACH,ALTER&gt;GEHALT</code>
+<p>&nbsp;</p>
+
+<form name="formular" method="POST" ACTION="cgi-bin/threenf.cgi">
+<table>
+<tr><td align="center"><table border=1>
+                       <tr><th align="center">FD - Menge</th></tr>
+                       </table>
+</td></tr>
+<tr><td><p><TEXTAREA NAME="fd" COLS=65 ROWS=10 wrap="off"></TEXTAREA></p></td></tr>
+<tr><td align="center"><INPUT TYPE="button" NAME="BSP" VALUE="Beispiel 1" onClick="javascript:beispiel1()">
+                       <INPUT TYPE="button" NAME="BSP" VALUE="Beispiel 2" onClick="javascript:beispiel2()">
+		       <INPUT TYPE="button" NAME="BSP" VALUE="Beispiel 3" onClick="javascript:beispiel3()">
+</td></tr>
+<tr><td>&nbsp;</td></tr>
+<tr><td align="center">
+<tr><td align="center"><table border=1><tr><th align="center">Gew&uuml;nschte Ausgabe</th></tr></table></td></tr>
+<tr><td align="center"><table border=1 width="300" cellpadding=2>
+                       <tr><td>1. nicht-redundante &Uuml;berdeckung</td><td><INPUT TYPE="checkbox" NAME="ausgabe" checked VALUE="redun"></td></tr>
+                       <tr><td>2. linksreduzierte &Uuml;berdeckung</td><td><INPUT TYPE="checkbox" NAME="ausgabe" checked VALUE="lreduz"></td></tr>
+                       <tr><td>3. rechtsreduzierte &Uuml;berdeckung</td><td><INPUT TYPE="checkbox" NAME="ausgabe" checked VALUE="rreduz"></td></tr>
+                       <tr><td>4. reduzierte &Uuml;berdeckung</td><td><INPUT TYPE="checkbox" NAME="ausgabe" checked VALUE="reduz"></td></tr>
+                       <tr><td>5. &Auml;quivalenzklassen</td><td><INPUT TYPE="checkbox" NAME="ausgabe" checked VALUE="aequi"></td></tr>
+                       <tr><td>6. minimale &Uuml;berdeckung</td><td><INPUT TYPE="checkbox" NAME="ausgabe" checked VALUE="mini"></td></tr>
+                       <tr><td>7. dritte Normalform</td><td><INPUT TYPE="checkbox" NAME="ausgabe" checked VALUE="3nf"></td></tr>
+                       </table>
+</td></tr>
+<tr><td>&nbsp;</td></tr>
+<tr><td align="center"><hr width="75%"</td></tr>
+<tr><td>&nbsp;</td></tr>
+<tr><td align="center"><INPUT TYPE="submit" NAME="BUTTON" VALUE="Abschicken"></td></tr>
+<tr><td>&nbsp;</td></tr>
+</table>
+</form>
+
+</div>
+</BODY>
+</HTML>

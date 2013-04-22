@@ -1,0 +1,313 @@
+<HTML
+><HEAD
+><TITLE
+>Schnellreferenz</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="kmod und fortgeschrittene Modularisierung"
+HREF="kerneld.html"><LINK
+REL="PREVIOUS"
+TITLE="Abwärtskompatibilität"
+HREF="x14360.html"><LINK
+REL="NEXT"
+TITLE="Das Laden von Block-Treibern"
+HREF="lock.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x14360.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 11. kmod und fortgeschrittene Modularisierung</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="lock.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN14393"
+>Schnellreferenz</A
+></H1
+><P
+>In diesem Kapitel wurden die folgenden Kernel-Symbole eingeführt:&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><SPAN
+CLASS="roman"
+><I
+CLASS="EMPHASIS"
+>/etc/modules.conf</I
+></SPAN
+></DT
+><DD
+><P
+>Die Konfigurationsdatei für
+        <SPAN
+CLASS="APPLICATION"
+>modprobe</SPAN
+> und
+        <SPAN
+CLASS="APPLICATION"
+>depmod</SPAN
+>. Sie wird verwendet, um das
+        bedarfsgestützte Laden zu konfigurieren, und wird in der Man-Page
+        für die beiden Programme beschrieben.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/kmod.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>int request_module(const char *name);</TT
+></DT
+><DD
+><P
+>&#13;
+
+Diese Funktion führt das Laden von Modulen bei Bedarf durch.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void inter_module_register(const char *string, struct module *module, const void *data);</TT
+>, <TT
+CLASS="LITERAL"
+>void inter_module_unregister(const char *);</TT
+></DT
+><DD
+><P
+>&#13;
+<SPAN
+><I
+CLASS="EMPHASIS"
+>inter_module_register</I
+></SPAN
+> stellt Daten anderen
+Modulen über das Kommunikationssystem zwischen Modulen zur
+Verfügung. Wenn die Daten nicht länger gemeinsam genutzt werden
+sollen, kann die Verfügbarkeit mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>inter_module_unregister</I
+></SPAN
+> aufgehoben
+werden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>const void *inter_module_get(const char *string);</TT
+>, <TT
+CLASS="LITERAL"
+>const void *inter_module_get_request(const char *string, const char *module);</TT
+>, <TT
+CLASS="LITERAL"
+> void inter_module_put(const char *string);</TT
+></DT
+><DD
+><P
+>&#13;
+
+Die ersten beiden Funktionen suchen einen String im
+Kommunikationssystem zwischen Modulen;
+<SPAN
+><I
+CLASS="EMPHASIS"
+>inter_module_get_request</I
+></SPAN
+>
+versucht darüber hinaus, das angegebene Modul zu laden, wenn der
+String nicht gefunden wird. Beide inkrementieren den Verwendungszähler
+des Moduls, das den String exportiert
+hat. <SPAN
+><I
+CLASS="EMPHASIS"
+>inter_module_put</I
+></SPAN
+> sollte
+aufgerufen werden, um den Verwendungszähler zu dekrementieren, wenn
+der Datenzeiger nicht länger benötigt wird.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/config.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>CONFIG_MODVERSIONS</TT
+></DT
+><DD
+><P
+>Dieses Makro ist nur dann definiert, wenn der Kernel mit
+        Versionsunterstützung kompiliert worden ist.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#ifdef MODVERSIONS</TT
+>, <TT
+CLASS="LITERAL"
+>#include &#60;linux/modversions.h&#62;</TT
+></DT
+><DD
+><P
+>Diese Header-Datei existiert nur, wenn
+        <TT
+CLASS="LITERAL"
+>CONFIG_MODVERSIONS</TT
+> definiert ist, und
+        enthält dann die Namen mit Versionsnummern aller vom Kernel
+        exportierten Symbole.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>__GENKSYMS__</TT
+></DT
+><DD
+><P
+>&#13;Dieses Makro wird von <SPAN
+CLASS="APPLICATION"
+>make</SPAN
+> definiert, wenn
+Dateien durch den Präprozessor laufen, die von
+<SPAN
+CLASS="APPLICATION"
+>genksyms</SPAN
+> gelesen werden, um neue
+Versionscodes zu erzeugen. Es wird verwendet, um die Einbindung von
+<TT
+CLASS="LITERAL"
+>&#60;linux/modversions.h&#62;</TT
+> zu verhindern,
+wenn neue Prüfsummen erzeugt werden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int call_usermodehelper(char *path, char *argv[], char *envp[]);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion führt ein User Mode-Programm im Prozeß-Kontext von
+<SPAN
+CLASS="APPLICATION"
+>keventd</SPAN
+> aus.</P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x14360.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="lock.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Abwärtskompatibilität</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="kerneld.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Das Laden von Block-Treibern</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

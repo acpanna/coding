@@ -1,0 +1,12 @@
+zu b)
+
+Bei Erstellung eines jar-Archves wird ein sogenanntes META-INF Verzeichnis
+erstellt, in welchem eine Datei namens MANIFEST.MF liegt, in der
+anscheinend zu jeder zum Archiv gehörigen Datei ein Eintrag mit dem
+zugehörigen Komprimierungsdaten erzeugt wird. 
+
+Meiner Meinung nach scheint die erste Methode schneller abzulaufen, als die
+jar-Methode, da bei der jar-Methode zuerst die einzelnen Files des Archivs
+entpackt werden müssen. Hingegen bei der ersten Methode entfällt das
+Entpacken, da die Files ja bereits in in einem "ausführbaren" Zustand
+vorliegen.

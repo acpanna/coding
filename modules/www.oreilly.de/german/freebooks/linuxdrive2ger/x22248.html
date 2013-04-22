@@ -1,0 +1,158 @@
+<HTML
+><HEAD
+><TITLE
+>NuBus</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Ein Überblick über die Peripherie-Busse"
+HREF="pci.html"><LINK
+REL="PREVIOUS"
+TITLE="SBus"
+HREF="pcisbus.html"><LINK
+REL="NEXT"
+TITLE="Externe Bus-Systeme"
+HREF="pciext.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="pcisbus.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 15. Ein Überblick über die Peripherie-Busse</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="pciext.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN22248"
+>NuBus</A
+></H1
+><P
+>&#13;Ein weiterer interessanter, aber in Vergessenheit geratener Bus ist der
+NuBus. Dieser Bus ist in älteren Macs (mit 68k-CPUs) zu finden.</P
+><P
+>&#13;Der gesamte Bus wird in den Speicher eingeblendet (wie alles auf der
+M68k-Plattform), und die Geräte werden ausschließlich geographisch
+adressiert. Dies ist gut und typisch für Apple, die meisten älteren
+Apple II hatten ein ähnliches Bus-Layout. Schlecht ist, daß es fast
+unmöglich ist, Dokumentationen über den NuBus zu bekommen, weil Apple
+bei den Macs keine Informationen herausrücken will (im Gegensatz zum
+Vorgänger Apple II, für den Quellcode und Schemazeichnungen für wenig
+Geld verfügbar waren).</P
+><P
+>Die Datei <TT
+CLASS="FILENAME"
+>drivers/nubus/nubus.c</TT
+> enthält fast
+alles, was wir über diesen Bus wissen, und ist ein interessanter
+Lesestoff. Sie zeigt, wieviel Reverse Engineering die Entwickler
+betreiben mußten.&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="pcisbus.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="pciext.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>SBus</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="pci.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Externe Bus-Systeme</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

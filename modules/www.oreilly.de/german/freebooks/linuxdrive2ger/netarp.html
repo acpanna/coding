@@ -1,0 +1,559 @@
+<HTML
+><HEAD
+><TITLE
+>MAC-Adreßauflösung</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Netzwerk-Treiber"
+HREF="net.html"><LINK
+REL="PREVIOUS"
+TITLE="Die Socket-Buffer"
+HREF="netskb.html"><LINK
+REL="NEXT"
+TITLE="Eigene ioctl-Befehle"
+HREF="netioctl.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="netskb.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 14. Netzwerk-Treiber</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="netioctl.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="NETARP"
+>MAC-Adreßauflösung</A
+></H1
+><P
+>&#13;
+
+Eine interessante Frage bei der Ethernet-Kommunikation ist die
+Verbindung von MAC-Adressen (der eindeutigen Hardware-ID der
+Schnittstelle) und IP-Nummern. Die meisten Protokolle stehen vor
+einem ähnlichen Problem, aber wir gehen hier nur auf den Ethernet-Fall
+ein. Wir versuchen hier, dieses Thema vollständig zu beschreiben,
+weswegen wir drei Situationen demonstrieren werden: ARP, Ethernet-Header
+ohne ARP (wie bei <SPAN
+CLASS="APPLICATION"
+>plip</SPAN
+>) und
+Nicht-Ethernet-Header.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN20580"
+>ARP mit Ethernet verwenden</A
+></H2
+><P
+>&#13;
+Normalerweise wird die Adreßauflösung mittels ARP, dem Address
+Resolution Protocol, durchgeführt. Glücklicherweise kümmert sich der
+Kernel um ARP, und eine Ethernet-Schnittstelle muß nichts Besonderes
+dafür tun. Solange <TT
+CLASS="LITERAL"
+>dev-&#62;addr</TT
+> und
+<TT
+CLASS="LITERAL"
+>dev-&#62;addr_len</TT
+> beim Öffnen korrekt
+zugewiesen werden, muß sich der Treiber nicht um das Auflösen der
+IP-Nummern in physikalische Adressen
+kümmern. <SPAN
+><I
+CLASS="EMPHASIS"
+>ether_setup</I
+></SPAN
+> weist die richtigen
+Gerätemethoden an <TT
+CLASS="LITERAL"
+>dev-&#62;hard_header</TT
+> und
+<TT
+CLASS="LITERAL"
+>dev-&#62;rebuild_header</TT
+> zu.</P
+><P
+>&#13;Obwohl der Kernel normalerweise die Details der Adreßauflösung (und
+das Zwischenspeichern der Ergebnisse) erledigt, ruft er den Treiber
+auf, um Hilfe beim Zusammenbauen des Pakets zu bekommen, denn es ist
+ja schließlich der Treiber, der die Details des Headers der
+physikalischen Schicht kennt, während die Autoren des Netzwerk-Codes
+versucht haben, den Rest des Kernels von diesem Wissen zu
+isolieren. Dazu ruft der Kernel die Methode
+<SPAN
+><I
+CLASS="EMPHASIS"
+>hard_header</I
+></SPAN
+> des Treibers auf, um das Paket
+mit den Ergebnissen der ARP-Anfrage aufzubauen. Normalerweise müssen
+Ethernet-Treiber über diesen Vorgang nichts wissen &#8212; der
+gemeinsame Ethernet-Code erledigt alles.&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN20599"
+>Überschreiben von ARP</A
+></H2
+><P
+>&#13;
+
+Einfache Punkt-zu-Punkt-Schnittstellen wie
+<SPAN
+CLASS="APPLICATION"
+>plip</SPAN
+> können zwar von Ethernet-Headern
+profitieren, wollen aber den Aufwand des Hin- und Hersendens von
+ARP-Paketen einsparen. Der Code von <SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+>
+gehört in diese Klasse der
+Netzwerk-Geräte. <SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> kann kein ARP
+verwenden, weil der Treiber die IP-Adressen der übertragenen Pakete
+verändert und ARP-Pakete ebenfalls IP-Adressen austauschen. Obwohl wir
+ohne größere Probleme einen einfachen ARP-Antwortgenerator hätten
+implementieren können, ist es interessanter zu zeigen, wie man mit
+Headern der physikalischen Schicht direkt umgeht.&#13;</P
+><P
+>Wenn Ihr Gerät die üblichen Hardware-Header verwenden will, ohne ARP
+zu benutzen, müssen Sie die Methode
+<TT
+CLASS="LITERAL"
+>dev-&#62;hard_header</TT
+> überschreiben. So
+macht <SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> das auch, und die neue Funktion
+ist recht kurz:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+int snull_header(struct sk_buff *skb, struct net_device *dev,
+                unsigned short type, void *daddr, void *saddr,
+                unsigned int len)
+{
+    struct ethhdr *eth = (struct ethhdr *)skb_push(skb,ETH_HLEN);
+
+    eth-&#62;h_proto = htons(type);
+    memcpy(eth-&#62;h_source, saddr ? saddr : dev-&#62;dev_addr, dev-&#62;addr_len);
+    memcpy(eth-&#62;h_dest,   daddr ? daddr : dev-&#62;dev_addr, dev-&#62;addr_len);
+    eth-&#62;h_dest[ETH_ALEN-1]   &#8257;= 0x01;   /* dest sind wir xor 1 */
+    return (dev-&#62;hard_header_len);
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die Funktion holt sich einfach nur die vom Kernel gelieferte
+Information und formatiert sie in einen Standard-Ethernet-Header. Sie
+setzt außerdem aus Gründen, die weiter unten beschrieben werden, ein
+Bit in der Ziel-Ethernet-Adresse um.&#13;</P
+><P
+>Wenn ein Paket von der Schnittstelle empfangen wird, wird der
+Hardware-Header auf verschiedene Weise von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>eth_type_trans</I
+></SPAN
+> benutzt. Wie haben
+den entsprechenden Aufruf schon in
+<SPAN
+><I
+CLASS="EMPHASIS"
+>snull_rx</I
+></SPAN
+> gesehen:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+skb-&#62;protocol = eth_type_trans(skb, dev);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Diese Funktion extrahiert den Protokoll-Identifikator
+(<TT
+CLASS="LITERAL"
+>ETH_P_IP</TT
+> in diesem Fall) aus dem
+Ethernet-Header, weist einen Wert an
+<TT
+CLASS="LITERAL"
+>skb-&#62;mac.raw</TT
+> zu, entfernt den Hardware-Header
+aus den Paketdaten (mit <SPAN
+><I
+CLASS="EMPHASIS"
+>skb_pull</I
+></SPAN
+>) und
+setzt einen Wert für
+<TT
+CLASS="LITERAL"
+>skb-&#62;pkt_type</TT
+>. Dieses letzte Feld hat
+beim Erzeugen eines <TT
+CLASS="LITERAL"
+>skb</TT
+> den Wert
+<TT
+CLASS="LITERAL"
+>PACKET_HOST</TT
+> (was bedeutet, daß das Paket zu
+diesem Rechner gehen soll), und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>eth_type_trans</I
+></SPAN
+> ändert den Wert auf
+die Ethernet-Ziel-Adresse. Wenn diese Adresse nicht mit der Adresse
+der Schnittstelle übereinstimmt, die das Paket empfangen soll, dann
+wird das Feld <TT
+CLASS="LITERAL"
+>pkt_type</TT
+> auf
+<TT
+CLASS="LITERAL"
+>PACKET_OTHERHOST</TT
+> gesetzt. Als Folge daraus
+verwirft <SPAN
+><I
+CLASS="EMPHASIS"
+>netif_rx</I
+></SPAN
+> alle Pakete des Typs
+<TT
+CLASS="LITERAL"
+>PACKET_OTHERHOST</TT
+>, sofern sich die
+Schnittstelle nicht im Promiscuous-Modus befindet. Aus diesem Grunde
+paßt <SPAN
+><I
+CLASS="EMPHASIS"
+>snull_header</I
+></SPAN
+> auf, daß die
+Ziel-Hardware-Adresse zu der &#8220;empfangenden&#8221; Schnittstelle paßt.&#13;</P
+><P
+>Wenn Ihre Schnittstelle eine Punkt-zu-Punkt-Verbindung ist, dann
+werden Sie an unerwarteten Multicast-Paketen wenig Spaß haben. Um dieses Problem
+zu verhindern, müssen Sie daran denken, daß eine Ziel-Adresse, deren
+erstes Oktett im niedrigstwertigen Bit eine 0 hat, an einen einzelnen
+Rechner gerichtet ist (d. h. der Typ ist
+<TT
+CLASS="LITERAL"
+>PACKET_HOST</TT
+> oder
+<TT
+CLASS="LITERAL"
+>PACKET_OTHERHOST</TT
+>). Der
+<SPAN
+CLASS="APPLICATION"
+>plip</SPAN
+>-Treiber verwendet 0xfc als erstes
+Oktett seiner Hardware-Adresse, <SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+>
+dagegen verwendet 0x00. Beide Adressen führen aber zu einer funktionierenden,
+Ethernet-artigen Punkt-zu-Punkt-Verbindung.
+&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="NETARPOTHER"
+>Nicht-Ethernet-Header</A
+></H2
+><P
+>&#13;
+
+Wir haben gerade gesehen, daß der Hardware-Header einige Informationen
+über die Ziel-Adresse hinaus enthält. Die wichtigste davon ist das
+Kommunikationsprotokoll. Als nächstes beschreiben wir, wie
+Hardware-Header verwendet werden können, um wichtige Informationen
+einzukapseln. Wenn
+Sie nähere Details wissen möchten, können Sie in den Kernel-Quellen
+oder in der technischen Dokumentation des jeweiligen
+Übertragungsmediums nachschlagen. Die meisten Treiber-Autoren können
+diese Erläuterungen überspringen und einfach nur die
+Ethernet-Implementation verwenden.&#13;</P
+><P
+>Es muß jedoch nicht jedes Protokoll alle Informationen
+bereitstellen. Eine Punkt-zu-Punkt-Verbindung wie
+<SPAN
+CLASS="APPLICATION"
+>plip</SPAN
+> oder <SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+>
+muß nicht unbedingt ganze Ethernet-Header transportieren, ist deswegen aber nicht weniger allgemein. Die Gerätemethode
+<SPAN
+><I
+CLASS="EMPHASIS"
+>hard_header</I
+></SPAN
+>, deren Implementation wir oben
+in Form von <SPAN
+><I
+CLASS="EMPHASIS"
+>snull_header</I
+></SPAN
+> gesehen haben),
+bekommt die
+Zustellungsinformationen &#8212; sowohl auf Protokoll-Ebene als auch
+die Hardware-Adresse &#8212; vom Kernel. Dazu kommt die 16 Bit große
+Protokoll-Nummer. IP hat beispielsweise den Wert
+<TT
+CLASS="LITERAL"
+>ETH_P_IP</TT
+>. Vom Treiber wird erwartet,
+daß er sowohl die Paketdaten als auch die Protokoll-Nummer korrekt an
+den Zielrechner überträgt. In einer Punkt-zu-Punkt-Verbindung könnten
+die Adressen im Hardware-Header weggelassen und statt dessen nur die
+Protokoll-Nummer übertragen werden, weil die Zustellung auch ohne
+Quell- und Ziel-Adresse funktioniert. Eine reine IP-Verbindung bräuchte
+sogar gar keinen Hardware-Header zu senden.&#13;</P
+><P
+>Wenn das Paket am anderen Ende der Verbindung entgegengenommen wird,
+dann muß die Empfangsfunktion <TT
+CLASS="LITERAL"
+>skb-&#62;protocol</TT
+>,
+<TT
+CLASS="LITERAL"
+>skb-&#62;pkt_type</TT
+> und
+<TT
+CLASS="LITERAL"
+>skb-&#62;mac.raw</TT
+> korrekt setzen.&#13;</P
+><P
+><TT
+CLASS="LITERAL"
+>skb-&#62;mac.raw</TT
+> ist ein char-Zeiger, der vom
+Adreßauflösungsmechanismus verwendet wird, der in den höheren
+Schichten des Netzwerk-Codes
+(z. B. <TT
+CLASS="FILENAME"
+>net/ipv4/arp.c</TT
+>) implementiert
+ist. Er muß auf eine Rechneradresse zeigen, die zu
+<TT
+CLASS="LITERAL"
+>dev-&#62;type</TT
+> paßt. Die möglichen Werte für den
+Gerätetyp sind in <TT
+CLASS="LITERAL"
+>linux/if_arp.h</TT
+>
+definiert. Ethernet-Schnittstellen verwenden beispielsweise
+<TT
+CLASS="LITERAL"
+>AARPHRD_ETHER</TT
+>.
+<SPAN
+><I
+CLASS="EMPHASIS"
+>eth_type_trans</I
+></SPAN
+> bearbeitet
+den Ethernet-Header empfangener Pakete folgendermaßen:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+skb-&#62;mac.raw=skb-&#62;data;
+skb_pull(skb,dev-&#62;hard_header_len);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Im einfachsten Fall (eine Punkt-zu-Punkt-Verbindung ohne Header) kann
+<TT
+CLASS="LITERAL"
+>skb-&#62;mac.raw</TT
+> auf einen statischen Puffer zeigen,
+der die Hardware-Adresse dieser Schnittstelle enthält;
+<TT
+CLASS="LITERAL"
+>protocol</TT
+> kann auf
+<TT
+CLASS="LITERAL"
+>ETH_P_IP</TT
+> gesetzt werden, und
+<TT
+CLASS="LITERAL"
+>packet-type</TT
+> behält den Default-Wert
+<TT
+CLASS="LITERAL"
+>PACKET_HOST</TT
+>.</P
+><P
+>Weil jeder Hardware-Typ seine Eigenheiten hat, ist es schwierig,
+weitere und nähere Ratschläge als das, was wir hier schon geschrieben
+haben, zu geben. Der Kernel ist aber voll von Beispielen. Schauen Sie
+sich zum Beispiel den AppleTalk-Treiber
+(<TT
+CLASS="FILENAME"
+>drivers/net/appletalk/cops.c</TT
+>), die
+Infrarot-Treiber (wie
+<TT
+CLASS="FILENAME"
+>drivers/net/irda/smc_ircc.c</TT
+>) oder den
+PPP-Treiber (<TT
+CLASS="FILENAME"
+>drivers/net/ppp_generic.c</TT
+>) an.</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="netskb.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="netioctl.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Die Socket-Buffer</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="net.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Eigene ioctl-Befehle</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

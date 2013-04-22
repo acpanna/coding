@@ -1,0 +1,87 @@
+/*
+========================================================================
+
+
+    Vorname      	: Heiko
+    Name          	: Vogel
+    Matrikelnummer	: 0854794
+    Uebungsgruppe 	: mittwochs
+
+    Benutzernummer	: c06
+    e-mail-Adresse	: heiko.vogel@stud.uni-bayreuth.de
+
+    Blatt Nr.     	: 02
+    Aufgabennr.   	: 05
+    Teilaufgabe   	: --
+
+    verwendeter
+    Compiler
+    m. Version	: Borland Turbo C++ for Windows V3.1 (c) 1991,92
+                        
+    verwendetes
+    Betriebsystem 	:Windows98
+
+*/
+
+/*
+------------------------------------------------------------------------
+
+    Beantwortung der Fragen:
+
+zahl_1 = INT_MAX / 2
+
+Da  INT_MAX = 32767  ist  INT_MAX / 2 = 16383.5
+Es können in zahl_1 aber nur ganze Zahlen abgespeichert werden, deshalb werden
+die Nachkommastellen abgeschnitten und zahl_1 = 16383.
+
+
+zahl_2 = 2 * zahl_1 + 1 =  32767
+
+zahl_2 = 2 * zahl_1 + 2 = -32768
+
+Da in einer Variable vom Datentyp "int" (entspricht 2 Bytes = 16 Bit)
+höchstens die Zahl 32767 (= 0111111111111111) abgespeichert werden kann, erhält
+man bei der zusätzlichen Addition von 1 die Zahl -32768 (= 1000000000000000).
+Durch die Addition von 1 wurde das 1. Bit, welches für positive Zahlen 0 und
+für negative Zahlen 1 ist, zu 1 gemacht, deshalb wird das Ergebnis als negative
+Zahl interpretiert. Da sonst nur noch Nullen nach der Eins folgen entspricht diese
+Binärzahl folglich der kleinsten negativen INT - Zahl, dies ist eben -32768.
+
+
+zahl_2 = (2 * zahl_1 + 2) / 2 = -16384
+
+(2 * zahl_1 + 2) entspricht -32768, also ist es logisch, das -32768 / 2 = -16384 ist.
+
+
+zahL2 = zahl_1 + 1 = 16384
+
+Ist auch logisch, hier wird bei der Addition von 1 keine "Bitgrenze" überschritten,
+somit liefert diese Zeile das richtige Ergebnis.
+
+
+zahl_3 = 15000, zahl_4 = 18000
+Summe zahl_3 + Zahl_4  = -32536
+
+Da in einer Variable vom Datentyp "short" (entspricht 2 Bytes = 16 Bit)
+höchstens die Zahl 32767 (= 0111111111111111) abgespeichert werden kann, erhält
+man für die zu erwartende Summe den Wert -32536.
+Denn:  33000 = (32767 + 1) + 232 d.h. 33000 entspricht -32768 + 232 = -32536
+
+
+zahl_5 = 15000, zahl_6 = 18000
+Summe zahl_5 + zahl_6 = 33000
+
+Hier ist das Ergebnis richtig, weil in einer Variable vom Datentyp "unsigned short"
+nur vorzeichenlose Zahlen gespeichert werden können. Deshalb verdoppelt sich der Bereich
+der darstellbaren positiven Zahlen, weil ja nun keine negative Zahlen (in Komplementdarstellung)
+mehr in diesen Variablen gespeichert werden können. D.h. das Vorzeichenbit kann zur Darstellung
+größerer positiver Zahlen mitverwendet werden. Größte darstellbare Zahl für eine Variable des
+Datentyps "unsigned short" ist 65535. Somit liefert die Addition zahl_5 + zahl_6 das richtige
+Ergebnis, weil dieser Zahlenbereich nicht überschritten wird.
+
+
+Leider kann ich mir nicht erklären wieso Sie jeweils die 1. Summe und 2. Summe ausgeben,
+bei mir besteht zwischen den Ergebnissen der 1. und der 2. Summe kein Unterschied !
+
+========================================================================
+*/

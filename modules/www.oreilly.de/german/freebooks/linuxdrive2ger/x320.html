@@ -1,0 +1,304 @@
+<HTML
+><HEAD
+><TITLE
+>Sicherheitsfragen</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Eine Einführung in den Linux-Kernel"
+HREF="anintro.html"><LINK
+REL="PREVIOUS"
+TITLE="Klassen von Geräten und Modulen"
+HREF="anclass.html"><LINK
+REL="NEXT"
+TITLE="Versionsnumerierung"
+HREF="x339.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="anclass.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 1. Eine Einführung in den Linux-Kernel</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x339.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN320"
+>Sicherheitsfragen</A
+></H1
+><P
+>Heutzutage ist Sicherheit ein zunehmend wichtiger Aspekt. Wir
+besprechen Sicherheitsfragen in diesem Buch, wenn sie auftreten. Es
+gibt aber auch einige allgemeine Konzepte, auf die wir bereits hier
+eingehen wollen.&#13;</P
+><P
+>Es gibt grundsätzlich zwei Arten möglicher Gefährdungen, die man
+<SPAN
+><I
+CLASS="EMPHASIS"
+>absichtlich</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>unbeabsichtigt</I
+></SPAN
+> nennen kann. Ein Sicherheitsproblem ist der Schaden, den ein
+Benutzer
+durch den Mißbrauch existierender Programme oder die zufällige Ausnutzung von
+Fehlern erreichen kann. Der andere Aspekt beschäftigt sich damit, was
+für eine (Fehl-)Funktionalität ein Programmierer implementieren
+kann. Offensichtlich hat der Programmierer weitaus mehr Möglichkeiten als der
+reine Benutzer. Mit anderen Worten: Es ist ebenso gefährlich, als
+Superuser ein Programm zu starten, das Sie von einem Freund bekommen
+haben, wie ihm oder ihr zu diesem Zeitpunkt direkt eine Superuser-Shell zur
+Verfügung zu stellen. Obwohl der Zugang zu einem Compiler
+<SPAN
+><I
+CLASS="EMPHASIS"
+>per se</I
+></SPAN
+> noch keine Sicherheitslücke ist, kann ein
+Loch auftreten, wenn der kompilierte Code tatsächlich ausgeführt
+wird. Seien Sie besonders vorsichtig mit Modulen, weil ein
+Kernel-Modul alles machen kann. Ein Modul ist genauso mächtig wie
+eine Superuser-Shell.&#13;</P
+><P
+>Jede Sicherheitskontrolle im System geht vom Kernel aus. Wenn der
+Kernel Sicherheitslücken hat, dann hat das ganze System
+Sicherheitslücken. In der offiziellen Kernel-Distribution kann nur ein
+dazu autorisierter Benutzer Module laden; der Systemaufruf
+<SPAN
+><I
+CLASS="EMPHASIS"
+>create_module</I
+></SPAN
+> überprüft, ob der aufrufende
+Prozeß das Recht hat, ein Modul in den Kernel zu laden. Bei einem
+offiziellen Kernel kann also nur der
+Superuser<A
+NAME="AEN329"
+HREF="#FTN.AEN329"
+>[1]</A
+>
+ oder ein Eindringling, dem es gelungen ist, Superuser-Rechte
+zu erhalten, die Machtfülle des privilegierten Codes ausnutzen.&#13;</P
+><P
+>Wo immer möglich sollten Treiber-Programmierer es vermeiden,
+eine Sicherheits-Policy in ihren Code einzubinden. Sicherheit ist eine
+strategische Frage, die am besten auf höheren Ebenen im Kernel unter der
+Kontrolle des Systemverwalters abgehandelt wird. Es gibt aber
+natürlich immer Ausnahmen. Als Programmierer von Gerätetreibern sollten Sie sich
+über solche Situationen im klaren sein, in denen manche Gerätezugriffe das
+System als Ganzes negativ beeinflussen könnten, und entsprechende Kontrollen
+vorsehen. Beispielsweise sollten Geräteoperationen, die globale
+Ressourcen betreffen (wie das Einstellen einer Interrupt-Leitung) oder
+die Auswirkungen auf andere Benutzer haben (wie das Einstellen der
+Default-Blockgröße eines Bandlaufwerks), normalerweise nur hinreichend
+privilegierten Benutzern zur Verfügung stehen. Eine solche Überprüfung
+muß vom Treiber selbst vorgenommen werden.</P
+><P
+>Treiber-Autoren müssen natürlich auch darauf achten, keine
+Sicherheitsfehler einzubauen. Die Programmiersprache C macht es recht
+einfach, bestimmte Typen von Fehlern zu machen. Viele derzeitige
+Sicherheitsprobleme entstehen beispielsweise durch sogenannte
+<SPAN
+><I
+CLASS="EMPHASIS"
+>buffer overrun</I
+></SPAN
+>-Fehler, bei denen der
+Programmierer vergessen hat, zu überprüfen, wie viele Daten in einen
+      Puffer geschrieben werden, wodurch die Daten über das
+      Puffer-Ende hinaus geschrieben werden und damit andere Daten
+      überschreiben können. Solche Fehler können das gesamte System
+beeinträchtigen und müssen auf jeden Fall vermieden
+werden. Glücklicherweise ist es im Zusammenhang mit Gerätetreibern
+relativ einfach, diese Fehler zu vermeiden, da die
+Benutzerschnittstelle sehr genau definiert ist und unter ständiger
+Beobachtung steht.</P
+><P
+>Auch einige andere generelle Ideen aus dem Bereich der Sicherheit
+sollten Sie im Kopf behalten. Alle Eingaben, die aus Benutzerprozessen
+stammen, sollten mit großem Mißtrauen betrachtet werden; trauen Sie
+den Daten nicht, sofern Sie sie nicht überprüfen können. Achten Sie
+auch auf uninitialisierten Speicher; jeder Speicher, den Sie vom
+Kernel bekommen, sollte mit Nullen gefüllt oder anderweitig
+initialisiert werden, bevor er einem Benutzer-Prozeß oder einem Gerät
+zur Verfügung gestellt wird, ansonsten können vertrauliche Informationen
+nach außen gelangen. Wenn Ihr Gerät gesendete Daten interpretiert, sollten
+Sie sicherstellen, daß der Benutzer nichts schicken kann, was das
+System beschädigen könnte. Denken Sie schließlich auch über die
+möglichen Auswirkungen von Geräteoperationen nach; wenn bestimmte
+Operationen (etwa das Neuladen der Firmware auf einer Adapter-Karte
+oder das Formatieren einer Festplatte) das ganze System
+beeinträchtigen könnten, sollten diese Operationen wahrscheinlich nur
+privilegierten Benutzern zur Verfügung stehen.</P
+><P
+>Seien Sie auch vorsichtig, wenn Sie Software von Dritten bekommen,
+insbesondere wenn es dabei um den Kernel geht: Weil jeder Zugriff auf
+den Quellcode hat, kann auch jeder Sachen kaputtmachen und neu
+kompilieren. Obwohl Sie den vorkompilierten Kerneln aus Ihrer
+Distribution vertrauen können, sollten Sie keine Kernel verwenden,
+die von einem Bekannten kompiliert worden sind, dem Sie nicht voll
+vertrauen &#8212; wenn Sie kein vorkompiliertes Binärprogramm als
+Superuser starten wollen, dann sollten Sie genausowenig einen
+vorkompilierten Kernel benutzen. Beispielsweise könnte ein böswillig
+modifizierter Kernel es jedem erlauben, ein Modul zu laden, und damit
+eine unerwartete Hintertür via
+<SPAN
+><I
+CLASS="EMPHASIS"
+>create_module</I
+></SPAN
+> schaffen.&#13;</P
+><P
+>Beachten Sie auch, daß man einen Linux-Kernel ohne jede
+Modulunterstützung kompilieren und so alle diesbezüglichen
+Sicherheitslöcher schließen kann. Natürlich müssen in diesem Fall alle
+benötigten Treiber direkt in den Kernel eingebaut werden. Ab der
+Version 2.2 ist es auch möglich, das Laden von Kernel-Modulen über den
+Capability-Mechanismus nach dem Booten abzuschalten.</P
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN329"
+HREF="x320.html#AEN329"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>In der Version 2.0 des Kernels darf nur der Superuser
+privilegierten Code ausführen, während in der Version 2.2
+anspruchsvollere Überprüfungen möglich sind. Wir besprechen das in
+<A
+HREF="extra.html"
+>Kapitel 5</A
+>.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="anclass.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x339.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Klassen von Geräten und Modulen</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="anintro.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Versionsnumerierung</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

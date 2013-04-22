@@ -1,0 +1,573 @@
+<HTML
+><HEAD
+><TITLE
+>Multicasting</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Netzwerk-Treiber"
+HREF="net.html"><LINK
+REL="PREVIOUS"
+TITLE="Statistische Informationen"
+HREF="netstats.html"><LINK
+REL="NEXT"
+TITLE="Abwärtskompatibilität"
+HREF="x20925.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="netstats.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 14. Netzwerk-Treiber</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x20925.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="NETMULTI"
+>Multicasting</A
+></H1
+><P
+>&#13;
+
+
+Ein &#8220;Multicast&#8221;-Paket ist ein Netzwerk-Paket, das an mehr
+als einen, aber nicht alle Rechner im Netzwerk geschickt werden soll.
+Diese Funktionalität wird dadurch erreicht, daß spezielle
+Hardware-Adressen an Rechnergruppen zugewiesen werden. Pakete, die an
+eine dieser besonderen Adressen geschickt werden, sollten von allen Rechnern
+in der Gruppe empfangen werden. Bei Ethernet ist in
+Multicast-Adressen das niedrigstwertige Bit des ersten
+Adressen-Oktetts in der Zieladresse gesetzt, während dieses Bit bei
+keiner Karte in der Hardware-Adresse gesetzt ist.&#13;</P
+><P
+>Der schwierige Teil des Umgangs mit Rechnergruppen und
+Hardware-Adressen wird von den Applikationen und dem Kernel übernommen;
+der Treiber selbst muß sich nicht um diese Probleme kümmern.&#13;</P
+><P
+>Die Übertragung von Multicast-Paketen ist einfach, weil sie genau wie
+jedes andere Paket aussehen. Die Schnittstelle überträgt die Pakete
+über das Kommunikationsmedium, ohne sich die Ziel-Adresse
+anzusehen. Es ist die Aufgabe des Kernels, eine korrekte
+Hardware-Ziel-Adresse zuzuweisen; die Gerätemethode
+<SPAN
+><I
+CLASS="EMPHASIS"
+>hard_header</I
+></SPAN
+> muß sich, wenn sie
+überhaupt existiert, die Daten, nicht
+ansehen, die sie verarbeiten soll.&#13;</P
+><P
+>Der Kernel verfolgt, welche Multicast-Adressen zu
+einem gegebenen Zeitpunkt interessant sind. Diese Liste kann sich
+häufig ändern, weil sie eine Funktion der zu einem gegebenen Zeitpunkt
+laufenden Applikationen und des Benutzerinteresses ist. Die
+Aufgabe des Treibers ist es, die Liste interessanter
+Multicast-Adressen entgegenzunehmen und dem Kernel die an diese
+Adressen geschickten Pakete zu übergeben. Wie der Treiber die
+Multicast-Liste implementiert, ist etwas davon abhängig, wie die
+zugrundeliegende Hardware funktioniert.
+Normalerweise gehört die Hardware, was das Multicasting angeht, zu
+einer von drei Klassen:&#13;</P
+><P
+></P
+><UL
+><LI
+STYLE="list-style-type: disc"
+><P
+>Schnittstellen, die kein Multicasting kennen. Diese
+Schnittstellen empfangen entweder Pakete, die exakt an ihre
+Hardware-Adresse gerichtet sind (und natürlich Broadcast-Pakete), oder
+sie empfangen jedes einzelne Paket. Sie können Multicast-Pakete nur
+empfangen, indem sie jedes Paket entgegennehmen und damit auch das
+Betriebssystem mit einer riesigen Anzahl &#8220;uninteressanter&#8221;
+Pakete belasten. Diese Schnittstellen gelten üblicherweise nicht als
+Multicasting-fähig, und der Treiber wird daher auch
+<TT
+CLASS="LITERAL"
+>IFF_MULTICAST</TT
+> in
+<TT
+CLASS="LITERAL"
+>dev-&#62;flags</TT
+> nicht setzen.</P
+><P
+>Punkt-zu-Punkt-Schnittstellen sind ein Sonderfall, weil sie
+        immer jedes Paket ohne Hardware-Filterung empfangen.</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>Schnittstellen, die Multicast-Pakete von anderen
+Paketen (Rechner-zu-Rechner- oder Broadcast-Pakete) unterscheiden
+können. Diese Schnittstellen können angewiesen werden, jedes
+Multicast-Paket zu empfangen und die Software entscheiden zu lassen,
+ob der Rechner ein gültiger Empfänger ist. Die dadurch zusätzlich
+entstehende Last ist noch akzeptabel, weil es normalerweise nur wenige
+Multicast-Pakete in einem Netzwerk gibt.</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>Schnittstellen, die Multicast-Adressen in der Hardware
+erkennen können. Diesen Schnittstellen kann eine Liste von
+Multicast-Adressen übergeben werden, für die Pakete empfangen werden
+sollen. Alle anderen Multicast-Pakete werden dann ignoriert. Das ist
+natürlich für den Kernel die optimale Lösung, weil er keine
+Prozessorzeit damit verschwenden muß, &#8220;uninteressante&#8221;
+Pakete, die von der Schnittstelle hereinkommen, zu verwerfen.</P
+></LI
+></UL
+><P
+>Der Kernel versucht, die Fähigkeiten von guten Schnittstellen
+auszunutzen und die dritte Klasse, die die flexibelste ist, so gut es
+geht zu unterstützen. Daher benachrichtigt der Kernel auch den
+Treiber, wenn sich die Liste der gültigen Multicast-Adressen geändert
+hat, und übergibt diese Liste an den Treiber, damit dieser dem
+Hardware-Filter die neue Information zur Verfügung stellen kann.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN20836"
+>Kernel-Unterstützung für Multicasting</A
+></H2
+><P
+>&#13;Im Folgenden finden Sie eine Zusammenfassung der Datenstrukturen und
+Funktionen aus dem Bereich des Multicasting:&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>void (*dev-&#62;set_multicast_list)(struct net_device *dev);</TT
+></DT
+><DD
+><P
+>&#13;Diese Gerätemethode wird immer dann aufgerufen, wenn sich die Liste der
+Maschinenadressen des Gerätes ändert, außerdem aber auch, wenn
+<TT
+CLASS="LITERAL"
+>dev-&#62;flags</TT
+> geändert worden ist, weil manche der
+Flags (z. B. <TT
+CLASS="LITERAL"
+>IFF_PROMISC</TT
+>) auch eine
+Neuprogrammierung der Hardware-Filter verlangen. Die Methode bekommt
+einen Zeiger auf eine <TT
+CLASS="LITERAL"
+>struct net_device</TT
+> als Argument
+und gibt <TT
+CLASS="LITERAL"
+>void</TT
+> zurück. Ein Treiber, der an der
+Implementation dieser Methode nicht interessiert ist, kann das Feld
+auf <TT
+CLASS="LITERAL"
+>NULL</TT
+> setzen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct dev_mc_list *dev-&#62;mc_list;</TT
+></DT
+><DD
+><P
+>&#13;Dies ist eine verkettete Liste aller Multicast-Adressen, die zu diesem
+Gerät gehören. Die Definition dieser Struktur steht am Ende dieses
+Abschnittes.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int dev-&#62;mc_count;</TT
+></DT
+><DD
+><P
+>Die Anzahl der Elemente in der verketteten Liste. Diese Information
+ist etwas redundant, aber es ist schneller,
+<TT
+CLASS="LITERAL"
+>mc_count</TT
+> auf 0 zu prüfen, als die Liste
+abzusuchen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>IFF_MULTICAST</TT
+></DT
+><DD
+><P
+>&#13;Wenn der Treiber diese Option in <TT
+CLASS="LITERAL"
+>dev-&#62;flags</TT
+>
+nicht setzt, dann wird die Schnittstelle nicht um die Verarbeitung von
+Multicast-Paketen gebeten. Gleichwohl wird aber immer noch die Methode
+<SPAN
+><I
+CLASS="EMPHASIS"
+>set_multicast_list</I
+></SPAN
+> aufgerufen, wenn
+sich <TT
+CLASS="LITERAL"
+>dev-&#62;flags</TT
+> ändert, weil die Multicast-Liste
+auch geändert werden kann, während die Schnittstelle nicht aktiv
+ist.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>IFF_ALLMULTI</TT
+></DT
+><DD
+><P
+>Dieses Flag wird von der Netzwerk-Software in
+<TT
+CLASS="LITERAL"
+>dev-&#62;flags</TT
+> gesetzt, um dem Treiber mitzuteilen,
+daß er alle Multicast-Pakete aus dem Netzwerk entgegennehmen soll. Das
+ist der Fall, wenn Multicast-Routing eingeschaltet wird. Wenn dieses
+Flag gesetzt ist, dann sollte
+<TT
+CLASS="LITERAL"
+>dev-&#62;mc_list</TT
+> nicht zur Filterung von
+Multicast-Paketen verwendet werden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>IFF_PROMISC</TT
+></DT
+><DD
+><P
+>Dieses Flag wird in <TT
+CLASS="LITERAL"
+>dev-&#62;flags</TT
+> gesetzt, wenn
+die Schnittstelle in den &#8220;Promiscuous-Modus&#8221; versetzt
+wird. In diesem Fall soll die Schnittstelle jedes Paket
+entgegennehmen, unabhängig von
+<TT
+CLASS="LITERAL"
+>dev-&#62;mc_list</TT
+>.</P
+></DD
+></DL
+></DIV
+><P
+>Schließlich benötigen Treiber-Programmierer als letzte Information noch
+die Definition von struct
+<TT
+CLASS="LITERAL"
+>dev_mc_list</TT
+>, die in
+<TT
+CLASS="LITERAL"
+>&#60;linux/netdevice.h&#62;</TT
+> steht:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+struct dev_mc_list {
+    struct dev_mc_list   *next;          /* Naechste Adresse in der Liste */
+    _&#8201;_u8                 dmi_addr[MAX_ADDR_LEN]; /* Hardware-Adresse */
+    unsigned char        dmi_addrlen;    /* Adressenlaenge */
+    int                  dmi_users;      /* Zahl der Benutzer */
+    int                  dmi_gusers;     /* Zahl der Gruppen */
+};</PRE
+></TD
+></TR
+></TABLE
+><P
+>Weil Multicasting und Hardware-Adressen unabhängig von der
+eigentlichen Übertragung der Pakete sind, ist diese Struktur portabel
+über die verschiedenen Netzwerk-Implementierungen, denn jede Adresse
+wird durch einen String von Oktetten und eine Länge identifiziert,
+genau wie <TT
+CLASS="LITERAL"
+>dev-&#62;dev_addr</TT
+>.&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN20898"
+>Eine typische Implementierung</A
+></H2
+><P
+>Am besten läßt sich
+<SPAN
+><I
+CLASS="EMPHASIS"
+>set_multicast_list</I
+></SPAN
+> durch ein wenig
+Pseudocode verstehen.&#13;</P
+><P
+>Die folgende Funktion ist eine typische Implementation von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>set_multicast_list</I
+></SPAN
+> in einem
+vollständigen Treiber (full-featured driver). Der Treiber ist
+insofern full-featured (<TT
+CLASS="LITERAL"
+>ff</TT
+>) oder vollständig, als die Schnittstelle, die er ansteuert, einen
+komplexen Hardware-Paketfilter hat, der eine Tabelle von
+Multicast-Adressen verwaltet, die von diesem Rechner empfangen werden
+sollen. Die Maximalgröße dieser Tabelle ist
+<TT
+CLASS="LITERAL"
+>VS_TABLE_SIZE</TT
+>.&#13;</P
+><P
+>Alle Funktionen, die das Präfix <TT
+CLASS="LITERAL"
+>ff_</TT
+> haben,
+sind Platzhalter für Hardware-spezifische Operationen.&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+void ff_set_multicast_list(struct net_device *dev)
+{
+    struct dev_mc_list *mcptr;
+
+    if (dev-&#62;flags &#38; IFF_PROMISC) {
+        ff_get_all_packets();
+        return;
+    }
+    /* Wenn wir mit mehr als einer Adresse umgehen koennen, holen wir uns   alle Multicast-Pakete und sortieren die in der Software.*/
+
+    if (dev-&#62;flags &#38; IFF_ALLMULTI || dev-&#62;mc_count &#62; FF_TABLE_SIZE) {
+        ff_get_all_multicast_packets();
+        return;
+    }
+    /* Kein Multicast? Dann holen wir uns nur unseren eigenen Kram. */
+    if (dev-&#62;mc_count == 0) {
+        ff_get_only_own_packets();
+        return;
+    }
+    /* Alle Multicast-Adressen im Hardware-Filter speichern */
+    ff_clear_mc_list();
+    for (mc_ptr = dev-&#62;mc_list; mc_ptr; mc_ptr = mc_ptr-&#62;next)
+        ff_store_mc_address(mc_ptr-&#62;dmi_addr);
+    ff_get_packets_in_multicast_list();
+}
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Diese Implementation kann vereinfacht werden, wenn die Schnittstelle
+keine Multicast-Tabelle für eingehende Pakete im Hardware-Filter
+ablegen kann. In diesem Fall hat
+<TT
+CLASS="LITERAL"
+>VS_TABLE_SIZE</TT
+> den Wert 0, und die
+letzten vier Codezeilen werden nicht benötigt.
+&#13;</P
+><P
+>Wie wir bereits angedeutet haben, müssen auch Schnittstellen, die
+mit Multicast-Paketen nichts anfangen können,
+<SPAN
+><I
+CLASS="EMPHASIS"
+>set_multicast_list</I
+></SPAN
+> implementieren,
+um über Veränderungen in <TT
+CLASS="LITERAL"
+>dev-&#62;flags</TT
+> informiert
+zu werden. Wir bezeichnen so etwas als eine
+&#8220;unvollständige&#8221; (<TT
+CLASS="LITERAL"
+>uv</TT
+>)
+Implementation. Diese Implementation ist sehr einfach, wie der
+folgende Code zeigt:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+
+void uv_set_multicast_list(struct net_device *dev)
+{
+    if (dev-&#62;flags &#38; IFF_PROMISC)
+        uv_get_all_packets();
+    else
+        uv_get_only_own_packets();
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Es ist wichtig, <TT
+CLASS="LITERAL"
+>IFF_PROMISC</TT
+> zu behandeln,
+weil der Benutzer sonst <SPAN
+CLASS="APPLICATION"
+>tcpdump</SPAN
+> oder andere
+Netzwerk-Analyse-Programme nicht benutzen kann. Wenn die Schnittstelle
+eine Punkt-zu-Punkt-Verbindung bedient, ist es dagegen nicht
+notwendig, <SPAN
+><I
+CLASS="EMPHASIS"
+>set_multicast_list</I
+></SPAN
+> zu
+implementieren, weil sie ohnehin jedes Paket bekommt.
+
+
+
+&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="netstats.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x20925.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Statistische Informationen</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="net.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Abwärtskompatibilität</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

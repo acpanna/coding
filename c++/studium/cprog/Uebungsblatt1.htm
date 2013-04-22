@@ -1,0 +1,279 @@
+<HTML>
+ <HEAD>
+   <TITLE>
+     &Uuml;bungsblatt 01, 11.05.1999
+   </TITLE>
+ </HEAD>
+ <BODY>
+
+  <H1>
+     &Uuml;bungsblatt 01, 11.05.1999
+   </H1>
+   <H2>
+     Abgabetermin: Mo, 18.05.1999, 17<SUP>00</SUP> Uhr
+   </H2>
+
+<DIV ALIGN="right">
+  <A HREF="mailto:Robert.Baier@uni-bayreuth.de">R. Baier</A> <BR>
+  <A HREF="mailto:hiwi502@btcipmatx1.cip.uni-bayreuth.de">B. Seifert</A> <BR>
+  <A HREF="mailto:hiwi509@btcipmatx1.cip.uni-bayreuth.de">H. Buchholz</A>
+  <BR CLEAR="all">
+</DIV>
+<P>
+
+Das &Uuml;bungsblatt besteht aus den Aufgaben <A HREF="#A_01">01</A>,
+<A HREF="#A_02">02</A> und <A HREF="#A_03">03</A>.
+Das &Uuml;bungsblatt inkl. aller Sourcecodes, Bilder, HTML-Seiten, ... kann auch
+als
+<UL>
+  <LI><A HREF="blatt_01.tar.gz"><TT>gzip</TT>'tes <TT>tar</TT>-Archive</A>
+  </LI>
+  <LI>
+      <A HREF="blatt_01.zip"><TT>ZIP</TT>-Archive</A>
+  </LI>
+</UL>
+heruntergeladen werden. <BR>
+
+<EM>Beachten Sie die <A HREF="../allgemein/hinweise.html">allgemeinen Abgabehinweise</A>!!</EM>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A_01">&nbsp;</A>
+
+   <H2>
+     Aufgabe 01
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi509@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Bernd Seifert)
+   </H3>
+
+Geben Sie folgenden Quellcode ein, compilieren Sie ihn und erstellen Sie
+ein ausf&uuml;hrbares Programm.
+
+<PRE>
+  #include &lt;stdio.h&gt;
+  #include &lt;math.h&gt;
+  
+  int main (void)
+  {
+
+     int i;
+
+     printf("Dieses Programm gibt alle Quadratzahlen zu den Basen 1 bis 20 aus!");
+     printf("\n\n");
+
+     for ( i = 1 ; i &lt; 21 ; i=i+1 )  /* for-Schleife wird 20-mal durchlaufen */
+     {
+     /* for-Schleife Anfang */
+
+        printf("Basis: %d", i);
+        printf("\t");                /* Tabulator */
+        printf("Ergebnis: %d",i*i);  /* Berechnung der Quadratzahl
+                                        in der printf()-Funktion! */
+        printf("\tASCII: %c", (char) ('A'+i));
+        printf("\tpow: %f", pow(i, 2));
+        printf("\n");
+      }
+      /* for-Schleife Ende */
+
+      return 0; 
+  }
+</PRE>
+
+Was gibt das Programm in den Spalten "ASCII" bzw. "pow" aus?
+Was bewirkt das Zeichen <TT>'\t'</TT> bei der Ausgabe?
+
+<P>
+Schreiben Sie das Programm mit den C++-Befehlen f&uuml;r Ein- und 
+Ausgabe um. Erkennt Ihr Compiler die Vorgaben des C++-Standards an
+oder beharrt er noch auf veralteten Konventionen zum Einbinden von
+Headerfiles? 
+
+<P>
+Wie mu&szlig; man das Programm &auml;ndern, damit es zuerst die
+Quadratzahl von 20, dann die von 19, ... und dann die von 1 ausgibt? <P>
+
+Abzugeben ist die Ausgabe des urspr&uuml;nglichen Programmes und
+der Quellcode des Files mit der C++-Ausgabe und der ver&auml;nderten 
+Reihenfolge der <TT>for</TT>-Schleife.
+
+<HR SIZE=5 WIDTH="100%">
+
+<A NAME="A_02">&nbsp;</A>
+
+   <H2>
+     Aufgabe 02
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi509@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Holger Buchholz)
+   </H3>
+
+Besch&auml;ftigen Sie sich mit der Dokumentation des C-Compilers auf 
+dem von Ihnen genutzten Betriebssystem und beantworten Sie schriftlich
+(per e-mail) die f&uuml;r Ihr Betriebssystem abgestimmten Fragen:
+
+<H3>nur f&uuml;r Windows NT-Benutzer:</H3>
+
+<OL TYPE=a>
+  <LI>
+    Welche Handb&uuml;cher gibt es online im S 81 einzusehen, die sich
+    mit C besch&auml;ftigen? <BR>
+
+    Die Handb&uuml;cher werden &uuml;ber die Taskleiste mit dem 
+    Popup-Men&uuml; "Start" und dem
+    Men&uuml; "<TT>Programme</TT>" und
+    dem Untermen&uuml; "<TT>Watcom C_C++ Tools Help</TT>" aufgerufen.
+    <P>
+  </LI>
+
+  <LI>
+    Analysieren Sie die folgenden Ausgaben des Watcom-Compilers:
+    
+    <PRE>
+      cd d:\c\ueb_01
+      wmake -f d:\c\ueb_01\c_test.mk -h -e d:\c\ueb_01\c_test.exe
+      wcc aufg_02.c -i=D:\WATCOMC\h;D:\WATCOMC\h\win -w4 -e25 -zq -otexan -d2 -bt=windows -ml
+      wlink d all SYS windows op m op maxe=25 op q op symf @c_test.lk1
+      Execution complete
+    </PRE> 
+    
+    und
+    
+    <PRE>
+      cd g:\java\mm\tex
+      wmake -f g:\java\mm\tex\c_test.mk -h -e g:\java\mm\tex\c_test.exe
+      wcc386 aufg_02.c -i=D:\WATCOMC\h;D:\WATCOMC\h\nt -w4 -e25 -zq -otexan -d2 -5r -bt=nt -mf
+      wlink d all SYS nt op m op maxe=25 op q op symf @c_test.lk1
+      Execution complete
+    </PRE>
+    
+    Was ist die Aufgabe der Executables <TT>wmake</TT>, <TT>wcc</TT>,
+    <TT>wcc386</TT> und <TT>wlink</TT>?
+  </LI>
+</OL>
+
+<H3>nur f&uuml;r Linux-Benutzer:</H3>
+
+<OL TYPE=a>
+  <LI>
+    Wie findet man Online-Informationen auf dem CIP-Pool, die sich
+    mit C und dem C-Compiler besch&auml;ftigen? <BR>
+    
+    Die Online-Manuals werden &uuml;ber die Taskleiste und Anklicken des
+    Icons "<TT>K</TT>" (ganz links) mit dem 
+    Popup-Men&uuml; "S.u.S.E." und dem
+    Men&uuml; "<TT>Everything</TT>" und
+    dem Untermen&uuml; "<TT>Documentation</TT>" aufgerufen. <BR>
+
+    Die Informationen und Dokumentationen sind im CIP-Pool unter dem
+    Verzeichnis "<TT>/usr/doc/</TT>" abgespeichert.
+    <P>
+  </LI>
+
+  <LI>
+    Analysieren Sie die folgenden Ausgaben des GNU C-Compilers (zus&auml;tzliche
+    Option "<TT>-v</TT>" beim &Uuml;bersetzen): 
+    
+    <PRE>
+      Reading specs from /usr/lib/gcc-lib/i486-linux/2.7.2.1/specs
+      gcc version 2.7.2.1
+       /usr/lib/gcc-lib/i486-linux/2.7.2.1/cpp -lang-c89 -v -undef -D__GNUC__=2 -D__GNUC_MINOR__=7 -trigraphs -$ -D__STRICT_ANSI__ -D__ELF__ -D__unix__ -D__i386__ -D__linux__ -D__unix -D__i386 -D__linux -Asystem(unix) -Asystem(posix) -Acpu(i386) -Amachine(i386) -Wall -D__i486__ aufg_02.c /tmp/cca09527.i
+      GNU CPP version 2.7.2.1 (i386 Linux/ELF)
+      #include "..." search starts here:
+      #include <...> search starts here:
+       /usr/local/include
+       /usr/i486-linux/include
+       /usr/lib/gcc-lib/i486-linux/2.7.2.1/include
+       /usr/include
+      End of search list.
+       /usr/lib/gcc-lib/i486-linux/2.7.2.1/cc1 /tmp/cca09527.i -fno-strength-reduce -quiet -dumpbase aufg_02.c -Wall -ansi -version -o /tmp/cca09527.s
+      GNU C version 2.7.2.1 (i386 Linux/ELF) compiled by GNU C version 2.7.2.1.
+       /usr/i486-linux/bin/as -V -Qy -o /tmp/cca095271.o /tmp/cca09527.s
+      GNU assembler version 2.9.1 (i486-linux), using BFD version 2.9.1.0.4
+       /usr/i486-linux/bin/ld -m elf_i386 -L /usr/X11R6/lib -rpath-link /usr/X11R6/lib -dynamic-linker /lib/ld-linux.so.1 /usr/lib/crt1.o /usr/lib/crti.o /usr/lib/crtbegin.o -L/usr/lib/gcc-lib/i486-linux/2.7.2.1 -L/usr/i486-linux/lib /tmp/cca095271.o -lm -lgcc -lc -lgcc /usr/lib/crtend.o /usr/lib/crtn.o      
+    </PRE>
+    
+    Was ist die Aufgabe der Executables <TT>cpp</TT>, <TT>cc1</TT>,
+    <TT>as</TT> und <TT>ld</TT>?
+</OL>
+
+
+<H3>gemeinsame Fragen:</H3>
+
+<OL TYPE=a START=3>
+  <LI>
+    Unter welchem Directory findet man die Headerdateien
+    <CENTER>
+       "<TT>math.h</TT>" und
+       "<TT>stdio.h</TT>",
+    </CENTER>
+    und was passiert, wenn man die <TT>include</TT>-Anweisungen einfach 
+    wegl&auml;&szlig;t?
+    <P>
+  </LI>
+
+  <LI>
+    Wie lauten die Namen der C-Funktionen f&uuml;r das Quadrieren, den Sinus und
+    des Cosinus, des Tangens, des Logarithmus und des Absolutbetrags? <BR>
+    Wo sind diese Funktionen deklariert? <BR>
+    Versuchen Sie, die Fragen mit den Online-Informationen zu beantworten.
+  </LI>
+</OL>
+
+Abzugeben ist die schriftliche Beantwortung aller Fragen.
+
+<P>
+<HR SIZE=5 WIDTH="100%">
+
+<A NAME="A_03">&nbsp;</A>
+
+   <H2>
+     Aufgabe 03
+   </H2>
+   <H3>
+     keine Korrektur der Aufgabe, Besprechung in den &Uuml;bungen
+   </H3>
+
+Erstellen Sie ein Programm, das
+
+<OL TYPE=a>
+  <LI>
+    den durchschnittlichen Benzinverbrauch auf 100 km und
+  </LI>
+  
+  <LI>
+    die Kosten pro gefahrenen Kilometer berechnet.
+  </LI>
+</OL>
+
+Die Eingabeparameter (<TT>float</TT>-Zahlen) sind
+<UL>
+  <LI>
+    die gefahrenen Kilometer,
+  </LI>
+  
+  <LI>
+    der gesamte Verbrauch in Litern und
+  </LI>
+  
+  <LI>
+    der Benzinpreis.
+  </LI>
+</UL>
+
+Orientieren Sie sich beim Schreiben des Programmes an dem
+Vorlesungsbeispiel zur Berechnung der Hypothenuse und der Fl&auml;che 
+eines rechtwinkligen Dreiecks.
+
+<P>
+Was meldet der Compiler, wenn Sie sich beim Funktionsaufruf 
+"<TT>printf()</TT>" oder beim Namen des Ausgabeobjekts "<TT>cout</TT>"
+vertippen? <BR>
+Was meldet der Compiler, wenn Sie die Variablen versehentlich vom Datentyp
+"<TT>real</TT>" anlegen (anstatt vom Datentyp "<TT>float</TT>")? <BR>
+Erhalten Sie zus&auml;tzliche Informationen durch eine Fehlernummer
+oder eine Zeilennummer?
+
+ </BODY>
+</HTML>

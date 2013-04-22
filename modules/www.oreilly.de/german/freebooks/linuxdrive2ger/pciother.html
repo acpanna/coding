@@ -1,0 +1,293 @@
+<HTML
+><HEAD
+><TITLE
+>Andere PC-Busse</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Ein Überblick über die Peripherie-Busse"
+HREF="pci.html"><LINK
+REL="PREVIOUS"
+TITLE="PC/104 und PC/104+"
+HREF="pci104.html"><LINK
+REL="NEXT"
+TITLE="SBus"
+HREF="pcisbus.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="pci104.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 15. Ein Überblick über die Peripherie-Busse</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="pcisbus.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="PCIOTHER"
+>Andere PC-Busse</A
+></H1
+><P
+>PCI und ISA sind die am häufigsten verwendeten Peripherie-Geräte in
+der PC-Welt, aber es sind nicht die einzigen. Dieser Abschnitt faßt die Merkmale der anderen Busse zusammen, die es auf dem
+PC-Markt gibt.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN22190"
+>MCA</A
+></H2
+><P
+>&#13;
+Die Micro Channel Architecture (MCA) ist ein IBM-Standard,
+der in PS/2-Rechnern und einigen Laptops verwendet wird. Das
+Hauptproblem bei MCA ist die fehlende Dokumentation, was bis vor
+kurzem zu einer fehlenden MCA-Unterstützung in Linux geführt hat.&#13;</P
+><P
+>Auf der Hardware-Ebene kann Micro Channel mehr als ISA. Es unterstützt
+Multimaster-DMA, 32 Bit-Adreß- und -Datenleitungen, gemeinsam genutzte
+Interrupt-Leitungen und die geographische Adressierung für den Zugriff auf
+Konfigurationsregister auf den Karten. Solche Register werden
+<I
+CLASS="FIRSTTERM"
+>Programmable Option Select (POS)</I
+> genannt, haben aber
+nicht alle Features von PCI-Registern. Die Linux-Unterstützung für
+Micro Channel enthält Funktionen, die an Module exportiert werden.&#13;</P
+><P
+>Ein Gerätetreiber kann den Integerwert
+<TT
+CLASS="LITERAL"
+>MCA_bus</TT
+> auslesen, um festzustellen, ob er
+auf einem Rechner mit Micro Channel
+läuft. <TT
+CLASS="LITERAL"
+>MCA_bus</TT
+> hat nur dann einen von Null
+verschiedenen Wert, wenn der Kernel auf einem MCA-Rechner läuft. Wenn
+das Symbol ein Präprozessor-Makro ist, dann ist auch das Makro
+<TT
+CLASS="LITERAL"
+>MCA_bus__is_a_macro</TT
+>
+definiert, und wenn
+<TT
+CLASS="LITERAL"
+>MCA_bus__is_a_macro</TT
+>
+undefiniert ist, dann ist <TT
+CLASS="LITERAL"
+>MCA_bus</TT
+> eine
+Integer-Variable, die an modularisierten Code exportiert
+wird. Sowohl <TT
+CLASS="LITERAL"
+>MCA_bus</TT
+> als auch
+<TT
+CLASS="LITERAL"
+>MCA_bus__is_a_macro</TT
+>
+sind in <TT
+CLASS="LITERAL"
+>&#60;asm/processor.h&#62;</TT
+> definiert.
+
+&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN22208"
+>EISA</A
+></H2
+><P
+>&#13;
+
+Der Extended ISA-Bus (EISA) ist eine 32-Bit-Erweiterung von ISA mit
+einem kompatiblen Verbindungsstecker; ISA-Karten können in einen
+EISA-Steckplatz gesteckt werden. Die zusätzlichen Drähte werden unter
+den ISA-Kontakten durchgeleitet.&#13;</P
+><P
+>Wie PCI und MCA ist auch der EISA-Bus für Jumper-lose Geräte entworfen
+worden. Er hat dieselben Features wie MCA: 32-Bit-Adreß- und
+-Datenleitungen, Multimaster-DMA und gemeinsam genutzte
+Interrupt-Leitungen. EISA-Geräte werden von der Software konfiguriert,
+benötigen aber keine besondere Unterstützung durch das
+Betriebssystem. Im Linux-Kernel gibt es bereits EISA-Treiber für
+Ethernet-Karten und SCSI-Controller.&#13;</P
+><P
+>Ein EISA-Treiber überprüft den Wert von
+<TT
+CLASS="LITERAL"
+>EISA_bus</TT
+>, um zu erfahren, ob der Rechner
+einen EISA-Bus hat. Wie bei <TT
+CLASS="LITERAL"
+>MCA_bus</TT
+> ist auch
+<TT
+CLASS="LITERAL"
+>EISA_bus</TT
+> entweder ein Makro oder eine
+Variable, je nachdem, ob
+<TT
+CLASS="LITERAL"
+>EISA_bus__is_a_macro</TT
+>
+definiert ist oder nicht. Beide Symbole sind in
+<TT
+CLASS="LITERAL"
+>&#60;asm/processor.h&#62;</TT
+> definiert.&#13;</P
+><P
+>Für die Treiber gibt es keine spezielle EISA-Unterstützung im Kernel,
+und der Programmierer muß sich selbst um die ISA-Erweiterungen
+kümmern. Die Treiber verwenden standardisierte
+EISA-I/O-Operationen, um auf die EISA-Register zuzugreifen. Sie
+können die Treiber, die es schon im Kernel gibt, als Beispiel-Code
+verwenden.&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN22226"
+>VLB</A
+></H2
+><P
+>&#13;
+Eine weitere Erweiterung von ISA ist der VESA Local Bus,
+der die ISA-Steckverbindung durch einen dritten, längs dahinter
+angeordneten Slot erweitert. Dieser zusätzliche Slot kann auch
+allein von VLB-Geräten verwendet werden, weil alle wichtigen Signale
+von der ISA-Schnittstelle auch hierher geführt werden. Damit können
+Geräte gebaut werden, die in einen VLB-Steckplatz gesteckt
+werden, ohne den ISA-Steckplatz zu benutzen. Solche Geräte sind
+allerdings sehr selten, weil die meisten Geräte an die Rückwand
+heranreichen müssen, damit ihre externen Anschlüsse zugänglich sind.&#13;</P
+><P
+>Der VESA-Bus hat sehr viel eingeschränktere Fähigkeiten als EISA, MCA
+und PCI und verschwindet vom Markt. Es gibt keine spezielle
+Kernel-Unterstützung für VLB. Sowohl der
+Lance-Ethernet-Treiber als auch der
+IDE-Festplattentreiber in Linux 2.0 können mit den VLB-Versionen der
+jeweiligen Geräte umgehen.
+
+&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="pci104.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="pcisbus.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>PC/104 und PC/104+</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="pci.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>SBus</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

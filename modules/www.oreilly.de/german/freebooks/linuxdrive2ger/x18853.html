@@ -1,0 +1,631 @@
+<HTML
+><HEAD
+><TITLE
+>Schnellreferenz</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="mmap und DMA"
+HREF="mem.html"><LINK
+REL="PREVIOUS"
+TITLE="Abwärtskompatibilität"
+HREF="membc.html"><LINK
+REL="NEXT"
+TITLE="Netzwerk-Treiber"
+HREF="net.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="membc.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 13. mmap und DMA</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="net.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN18853"
+>Schnellreferenz</A
+></H1
+><P
+>In diesem Kapitel wurden die folgenden Symbole aus dem Bereich
+der Speicherverwaltung eingeführt. Die Liste enthält nicht die
+Symbole, die im ersten Abschnitt eingeführt wurden, weil dieser
+Abschnitt schon selbst eine große Liste ist und die dort genannten
+Symbole selten für Gerätetreiber nützlich sind.&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/mm.h&#62;</TT
+></DT
+><DD
+><P
+>In dieser Header-Datei sind alle Funktionen und Strukturen
+        aus dem Bereich der Speicherverwaltung definiert.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int remap_page_range(unsigned long virt_add, unsigned long phys_add, unsigned long size, pgprot_t prot);</TT
+></DT
+><DD
+><P
+>Diese Funktion ist der Kern von
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+>. Sie bildet <SPAN
+><I
+CLASS="EMPHASIS"
+>size</I
+></SPAN
+>
+        Bytes einer physikalischen Adresse, die bei <TT
+CLASS="LITERAL"
+>phys_addr</TT
+> beginnt, auf die virtuelle Adresse
+        <TT
+CLASS="LITERAL"
+>virt_addr</TT
+> ab. Die Zugriffsbits für den
+        virtuellen Adreßraum werden in <TT
+CLASS="LITERAL"
+>prot</TT
+> angegeben.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct page *virt_to_page(void *kaddr);</TT
+>, <TT
+CLASS="LITERAL"
+>void *page_address(struct page *page);</TT
+></DT
+><DD
+><P
+>&#13;
+Diese Makros konvertieren zwischen logischen Kernel-Adressen und
+deeren zugehörigen
+Speichertabellen-Einträgen. <SPAN
+><I
+CLASS="EMPHASIS"
+>page_address</I
+></SPAN
+>
+funktioniert nur auf Seiten im niedrigen Speicher sowie auf Seiten im
+hohen Speicher, die explizit eingeblendet worden sind.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void *_&#8201;_va(unsigned long physaddr);</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned long _&#8201;_pa(void *kaddr);</TT
+></DT
+><DD
+><P
+>&#13;
+Diese Makros konvertieren zwischen logischen Kernel-Adressen und
+physikalischen Adressen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long kmap(struct page *page);</TT
+>, <TT
+CLASS="LITERAL"
+>void kunmap(struct page *page);</TT
+></DT
+><DD
+><P
+>&#13;
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kmap</I
+></SPAN
+> gibt eine virtuelle Kernel-Adresse zurück,
+die auf die angegebene Seite eingeblendet ist. Dabei wird die
+Einblendung bei Bedarf erzeugt. <SPAN
+><I
+CLASS="EMPHASIS"
+>kunmap</I
+></SPAN
+> löscht die
+Einblendung für die angegebene Seite.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/iobuf.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>void kiobuf_init(struct kiobuf *iobuf);</TT
+>, <TT
+CLASS="LITERAL"
+>int alloc_kiovec(int number, struct kiobuf **iobuf);</TT
+>, <TT
+CLASS="LITERAL"
+>void free_kiovec(int number, struct kiobuf **iobuf);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+
+Diese Funktionen erledigen die Allokation, Initialisierung und
+Freigabe von
+Kernel-I/O-Puffern. <SPAN
+><I
+CLASS="EMPHASIS"
+>kiobuf_init</I
+></SPAN
+>
+initialisiert einen einzelnen kiobuf, wird aber nur selten
+verwendet. <SPAN
+><I
+CLASS="EMPHASIS"
+>alloc_kiovec</I
+></SPAN
+> wird meistens
+statt dessen verwendet und alloziert und initialisiert einen Vektor
+von kiobufs. Ein solcher Vektor von kiobufs wird mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>free_kiovec</I
+></SPAN
+> wieder freigegeben.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int lock_kiovec(int nr, struct kiobuf *iovec[], int wait);</TT
+>, <TT
+CLASS="LITERAL"
+>int unlock_kiovec(int nr, struct kiobuf *iovec[]);</TT
+></DT
+><DD
+><P
+>&#13;
+Diese Funktionen sperren einen kiovec im Speicher und geben ihn wieder
+frei. Sie sind nicht notwendig, wenn kiobufs für I/O in User
+Space-Speicher verwendet werden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int map_user_kiobuf(int rw, struct kiobuf *iobuf, unsigned long address, size_t len);</TT
+>, <TT
+CLASS="LITERAL"
+>void unmap_kiobuf(struct kiobuf *iobuf);</TT
+></DT
+><DD
+><P
+>&#13;
+<SPAN
+><I
+CLASS="EMPHASIS"
+>map_user_kiobuf</I
+></SPAN
+> blendet einen Puffer im User
+Space in den angegebenen Kernel-I/O-Puffer ein;
+<SPAN
+><I
+CLASS="EMPHASIS"
+>unmap_kiobuf</I
+></SPAN
+> hebt diese Einblendung wieder
+auf.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;asm/io.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned long virt_to_bus(volatile void * address);</TT
+>, <TT
+CLASS="LITERAL"
+>void * bus_to_virt(unsigned long address);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+Diese Funktionen konvertieren zwischen virtuellen Kernel-Adressen und
+Bus-Adressen. Bus-Adressen müssen für die Kommunikation mit
+Peripherie-Geräten verwendet werden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/pci.h&#62;</TT
+></DT
+><DD
+><P
+>&#13;
+Die Header-Datei, die die folgenden Funktionen definiert.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int pci_dma_supported(struct pci_dev *pdev, dma_addr_t mask);</TT
+></DT
+><DD
+><P
+>&#13;Für Peripherie-Geräte, die den vollen 32-Bit-Bereich nicht adressieren
+können, bestimmt diese Funktion, ob DMA überhaupt auf dem Host-System
+unterstützt wird.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void *pci_alloc_consistent(struct pci_dev *pdev, size_t size, dma_addr_t *bus_addr)</TT
+>, <TT
+CLASS="LITERAL"
+>void pci_free_consistent(struct pci_dev *pdev, size_t size, void *cpuaddr, dma_handle_t bus_addr);</TT
+></DT
+><DD
+><P
+>&#13;
+Diese Funktionen allozieren konsistente DMA-Einblendungen
+für einen Puffer, der während der gesamten Lebensdauer des Treibers
+existiert, und geben sie wieder frei.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>PCI_DMA_TODEVICE</TT
+>, <TT
+CLASS="LITERAL"
+>PCI_DMA_FROMDEVICE</TT
+>, <TT
+CLASS="LITERAL"
+>PCI_DMA_BIDIRECTIONAL</TT
+>, <TT
+CLASS="LITERAL"
+>PCI_DMA_NONE</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+Diese Symbole werden dazu verwendet, den Funktionen für
+Streaming-Einblendungen mitzuteilen, in welche Richtung Daten vom oder
+zum Puffer transportiert werden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>dma_addr_t pci_map_single(struct pci_dev *pdev, void *buffer, size_t size, int direction);</TT
+>, <TT
+CLASS="LITERAL"
+>void pci_unmap_single(struct pci_dev *pdev, dma_addr_t bus_addr, size_t size, int direction);</TT
+></DT
+><DD
+><P
+>&#13;
+Erzeugen und zerstören eine Streaming-DMA-Einblendung zur einmaligen
+Verwendung.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void pci_sync_single(struct pci_dev *pdev, dma_handle_t bus_addr, size_t size, int direction)</TT
+></DT
+><DD
+><P
+>&#13;Synchronisieren einen Puffer, der eine Streaming-Einblendung
+hat. Diese Funktion muß verwendet werden, wenn der Prozessor auf einen
+Puffer zugreifen muß, während die Streaming-Einblendung noch besteht
+(also während der Puffer dem Gerät gehört).</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct scatterlist { /* ... */ };</TT
+>, <TT
+CLASS="LITERAL"
+>dma_addr_t sg_dma_address(struct scatterlist *sg);</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned int sg_dma_len(struct scatterlist *sg);</TT
+></DT
+><DD
+><P
+>&#13;
+
+Die Struktur <TT
+CLASS="LITERAL"
+>scatterlist</TT
+> beschreibt eine
+I/O-Operation, die mehr als einen Puffer betrifft. Die Makros
+<SPAN
+><I
+CLASS="EMPHASIS"
+>sg_dma_address</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>sg_dma_len</I
+></SPAN
+> können dazu verwendet
+werden, bei der Implementierung von Scatter-Gather-Operationen
+Bus-Adressen und Puffer-Längen zu extrahieren, die dann an das Gerät
+übergeben werden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>pci_map_sg(struct pci_dev *pdev, struct scatterlist *list, int nents, int direction);</TT
+>, <TT
+CLASS="LITERAL"
+>pci_unmap_sg(struct pci_dev *pdev, struct scatterlist *list, int nents, int direction);</TT
+>, <TT
+CLASS="LITERAL"
+>pci_dma_sync_sg(struct pci_dev *pdev, struct scatterlist *sg, int nents, int direction)</TT
+></DT
+><DD
+><P
+>&#13;
+
+<SPAN
+><I
+CLASS="EMPHASIS"
+>pci_map_sg</I
+></SPAN
+> blendet eine Scatter-Gather-Operation
+ein und <SPAN
+><I
+CLASS="EMPHASIS"
+>pci_unmap_sg</I
+></SPAN
+> hebt diese Einblendung
+wieder auf. Wenn auf die Puffer zugegriffen werden muß, während die
+Einblendung noch aktiv ist, kann
+<SPAN
+><I
+CLASS="EMPHASIS"
+>pci_dma_sync_sg</I
+></SPAN
+> zum
+Synchronisieren verwendet werden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>/proc/dma</TT
+></DT
+><DD
+><P
+>Diese Daten enthält einen textuellen Snapshot der allozierten Kanäle
+in den DMA-Controllern. PCI-basierte DmA wird hier nicht gezeigt, weil
+jede Karte unabhängig von den anderen arbeitet, ohne einen Kanal im
+DMA-Controller allozieren zu müssen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;asm/dma.h&#62;</TT
+></DT
+><DD
+><P
+>&#13;
+Diese Header-Datei definiert oder deklariert alle Funktionen und
+Makros aus dem DMA-Bereich. Sie muß vor der Verwendung eines der folgenden
+Symbole eingebunden werden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int request_dma(unsigned int channel, const char *name);</TT
+>, <TT
+CLASS="LITERAL"
+>void free_dma(unsigned int channel);</TT
+></DT
+><DD
+><P
+>&#13;
+Diese Funktionen greifen auf die DMA-Registry zu. Die Registrierung
+muß vor der Verwendung der ISA-DMA-Kanäle erfolgen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long claim_dma_lock();</TT
+>, <TT
+CLASS="LITERAL"
+>void release_dma_lock(unsigned long flags);</TT
+></DT
+><DD
+><P
+>&#13;
+Diese Funktionen holen das DMA-Spinlock und geben es wieder
+frei. Dieses Spinlock muß gehalten werden, bevor eine der anderen
+ISA-DMA-Funktionen, die unten in dieser Liste beschrieben werden,
+aufgerufen wird. Sie schalten auch die Interrupts im lokalen Prozessor
+aus und wieder ein.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void set_dma_mode(unsigned int channel, char mode);</TT
+>, <TT
+CLASS="LITERAL"
+>void set_dma_addr(unsigned int channel, unsigned int addr);</TT
+>, <TT
+CLASS="LITERAL"
+>void set_dma_count(unsigned int channel, unsigned int count);</TT
+></DT
+><DD
+><P
+>&#13;
+
+Diese Funktionen dienen zum Programmieren von DMA-Informationen im
+DMA-Controller. <TT
+CLASS="LITERAL"
+>addr</TT
+> ist eine Bus-Adresse.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void disable_dma(unsigned int channel);</TT
+>, <TT
+CLASS="LITERAL"
+>void enable_dma(unsigned int channel);</TT
+></DT
+><DD
+><P
+>&#13;
+Ein DMA-Kanal muß während der Konfiguration abgeschaltet sein. Diese
+Funktionen ändern den Status des DMA-Kanals.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int get_dma_residue(unsigned int channel);</TT
+></DT
+><DD
+><P
+>&#13;Wenn der Treiber wissen muß, wie eine DMA-Übertragung fortschreitet,
+kann er diese Funktion aufrufen, die die Anzahl der noch ausstehenden
+Datenübertragungen zurückgibt. Nach erfolgreichem Abschluß der
+DMA-Übertragung gibt die Funktion 0 zurück; während der Übertragung
+von Daten ist der Wert nicht vorhersagbar.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void clear_dma_ff(unsigned int channel)</TT
+></DT
+><DD
+><P
+>&#13;Das DMA-Flip-Flop wird vom Controller verwendet, um 16-Bit-Werte mit
+Hilfe zweier 8-Bit-Operationen zu übertragen. Es muß zurückgesetzt werden, bevor irgendwelche Daten an den Controller geschickt werden.</P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="membc.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="net.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Abwärtskompatibilität</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="mem.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Netzwerk-Treiber</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

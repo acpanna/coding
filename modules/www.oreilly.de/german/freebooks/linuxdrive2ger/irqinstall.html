@@ -1,0 +1,1514 @@
+<HTML
+><HEAD
+><TITLE
+>Einen Interrupt-Handler installieren</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Interrupt-Handler"
+HREF="irq.html"><LINK
+REL="PREVIOUS"
+TITLE="Den Parallel-Port vorbereiten"
+HREF="intsetup.html"><LINK
+REL="NEXT"
+TITLE="Einen Handler implementieren"
+HREF="irqhandler.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="intsetup.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 9. Interrupt-Handler</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="irqhandler.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="IRQINSTALL"
+>Einen Interrupt-Handler installieren</A
+></H1
+><P
+>Wenn Sie die erzeugten Interrupts wirklich &#8220;sehen&#8221; wollen,
+reicht es nicht, auf das Hardware-Gerät zu schreiben. Ein
+Software-Handler muß her. Wenn dem Linux-Kernel nicht mitgeteilt wird,
+daß Interrupts zu erwarten sind, bestätigt dieser die Interrupts
+lediglich und ignoriert sie ansonsten.</P
+><P
+>&#13;
+
+Interrupt-Leitungen sind eine wertvolle und oft knappe Ressource,
+insbesondere dort, wo es nur 15 oder 16 davon gibt. Der Kernel verwaltet
+eine Liste der Interrupt-Leitungen, ähnlich wie die Liste der
+I/O-Ports. Ein Modul darf einen Interrupt-Kanal (auch IRQ für
+Interrupt ReQuest genannt) erst nach der Anforderung verwenden und muß
+ihn  wieder freigeben, wenn es
+damit fertig ist. In vielen Situationen wird auch erwartet, daß Module
+Interrupt-Leitungen teilen, wie wir noch sehen werden. Die
+folgenden Funktionen, die in
+<TT
+CLASS="LITERAL"
+>&#60;linux/sched.h&#62;</TT
+> deklariert sind,
+implementieren die Schnittstelle:
+
+
+
+
+&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+int request_irq(unsigned int irq,
+                void (*handler)(int, void *, struct pt_regs *),
+                unsigned long flags,
+                const char *dev_name,
+                void *dev_id);
+
+void free_irq(unsigned int irq, void *dev_id);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Der Rückgabewert von <SPAN
+><I
+CLASS="EMPHASIS"
+>request_irq</I
+></SPAN
+> ist 0 im
+Erfolgsfall und ein negativer Fehlercode im Fehlerfall, ganz wie
+gewohnt. Es ist nicht ungewöhnlich, daß die Funktion
+<TT
+CLASS="LITERAL"
+>-EBUSY</TT
+> zurückgibt, um mitzuteilen, daß ein anderer
+Treiber bereits die gewünschte Interrupt-Leitung belegt. Die Argumente
+haben die folgenden Bedeutungen:&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned int irq</TT
+></DT
+><DD
+><P
+>&#13;
+Dies ist die angeforderte Interrupt-Nummer.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void (*handler)(int, void *, struct pt_regs *)</TT
+></DT
+><DD
+><P
+>Ein Zeiger auf die zu installierende
+Handler-Funktion. Wir besprechen die Argumente dieser Funktion später
+noch.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long flags</TT
+></DT
+><DD
+><P
+>Wie Sie sich sicherlich schon gedacht haben, eine Bitmaske
+        von Optionen (siehe unten) aus dem Bereich der
+Interrupt-Verwaltung.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>const char *dev_name</TT
+></DT
+><DD
+><P
+>Der an <SPAN
+><I
+CLASS="EMPHASIS"
+>request_irq</I
+></SPAN
+> übergebene
+        String wird in <TT
+CLASS="FILENAME"
+>/proc/interrupts</TT
+>
+        verwendet, um den Eigentümer des Interrupts anzuzeigen (siehe
+        den nächsten Abschnitt).</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void *dev_id</TT
+></DT
+><DD
+><P
+>&#13;Dieser Zeiger wird für gemeinsam genutzte Interrupt-Leitungen verwendet. Es
+handelt sich dabei um einen eindeutigen Bezeichner, der verwendet
+wird, wenn die Interrupt-Leitung freigegeben wird, und auch vom Treiber
+verwendet werden kann, um auf den eigenen privaten Datenbereich zu
+verweisen (um festzustellen, welches Gerät den Interrupt ausgelöst
+hat). Wenn keine gemeinsame Nutzung von Interrupts vorliegt, kann
+<TT
+CLASS="LITERAL"
+>dev_id</TT
+> auf <TT
+CLASS="LITERAL"
+>NULL</TT
+> gesetzt
+werden, aber es ist auf jeden Fall sinnvoll, mit diesem Element auf
+eine Gerätestruktur zu verweisen. Wir werden weiter unten in diesem
+Kapitel noch ein praktisches Beispiel für die
+Verwendung von <TT
+CLASS="LITERAL"
+>dev_id</TT
+> sehen.</P
+></DD
+></DL
+></DIV
+><P
+>Folgende Bits können in <TT
+CLASS="LITERAL"
+>flags</TT
+> gesetzt werden:&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>SA_INTERRUPT</TT
+></DT
+><DD
+><P
+>&#13;Dieser Schalter markiert einen &#8220;schnellen&#8221;
+Interrupt-Handler. Schnelle Handler werden ausgeführt, wenn Interrupts
+abgeschaltet sind (dieses Thema wird genauer in &#8220;<A
+HREF="irqinstall.html#IRQFAST"
+>the Section called <I
+>Schnelle und langsame Handler</I
+></A
+>&#8221; behandelt.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>SA_SHIRQ</TT
+></DT
+><DD
+><P
+>&#13;Dieser Schalter kennzeichnet einen Interrupt, den mehrere Geräte
+teilen können. Das Konzept der gemeinsamen Benutzung von Interrupts
+wird in &#8220;<A
+HREF="irqshare.html"
+>the Section called <I
+>Gemeinsames Nutzen von Interrupts</I
+></A
+>&#8221; beschrieben.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>SA_SAMPLE_RANDOM</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+
+Dieses Bit tut kund, daß die generierten Interrupts zu dem von
+<TT
+CLASS="FILENAME"
+>/dev/random</TT
+> und
+<TT
+CLASS="FILENAME"
+>/dev/urandom</TT
+> benutzten Pool beitragen
+können. Diese Geräte geben beim Lesen echte Zufallszahlen zurück und
+sind dafür gedacht, einer Verschlüsselungssoftware bei der Generierung sicherer
+Schlüssel zu helfen. Diese Zufallszahlen werden aus einem Pool
+entnommen, der von verschiedenen zufälligen Ereignissen gespeist
+wird. Wenn Ihr Gerät Interrupts wirklich zu zufälligen Zeitpunkten
+erzeugt, dann sollten Sie diesen Schalter setzen. Wenn Ihre Interrupts
+dagegen vorhersagbar sind (wie beispielsweise die vertikale
+Austastlücke eines Framegrabbers), dann sollte dieser Schalter nicht
+gesetzt werden, es würde ohnehin nicht zur Systementropie
+beitragen. Auf Geräten, die von Angreifern beeinträchtigt werden könnten,
+sollten Sie dieses Flag nicht setzen; beispielsweise könnten
+Netzwerktreiber durch vorhersagbares Paket-Timing von außen beeinflußt
+werden und sollten daher nicht zum Entropie-Pool beitragen. Weitere
+Informationen dazu finden Sie in den Kommentaren in
+<TT
+CLASS="FILENAME"
+>drivers/char/random.c</TT
+>.</P
+></DD
+></DL
+></DIV
+><P
+>Der Interrupt-Handler kann entweder bei der Initialisierung des
+Treibers installiert werden oder wenn das Gerät zum erstenmal geöffnet wird. Zwar mag es als gute Idee erscheinen, den Interrupt-Handler
+in der Initialisierungsfunktion des Moduls zu installieren, das
+ist aber nicht der Fall. Weil die Anzahl der Interrupt-Leitungen begrenzt
+ist, sollten Sie keine davon verschwenden. Es passiert leicht, daß man
+in seinem Rechner mehr Geräte als Interrupts hat. Wenn ein Modul bei
+der Initialisierung einen IRQ anfordert, dann hindert es damit alle
+anderen Treiber, diesen Interrupt zu benutzen, selbst wenn das Gerät
+den Interrupt nie verwendet. Wenn der Interrupt dagegen beim Öffnen des
+Geräts angefordert wird, ist eine gemeinsame Nutzung in gewissen
+Grenzen möglich.
+&#13;</P
+><P
+>Es ist beispielsweise möglich, einen Framegrabber auf demselben
+Interrupt wie ein Modem zu betreiben, solange Sie die beiden Geräte
+nicht gleichzeitig benutzen. Oft werden Module für spezielle Geräte
+beim Booten des Systems geladen, auch wenn sie dann nie benutzt
+werden. Eine spezielle Hardware zur Datenerfassung könnte den gleichen
+Interrupt wie der zweite serielle Port benutzen. Es ist zwar nicht zuviel verlangt, keine Internet-Verbindung aufzubauen, während eine
+Datenerfassung läuft, aber ein Entladen des Moduls, nur um
+das Modem benutzen zu können, wäre wirklich unangenehm.&#13;</P
+><P
+>&#13;<SPAN
+><I
+CLASS="EMPHASIS"
+>request_irq</I
+></SPAN
+> muß aufgerufen werden, wenn das Gerät zum
+erstenmal geöffnet wird, aber <SPAN
+><I
+CLASS="EMPHASIS"
+>bevor</I
+></SPAN
+> die Hardware
+aufgefordert wird, Interrupts zu erzeugen. Der richtige Moment für
+<SPAN
+><I
+CLASS="EMPHASIS"
+>free_irq</I
+></SPAN
+> ist das letzte Mal, an dem das Gerät
+geschlossen wird, und <SPAN
+><I
+CLASS="EMPHASIS"
+>nachdem</I
+></SPAN
+> die Hardware
+angewiesen wurde, keine Interrupts mehr zu senden. Ein kleiner Nachteil ist, daß Sie sich je Gerät merken müssen, wie oft es geöffnet wurde. Es reicht nicht, den Verwendungszähler des Moduls zu benutzen, wenn ein und dasselbe Modul zwei oder mehr Geräte
+steuert.
+
+
+&#13;</P
+><P
+>Im Gegensatz zu dem, was wir gerade gesagt haben, fordert
+<SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> seine Interrupt-Leitung zur
+Ladezeit an. Wir haben das gemacht, damit Sie Testprogramme verwenden
+können, ohne einen gesonderten Prozeß laufen lassen zu müssen, der das
+Gerät offenhält. Daher fordert <SPAN
+CLASS="APPLICATION"
+>short</SPAN
+>
+einen Interrupt in seiner Initialisierungsfunktion
+(<SPAN
+><I
+CLASS="EMPHASIS"
+>short_init</I
+></SPAN
+>) an, anstatt das in
+<SPAN
+><I
+CLASS="EMPHASIS"
+>short_open</I
+></SPAN
+> zu tun, wie
+es ein echtes Gerät machen würde.&#13;</P
+><P
+>Der vom folgenden Code angeforderte Interrupt ist
+<TT
+CLASS="LITERAL"
+>short_irq</TT
+>. Die Zuweisung dieser Variablen
+(also die Ermittlung, welcher IRQ verwendet werden soll)
+werden wir später betrachten, weil das für diese Erläuterung nicht weiter
+interessant ist. <TT
+CLASS="LITERAL"
+>short_base</TT
+> ist die
+Basis-I/O-Adresse der verwendeten parallelen Schnittstelle. Um das
+Melden von Interrupts einzuschalten, wird das Register 2 der
+Schnittstelle beschrieben.&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+if (short_irq &#62;= 0) {
+    result = request_irq(short_irq, short_interrupt,
+                         SA_INTERRUPT, "short", NULL);
+    if (result) {
+        printk(KERN_INFO "short: can't get assigned irq %i\n",
+               short_irq);
+        short_irq = -1;
+    }
+    else { /* jetzt einschalten -- annehmen, dass das hier der Parallel-Port ist */
+        outb(0x10,short_base+2);
+    }
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Der Code zeigt, daß der Handler als schneller Handler installiert
+wird (<TT
+CLASS="LITERAL"
+>SA_INTERRUPT</TT
+>), keine gemeinsame Nutzung
+von Interrupts unterstützt (<TT
+CLASS="LITERAL"
+>SA_SHIRQ</TT
+> ist nicht
+angegeben) und nicht zum Zufallszahlen-Pool beiträgt
+(<TT
+CLASS="LITERAL"
+>SA_SAMPLE_RANDOM</TT
+> ist ebenfalls nicht
+angegeben). Der <SPAN
+><I
+CLASS="EMPHASIS"
+>outb</I
+></SPAN
+>-Aufruf schaltet dann das
+Melden von Interrupts für den Parallel-Port ein.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="IRQPROC"
+>Die /proc-Schnittstelle</A
+></H2
+><P
+>&#13;Immer wenn ein Hardware-Interrupt beim Prozessor eintrifft, wird ein
+interner Zähler inkrementiert, wodurch festgestellt werden kann, ob ein
+Gerät wie erwartet arbeitet. Die eingetroffenen Interrupts werden in
+<TT
+CLASS="FILENAME"
+>/proc/interrupts</TT
+> angezeigt. Die folgende
+Ausgabe stammt von einem Zwei-Prozessor-Pentium-System nach mehreren
+Tagen Systemlaufzeit:
+
+&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+           CPU0       CPU1
+  0:   34584323   34936135    IO-APIC-edge  timer
+  1:     224407     226473    IO-APIC-edge  keyboard
+  2:          0          0          XT-PIC  cascade
+  5:    5636751    5636666   IO-APIC-level  eth0
+  9:          0          0   IO-APIC-level  acpi
+ 10:     565910     565269   IO-APIC-level  aic7xxx
+ 12:     889091     884276    IO-APIC-edge  PS/2 Mouse
+ 13:          1          0          XT-PIC  fpu
+ 15:    1759669    1734520    IO-APIC-edge  ide1
+NMI:   69520392   69520392
+LOC:   69513717   69513716
+ERR:          0</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die erste Spalte enthält die IRQ-Nummer. Sie können sehen, daß IRQs
+fehlen. Das liegt daran, daß in dieser Datei nur Interrupts angezeigt
+werden, für die Handler installiert sind. Beispielsweise ist die erste
+serielle Schnittstelle (IRQ 4) nicht enthalten, weil das Modem nicht
+benutzt wird. Selbst wenn wir das Modem vorher benutzt hätten, aber nicht zum
+jetzigen Zeitpunkt benutzen, würde dieser Interrupt nicht in der
+Datei auftauchen; die seriellen Schnittstellen können sich benehmen
+und geben ihre Interrupt-Handler wieder frei, wenn das Gerät
+geschlossen wird.</P
+><P
+>Die Anzeige in <TT
+CLASS="FILENAME"
+>/proc/interrupts</TT
+> gibt an,
+wie viele Interrupts an welche CPU geliefert worden sind. Wie Sie sehen
+können, versucht der Linux-Kernel ziemlich erfolgreich, die Interrupts
+gleichmäßig auf die Prozessoren zu verteilen. Die letzten Spalten
+enthalten Informationen über den programmierbaren
+Interrupt-Controller, der den Interrupt bearbeitet (und um den sich
+Treiber-Autoren nicht kümmern müssen), sowie den oder die Namen des
+oder der Geräte, die Handler für den Interrupt registriert haben
+(ausgegeben wird das <TT
+CLASS="LITERAL"
+>dev_name</TT
+>-Argument von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request_irq</I
+></SPAN
+>).</P
+><P
+>&#13;
+
+Im <TT
+CLASS="FILENAME"
+>/proc</TT
+>-Dateisystem gibt es noch eine
+weitere Datei zum Thema Interrupts. Sie heißt
+<TT
+CLASS="FILENAME"
+>/proc/stat</TT
+>. Manchmal ist die eine
+nützlicher, manchmal die
+andere. <TT
+CLASS="FILENAME"
+>/proc/stat</TT
+> enthält einige
+Low-Level-Statistiken über die Systemaktivität. Dazu gehört
+unter anderem die Anzahl der Interrupts, die seit dem Hochfahren des Systems
+angezeigt wurden. Jede Zeile in <SPAN
+><I
+CLASS="EMPHASIS"
+>stat</I
+></SPAN
+> fängt
+mit einem Textstring an, der der Schlüssel der Zeile ist. Wir suchen
+hier nach <TT
+CLASS="LITERAL"
+>intr</TT
+>. Das folgende Bild (verkürzt und
+umbrochen) ergab sich kurz nach dem vorigen:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+intr 884865 695557 4527 0 3109 4907 112759 3 0 0 0 11314
+     0 17747 1 0 34941 0 0 0 0 0 0 0</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Die erste Zahl ist die Gesamtsumme aller Interrupts, während die
+anderen Zahlen jeweils für eine IRQ_Leitung stehen, beginnend mit
+Interrupt 0. Diese Anzeige zeigt, daß der Interrupt Nummer 4 4907mal
+ausgelöst wurde, auch wenn <SPAN
+><I
+CLASS="EMPHASIS"
+>derzeit</I
+></SPAN
+> kein Handler
+installiert ist. Wenn der Treiber, den Sie testen, Interrupts bei
+jedem <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> bzw. <SPAN
+><I
+CLASS="EMPHASIS"
+>close</I
+></SPAN
+>
+anfordert respektive wieder freigibt, dann ist
+<TT
+CLASS="FILENAME"
+>/proc/stat</TT
+> für Sie vermutlich nützlicher
+als <TT
+CLASS="FILENAME"
+>/proc/interrupts</TT
+>.&#13;</P
+><P
+>Ein weiterer Unterschied zwischen den Dateien ist, daß
+<TT
+CLASS="FILENAME"
+>interrupts</TT
+> nicht von der Architektur
+abhängig ist, <TT
+CLASS="FILENAME"
+>stat</TT
+> hingegen schon: Die Anzahl der Felder hängt von der Hardware ab. Die Menge der verfügbaren Interrupts
+variiert von nur 15 auf Sparc-Systemen bis zu 256 auf dem IA-64 und
+einigen anderen Systemen. Interressanterweise ist die Anzahl der auf
+dem x86 definierten Interrupts derzeit nicht etwa 16, sondern 224;
+dies wird in <TT
+CLASS="FILENAME"
+>include/asm-i386/irq.h</TT
+> erklärt und
+beruht darauf, daß Linux die Architektur-Begrenzung und nicht eine
+implementationsspezifische Begrenzung (wie die 16 Interrupt-Quellen
+des altmodischen PC-Interrupt-Controllers) verwendet.</P
+><P
+>Hier folgt eine Momentaufnahme von
+<TT
+CLASS="FILENAME"
+>/proc/interrupts</TT
+> auf einem IA-64-System. Wie Sie
+sehen, gibt es hier außer unterschiedlichem Hardware-Routing gängiger
+Interrupt-Quellen keine Plattformabhängigkeit.</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;           CPU0       CPU1
+ 27:       1705      34141  IO-SAPIC-level  qla1280
+ 40:          0          0           SAPIC  perfmon
+ 43:        913       6960  IO-SAPIC-level  eth0
+ 47:      26722        146  IO-SAPIC-level  usb-uhci
+ 64:          3          6   IO-SAPIC-edge  ide0
+ 80:          4          2   IO-SAPIC-edge  keyboard
+ 89:          0          0   IO-SAPIC-edge  PS/2 Mouse
+239:    5606341    5606052           SAPIC  timer
+254:      67575      52815           SAPIC  IPI
+NMI:          0          0
+ERR:          0</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="IRQPROBE"
+>Automatische Erkennung der IRQ-Nummer</A
+></H2
+><P
+>&#13;
+
+
+Die Bestimmung der IRQ-Leitung, die ein Gerät verwendet, ist eines der
+größten Probleme beim Initialisieren eines Treibers. Der Treiber muß
+sie kennen, um den Handler richtig installieren zu können. Auch wenn
+ein Programmierer vom Benutzer verlangen könnte, die Interrupt-Nummer
+beim Laden des Moduls anzugeben, ist das schlechter Stil, weil der
+Benutzer diese Nummer meistens nicht kennt &#8212; entweder weil er
+die Jumper auf dem Gerät nicht selbst konfiguriert hat oder weil das
+Gerät gar keine Jumper verwendet. Die automatische Erkennung der
+Interrupt-Nummer gehört daher zur Basisfunktionalität eines guten
+Treibers.&#13;</P
+><P
+>Manchmal hängt die automatische Erkennung von dem Wissen ab, daß
+manche Geräte ein Default-Verhalten haben, das sich &#8212; wenn
+überhaupt &#8212; nur selten ändert. In diesem Fall könnte der Treiber
+annehmen, daß die Default-Werte gelten. Genau das macht
+<SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> mit dem Parallel-Port. Die
+Implementation ist einfach, wie in diesem Beispiel aus
+<SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> zu sehen ist:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+if (short_irq &#60; 0) /* noch nicht angegeben, den Default annehmen */
+    switch(short_base) {
+      case 0x378: short_irq = 7; break;
+      case 0x278: short_irq = 2; break;
+      case 0x3bc: short_irq = 5; break;
+    }</PRE
+></TD
+></TR
+></TABLE
+><P
+>Der Code weist die Interrupt-Nummer anhand der gewählten
+I/O-Basisadresse aus, wobei der Benutzer den Default beim Laden
+durch Aufruf von z.B.</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;insmod ./short.o short_irq=<TT
+CLASS="REPLACEABLE"
+><I
+>x</I
+></TT
+>.</PRE
+></TD
+></TR
+></TABLE
+><P
+>überschreiben kann. <TT
+CLASS="LITERAL"
+>short_base</TT
+>
+verwendet <TT
+CLASS="LITERAL"
+>0x378</TT
+> als
+Default, so daß der Default von <TT
+CLASS="LITERAL"
+>short_irq</TT
+> 7
+ist.&#13;</P
+><P
+>Manche Geräte haben ein etwas fortgeschritteneres Design und
+&#8220;teilen mit&#8221;, welchen Interrupt sie verwenden. In diesem
+Fall kann der Treiber die Interrupt-Nummer bestimmen, indem er ein
+Statusbyte in einem der I/O-Ports der Geräte oder in der
+PCI-Konfiguration liest. Wenn das
+gesuchte Gerät über die Fähigkeit verfügt, dem Treiber mitzuteilen,
+welcher Interrupt verwendet wird, dann beschränkt sich die Erkennung
+des Interrupts auf das Befragen des Gerätes.&#13;</P
+><P
+>Es ist interessant, daß moderne Geräte ihre Interrupt-Konfiguration
+bereitstellen. Der PCI-Standard fordert von den Peripherie-Geräten,
+daß sie die von ihnen verwendeten Interrupt-Leitungen mitteilen. Wir
+werden in <A
+HREF="pci.html"
+>Kapitel 15</A
+> über den PCI-Standard sprechen.&#13;</P
+><P
+>Leider ist nicht jedes Gerät programmiererfreundlich, so
+daß die automatische Erkennung auf ein wenig Ausprobieren
+zurückgreifen muß. Die Technik ist ziemlich einfach: Der Treiber
+fordert das Gerät auf, Interrupts zu generieren, und beobachtet, was
+passiert. Wenn alles gutgeht, dann wird nur eine
+Interrupt-Leitung aktiviert.&#13;</P
+><P
+>Obwohl dieses Ausprobieren theoretisch einfach ist, kann die
+tatsächliche Implementation nicht ganz leicht sein. Wir werden uns zwei
+verschiedene Möglichkeiten anschauen: vom Kernel bereitgestellte
+Hilfsfunktionen und die Implementierung einer eigenen Version.&#13;</P
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN11594"
+>Ausprobieren mit Kernel-Hilfe</A
+></H3
+><P
+>&#13;Der Linux-Kernel enthält eine Hilfe zum Ausprobieren von
+Interrupt-Nummern. Diese funktioniert nur bei nicht gemeinsam
+genutzten Interrupts, aber die meiste Hardware, die mit gemeinsam
+genutzten Interrupts arbeiten kann, hat eh bessere Möglichkeiten, die
+konfigurierte IRQ-Nummer herauszufinden. Diese Funktionalität ist
+in <TT
+CLASS="LITERAL"
+>&#60;linux/interrupt.h&#62;</TT
+> definiert (wo
+auch der zugehörige Probier-Mechanismus beschrieben wird):
+
+&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long probe_irq_on(void);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion gibt eine Bitmaske nicht zugewiesener Interrupts
+zurück. Der Treiber muß sich diese Bitmaske merken und später an
+<SPAN
+><I
+CLASS="EMPHASIS"
+>probe_irq_off</I
+></SPAN
+> weitergeben. Nach
+diesem Aufruf sollte der Treiber veranlassen, daß sein Gerät
+mindestens einen Interrupt erzeugt.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int probe_irq_off(unsigned long);</TT
+></DT
+><DD
+><P
+>&#13;Nachdem das Gerät einen Interrupt angefordert hat, ruft der Treiber
+diese Funktion auf und übergibt ihr als Argument die Bitmaske, die er
+vorher von <SPAN
+><I
+CLASS="EMPHASIS"
+>probe_irq_on</I
+></SPAN
+> bekommen
+hat. <SPAN
+><I
+CLASS="EMPHASIS"
+>probe_irq_off</I
+></SPAN
+> gibt die Nummer
+des Interrupts zurück, der nach dem
+<SPAN
+><I
+CLASS="EMPHASIS"
+>probe_irq_on</I
+></SPAN
+> hinzugekommen
+ist. Wenn keine Interrupts aufgetreten sind, dann wird 0 zurückgegeben
+(es ist also nicht möglich, IRQ 0 auszuprobieren, aber es ist ohnehin in
+keiner unterstützten Architektur möglich, daß ein eigenes Gerät diesen
+Interrupt verwendet). Wenn mehr als ein Interrupt aufgetreten ist
+(mehrdeutige Erkennung), dann gibt
+<SPAN
+><I
+CLASS="EMPHASIS"
+>probe_irq_off</I
+></SPAN
+> einen negativen Wert
+zurück.</P
+></DD
+></DL
+></DIV
+><P
+>Der Programmierer sollte sorgfältig darauf achten, die Interrupts auf
+dem Gerät
+<SPAN
+><I
+CLASS="EMPHASIS"
+>nach</I
+></SPAN
+> dem Aufruf von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>probe_irq_on</I
+></SPAN
+> einzuschalten und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>vor</I
+></SPAN
+> dem Aufruf von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>probe_irq_off</I
+></SPAN
+>
+abzuschalten. Außerdem dürfen Sie nicht vergessen, den ausstehenden
+Interrupt nach dem <SPAN
+><I
+CLASS="EMPHASIS"
+>probe_irq_off</I
+></SPAN
+> in
+Ihrem Gerät zu bedienen.&#13;</P
+><P
+>Das Modul <SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> führt vor, wie dieses
+Ausprobieren genutzt wird. Wenn Sie das Modul mit
+<TT
+CLASS="LITERAL"
+>probe=1</TT
+> laden, dann wird der folgende Code
+ausgeführt, der die Interrupt-Leitung erkennt, sofern die Pins 9 und
+10 der parallelen Schnittstelle miteinander verbunden sind:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+int count = 0;
+do {
+    unsigned long mask;
+
+    mask = probe_irq_on();
+    outb_p(0x10,short_base+2); /* Interrupts einschalten */
+    outb_p(0x00,short_base);   /* Bit loeschen */
+    outb_p(0xFF,short_base);   /* Bit setzen: Interrupt! */
+    outb_p(0x00,short_base+2); /* Interrupts abschalten */
+    udelay(5);                 /* ein wenig Zeit lassen */
+    short_irq = probe_irq_off(mask);
+
+    if (short_irq == 0) { /* keiner? */
+        printk(KERN_INFO "short: probe meldete keinen IRQ\n");
+        short_irq = -1;
+    }
+    /*
+     * Wenn mehr als eine Zeile aktiviert worden ist, dann ist das
+     * Ergebnis negativ. Wir sollten den Interrupt bedienen (beim
+     * lpt-Port nicht notwendig) und es noch einmal probieren. Nach fuenf
+     * vergeblichen Versuchen geben wir auf. */
+     */
+} while (short_irq &#60; 0 &#38;&#38; count++ &#60; 5);
+if (short_irq &#60; 0)
+printk("short: probe scheiterte %i mal, ich gebe auf\n", count);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Beachten Sie den Aufruf von <SPAN
+><I
+CLASS="EMPHASIS"
+>udelay</I
+></SPAN
+> vor dem Aufruf
+von <SPAN
+><I
+CLASS="EMPHASIS"
+>probe_irq_off</I
+></SPAN
+>. Je nach
+Prozessor-Geschwindigkeit muß man dem Interrupt ein wenig Zeit lassen,
+bis er ankommt.</P
+><P
+>Wenn Sie die Kernel-Quellen durchlesen, stoßen Sie vermutlich noch auf
+ein anderes Paar von Funktionen:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>void autoirq_setup(int waittime);</TT
+></DT
+><DD
+><P
+>&#13;Richtet das Ausprobieren von IRQs ein. Das Argument
+<TT
+CLASS="LITERAL"
+>waittime</TT
+> wird nicht verwendet.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int autoirq_report(int waittime);</TT
+></DT
+><DD
+><P
+>&#13;Wartet das (in jiffies) angegebene Intervall ab und gibt dann die
+Nummer des Interrupts zurück, der seit dem Aufruf von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>autoirq_setup</I
+></SPAN
+> eingetroffen ist.</P
+></DD
+></DL
+></DIV
+><P
+>Diese Funktionen werden aus historischen Gründen vor allem im
+Netzwerktreiber-Code verwendet. Sie sind derzeit mit Hilfe von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>probe_irq_on</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>probe_irq_off</I
+></SPAN
+> implementiert; es gibt
+normalerweise keinen Grund, die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>autoirq_</I
+></SPAN
+>-Funktionen den
+<SPAN
+><I
+CLASS="EMPHASIS"
+>probe_irq_</I
+></SPAN
+>-Funktionen vorzuziehen.</P
+><P
+>&#13;Das Ausprobieren kann lange dauern. Das trifft zwar nicht auf
+<SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> zu, aber bei beispielsweise einem
+Framegrabber ist eine Verzögerung von mindestens 20 Millisekunden (was
+für den Prozessor Jahrhunderte sind) notwendig. Bei anderen Geräten
+kann es sogar noch länger dauern. Daher ist es am besten, nur einmal,
+bei der Initialisierung des Moduls, nach der Interrupt-Leitung zu
+suchen &#8212; unabhängig davon, ob Sie den Handler beim Öffnen des Gerätes
+(was Sie tun sollten) oder in der Initialisierungsfunktion
+(was Sie ohnehin nicht tun sollten) installieren.
+&#13;</P
+><P
+>Interessanterweise ist auf manchen Plattformen (PowerPC, M68k, den
+meisten MIPS-Implementationen und auf beiden SPARC-Plattformen) kein Ausprobieren
+nötig und daher sind die früheren Funktionen auch nur als leere Platzhalter (die mitunter
+"nutzloser ISA-Unsinn" genannt werden) implementiert. Auf anderen
+Plattformen ist das Ausprobieren nur für ISA-Geräte implementiert. Die
+meisten Architekturen definieren die Funktionen aber (auch wenn sie
+leer sind), um das Portieren existierender Gerätetreiber zu erleichtern.&#13;</P
+><P
+>Das Ausprobieren von IRQs ist &#8212; ganz allgemein gesagt &#8212; ein Hack, und
+ausgereifte Architekturen wie der PCI-Bus liefern alle notwendigen
+Informationen auch so.
+&#13;</P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="IRQPROBESELF"
+>Ausprobieren im Eigenbau</A
+></H3
+><P
+>&#13;Das Ausprobieren kann auch ohne große Schwierigkeiten im Treiber
+selbst implementiert werden. <SPAN
+CLASS="APPLICATION"
+>short</SPAN
+>
+übernimmt die Erkennung der IRQ-Leitung selbst, wenn es mit
+<TT
+CLASS="LITERAL"
+>probe=2</TT
+> geladen wird.&#13;</P
+><P
+>Der Mechanismus ist nicht anders als der oben beschriebene: alle ungenutzten
+Interrupts einschalten, dann abwarten und schauen, was passiert. Wir
+können in diesem Fall jedoch unser Wissen über das Gerät
+ausnutzen. Oft kann ein Gerät nur auf eine IRQ-Nummer aus drei oder
+vier möglichen eingestellt werden; damit reicht es, diese wenigen IRQs
+auszuprobieren, um den richtigen zu finden, ohne daß alle möglichen
+IRQs ausprobiert werden müßten.&#13;</P
+><P
+>Die Implementation von <SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> nimmt an, daß
+die möglichen IRQ-Werte 3, 5, 7 und 9 sind. Diese Nummern sind
+übrigens genau die Werte, die Sie bei manchen parallelen Geräten
+auswählen können.&#13;</P
+><P
+>Der untenstehende Code testet alle &#8220;möglichen&#8221; Interrupts
+und schaut, was passiert. Das Array <TT
+CLASS="LITERAL"
+>trials</TT
+> enthält
+die auszuprobierenden IRQs und hat eine <TT
+CLASS="LITERAL"
+>0</TT
+> als
+Endmarkierung. Das Array <TT
+CLASS="LITERAL"
+>tried</TT
+> wird benutzt, um zu
+protokollieren, welche Handler von diesem Treiber bereits registriert
+worden sind.&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+
+int trials[] = {3, 5, 7, 9, 0};
+int tried[]  = {0, 0, 0, 0, 0};
+int i, count = 0;
+
+/*
+ * Den Test-Handler für alle in Frage kommenden Leitungen
+ * installieren. Das Ergebnis (0 bei Erfolg, ansonsten -EBUSY) wird
+ * abgespeichert, damit nur erfolgreich angeforderte Interrupts auch
+ * wieder freigegeben werden
+ */
+for (i=0; trials[i]; i++)
+    tried[i] = request_irq(trials[i], short_probing,
+                           SA_INTERRUPT, "short probe", NULL);
+
+do {
+    short_irq = 0; /* bisher noch keiner */
+    outb_p(0x10,short_base+2); /* einschalten */
+    outb_p(0x00,short_base);
+    outb_p(0xFF,short_base); /* Bit aendern */
+    outb_p(0x00,short_base+2); /* abschalten */
+    udelay(5);  /* ein wenig warten */
+
+    /* dieser Wert ist vom Handler gesetzt worden */
+    if (short_irq == 0) { /* keiner davon? */
+        printk(KERN_INFO "short: probe meldete keinen IRQ\n");
+    }
+    /*
+     * Wenn mehr als eine Leitung aktiviert worden ist, ist das
+     * Ergebnis negativ. Wir sollten den Interrupt bedienen (der
+     * lpt-Port braucht das aber nicht) und machen einen neuen
+     * Schleifendurchlauf (maximal 5).
+     */
+} while (short_irq &#60;=0 &#38;&#38; count++ &#60; 5);
+
+/* Schleifenende, Handler deinstallieren */
+for (i=0; trials[i]; i++)
+    if (tried[i] == 0)
+        free_irq(trials[i], NULL);
+
+if (short_irq &#60; 0)
+    printk("short: probe scheiterte %i times, gibt auf\n", count);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Möglicherweise kennen Sie die &#8220;möglichen&#8221; IRQ-Werte nicht
+im voraus. In diesem Fall müssen Sie alle freien Interrupts
+ausprobieren, anstatt sich auf die wenigen in
+<TT
+CLASS="LITERAL"
+>trials[]</TT
+> zu beschränken. Um alle
+Interrupts auszuprobieren, müssen Sie sie von IRQ 0 bis IRQ
+<TT
+CLASS="LITERAL"
+>NR_IRQS-1</TT
+> durchprobieren, wobei
+<TT
+CLASS="LITERAL"
+>NR_IRQS</TT
+> in
+<TT
+CLASS="LITERAL"
+>&#60;asm/irq.h&#62;</TT
+> definiert ist und von der
+jeweiligen Plattform abhängt.
+&#13;</P
+><P
+>Jetzt fehlt uns nur noch der Handler zum Ausprobieren selbst. Dieser
+hat die Aufgabe, <TT
+CLASS="LITERAL"
+>short_irq</TT
+> danach zu
+aktualisieren, welche Interrupts empfangen werden. Ein Wert von Null
+in <TT
+CLASS="LITERAL"
+>short_irq</TT
+> bedeutet, daß noch nichts
+gefunden wurde, während ein negativer Wert &#8220;mehrdeutig&#8221;
+bedeutet. Wir haben diese Werte so gewählt, daß sie konsistent mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>irq_probe_off</I
+></SPAN
+> sind. Damit kann
+<TT
+CLASS="FILENAME"
+>short.c</TT
+> den gleichen Code zum Ausprobieren
+verwenden.&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+void short_probing(int irq, void *dev_id, struct pt_regs *regs)
+{
+    if (short_irq == 0) short_irq = irq;    /* gefunden */
+    if (short_irq != irq) short_irq = -irq; /* mehrdeutig */
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die Argumente des Handlers werden später beschrieben. Im Moment reicht
+es zu wissen, daß <TT
+CLASS="LITERAL"
+>irq</TT
+> der Interrupt ist, der
+behandelt werden soll.
+
+
+&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="IRQFAST"
+>Schnelle und langsame Handler</A
+></H2
+><P
+>Ältere Versionen des Linux-Kernels haben großen Aufwand getrieben, um
+        zwischen &#8220;schnellen&#8221; und &#8220;langsamen&#8221; Interrupts zu
+        unterscheiden. Schnelle Interrupts konnten schnell
+        abgearbeitet werden, während die Bearbeitung langsamer Interrupts bedeutend
+        länger dauerte. Langsame Interrupts konnten so viel
+        Prozessor-Leistung verlangen, daß es sich lohnte, die
+        Interrupts während ihrer Abarbeitung wieder
+        einzuschalten. Ansonsten wären Aufgaben, die eine schnelle
+        Bearbeitung erforderten, zu lange verzögert worden.</P
+><P
+>&#13;In modernen Kerneln sind die meisten Unterschiede zwischen schnellen
+und langsamen Interrupts verschwunden. Es bleibt nur noch einer:
+Schnelle Interrupts (also solche, die mit dem Flag
+<TT
+CLASS="LITERAL"
+>SA_INTERRUPT</TT
+> angefordert werden) werden
+ausgeführt, während alle anderen Interrupts auf dem aktuellen
+Prozessor abgeschaltet sind. Beachten Sie, daß andere Prozessoren
+trotzdem noch Interrupts verarbeiten können, auch wenn nie zwei
+Prozessoren gleichzeitig den gleichen IRQ bearbeiten.</P
+><P
+>Um die langsamen und schnellen Ausführungsumgebungen
+zusammenzufassen:&#13;</P
+><P
+></P
+><UL
+><LI
+STYLE="list-style-type: disc"
+><P
+>Bei einem schnellen Handler ist das Melden der Interrupts im
+Mikroprozessor abgeschaltet und der gerade bediente Interrupt
+ist im Interrupt Controller abgeschaltet. Der Handler kann das Melden allerdings im
+Prozessor durch Aufruf von <SPAN
+><I
+CLASS="EMPHASIS"
+>sti</I
+></SPAN
+> wieder
+einschalten.</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>Ein langsamer Handler läuft bei eingeschalteter
+Interrupt-Meldung im Prozessor; der gerade bediente Interrupt ist im
+Interrupt-Controller abgeschaltet.</P
+></LI
+></UL
+><P
+>Welche Art von Interrupt sollten Sie also für Ihren Treiber verwenden?
+Auf modernen Systemen braucht man
+<TT
+CLASS="LITERAL"
+>SA_INTERRUPT</TT
+> nur für einige wenige bestimmte
+Situationen (wie Timer-Interrupts). Wenn es nicht sehr gute Gründe
+dafür gibt, daß die anderen Interrupts abgeschaltet werden müssen, während Ihr
+Interrupt-Handler läuft, sollten Sie
+<TT
+CLASS="LITERAL"
+>SA_INTERRUPT</TT
+> nicht verwenden.</P
+><P
+>Diese Beschreibung sollte die meisten Leser zufriedenstellen, auch
+wenn jemand mit Vorliebe für Hardware und ein wenig Erfahrung mit
+seinem oder ihrem Computer vielleicht an tiefergehenden Informationen
+interessiert sein könnte. Wenn Sie sich nicht für die Interna
+interessieren, können Sie den nächsten Abschnitt überspringen.&#13;</P
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="INTIIH"
+>Interna der Interrupt-Verarbeitung auf der x86-Architektur</A
+></H3
+><P
+>&#13;
+Diese Beschreibung wurde aus
+<TT
+CLASS="FILENAME"
+>arch/i386/kernel/irq.c</TT
+>,
+<TT
+CLASS="FILENAME"
+>arch/i386/kernel/i8259.c</TT
+> und
+<TT
+CLASS="FILENAME"
+>include/asm-i386/hw_irq.h</TT
+>, wie sie in den
+2.4.<TT
+CLASS="REPLACEABLE"
+><I
+>x</I
+></TT
+>-Kerneln stehen, extrapoliert. Die
+allgemeinen Konzepte bleiben gleich, aber die Hardware unterscheidet
+sich auf anderen Plattformen doch.&#13;</P
+><P
+>Die niedrigste Ebene der Interrupt-Verarbeitung ist als
+Assembler-Code-Makros vorhanden, die in <TT
+CLASS="FILENAME"
+>hw_irq.h</TT
+> deklariert und in
+<TT
+CLASS="FILENAME"
+>i8259.c</TT
+> expandiert werden. Jeder Interrupt ist
+mit der Funktion <TT
+CLASS="FILENAME"
+>do_IRQ</TT
+> in
+<TT
+CLASS="FILENAME"
+>irq.c</TT
+> verbunden.</P
+><P
+>Als erstes bestätigt <SPAN
+><I
+CLASS="EMPHASIS"
+>do_IRQ</I
+></SPAN
+> den Interrupt,
+so daß der Interrupt Controller mit anderen Dingen weitermachen
+kann. Dann holt sich die Funktion ein Spinlock für die angegebene
+IRQ-Nummer und verhindert damit, daß andere CPUs diesen IRQ
+bearbeiten. Eine Reihe von Status-Bits wird gelöscht (einschließlich
+<TT
+CLASS="LITERAL"
+>IRQ_WAITING</TT
+>, das wir uns gleich anschauen
+werden), und dann wird der Handler für diesen IRQ ermittelt. Wenn es keinen
+gibt, gibt es nichts weiter zu tun; das Spinlock wird freigegeben,
+ausstehende Tasklets und untere Hälften werden ausgeführt, und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>do_IRQ</I
+></SPAN
+> kehrt zurück.</P
+><P
+>&#13;Wenn ein Gerät einen Interrupt auslöst, gibt es aber normalerweise
+auch einen Handler. Die Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>handle_IRQ_event</I
+></SPAN
+> wird aufgerufen,
+um die Handler selbst aufzurufen. Dies geschieht durch Abfragen des
+globalen Interrupt-Sperr-Bits. Wenn dieses Bit gesetzt ist, dann
+wartet der Prozessor in einer Schleife, bis es gelöscht ist. Der
+Aufruf von <SPAN
+><I
+CLASS="EMPHASIS"
+>cli</I
+></SPAN
+> löscht dieses Bit und blockiert
+damit die Bearbeitung von Interrupts; der normale Mechanismus zur
+Bearbeitung von Interrupts setzt dieses Bit nicht und erlaubt daher die
+weitere Interrupt-Verarbeitung. Wenn es sich um einen langsamen
+Handler handelt, werden die Interrupts in der Hardware wieder
+eingeschaltet und der Handler wird aufgerufen. Dann muß nur noch
+aufgeräumt, Tasklets und untere Hälften ausgeführt und mit der
+normalen Arbeit weitergemacht werden. Die &#8220;normale Arbeit&#8221; kann sich
+als Folge des Interrupts durchaus geändert haben (so könnte der
+Handler beispielsweise einen Prozeß mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>wake_up</I
+></SPAN
+> aufgeweckt haben), so daß das
+letzte, was beim Rücksprung passiert, ein mögliches Rescheduling des
+Prozessors ist.</P
+><P
+>&#13;
+
+
+
+
+Das Suchen nach IRQs geschieht durch Setzen des Status-Bits
+<TT
+CLASS="LITERAL"
+>IRQ_WAITING</TT
+> für alle IRQs, die derzeit
+keinen Handler haben. Wenn der Interrupt eintrifft, löscht
+<SPAN
+><I
+CLASS="EMPHASIS"
+>do_IRQ</I
+></SPAN
+> dieses Bit und springt dann zurück,
+weil kein Handler registriert
+ist. Wenn <SPAN
+><I
+CLASS="EMPHASIS"
+>probe_irq_off</I
+></SPAN
+> von einem
+Treiber aufgerufen wird, muß die Funktion nur nach dem
+IRQ suchen, bei dem <TT
+CLASS="LITERAL"
+>IRQ_WAITING</TT
+> nicht mehr
+gesetzt ist.&#13;</P
+></DIV
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="intsetup.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="irqhandler.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Den Parallel-Port vorbereiten</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="irq.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Einen Handler implementieren</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

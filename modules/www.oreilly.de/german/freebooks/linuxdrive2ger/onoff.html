@@ -1,0 +1,429 @@
+<HTML
+><HEAD
+><TITLE
+>Öffnen und Schließen</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Netzwerk-Treiber"
+HREF="net.html"><LINK
+REL="PREVIOUS"
+TITLE="Die Struktur net_device im Detail"
+HREF="x19513.html"><LINK
+REL="NEXT"
+TITLE="Paket-Übertragung"
+HREF="nettx.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x19513.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 14. Netzwerk-Treiber</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="nettx.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="ONOFF"
+>Öffnen und Schließen</A
+></H1
+><P
+>&#13;
+
+Unser Treiber kann eine Schnittstelle beim Laden des Moduls oder beim
+Hochfahren des Kernels suchen. Bevor die Schnittstelle Pakete
+transportieren kann, muß der Kernel sie aber öffnen und ihr eine
+Adresse zuweisen. Dies geschieht als Reaktion auf einen
+<SPAN
+CLASS="APPLICATION"
+>ifconfig</SPAN
+>-Aufruf.
+&#13;</P
+><P
+>Wenn <SPAN
+CLASS="APPLICATION"
+>ifconfig</SPAN
+> verwendet wird, um einer
+Schnittstelle eine Adresse zuzuweisen, erledigt es zwei
+Aufgaben. Zunächst weist es die Adresse der Schnittstelle mit Hilfe
+des <TT
+CLASS="LITERAL"
+>ioctl</TT
+>-Befehls <TT
+CLASS="LITERAL"
+>SIOCSIFADDR</TT
+>
+(Socket I/O Control Set Interface ADDRess) zu und dann setzt es das
+<TT
+CLASS="LITERAL"
+>IFF_UP</TT
+>-Bit in
+<TT
+CLASS="LITERAL"
+>dev-&#62;flag</TT
+> durch den
+<TT
+CLASS="LITERAL"
+>ioctl</TT
+>-Befehl <TT
+CLASS="LITERAL"
+>SIOCSIFFLAGS</TT
+>
+(Socket I/O Control Set Interface FLAGS), um die Schnittstelle zu
+aktivieren.&#13;</P
+><P
+>Was das Gerät angeht, macht <TT
+CLASS="LITERAL"
+>ioctl(SIOCSIFADDR)</TT
+>
+nichts. Es wird keine Treiberfunktion aufgerufen &#8212; die Aufgabe
+ist geräteunabhängig und wird vom Kernel erledigt. Der zweite
+<TT
+CLASS="LITERAL"
+>ioctl</TT
+>-Befehl (<TT
+CLASS="LITERAL"
+>SIOCSIFFLAGS</TT
+>) ruft
+dann allerdings die <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>-Methode für das Gerät
+auf.
+&#13;</P
+><P
+>Entsprechend ruft <SPAN
+CLASS="APPLICATION"
+>ifconfig</SPAN
+> beim
+Herunterfahren einer Schnittstelle
+<TT
+CLASS="LITERAL"
+>ioctl(SIOCSIFFLAGS)</TT
+> auf, um das Flag
+<TT
+CLASS="LITERAL"
+>IFF_UP</TT
+> zu löschen. Anschließend wird die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>stop</I
+></SPAN
+>-Methode aufgerufen.
+&#13;</P
+><P
+>Beide Gerätemethoden geben im Erfolgsfall 0 und den üblichen
+negativen Wert bei Fehlern zurück.&#13;</P
+><P
+>Was den eigentlichen Code angeht, muß der Treiber in vielerlei
+Hinsicht das gleiche machen,
+wie auch bei Zeichen- und Block-Treibern. <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>
+fordert alle benötigten Systemressourcen an und teilt der
+Schnittstelle mit, jetzt aktiv zu sein; <SPAN
+><I
+CLASS="EMPHASIS"
+>stop</I
+></SPAN
+>
+fährt die Schnittstelle herunter und gibt die Systemressourcen
+frei. Es sind allerdings noch eine Reihe weiterer Schritte
+durchzuführen.</P
+><P
+>&#13;
+Zunächst muß die Hardware-Adresse aus dem Hardware-Gerät nach
+<TT
+CLASS="LITERAL"
+>dev-&#62;dev_addr</TT
+> kopiert werden, bevor die
+Schnittstelle mit der Außenwelt kommunizieren kann. Die
+Hardware-Adresse kann je nach Geschmack des Treibers beim Suchen nach
+dem Gerät oder beim Öffnen zugewiesen werden. Die
+Software-Schnittstelle <SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> macht das in
+<SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>; hier wird einfach eine Hardware-Nummer
+vorgetäuscht, indem ein ASCII-String der Länge
+<TT
+CLASS="LITERAL"
+>ETH_ALEN</TT
+> verwendet wird (also der Länge von
+Ethernet-Hardware-Adressen).</P
+><P
+>&#13;
+
+Die Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> sollte auch die
+Übertragungswarteschlange der Schnittstelle starten (und damit Pakete
+zur Übertragung akzeptieren), sobald die Schnittstelle zum Senden von
+Daten bereit ist. Der Kernel stellt dafür eine Funktion bereit:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;void netif_start_queue(struct net_device *dev);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Der Code von <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> in
+<SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> sieht so aus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+int snull_open(struct net_device *dev)
+{
+    MOD_INC_USE_COUNT;
+
+    /* request_region(), request_irq(), .... (wie fops-&#62;open) */
+
+    /*
+     * Die Hardware-Adresse der Karte zuweisen: Wir verwenden
+     * "\0SNULx", wobei x 0 oder 1 ist. Das erste Byte ist '\0', um
+     * Multicast-Adressen zu vermeiden (das erste Byte in
+     * Multicast-Adressen ist ungerade).
+     */
+    memcpy(dev-&#62;dev_addr, "\0SNUL0", ETH_ALEN);
+    dev-&#62;dev_addr[ETH_ALEN-1] += (dev - snull_devs); /* die Nummer */
+
+    netif_start_queue(dev);
+    return 0;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wie Sie sehen, muß man bei Abwesenheit echter Hardware in der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>-Methode nur wenig tun. Das gleiche gilt auch
+für die <SPAN
+><I
+CLASS="EMPHASIS"
+>stop</I
+></SPAN
+>-Methode; diese macht nur die
+Operationen von <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> rückgängig. Aus diesem Grund
+wird die Funktion, die <SPAN
+><I
+CLASS="EMPHASIS"
+>stop</I
+></SPAN
+> implementiert, oft
+<SPAN
+><I
+CLASS="EMPHASIS"
+>close</I
+></SPAN
+> oder <SPAN
+><I
+CLASS="EMPHASIS"
+>release</I
+></SPAN
+> genannt.</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+int snull_release(struct net_device *dev)
+{
+    /* Ports, IRQ usw. freigeben -- wie fops-&#62;close */
+
+    netif_stop_queue(dev); /* keine Uebertragung mehr moeglich */
+    MOD_DEC_USE_COUNT;
+    return 0;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Die Funktion</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;void netif_stop_queue(struct net_device *dev);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+
+ist das Gegenstück zu
+<SPAN
+><I
+CLASS="EMPHASIS"
+>netif_start_queue</I
+></SPAN
+>; sie markiert das
+Gerät als nicht mehr übertragungsfähig. Diese Funktion
+muß aufgerufen werden, wenn die Schnittstelle geschlossen wird (was
+in der Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>stop</I
+></SPAN
+> geschieht), kann aber auch
+dazu verwendet werden, die Übertragung vorübergehend anzuhalten, was
+im nächsten Abschnitt erläutert wird.&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x19513.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="nettx.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Die Struktur net_device im Detail</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="net.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Paket-Übertragung</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

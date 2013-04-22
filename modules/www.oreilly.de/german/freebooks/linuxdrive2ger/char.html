@@ -1,0 +1,480 @@
+<HTML
+><HEAD
+><TITLE
+>Zeichen-Treiber</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="PREVIOUS"
+TITLE="Schnellreferenz"
+HREF="x1916.html"><LINK
+REL="NEXT"
+TITLE="Major- und Minor-Nummern"
+HREF="charmami.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x1916.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="charmami.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="CHAR"
+>Kapitel 3. Zeichen-Treiber</A
+></H1
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Inhalt</B
+></DT
+><DT
+><A
+HREF="char.html#AEN2189"
+>Das Design von scull</A
+></DT
+><DT
+><A
+HREF="charmami.html"
+>Major- und Minor-Nummern</A
+></DT
+><DT
+><A
+HREF="charfops.html"
+>Datei-Operationen</A
+></DT
+><DT
+><A
+HREF="charfile.html"
+>Die Struktur file</A
+></DT
+><DT
+><A
+HREF="x2969.html"
+>open und release</A
+></DT
+><DT
+><A
+HREF="charscullmem.html"
+>Die Verwendung von
+Speicher in scull</A
+></DT
+><DT
+><A
+HREF="charrace.html"
+>Ein kurze Einführung in Race Conditions</A
+></DT
+><DT
+><A
+HREF="charrdwr.html"
+>read und write</A
+></DT
+><DT
+><A
+HREF="x3593.html"
+>Die neuen Geräte ausprobieren</A
+></DT
+><DT
+><A
+HREF="chardevfs.html"
+>Das Device-Dateisystem</A
+></DT
+><DT
+><A
+HREF="x3895.html"
+>Abwärtskompatibilität</A
+></DT
+><DT
+><A
+HREF="x4097.html"
+>Schnellreferenz</A
+></DT
+></DL
+></DIV
+><P
+>In diesem Kapitel werden wir einen vollständigen Zeichen-Gerätetreiber
+schreiben. Wir nehmen einen Zeichen-Treiber, weil diese Treiber-Klasse
+für die meisten einfachen Hardware-Geräte geeignet ist.
+
+Außerdem sind sie leichter zu verstehen als beispielsweise
+Block-Treiber. Das Endziel ist es dabei, einen
+<SPAN
+><I
+CLASS="EMPHASIS"
+>modularisierten</I
+></SPAN
+> Zeichen-Treiber zu schreiben,
+aber wir werden in diesem Kapitel nicht auf Probleme der
+Modularisierung eingehen.&#13;</P
+><P
+>&#13;Während des ganzen Kapitels werden wir Code-Fragmente vorstellen, die
+aus einem echten Gerätetreiber stammen: <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>, was für <SPAN
+><I
+CLASS="EMPHASIS"
+>Simple Character Utility for Loading
+Localities</I
+></SPAN
+> steht. <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> ist ein Zeichen-Treiber,
+der einen Speicherbereich so anspricht, als würde es sich um ein Gerät
+handeln. Als Nebeneffekt aus diesem Verhalten kann, solange es um
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> geht, der Begriff
+<I
+CLASS="FIRSTTERM"
+>Gerät</I
+> mit der
+Bedeutung &#8220;der Speicherbereich, der von
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> verwendet wird&#8221; benutzt werden.&#13;</P
+><P
+>Es ist ein Vorteil von <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>, daß der Treiber nicht
+von irgendwelcher Hardware abhängt, weil ja jeder Computer über Speicher
+verfügt. <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> arbeitet einfach nur auf einem Stück
+Speicher, das mit <SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> alloziert wird. Jeder
+kann <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> kompilieren und starten;
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> ist portabel über alle Rechnerarchitekturen hinweg,
+auf denen Linux läuft. Auf der anderen Seite macht das Gerät natürlich
+nichts Nützliches, außer daß es die Schnittstelle zwischen dem Kernel
+und Zeichen-Treibern demonstriert und den Benutzer einige Tests
+starten läßt.
+&#13;</P
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN2189"
+>Das Design von scull</A
+></H1
+><P
+>&#13;
+
+Beim Schreiben eines Treibers besteht der erste Schritt darin, die
+Funktionen (den <I
+CLASS="FIRSTTERM"
+>Mechanismus</I
+>) zu definieren, den der
+Treiber den Benutzerprogrammen bieten wird. Weil unser
+<I
+CLASS="FIRSTTERM"
+>Gerät</I
+> ein Teil des Computerspeichers ist, können wir
+damit machen, was wir wollen. Es kann sich um ein Gerät mit
+sequentiellem oder wahlfreiem Zugriff handeln, um ein Gerät oder viele
+usw.&#13;</P
+><P
+>Damit <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> als nützliches Muster eines richtigen
+Treibers für richtige Geräte dienen kann, werden wir Ihnen zeigen, wie
+Sie mehrere Geräte-Abstraktionen auf dem Computerspeicher aufsetzen
+können, alle mit eigenen Charakteristika (einer sogenannten <SPAN
+><I
+CLASS="EMPHASIS"
+>Personality</I
+></SPAN
+>).&#13;</P
+><P
+>Der Quellcode von <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> implementiert die folgenden
+Geräte. Jedes Gerät, das vom Modul implementiert wird, wird als ein
+<I
+CLASS="FIRSTTERM"
+>Typ</I
+> bezeichnet:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+>scull0-3</DT
+><DD
+><P
+>Vier Geräte, die aus vier Speicherbereichen bestehen,
+
+
+
+
+die alle global und persistent sind. <I
+CLASS="FIRSTTERM"
+>Global</I
+> bedeutet
+hier, daß auf allen Dateideskriptoren die gleichen Daten benutzt werden, wenn
+das Gerät mehr als einmal geöffnet wird. <I
+CLASS="FIRSTTERM"
+>Persistent</I
+>
+bedeutet, daß die Daten nicht verlorengehen, wenn das Gerät
+geschlossen und wieder geöffnet wird. Es macht Spaß, mit so einem
+Gerät zu arbeiten, weil man auf das Gerät mit konventionellen Befehlen
+wie <SPAN
+CLASS="APPLICATION"
+>cp</SPAN
+>, <SPAN
+CLASS="APPLICATION"
+>cat</SPAN
+> und der
+Shell-I/O-Umleitung zugreifen und es testen kann. Wir werden die
+Interna des Gerätes in diesem Kapitel untersuchen.</P
+></DD
+><DT
+>scullpipe0-3</DT
+><DD
+><P
+>Vier <I
+CLASS="FIRSTTERM"
+>FIFO</I
+>-Geräte, die wie Pipes arbeiten. Ein
+        Prozeß liest die Daten, die ein anderer Prozeß schreibt. Wenn
+        mehrere Prozesse von demselben Gerät lesen wollen, dann
+        konkurrieren sie um die Daten. Die Interna von
+        <SPAN
+CLASS="APPLICATION"
+>scullpipe</SPAN
+> werden zeigen, wie blockierendes und
+        nicht-blockierendes Lesen und Schreiben implementiert werden
+        kann. Das funktioniert auch, ohne auf Interrupts auszuweichen.
+        Obwohl echte Treiber ihre Geräte mittels Hardware-Interrupts
+        synchronisieren, ist es dennoch wichtig, sich mit blockierenden
+        und nicht-blockierenden Operationen zu beschäftigen. Auch kann
+        dieses Thema unabhängig von Interrupts behandelt werden (über die
+        wir in <A
+HREF="irq.html"
+>Kapitel 9</A
+> sprechen werden).</P
+></DD
+><DT
+>scullsingle, scullpriv, sculluid, scullwuid</DT
+><DD
+><P
+>Diese Geräte ähneln <SPAN
+><I
+CLASS="EMPHASIS"
+>scull0</I
+></SPAN
+>, haben aber
+        einige Einschränkungen hinsichtlich der Zeitpunkte, zu denen ein
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> zugelassen ist. Das erste Gerät
+        (<SPAN
+><I
+CLASS="EMPHASIS"
+>scullsingle</I
+></SPAN
+>) erlaubt nur jeweils einem Prozeß, auf das Gerät zuzugreifen, während
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>scullpriv</I
+></SPAN
+> privat zur jeweiligen virtuellen
+        Konsole (oder X-Terminalsitzung) ist, weil Prozesse auf jeder
+Konsole und jedem Terminal einen anderen Speicherbereich als Prozesse
+aus anderen Konsolen bekommen. <SPAN
+><I
+CLASS="EMPHASIS"
+>sculluid</I
+></SPAN
+> und
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>scullwuid</I
+></SPAN
+> können mehrfach geöffnet werden, aber
+        nur von jeweils einem Benutzer. Die erste Version gibt
+        &#8220;Gerät besetzt&#8221; zurück, wenn ein anderer Benutzer das
+        Gerät sperrt, während die letzte ein blockierendes
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> implementiert. Diese Varianten von
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> stellen mehr &#8220;Policy&#8221; als          &#8220;Mechanismus&#8221; dar, sind aber trotzdem interessant, weil manche Geräte
+eine derartige Verwaltung benötigen.</P
+></DD
+></DL
+></DIV
+><P
+>Jedes der <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Geräte demonstriert verschiedene
+Features des Treibers und zeigt auch verschiedene Schwierigkeiten
+auf. In diesem Kapitel werden wir die Interna von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>scull0-3</I
+></SPAN
+> besprechen; die fortgeschritteneren Geräte
+kommen dann in <A
+HREF="extra.html"
+>Kapitel 5</A
+> zur Sprache: <SPAN
+><I
+CLASS="EMPHASIS"
+>scullpipe</I
+></SPAN
+>
+wird in <A
+HREF="exblocking.html#EXIMPL"
+>the Section called <I
+>Eine Beispiel-Implementation: scullpipe</I
+> in Kapitel 5</A
+> beschrieben, die anderen Geräte in
+<A
+HREF="exaccess.html"
+>the Section called <I
+>Zugriffskontrolle auf Gerätedateien</I
+> in Kapitel 5</A
+>.
+
+&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x1916.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="charmami.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Schnellreferenz</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Major- und Minor-Nummern</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

@@ -1,0 +1,412 @@
+<HTML
+><HEAD
+><TITLE
+>Die Symboltabelle des Kernels</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Module erstellen und starten"
+HREF="building.html"><LINK
+REL="PREVIOUS"
+TITLE="Kompilieren und Laden"
+HREF="x666.html"><LINK
+REL="NEXT"
+TITLE="Initialisierung und Beendigung"
+HREF="buiini.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x666.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 2. Module erstellen und starten</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="buiini.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN956"
+>Die Symboltabelle des Kernels</A
+></H1
+><P
+>&#13;
+Wir haben schon gesehen, wie <SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+> undefinierte
+Symbole anhand der Tabelle der öffentlichen Kernel-Symbole
+auflöst. Diese Tabelle enthält die Adressen der globalen
+Kernel-Elemente &#8212;
+Funktionen und Variablen &#8212;, die benötigt werden, um
+modularisierte Treiber zu programmieren. Die öffentliche Symboltabelle
+kann in Textform aus der Datei
+<TT
+CLASS="FILENAME"
+>/proc/ksyms</TT
+> ausgelesen werden (natürlich
+nur, wenn Ihr Kernel das <TT
+CLASS="FILENAME"
+>/proc</TT
+>-Dateisystem
+unterstützt, was er wirklich tun sollte).
+
+&#13;</P
+><P
+>&#13;
+Wenn Ihr Modul geladen wird, werden alle deklarierten globalen Symbole
+in die Symboltabelle des Kernels aufgenommen. Das können Sie anhand
+der Datei <TT
+CLASS="FILENAME"
+>/proc/ksyms</TT
+> oder der Ausgabe
+des Befehls <SPAN
+CLASS="APPLICATION"
+>ksyms</SPAN
+> überprüfen.&#13;</P
+><P
+>&#13;
+
+
+Neue Module können wiederum die Symbole verwenden, die Ihr Modul
+exportiert; so können Sie neue Module auf anderen Modulen aufsetzen
+lassen. Auch in den ausgelieferten Kernel-Quellen bauen Module
+aufeinander auf: Das <SPAN
+CLASS="APPLICATION"
+>msdos</SPAN
+>-Dateisystem benötigt die
+Symbole, die vom Modul <SPAN
+CLASS="APPLICATION"
+>fat</SPAN
+> exportiert
+werden, und jedes USB-Input-Gerätemodul baut auf den Modulen
+<SPAN
+CLASS="APPLICATION"
+>usbcore</SPAN
+> und
+<SPAN
+CLASS="APPLICATION"
+>input</SPAN
+> auf.&#13;</P
+><P
+>Das Aufeinandersetzen von Modulen ist in komplexen Projekten sehr
+nützlich. Wenn eine neue Abstraktion in Form eines Gerätetreibers
+implementiert wird, könnte diese beispielsweise eine Schnittstelle für
+hardware-spezifische Implementationen bieten. Beispielsweise könnte
+ein Bildschirmspeicher-Videotreiber Symbole exportieren, die von einem
+hardware-näheren VGA-Treiber verwendet werden. Jeder Benutzer lädt das
+Bildschirmspeicher-Modul sowie das passende VGA-Modul für seine
+vorhandene Hardware. Die Unterstützung von Parallel-Ports und die große
+Vielfalt von Peripherie-Geräten wird auf ähnliche Weise unterstützt &#8212;
+außerdem das gesamte USB-Kernel-Subsystem. Der Aufbau des Subsystems
+für den Parallel-Port ist in <A
+HREF="x956.html#BUISTACKING"
+>Abbildung 2-2</A
+> zu sehen;
+die Pfeile stellen die Kommunikation zwischen den Modulen (mit einigen
+Beispielfunktionen und Datenstrukturen) und mit der
+Kernel-Programmierschnittstelle dar.</P
+><DIV
+CLASS="FIGURE"
+><A
+NAME="BUISTACKING"
+></A
+><P
+><B
+>Abbildung 2-2. Aufeinanderstapeln von Treibermodulen
+für den Parallel-Port</B
+></P
+><P
+><IMG
+SRC="ldr_0202.jpg"></P
+></DIV
+><P
+>Wenn aufeinandergestapelte Module verwendet werden, ist das
+Hilfsprogramm <SPAN
+CLASS="APPLICATION"
+>modprobe</SPAN
+>
+nützlich. <SPAN
+CLASS="APPLICATION"
+>modprobe</SPAN
+> funktioniert ähnlich wie
+<SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+>, lädt aber auch alle anderen Module,
+die das zu ladende Modul zusätzlich benötigt. Ein
+<SPAN
+CLASS="APPLICATION"
+>modprobe</SPAN
+>-Aufruf kann also mehrere
+<SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+>-Aufrufe ersetzen (auch wenn Sie
+<SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+> immer noch brauchen, wenn Sie
+eigene Module aus dem aktuellen Verzeichnis laden wollen, weil
+<SPAN
+CLASS="APPLICATION"
+>modprobe</SPAN
+> nur den Baum mit den installierten
+Modulen verwendet).</P
+><P
+>Die Modularisierung in Ebenen kann auch die Entwicklungszeit
+verkürzen, weil jede einzelne Ebene vereinfacht wird. Das entspricht
+der Trennung in Mechanismus und Policy, über die wir in
+<A
+HREF="anintro.html"
+>Kapitel 1</A
+> gesprochen haben.
+
+&#13;</P
+><P
+>&#13;
+
+
+
+
+Normalerweise implementiert ein Modul seine eigene Funktionalität,
+ohne überhaupt irgendwelche Symbole exportieren zu müssen. Sie müssen
+aber immer dann Symbole exportieren, wenn andere Module davon Gebrauch
+machen können oder sollen. Eventuell müssen Sie auch spezielle
+Anweisungen einbinden, um das Exportieren aller nicht-statischen
+Symbole zu vermeiden, da manche (aber nicht alle) Versionen
+von <SPAN
+CLASS="APPLICATION"
+>modutils</SPAN
+> defaultmäßig alle Symbole
+exportieren.</P
+><P
+>&#13;Die Header-Dateien des Linux-Kernels stellen eine bequeme Möglichkeit
+bereit, die Sichtbarkeit Ihrer Symbole zu verwalten, reduzieren
+damit die Verschmutzung des Namensraums und fördern das Verstecken von
+Informationen. Der in diesem Abschnitt beschriebene Mechanismus
+funktioniert ab Kernel-Version 2.1.18; der 2.0-Kernel hatte einen
+vollständig anderen Mechanismus, der am Ende dieses Kapitels
+beschrieben wird.</P
+><P
+>&#13;
+
+Wenn Ihr Modul überhaupt keine Symbole exportiert, dann können Sie das
+mit dem folgenden Makroaufruf in Ihrer Quelldatei ausdrücklich ausweisen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; EXPORT_NO_SYMBOLS;</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Das Makro wird zu einer Assembler-Anweisung expandiert und kann an
+beliebiger Stelle im Modul stehen. Portabler Code sollte es aber in
+die Initialisierungsfunktion des Moduls
+(<SPAN
+><I
+CLASS="EMPHASIS"
+>init_module</I
+></SPAN
+>) stellen, weil die in
+<TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> definierte Version dieses Makros nur
+dort funktioniert.</P
+><P
+>&#13;Wenn Sie dagegen einen Teil der Symbole aus Ihrem Modul exportieren
+müssen, besteht der erste Schritt darin, das Präprozessor-Makro
+<TT
+CLASS="LITERAL"
+>EXPORT_SYMTAB</TT
+> zu definieren. Dies muß
+<SPAN
+><I
+CLASS="EMPHASIS"
+>vor</I
+></SPAN
+> dem Einbinden von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>module.h</I
+></SPAN
+> geschehen. Normalerweise macht man das
+mit dem Compiler-Schalter <SPAN
+><I
+CLASS="EMPHASIS"
+>&#8211;D</I
+></SPAN
+> im
+<TT
+CLASS="FILENAME"
+>Makefile</TT
+>.</P
+><P
+>Wenn <TT
+CLASS="LITERAL"
+>EXPORT_SYMTAB</TT
+> definiert ist, können die
+einzelnen Symbole mit ein paar Makros exportiert werden:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; EXPORT_SYMBOL (name);
+ EXPORT_SYMBOL_NOVERS (name);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#62;
+&#62;
+
+Beide Versionen des Makros machen ein Symbol außerhalb des Moduls
+sichtbar, die zweite Version (<TT
+CLASS="LITERAL"
+>EXPORT_SYMBOL_NOVERS</TT
+>)
+exportiert das Symbol ohne Versionsinformationen (siehe <A
+HREF="kerneld.html"
+>Kapitel 11</A
+>&#62;). Symbole müssen außerhalb jeder Funktion
+exportiert werden, weil die Makros zu einer Variablendeklaration
+expandieren. (Wenn es Sie interessiert, können Sie in
+<TT
+CLASS="LITERAL"
+>&#60;linux/module.h&#62;</TT
+> nachlesen, wie das
+funktioniert, aber das ist zum Programmieren von Modulen nicht
+notwendig.)
+&#13;</P
+><P
+>&#13;
+
+
+
+
+
+
+
+
+
+
+&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x666.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="buiini.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Kompilieren und Laden</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="building.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Initialisierung und Beendigung</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

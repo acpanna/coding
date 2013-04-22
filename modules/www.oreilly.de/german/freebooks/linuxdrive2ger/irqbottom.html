@@ -1,0 +1,845 @@
+<HTML
+><HEAD
+><TITLE
+>Tasklets und untere Hälften</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Interrupt-Handler"
+HREF="irq.html"><LINK
+REL="PREVIOUS"
+TITLE="Einen Handler implementieren"
+HREF="irqhandler.html"><LINK
+REL="NEXT"
+TITLE="Gemeinsames Nutzen von Interrupts"
+HREF="irqshare.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="irqhandler.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 9. Interrupt-Handler</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="irqshare.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="IRQBOTTOM"
+>Tasklets und untere Hälften</A
+></H1
+><P
+>&#13;
+Eines der Hauptprobleme bei der Verarbeitung von Interrupts ist die Ausführung längerer Aufgaben aus einem Handler heraus. Oft muß als
+Reaktion auf einen Geräte-Interrupt ziemlich viel Arbeit geleistet werden;
+auf der anderen Seite müssen Interrupt-Handler aber schnell fertig
+werden und dürfen die Interrupts nicht zu lange blockieren. Diese
+beiden Anforderungen (Arbeit und Geschwindigkeit) stehen miteinander
+in Konflikt, was ein Problem für den Treiber-Autor ist.</P
+><P
+>Unter Linux (wie auch vielen anderen Systemen)
+wird dieses Problem gelöst, indem der Interrupt-Handler in zwei
+Hälften aufgeteilt wird: die sogenannte &#8220;obere Hälfte&#8221;
+(<SPAN
+><I
+CLASS="EMPHASIS"
+>Top Half</I
+></SPAN
+>) ist die Routine, die Sie mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request_irq</I
+></SPAN
+> registrieren und die auf den
+Interrupt reagiert. Die
+&#8220;untere Hälfte&#8221; (<SPAN
+><I
+CLASS="EMPHASIS"
+>Bottom Half</I
+></SPAN
+>) ist
+eine Routine, die von der oberen Hälfte zur Ausführung zu einem
+späteren, sicheren Zeitpunkt vorgemerkt wird. Die Verwendung des
+Ausdrucks &#8220;untere Hälfte&#8221; im 2.4-Kernel kann etwas verwirrend sein, weil
+damit sowohl die zweite Hälfte eines Interrupt-Handlers als auch einer der
+Mechanismen, mit denen diese implementiert wird, oder beides gemeint sein
+kann. Wenn wir von einer <SPAN
+><I
+CLASS="EMPHASIS"
+>unteren Hälfte</I
+></SPAN
+> sprechen,
+meinen wir untere Hälften im allgemeinen; die alte
+Linux-Implementation der unteren Hälften wird explizit mit der Abkürzung
+BH für Bottom Half bezeichnet.&#13;</P
+><P
+>Aber wozu ist so eine untere Hälfte gut?&#13;</P
+><P
+>Der große Unterschied zwischen einer oberen Hälfte und einer unteren
+Hälfte ist der, daß während der Ausführung der unteren Hälfte alle
+Interrupts eingeschaltet sind; deswegen läuft diese zu einem
+sichereren Zeitpunkt. In einem typischen Szenario
+speichert die obere Hälfte die Daten vom Gerät möglichst schnell in
+einen gerätespezifischen Puffer, trägt ihre untere Hälfte in den Scheduler ein und endet. Das geht sehr schnell. Die untere Hälfte erledigt dann, was
+noch an Arbeit übrig ist (etwa Prozesse aufwecken, andere
+I/O-Operationen einleiten usw.). Diese Konfiguration erlaubt es der
+oberen Hälfte, einen neuen Interrupt zu bedienen, während die untere
+Hälfte noch läuft.&#13;</P
+><P
+>Jeder ernsthafte Interrupt-Handler ist auf diese Art und Weise
+aufgeteilt. Wenn beispielsweise eine Netzwerkschnittstelle die Ankunft
+eines neuen Pakets meldet, dann holt der Handler nur die Daten und
+reicht sie an die Protokollschicht hinauf. Die eigentliche
+Verarbeitung des Pakets geschieht dann in der unteren Hälfte.</P
+><P
+>Man sollte bei der Verarbeitung unterer Hälften nicht vergessen, daß
+alle Einschränkungen, die für Interrupt-Handler gelten, auch für
+untere Hälften gelten. Diese dürfen also nicht schlafen, nicht auf den
+User-Space zugreifen und nicht den Scheduler aufrufen.</P
+><P
+>Der Linux-Kernel enthält zwei verschiedene Mechanismen, die dazu
+verwendet werden können, um die Verarbeitung von unteren Hälften zu
+implementieren. Tasklets wurden spät während der 2.3-Entwicklung
+eingeführt und sind jetzt das Mittel der Wahl für untere Hälften,
+dafür aber nicht portabel auf ältere Kernel-Versionen. Die ältere
+Implementation unterer Hälften (BH) existiert selbst in ganz alten
+Kerneln, wenn sie auch im 2.4-Kernel mit Tasklets implementiert
+ist. Wir schauen uns hier weitere Mechanismen an. Treiber-Autoren, die
+neuen Code schreiben, sollten, wo immer es möglich ist, Tasklets für untere
+Hälften verwenden; auch wenn Portabilitätsüberlegungen mitunter zur
+Wahl der BHs führen werden.</P
+><P
+>Auch die folgenden Informationen basieren auf dem
+<SPAN
+CLASS="APPLICATION"
+>short</SPAN
+>-Treiber. Wenn dieser mit einer
+Modul-Option geladen wird, kann man ihn auffordern, die Interrupts in
+obere und untere Hälften getrennt zu bearbeiten, wobei entweder ein
+Tasklet oder eine BH verwendet wird. In diesem Fall wird die obere
+Hälfte schnell ausgeführt; sie merkt sich die aktuelle Uhrzeit und
+merkt die Ausführung der unteren Hälfte vor. Diese hat dann die
+Aufgabe, das Format der gespeicherten Zeit umzuwandeln und Benutzerprozesse aufzuwecken,
+die eventuell auf die Daten warten.</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN11924"
+>Tasklets</A
+></H2
+><P
+>&#13;
+
+Wir haben Sie bereits kurz in <A
+HREF="flow.html"
+>Kapitel 6</A
+>&#62; das Thema Tasklets eingeführt; eine kurze Zusammenfassung
+sollte hier also reichen. Erinnern Sie sich, daß Tasklets spezielle
+Funktionen sind, die zur Ausführung im Interrupt-Kontext an einem vom
+System bestimmten sicheren Zeitpunkt vorgemerkt werden. Sie können
+mehrfach vorgemerkt werden, werden aber nur einmal ausgeführt. Kein
+Tasklet läuft jemals parallel mit sich selbst, weil sie nur einmal
+ausgeführt werden; aber Tasklets können auf SMP-Systemen parallel mit
+anderen Tasklets laufen. Wenn Ihr Treiber also mehrere Tasklets
+enthält, müssen diese Sperren verwenden, um sich nicht gegenseitig ins
+Gehege zu kommen.</P
+><P
+>Es wird auch garantiert, daß Tasklets auf der CPU ausgeführt werden,
+auf der sie zuerst vorgemerkt worden sind. Ein Interrupt-Handler kann
+also davon ausgehen, daß ein Tasklet nicht ausgeführt wird, bevor
+nicht der Handler abgeschlossen wurde. Ein anderer Interrupt kann aber
+natürlich eintreffen, während das Tasklet läuft, weswegen man
+möglicherweise immer noch Sperren zwischen dem Tasklet und dem
+Interrupt-Handler benötigt.</P
+><P
+>&#13;Tasklets müssen mit dem <TT
+CLASS="LITERAL"
+>DECLARE_TASKLET</TT
+>-Makro
+deklariert werden:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;DECLARE_TASKLET(name, function, data);</PRE
+></TD
+></TR
+></TABLE
+><P
+><TT
+CLASS="LITERAL"
+>name</TT
+> ist der Name des Tasklets,
+<TT
+CLASS="LITERAL"
+>function</TT
+> die auszuführende Funktion (die ein
+<TT
+CLASS="LITERAL"
+>unsigned long</TT
+>-Argument erwartet und <TT
+CLASS="LITERAL"
+>void</TT
+>
+zurückgibt), und <TT
+CLASS="LITERAL"
+>data</TT
+> ist ein <TT
+CLASS="LITERAL"
+>unsigned
+long</TT
+>-Wert, der an die Tasklet-Funktion übergeben wird.</P
+><P
+>Der <SPAN
+CLASS="APPLICATION"
+>short</SPAN
+>-Treiber deklariert sein Tasklet
+folgendermaßen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+void short_do_tasklet (unsigned long);
+DECLARE_TASKLET (short_tasklet, short_do_tasklet, 0);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Die Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>tasklet_schedule</I
+></SPAN
+> dient dazu, ein
+Tasklet zur Ausführung vorzumerken. Wenn
+<SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> mit <TT
+CLASS="LITERAL"
+>tasklet=1</TT
+>
+geladen wird, installiert es einen gesonderten Interrupt-Handler, der
+die Daten speichert und das Tasklet folgendermaßen vormerkt:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+void short_tl_interrupt(int irq, void *dev_id, struct pt_regs *regs)
+{
+    do_gettimeofday((struct timeval *) tv_head); /* cast, um die
+                                 'volatile'-Warnung zu vermeiden */
+    short_incr_tv(&#38;tv_head);
+    tasklet_schedule(&#38;short_tasklet);
+    short_bh_count++; /* aufzeichnen, daß ein Interrupt eingetroffen ist */
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die eigentliche Tasklet-Routine,
+<SPAN
+><I
+CLASS="EMPHASIS"
+>short_do_tasklet</I
+></SPAN
+>, wird kurz danach ausgeführt,
+wenn es dem System paßt. Wie bereits erwähnt, führt diese Methode den
+größten Teil der Arbeit in der Interrupt-Behandlung aus und sieht
+folgendermaßen aus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+void short_do_tasklet (unsigned long unused)
+{
+    int savecount = short_bh_count, written;
+    short_bh_count = 0; /* wir sind schon aus der Schlange entfernt worden */
+    /*
+     * Die untere Haelfte liest das Array tv, das von der oberen Haelfte
+     * gefuellt worden ist, und gibt es in den Ring-Text-Puffer aus,
+     * der dann vom lesenden Prozeß verbraucht wird.
+     */
+
+    /* Zuerst die Nummer des Interrupts schreiben, der vor dieser BH
+       aufgetreten ist. */
+
+    written = sprintf((char *)short_head,"bh after %6i\n",savecount);
+    short_incr_bp(&#38;short_head, written);
+
+    /*
+     * Dann die Zeit-Werte schreiben, genau 16 Byte auf einmal, damit
+     * dies mit PAGE_SIZE zusammenpaßt.
+     */
+
+    do {
+        written = sprintf((char *)short_head,"%08u.%06u\n",
+                        (int)(tv_tail-&#62;tv_sec % 100000000),
+                        (int)(tv_tail-&#62;tv_usec));
+        short_incr_bp(&#38;short_head, written);
+        short_incr_tv(&#38;tv_tail);
+    } while (tv_tail != tv_head);
+
+    wake_up_interruptible(&#38;short_queue); /* schlafende Prozesse aufwecken */
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Unter anderem merkt sich dieses Tasklet, wie viele Interrupts seit dem
+letzten Aufruf eingetroffen sind. Ein Gerät wie
+<SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> kann ziemlich viele Interrupts in
+ziemlich kurzer Zeit erzeugen, so daß es nicht ungewöhnlich ist, daß
+mehrere eingetroffen sind, bevor die untere Hälfte ausgeführt worden
+ist. Treiber müssen immer auf diese Möglichkeit vorbereitet und in der
+Lage sein, anhand der von der oberen Hälfte
+hinterlassenen Informationen zu bestimmen, wieviel noch zu tun ist.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="IRQBHDESIGN"
+>Das Design der unteren Hälften</A
+></H2
+><P
+>Im Gegensatz zu Tasklets gibt es die alten BHs schon fast so lange wie den
+Linux-Kernel selbst. Das sieht man an einer Reihe
+von Dingen. Beispielsweise sind alle unteren Hälften im Kernel
+vordefiniert, und es kann nur maximal 32 davon geben. Weil sie
+vordefiniert sind, können sie auch nicht direkt von Modulen verwendet
+werden, aber das ist kein Problem, wie wir noch sehen werden.&#13;</P
+><P
+>Immer wenn Code eine untere Hälfte zur Ausführung vormerken will, ruft
+er <SPAN
+><I
+CLASS="EMPHASIS"
+>mark_bh</I
+></SPAN
+> auf. In der älteren
+BH-Implementation setzte <SPAN
+><I
+CLASS="EMPHASIS"
+>mark_bh</I
+></SPAN
+> ein Bit
+in einer Bit-Maske, was es ermöglichte, den dazugehörenden Handler zur
+Laufzeit schnell zu finden. In modernen Kerneln wird einfach
+<SPAN
+><I
+CLASS="EMPHASIS"
+>tasklet_schedule</I
+></SPAN
+> aufgerufen, um die
+Routine für die untere Hälfte zur Ausführung vorzumerken.
+
+&#13;</P
+><P
+>Das Markieren unterer Hälften ist in
+<TT
+CLASS="LITERAL"
+>&#60;linux/interrupt.h&#62;</TT
+> als&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+
+void mark_bh(int nr);</PRE
+></TD
+></TR
+></TABLE
+><P
+> definiert. <TT
+CLASS="LITERAL"
+>nr</TT
+> ist dabei die
+&#8220;Nummer&#8221; der zu aktivierenden BH. Die Nummer
+ist eine symbolische Konstante, die in
+<TT
+CLASS="LITERAL"
+>&#60;linux/interrupt.h&#62;</TT
+> definiert ist und das
+Bit kennzeichnet, das gesetzt werden soll. Die Funktion, die zu jeder
+unteren Hälfte gehört, wird vom Treiber bereitgestellt, dem die untere
+Hälfte gehört. Wenn beispielsweise
+<TT
+CLASS="LITERAL"
+>mark_bh(SCSI_BH)</TT
+> aufgerufen wird,
+dann ist die vorgemerkte Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>scsi_bottom_half_handler</I
+></SPAN
+>,
+ein Bestandteil des SCSI-Treibers.&#13;</P
+><P
+>Wie bereits erwähnt wurde, sind untere Hälften statische Objekte, weswegen
+ein modularisierter Treiber keine <SPAN
+><I
+CLASS="EMPHASIS"
+>eigenen</I
+></SPAN
+> unteren Hälften
+registrieren kann. Es gibt keine dynamische Allokation unterer
+Hälften, und dabei wird es wahrscheinlich auch
+bleiben. Glücklicherweise kann statt
+dessen die <SPAN
+><I
+CLASS="EMPHASIS"
+>immediate</I
+></SPAN
+>-Task-Schlange verwendet werden.&#13;</P
+><P
+>Im Rest dieses Abschnitts werden die interessantesten unteren Hälften
+aufgelistet. Anschließend folgt eine Beschreibung, wie der Kernel eine
+untere Hälfte ausführt. Sie sollten das verstehen, um untere Hälften
+korrekt verwenden zu können.&#13;</P
+><P
+>Eine Reihe von im Kernel deklarierten unteren Hälften ist
+interessant, und einige wenige können sogar, wie oben erläutert, von
+einem Treiber verwendet werden. Die interessantesten unteren Hälften
+sind:&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>IMMEDIATE_BH</TT
+></DT
+><DD
+><P
+>&#13;
+Dies ist die wichtigste untere Hälfte für Treiber-Programmierer. Die
+vorgemerkte Funktion führt (mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>run_task_queue</I
+></SPAN
+>) eine Task-Schlange,
+<TT
+CLASS="LITERAL"
+>tq_immediate</TT
+>, aus. Ein Treiber (wie
+beispielsweise ein benutzerdefiniertes Modul), der keine eigene untere
+Hälfte hat, kann die <SPAN
+><I
+CLASS="EMPHASIS"
+>immediate</I
+></SPAN
+>-Schlange verwenden, als wäre es seine
+eigene untere Hälfte. Nachdem ein Task in der Schlange registriert
+worden ist, muß der Treiber die untere Hälfte markieren, damit der
+Code auch tatsächlich ausgeführt wird. Wie man das macht, wurde in
+&#8220;<A
+HREF="flowqueue.html#FLOWIMMQ"
+>the Section called <I
+>Die unmittelbare Schlange</I
+> in Kapitel 6</A
+>&#8221; in <A
+HREF="flow.html"
+>Kapitel 6</A
+>
+erklärt.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>TQUEUE_BH</TT
+></DT
+><DD
+><P
+>&#13;
+
+Diese untere Hälfte wird bei jedem Timer-Tick aktiviert, wenn ein Task
+in <TT
+CLASS="LITERAL"
+>tq_timer</TT
+> aktiviert ist. In der Praxis
+kann ein Treiber seine eigene untere Hälfte unter Verwendung von
+<TT
+CLASS="LITERAL"
+>tq_timer</TT
+> implementieren. Die in <A
+HREF="flow.html"
+>Kapitel 6</A
+> (im Abschnitt &#8220;<A
+HREF="flowqueue.html#FLOWTIMERQUEUE"
+>the Section called <I
+>Die Timer-Schlange</I
+> in Kapitel 6</A
+>&#8221;) eingeführte <SPAN
+><I
+CLASS="EMPHASIS"
+>timer</I
+></SPAN
+>-Schlange ist eine
+untere Hälfte. Es ist hier nicht notwendig,
+<SPAN
+><I
+CLASS="EMPHASIS"
+>mark_bh</I
+></SPAN
+>
+aufzurufen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>TIMER_BH</TT
+></DT
+><DD
+><P
+>&#13;
+Diese untere Hälfte wird von <SPAN
+><I
+CLASS="EMPHASIS"
+>do_timer</I
+></SPAN
+>
+markiert, der Funktion, die für den Clock-Tick zuständig ist. Die von
+dieser unteren Hälfte aufgerufene Funktion ist diejenige, die die
+Timer im Kernel steuert. Ein Treiber kann diese Möglichkeit ausschließlich über
+<SPAN
+><I
+CLASS="EMPHASIS"
+>add_timer</I
+></SPAN
+> nutzen.</P
+></DD
+></DL
+></DIV
+><P
+>Die verbleibenden unteren Hälften werden von Kernel-spezifischen
+Treibern verwendet. Es gibt in ihnen keine Einsprungpunkte für Module,
+weil das auch keinen Sinn ergeben würde. Die Menge dieser anderen
+unteren Hälften nimmt stetig ab, weil immer mehr Treiber unter
+Verwendung von Tasklets umgeschrieben werden.&#13;</P
+><P
+>Sobald eine untere Hälfte markiert worden ist, wird diese aufgerufen,
+wenn <SPAN
+><I
+CLASS="EMPHASIS"
+>bh_action</I
+></SPAN
+> (in
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kernel/softirq.c</I
+></SPAN
+>) aufgerufen wird. Das passiert,
+wenn Tasklets ausgeführt werden. Dies wiederum geschieht immer dann,
+wenn ein Prozeß aus einem Systemaufruf zurückkehrt oder wenn ein
+Interrupt-Handler beendet wird. Tasklets werden immer als Bestandteil
+des Timer-Interrupts ausgeführt, weswegen ein Treiber normalerweise
+erwarten kann, daß eine BH-Routine spätestens zehn Millisekunden nach
+der Vormerkung ausgeführt wird.&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN12035"
+>Eine untere Hälfte (BH) schreiben</A
+></H2
+><P
+>&#13;Aus der Liste verfügbarer unterer Hälften
+in &#8220;<A
+HREF="irqbottom.html#IRQBHDESIGN"
+>the Section called <I
+>Das Design der unteren Hälften</I
+></A
+>&#8221; wird klar, daß ein neuer
+Treiber eine eigene untere Hälfte an
+<TT
+CLASS="LITERAL"
+>IMMEDIATE_BH</TT
+> anhängen sollte, indem er die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>immediate</I
+></SPAN
+>-Schlange verwendet.
+
+
+
+&#13;</P
+><P
+>Wenn
+<TT
+CLASS="LITERAL"
+>IMMEDIATE_BH</TT
+> markiert wird, arbeitet die
+zuständige Funktion nur die <SPAN
+><I
+CLASS="EMPHASIS"
+>immediate</I
+></SPAN
+>-Schlange ab. Wenn Ihr
+Interrupt-Handler seinen Handler für die untere Hälfte in
+<TT
+CLASS="LITERAL"
+>tq_immediate</TT
+> einstellt und die untere Hälfte
+markiert, dann wird der eingestellte Task genau zur richtigen Zeit
+aufgerufen. Weil Sie in allen Kerneln den gleichen Task
+mehrfach eintragen können, ohne die Task-Schlange zu beschädigen,
+können Sie Ihre untere Hälfte jedesmal einstellen, wenn der Handler
+der oberen Hälfte läuft. Ein Beispiel für dieses Verhalten folgt in
+Kürze.&#13;</P
+><P
+>Treiber mit exotischen Konfigurationen &#8212; beispielsweise
+mit mehreren unteren Hälften o. ä. &#8212;, die nicht einfach mit
+<TT
+CLASS="LITERAL"
+>tq_immediate</TT
+> erschlagen werden können,
+benötigen möglicherweise eine benutzerdefinierte Task-Schlange. Der
+Interrupt-Handler stellt dann seine Tasks in diese Schlange und
+fügt eine einfache Funktion zum Abarbeiten dieser Schlange in die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>immediate</I
+></SPAN
+>-Schlange ein, wenn es dazu Zeit ist. Details hierzu finden Sie
+in &#8220;<A
+HREF="flowqueue.html#FLOWOWNQ"
+>the Section called <I
+>Eigene Task-Schlangen anlegen</I
+> in Kapitel 6</A
+>&#8221; in <A
+HREF="flow.html"
+>Kapitel 6</A
+>.&#13;</P
+><P
+>Schauen wir uns jetzt die BH-Implementation von
+<SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> an. Wenn das Modul mit
+<TT
+CLASS="LITERAL"
+>bh=1</TT
+> geladen wird, dann installiert das Modul einen
+Interrupt-Handler, der eine untere Hälfte benutzt:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+void short_bh_interrupt(int irq, void *dev_id, struct pt_regs *regs)
+{
+    /* Cast, um 'volatile'-Warnung zu vermeiden */
+    do_gettimeofday((struct timeval *) tv_head);
+    short_incr_tv(&#38;tv_head);
+
+    /* BH vormerken. Mehrfaches Vormerken nicht beruecksichtigen. */
+    queue_task(&#38;short_task, &#38;tq_immediate);
+    mark_bh(IMMEDIATE_BH);
+
+    short_bh_count++; /* Aufzeichnen, daß ein Interrupt eingetroffen ist */
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wie erwartet ruft dieser Code <SPAN
+><I
+CLASS="EMPHASIS"
+>queue_task</I
+></SPAN
+>
+auf, ohne zu überprüfen, ob der Task schon in der Schlange steht.&#13;</P
+><P
+>Die untere Hälfte macht dann den Rest der Arbeit. Sie unterscheidet
+sich tatsächlich nicht vom vorher gezeigten
+<SPAN
+><I
+CLASS="EMPHASIS"
+>short_do_tasklet</I
+></SPAN
+>.</P
+><P
+>Hier ein Beispiel einer Ausgabe, wenn Sie
+<SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> mit <TT
+CLASS="LITERAL"
+>bh=1</TT
+> laden:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>morgana% echo 1122334455 &#62; /dev/shortint ; cat /dev/shortint
+bh after      5
+50588804.876653
+50588804.876693
+50588804.876720
+50588804.876747
+50588804.876774</PRE
+></TD
+></TR
+></TABLE
+><P
+>Welches Timing Sie zu sehen bekommen, hängt natürlich
+stark von Ihrem jeweiligen System ab.</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="irqhandler.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="irqshare.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Einen Handler implementieren</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="irq.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Gemeinsames Nutzen von Interrupts</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

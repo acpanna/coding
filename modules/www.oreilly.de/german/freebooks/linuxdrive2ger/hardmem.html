@@ -1,0 +1,1342 @@
+<HTML
+><HEAD
+><TITLE
+>I/O-Speicher verwenden</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Hardware-Verwaltung"
+HREF="hard.html"><LINK
+REL="PREVIOUS"
+TITLE=" Digitale I/O-Ports verwenden"
+HREF="harddigio.html"><LINK
+REL="NEXT"
+TITLE="Abwärtskompatibilität"
+HREF="hardback.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="harddigio.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 8. Hardware-Verwaltung</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="hardback.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="HARDMEM"
+>I/O-Speicher verwenden</A
+></H1
+><P
+>&#13;
+
+
+
+
+
+Trotz der Beliebtheit von I/O-Ports in der x86-Welt läuft der wichtigste
+Mechanismus zur Kommunikation mit Geräten immer noch über in den Speicher
+abgebildete Register und Gerätespeicher. Beide werden
+<SPAN
+><I
+CLASS="EMPHASIS"
+>I/O-Speicher</I
+></SPAN
+> genannt, weil die Software den
+Unterschied zwischen Registern und Speichern nicht sehen kann.</P
+><P
+>I/O-Speicher ist einfach ein Bereich von RAM-artigen Speicherstellen,
+die das Gerät dem Prozessor über den Bus verfügbar macht. Dieser
+    Speicher kann für diverse Zwecke wie das Speichern von Videodaten
+    oder Ethernet-Paketen verwendet werden, aber auch Geräteregister
+    implementieren, die sich wie I/O-Ports verhalten (d. h. sie haben
+  Nebeneffekte beim Lesen und Schreiben).</P
+><P
+>Wie auf den I/O-Speicher zugegriffen wird, ist von der
+Computer-Architektur, dem Bus und dem Gerät abhängig, auch wenn die
+  Prinzipien überall gleich sind. Wir werden in diesem Kapitel
+  hauptsächlich auf ISA- und PCI-Speicher eingehen, aber auch
+  allgemeine Informationen liefern. Der Zugriff auf PCI-Speicher wird
+  hier zwar eingeführt, PCI wird aber gründlich erst in <A
+HREF="pci.html"
+>Kapitel 15</A
+> behandelt.</P
+><P
+>&#13;
+
+Je nach Computer-Plattform und verwendetem Bus kann auf I/O-Speicher
+über Seitentabellen zugegriffen werden oder nicht. Wenn der Zugriff
+über Seitentabellen erfolgt, muß der Kernel zunächst dafür sorgen, daß
+die physikalische Adresse von Ihrem Treiber aus sichtbar ist (dazu muß
+üblicherweise vor allen I/O-Operationen
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+> aufgerufen werden). Wenn keine
+Seitentabellen verwendet werden, sehen die I/O-Speicherstellen
+I/O-Ports ziemlich ähnlich, und Sie können mit den passenden
+Wrapper-Funktionen einfach darauf schreiben und daraus lesen.</P
+><P
+>Die direkte Verwendung von Zeigern auf I/O-Speicher ist nicht ratsam, unabhängig davon, ob <SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+> für den
+Zugriff auf I/O-Speicher notwendig ist oder nicht. Auch wenn I/O-Speicher (wie in
+"<A
+HREF="hard.html#HARDCLASS"
+>the Section called <I
+>I/O-Ports und I/O-Speicher</I
+></A
+>" besprochen) auf Hardware-Ebene wie
+normales RAM angesprochen wird, legt die in &#8220;<A
+HREF="hard.html#HARDCLASSMEM"
+>the Section called <I
+>I/O-Register und konventioneller Speicher</I
+></A
+>&#8221; empfohlene besondere Vorsicht nahe, normale Zeiger zu vermeiden . Die Wrapper-Funktionen für den Zugriff
+auf I/O-Speicher sind sowohl auf allen Plattformen sicher als auch
+wegoptimiert, wenn das direkte Dereferenzieren eines Zeigers die Operation durchführen könnte.</P
+><P
+>Selbst wenn das Dereferenzieren eines Zeigers (zur Zeit) auf der
+x86-Plattform möglcih ist, machen Sie Ihren Treiber schlechter lesbar
+und unportabel, wenn Sie nicht die vorgesehenen Makros verwenden.</P
+><P
+>&#13;
+
+In <A
+HREF="building.html"
+>Kapitel 2</A
+> hatten wir bereits erwähnt, daß
+Gerätespeicherbereiche vor der Verwendung alloziert werden müssen. Das
+funktioniert ähnlich wie das Registrieren von I/O-Ports und wird durch
+die folgenden Funktionen erledigt:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;int check_mem_region(unsigned long start, unsigned long len);
+void request_mem_region(unsigned long start, unsigned long len,
+char *name);
+void release_mem_region(unsigned long start, unsigned long len);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Das Argument <TT
+CLASS="LITERAL"
+>start</TT
+> ist die physikalische Adresse
+des Speicherbereichs vor jeder Abbildung. Die Funktionen werden
+normalerweise etwa so verwendet:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;if (check_mem_region(mem_addr, mem_size)) {
+    printk("drivername: memory already in use\n");
+    return -EBUSY;
+}
+    request_mem_region(mem_addr, mem_size, "drivername");
+
+    [...]
+
+    release_mem_region(mem_addr, mem_size);&#13;</PRE
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="HARDMEMDIRECT"
+>Direkt abgebildeter Speicher</A
+></H2
+><P
+>&#13;
+Einige Computer-Plattformen reservieren einen Teil ihres
+Speicher-Adreßraumes für I/O-Speicherstellen und schalten die
+Speicherverwaltung für (virtuelle) Adressen in diesem Speicherbereich
+automatisch ab.</P
+><P
+>&#13;Die in PDAs verwendeten MIPS-Prozessoren machen dies auf sehr
+interessante Weise. Zwei Adressbereiche mit je 512 MByte werden direkt
+auf physikalische Adressen abgebildet. Jeder Speicherzugriff auf einen
+dieser Adreßbereiche geht an der MMU wie auch am Cache vorbei. Ein
+Abschnitt von diesen 512 Megabytes ist für Peripherie-Geräte
+reserviert; Treiber können auf ihren I/O-Speicher direkt durch
+Verwendung des nicht gecachten Adreßbereichs zugreifen.</P
+><P
+>&#13;
+Andere Plattformen haben andere Möglichkeiten, um direkt abgebildete
+Adreßbereiche zur Verfügung zu stellen: Manche haben spezielle Adreßräume, um physikalische
+Adressen zu dereferenzieren (beispielsweise verwendet SPARC64 zu
+diesem Zweck einen besonderen &#8220;address space identifier&#8221;), andere
+verwenden virtuelle Adressen, die so eingerichtet sind, daß sie die
+Prozessor-Caches umgehen.&#13;</P
+><P
+>&#13;Auch wenn Sie auf einen direkt abgebildeten I/O-Speicherbereich
+zugreifen müssen, sollten Sie trotzdem nicht Ihre I/O-Zeiger
+dereferenzieren, auch wenn Sie damit auf manchen Architekturen
+vielleicht durchkommen. Um Code zu schreiben, der auf verschiedenen
+Systemen und in verschiedenen Kernel-Versionen funktioniert, müssen
+Sie direkte Zugriffe vermeiden und statt dessen die folgenden
+Funktionen verwenden:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned readb(address);</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned readw(address);</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned readl(address);</TT
+></DT
+><DD
+><P
+>&#13;
+
+Diese Makros holen 8 Bit, 16 Bit und 32 Bit breite Datenwerte aus
+dem I/O-Speicher. Der Vorteil der Verwendung von Makros liegt in der
+Typenlosigkeit des Arguments: <TT
+CLASS="LITERAL"
+>address</TT
+> wird vor der
+Verwendung gecastet, denn der Wert &#8220;ist nicht eindeutig ein Integer
+oder ein Zeiger, und wir akzeptieren beides&#8221; (übersetzt aus
+<TT
+CLASS="FILENAME"
+>asm-alpha/io.h</TT
+>). Weder die Funktionen zum Lesen
+noch die zum Schreiben überprüfen die Gültigkeit von
+<TT
+CLASS="LITERAL"
+>adresse</TT
+>, weil sie genauso schnell wie das
+Dereferenzieren von Zeigern sein sollten (und, wie wir inzwischen
+wissen, manchmal genau dazu expandieren).</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void writeb(unsigned value, address);</TT
+>, <TT
+CLASS="LITERAL"
+>void writew(unsigned value, address);</TT
+>, <TT
+CLASS="LITERAL"
+>void writel(unsigned value, address);</TT
+></DT
+><DD
+><P
+>&#13;
+
+Entsprechend dienen diese Funktionen (Makros) dazu, 8-Bit-, 16-Bit-
+und 32-Bit-Datenelemente zu schreiben.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>memset_io(address, value, count);</TT
+></DT
+><DD
+><P
+>&#13;Wenn Sie <SPAN
+><I
+CLASS="EMPHASIS"
+>memset</I
+></SPAN
+> auf I/O-Speicher benötigen, dann
+können Sie diese Funktion verwenden, die die Semantik des originalen
+<SPAN
+><I
+CLASS="EMPHASIS"
+>memset</I
+></SPAN
+> beibehält.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>memcpy_fromio(dest, source, num);</TT
+>, <TT
+CLASS="LITERAL"
+>memcpy_toio(dest, source, num);</TT
+></DT
+><DD
+><P
+>&#13;
+Diese Funktionen verschieben Datenblocks in den und aus dem I/O-Speicher und
+verhalten sich wie die C-Bibliotheksroutine
+<SPAN
+><I
+CLASS="EMPHASIS"
+>memcpy</I
+></SPAN
+>.</P
+></DD
+></DL
+></DIV
+><P
+>In modernen Versionen des Kernels sind diese Funktionen auf allen
+Architekturen vorhanden. Die Implementation unterscheidet sich aber;
+auf manchen sind sie Makros, die zu Zeiger-Operationen expandieren,
+auf anderen sind sie richtige Funktionen. Als Treiber-Autor müssen Sie sich
+darüber aber keine Gedanken machen, solange Sie sie verwenden.</P
+><P
+>&#13;
+Manche 64-Bit-Plattformen verfügen auch über
+<SPAN
+><I
+CLASS="EMPHASIS"
+>readq</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>writeq</I
+></SPAN
+> für acht
+Byte (Quad-Wort) breite Speicheroperationen auf dem PCI-Bus. Die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>Quad-Wort</I
+></SPAN
+>-Bezeichnung ist ein historisches
+Überbleibsel aus der Zeit, als alle richtigen Prozessoren
+16 Bit breite Worte hatten. Das <SPAN
+><I
+CLASS="EMPHASIS"
+>L</I
+></SPAN
+> für
+32-Bit-Werte ist inzwischen eigentlich auch nicht mehr korrekt, aber
+wenn man alle die Funktionen umbenennen würde, würde das nur noch mehr Verwirrung stiften.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN10836"
+><SPAN
+><I
+CLASS="EMPHASIS"
+>short</I
+></SPAN
+> für I/O-Speicher verwenden</A
+></H2
+><P
+>&#13;Das Beispiel-Modul <SPAN
+CLASS="APPLICATION"
+>short</SPAN
+>, das wir weiter
+oben eingeführt hatten, um auf I/O-Ports zuzugreifen, kann auch für
+I/O-Speicher verwendet werden. Zu diesem Zweck müssen Sie beim Laden
+angeben, daß Sie I/O-Speicher verwenden wollen, und Sie müssen auch die
+Basisadresse ändern, um sie auf Ihren I/O-Bereich zeigen zu lassen.</P
+><P
+>So haben wir beispielsweise <SPAN
+CLASS="APPLICATION"
+>short</SPAN
+>
+verwendet, um die Debug-LEDs auf einem MIPS-Entwicklungssystem
+aufleuchten zu lassen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+> mips.root# <TT
+CLASS="USERINPUT"
+><B
+>./short_load use_mem=1 base=0xb7ffffc0</B
+></TT
+>
+ mips.root# <TT
+CLASS="USERINPUT"
+><B
+>echo -n 7 &#62; /dev/short0</B
+></TT
+></PRE
+></TD
+></TR
+></TABLE
+><P
+><SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> wird für I/O-Speicher genauso wie für
+I/O-Ports verwendet, aber weil es für I/O-Speicher keine wartenden
+oder String-Anweisungen gibt, passiert beim Zugriff auf
+<TT
+CLASS="FILENAME"
+>/dev/short0p</TT
+> und
+<TT
+CLASS="FILENAME"
+>/dev/short0s</TT
+> genau das gleiche wie bei
+<TT
+CLASS="FILENAME"
+>/dev/short0</TT
+>.</P
+><P
+>Das folgende Fragment zeigt die Schleife, die
+<SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> verwendet, um in einen
+Speicherbereich zu schreiben:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+while (count--) {
+    writeb(*(ptr++), address);
+    wmb();
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Beachten Sie die Verwendung einer Schreib-Speicherbarriere. Weil
+<SPAN
+><I
+CLASS="EMPHASIS"
+>writeb</I
+></SPAN
+> auf vielen Architekturen vermutlich eine
+direkte Zuweisung ist, muß die Speicherbarriere verwendet werden, um
+sicherzustellen, daß die Schreiboperationen in der erwarteten
+Reihenfolge erfolgen.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN10859"
+>Von der Software abgebildeter I/O-Speicher</A
+></H2
+><P
+>&#13;
+Von der MIPS-Prozessorklasse einmal abgesehen, ist das direkte Abbilden
+von I/O-Speicher noch ziemlich selten; insbesondere, wenn ein
+Peripherie-Bus verwendet wird (was meistens der Fall ist).</P
+><P
+>&#13;
+Die gängigste Hardware- und Software-Anordnung für I/O-Speicher sieht
+folgendermaßen aus: Geräte befinden sich an wohlbekannten
+physikalischen Adressen, aber die CPU hat keine vordefinierte
+virtuelle Adresse, um auf die Geräte zuzugreifen. Die wohlbekannte
+physikalische Adresse kann entweder im Gerät fest verdrahtet sein oder
+von der System-Firmware beim Booten zugewiesen werden. Ersteres ist
+beispielsweise bei ISA-Geräten der Fall, deren Adressen entweder in
+die Schaltkreise des Gerätes eingebrannt sind, im lokalen
+Gerätespeicher statisch zugewiesen werden oder mittels physikalischer
+Jumper gesetzt werden. Letzteres ist bei PCI-Geräten der Fall, deren
+Adressen von der System-Software zugewiesen und in den Gerätespeicher
+geschrieben werden, wo sie nur so lange vorhanden sind, wie das Gerät
+eingeschaltet ist.</P
+><P
+>&#13;
+Auf jeden Fall muß es eine Möglichkeit geben, einem Gerät eine
+virtuelle Adresse zuzuweisen, damit Software auf den I/O-Speicher
+zugreifen kann. Dies ist die Aufgabe der Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+>, die in &#8220;<A
+HREF="getvmalloc.html"
+>the Section called <I
+>vmalloc und Freunde</I
+> in Kapitel 7</A
+>&#8221; eingeführt wurde. Diese Funktion, die im
+vorigen Kapitel behandelt wurde, weil es bei ihr um die
+Speicherverwaltung geht, ist speziell dazu gedacht,
+I/O-Speicherbereichen virtuelle Adressen zuzuweisen. Außerdem haben
+die Kernel-Entwickler <SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+> so implementiert,
+daß die Funktion nichts macht, wenn sie auf direkt abgebildete
+I/O-Adressen angewendet wird.</P
+><P
+>Mit <SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+> (und <SPAN
+><I
+CLASS="EMPHASIS"
+>iounmap</I
+></SPAN
+>)
+kann ein Gerätetreiber auf beliebige I/O-Speicheradressen zugreifen,
+egal, ob diese nun direkt in den virtuellen Adreßraum abgebildet
+werden oder nicht. Denken Sie aber daran, daß diese Adressen nicht
+direkt referenziert werden sollten; benutzen Sie statt dessen
+Funktionen wie <SPAN
+><I
+CLASS="EMPHASIS"
+>readb</I
+></SPAN
+>. Wir könnten
+<SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> so schreiben, daß der Treiber sowohl
+mit MIPS-I/O-Speicher als auch mit dem gängigeren ISA/PCI-x86-Speicher
+arbeitet, indem wir das Modul mit <SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>iounmap</I
+></SPAN
+> ausstatten, wenn der Parameter
+<TT
+CLASS="LITERAL"
+>use_mem</TT
+> verwendet wird.</P
+><P
+>Bevor wir Ihnen zeigen, wie <SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> die
+Funktionen aufruft, werfen wir lieber noch einen Blick auf die
+Prototypen der Funktionen und führen einige Details ein, die wir im
+letzten Kapitel übergangen haben.
+
+&#13;</P
+><P
+>Die Funktionen haben folgende Definition:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;#include &#60;asm/io.h&#62;
+void *ioremap(unsigned long phys_addr, unsigned long size);
+void *ioremap_nocache(unsigned long phys_addr, unsigned long size);
+void iounmap(void * addr);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Zunächst einmal wird Ihnen vielleicht die neue Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap_nocache</I
+></SPAN
+> auffallen. Wir haben diese in
+<A
+HREF="get.html"
+>Kapitel 7</A
+> nicht behandelt, weil sie eindeutig
+Hardware-bezogen ist. Um aus einer der Kernel-Header-Dateien zu
+übersetzen: &#8220;(Die Funktion) ist nützlich, wenn einige Kontrollregister
+sich in einem solchen Bereich befinden und das Kombinieren von
+Schreiboperationen oder das Cachen von Leseoperationen nicht erwünscht
+sind.&#8221; Auf den meisten Computer-Plattformen ist die Implementation
+dieser Funktion in den Situationen identisch mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+>, in denen der gesamte I/O-Speicher
+bereits über Adressen sichtbar ist, die nicht gecacht werden können &#8211; es
+gibt in diesem Fall keinen Grund, eine Spezialversion von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+> zu implementieren.</P
+><P
+>Ein weiteres wichtiges Merkmal von <SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+> ist
+das unterschiedliche Verhalten in Version 2.0 und späteren
+Versionen. In Linux 2.0 (die Funktion hieß
+damals <SPAN
+><I
+CLASS="EMPHASIS"
+>vremap</I
+></SPAN
+>) weigerte sich die Funktion,
+Speicherbereiche abzubilden, die nicht an Seitengrenzen ausgerichtet
+waren. Das war auch sinnvoll so, weil auf CPU-Ebene alles in Einheiten von ganzen Seiten passiert. Manchmal müssen Sie aber kleine Bereiche
+von I/O-Registern abbilden, deren (physikalische) Adressen nicht an
+Seitengrenzen ausgerichtet sind. Um dieses neue Bedürfnis befriedigen zu
+können, sind Kernel ab der Version 2.1.131 auch in der Lage,
+nicht ausgerichtete Adressen abzubilden.</P
+><P
+>Unser Modul <SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> benutzt nicht
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+> direkt, sondern verwendet den folgenden
+Code, um abwärtsportabel mit 2.0-Kerneln zu sein und trotzdem auf
+Register zugreifen zu können, die nicht an Seitengrenzen liegen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+/* Einen nicht (notwendigerweise) ausgerichteten Port-Bereich abbilden */
+void *short_remap(unsigned long phys_addr)
+{
+    /* Der Code stammt hauptsaechlich aus arch/any/mm/ioremap.c */
+    unsigned long offset, last_addr, size;
+
+    last_addr = phys_addr + SHORT_NR_PORTS - 1;
+    offset = phys_addr &#38; &#732;PAGE_MASK;
+
+    /* Anfang und Ende auf eine volle Seite ausrichten */
+    phys_addr &#38;= PAGE_MASK;
+    size = PAGE_ALIGN(last_addr) - phys_addr;
+    return ioremap(phys_addr, size) + offset;
+}
+
+/* Einen mit short_remap geholten Bereich wieder ausblenden */
+void short_unmap(void *virt_add)
+{
+    iounmap((void *)((unsigned long)virt_add &#38; PAGE_MASK));
+}
+&#13;</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="HARDISA"
+>ISA-Speicher unter 1 MByte</A
+></H2
+><P
+>&#13;
+Einer der bekanntesten I/O-Speicherbereiche ist der ISA-Bereich auf
+PCs. Dies ist der Speicherbereich zwischen 640 KByte
+(<TT
+CLASS="LITERAL"
+>0x0A0000</TT
+>) und 1 MByte
+(<TT
+CLASS="LITERAL"
+>0x100000</TT
+>). Der Bereich erscheint also mitten im
+normalen System-RAM. Diese Positionierung scheint vielleicht etwas
+merkwürdig zu sein, ist aber eine Folge einer in den frühen achtziger Jahren
+getroffenen Entscheidung, als 640 KByte Speicher mehr zu sein schien, als
+jemals irgendjemand benutzen würde.</P
+><P
+>&#13;Dieser Speicherbereich gehört zur Klasse des nicht direkt abgebildeten
+Speichers.<A
+NAME="AEN10925"
+HREF="#FTN.AEN10925"
+>[1]</A
+> Sie können mit dem
+<SPAN
+CLASS="APPLICATION"
+>short</SPAN
+>-Modul wie oben beschrieben ein paar Bytes in diesen Speicherbereich schreiben, wenn Sie
+<TT
+CLASS="LITERAL"
+>use_mem</TT
+> beim Laden setzen.</P
+><P
+>Obwohl es ISA-I/O-Speicher nur in x86-Computern gibt, halten wir es
+dennoch für sinnvoll, einige Worte und einen Beispiel-Treiber darauf
+zu verwenden.</P
+><P
+>Wir werden in diesem Kapitel nicht über PCI-Speicher sprechen, weil
+das die sauberste Form von I/O-Speicher ist: Sobald Sie die
+physikalische Adresse kennen, können Sie diese einfach abbilden und
+darauf zugreifen. Das &#8220;Problem&#8221; mit PCI-I/O-Speicher besteht vielmehr
+darin, daß wir nicht so einfach ein funktionierendes Beispiel für
+dieses Kapitel konstruieren können, weil wir nicht im voraus
+wissen können, auf welche physikalischen Adressen Ihr PCI-Speicher
+abgebildet wird oder wann man gefahrlos auf diese Bereiche zugreifen
+kann. Wir beschreiben hier den ISA-Speicherbereich, da er sowohl
+weniger sauber ist als auch besser dafür geeignet, funktionierenden
+Beispiel-Code vorzuführen.</P
+><P
+>&#13;Um den Zugriff auf ISA-Speicher zu zeigen, benutzen wir noch ein
+weiteres albernes kleines Modul (das ebenfalls in den Beispiel-Quellen
+enthalten ist). Dieses heißt einfach <SPAN
+CLASS="APPLICATION"
+>silly</SPAN
+> als
+Akronym für &#8220;Simple Tool for Unloading and Printing ISA Data&#8221; (oder so
+ähnlich).</P
+><P
+>Das Modul ergänzt die Funktionalität von
+<SPAN
+CLASS="APPLICATION"
+>short</SPAN
+>, indem es Zugriff auf den gesamten 384
+KByte großen Speicherbereichs gewährt und alle
+I/O-Funktionen vorführt. Es enthält vier Geräteknoten, die die gleiche Aufgabe
+mit verschiedenen Datenübertragungsfunktionen durchführen. Die
+<TT
+CLASS="LITERAL"
+>silly</TT
+>-Geräte dienen ähnlich wie <TT
+CLASS="FILENAME"
+>/dev/mem</TT
+> als Fenster auf den
+I/O-Speicher. Sie können
+Daten lesen und schreiben und mit <SPAN
+><I
+CLASS="EMPHASIS"
+>lseek</I
+></SPAN
+> auf eine
+beliebige I/O-Speicheradresse springen.&#13;</P
+><P
+>Weil <SPAN
+CLASS="APPLICATION"
+>silly</SPAN
+> den Zugriff auf ISA-Speicher
+ermöglicht, müssen als erstes die physikalischen ISA-Adressen auf
+virtuelle Kernel-Adressen abgebildet werden. In den frühen Tagen des
+Linux-Kernels konnte man einfach einem Zeiger eine ISA-Adresse
+zuweisen und ihn dann direkt dereferenzieren. In der modernen Welt müssen
+wir aber mit dem virtuellen Speichersystem arbeiten und zuerst den
+Speicherbereich abbilden. Dies geschieht, wie oben bei
+<SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> beschrieben, mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+>:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+#define ISA_BASE    0xA0000
+#define ISA_MAX    0x100000  /* allgemeiner Speicherzugriff */
+
+    /* diese Zeile steht in silly_init */
+    io_base = ioremap(ISA_BASE, ISA_MAX - ISA_BASE);</PRE
+></TD
+></TR
+></TABLE
+><P
+><SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+> gibt einen Zeigerwert zurück, der von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>readb</I
+></SPAN
+> und den anderen in &#8220;<A
+HREF="hardmem.html#HARDMEMDIRECT"
+>the Section called <I
+>Direkt abgebildeter Speicher</I
+></A
+>&#8221; beschriebenen Funktionen verwendet werden
+kann.</P
+><P
+>Werfen wir noch einen Blick auf unser Beispiel-Modul, um zu sehen, wie
+diese Funktionen verwendet werden
+können. <TT
+CLASS="FILENAME"
+>/dev/sillyb</TT
+> mit der Minor-Nummer 0 greift
+auf den I/O-Speicher mit <SPAN
+><I
+CLASS="EMPHASIS"
+>readb</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>writeb</I
+></SPAN
+> zu. Der folgende Code zeigt die
+Implementation für <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>, mit der der Adreßbereich
+<TT
+CLASS="LITERAL"
+>0xA0000-0xFFFFF</TT
+> als virtuelle Datei im Bereich
+<TT
+CLASS="LITERAL"
+>0-0x5FFFF</TT
+> zur Verfügung gestellt wird. Die Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> ist als <TT
+CLASS="LITERAL"
+>switch</TT
+>-Anweisung
+über die verschiedenen Zugriffsmodi strukturiert; hier sehen Sie den
+Fall <TT
+CLASS="FILENAME"
+>sillyb</TT
+>:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+case M_8:
+  while (count) {
+      *ptr = readb(add);
+      add++; count--; ptr++;
+  }
+  break;</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die nächsten beiden Geräte sind <TT
+CLASS="FILENAME"
+>/dev/sillyw</TT
+>
+(Minor-Nummer 1) und <TT
+CLASS="FILENAME"
+>/dev/sillyl</TT
+> (Minor-Nummer
+2). Sie arbeiten wie <TT
+CLASS="FILENAME"
+>/dev/sillyb</TT
+>, verwenden aber
+16-Bit- bzw. 32-Bit-Funktionen. Hier folgt die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>-Implementation von
+<TT
+CLASS="FILENAME"
+>sillyl</TT
+>, die ebenfalls Bestandteil einer
+<TT
+CLASS="LITERAL"
+>switch</TT
+>-Anweisung ist:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+case M_32:
+  while (count &#62;= 4) {
+      writel(*(u32 *)ptr, add);
+      add+=4; count-=4; ptr+=4;
+  }
+  break;</PRE
+></TD
+></TR
+></TABLE
+><P
+>Das letzte Gerät ist <TT
+CLASS="FILENAME"
+>/dev/sillycp</TT
+> (Minor-Nummer
+3), das die <SPAN
+><I
+CLASS="EMPHASIS"
+>memcpy_*io</I
+></SPAN
+>-Funktionen verwendet, um
+die gleiche Aufgabe zu erledigen. Der Kern der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>-Implementation sieht wie folgt aus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+case M_memcpy:
+  memcpy_fromio(ptr, add, count);
+  break;</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+Weil <SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+> dazu verwendet wird, auf den
+ISA-Speicherbereich zuzugreifen, muß <SPAN
+CLASS="APPLICATION"
+>silly</SPAN
+>
+<SPAN
+><I
+CLASS="EMPHASIS"
+>iounmap</I
+></SPAN
+> aufrufen, wenn das Modul entladen wird:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+iounmap(io_base);
+&#13;</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN10983"
+>isa_readb und verwandte Funktionen</A
+></H2
+><P
+>&#13;Ein Blick in die Kernel-Quellen offenbart noch einen weiteren Satz von
+Routinen mit Namen wie <SPAN
+><I
+CLASS="EMPHASIS"
+>isa_readb</I
+></SPAN
+>. Tatsächlich hat
+jede der gerade beschriebenen Funktionen ein
+<SPAN
+><I
+CLASS="EMPHASIS"
+>isa_</I
+></SPAN
+>-Äquivalent. Diese Funktionen ermöglichen den
+Zugriff auf den ISA-Speicher, ohne vorher <SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+>
+aufrufen zu müssen. Die Kernel-Entwickler haben allerdings verlauten lassen, daß diese Treiber nicht mehr als vorübergehende
+Hilfen für das Portieren von Treibern sind und in der Zukunft
+verschwinden könnten. Sie sollten daher nicht verwendet werden.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN10991"
+>Nach ISA-Speicher suchen</A
+></H2
+><P
+>&#13;
+Auch wenn die meisten modernen Geräte bessere I/O-Bus-Architekturen wie
+PCI verwenden, muß man sich als Programmierer mitunter dennoch mit
+ISA-Geräten und deren I/O-Speicher auseinandersetzen, weswegen wir
+hier eine Seite mit diesem Thema zubringen. Wir sprechen hier nicht
+über den hohen ISA-Speicher (das sogenannte Speicherloch im
+physikalischen Adreßbereich von 15 MByte bis 16 MByte), weil diese Art von
+I/O-Speicher heutzutage äußerst selten ist und von den meisten
+modernen Hauptplatinen und Kerneln nicht unterstützt wird. Um
+auf diesen Bereich des I/O-Speichers zuzugreifen, müssen Sie den
+Initialisierungscode des Kernels verändern, und das wollen wir hier
+lieber nicht behandeln.</P
+><P
+>Bei der Verwendung von in den Speicher abgebildeten ISA-Geräten
+ignoriert der Treiber-Autor oft, wo im physikalischen Adreßraum sich
+der relevante I/O-Speicher befindet, weil die eigentliche Adresse oft
+vom Benutzer aus einer Reihe von möglichen Alternativen ausgewählt
+wird. Es kann aber auch einfach notwendig sein festzustellen, ob es
+an einer bestimmten Adresse ein Gerät gibt oder nicht.</P
+><P
+>&#13;Das Speicherverwaltungssystem kann beim Suchen hilfreich sein,
+
+
+
+
+
+denn es kann die Speicherbereiche identifizieren, die bereits von
+einem anderen Treiber mit Beschlag belegt worden sind. Der
+Speicherverwalter kann Ihnen aber nichts über Geräte sagen, deren
+Treiber nicht geladen sind, oder ob ein bestimmter Bereich das
+Gerät enthält, an dem Sie interessiert sind. Daher kann es trotzdem
+noch notwendig sein, den Speicher zu testen, um zu sehen, was sich
+dort befindet. Sie werden dabei auf einen von drei verschiedenen Fällen stoßen: an
+der Adresse ist RAM abgebildet, es ist dort ROM abgebildet (etwa das
+VGA-BIOS) oder der Bereich ist frei.</P
+><P
+>Der Beispiel-Code von <SPAN
+CLASS="APPLICATION"
+>skull</SPAN
+> zeigt eine
+Möglichkeit, mit solchem Speicher umzugehen, da aber
+<SPAN
+CLASS="APPLICATION"
+>skull</SPAN
+> keinem physikalischen Gerät
+zugehörig ist, gibt dieser Treiber einfach Informationen über den
+Speicherbereich von 640 KByte bis 1 MByte aus und beendet sich dann. Der
+Code zum Analysieren des Speichers verdient aber trotzdem eine
+Beschreibung, damit Sie sehen können, wie man Speicher absuchen
+kann.</P
+><P
+>&#13;Der Code zur Suche nach RAM-Segmenten verwendet
+<SPAN
+><I
+CLASS="EMPHASIS"
+>cli</I
+></SPAN
+>, um Interrupts abzuschalten, da diese
+Segmente nur durch physikalisches Schreiben und erneutes Lesen der
+Daten getestet werden können und echtes RAM von einem Interrupt-Handler
+mitten in unseren Tests verändert werden könnte. Der folgende Code ist
+nicht vollständig narrensicher, weil er RAM-Speicher auf
+Karten zur Datenerfassung für leere Bereiche halten könnte, wenn das Gerät
+aktiv versucht, den eigenen Speicher zu beschreiben, während unser
+Code diesen Bereich absucht. Diese Situation ist aber recht
+unwahrscheinlich.</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+unsigned char oldval, newval; /* Werte, die aus dem Speicher gelesen werden */
+unsigned long flags;          /* speichert System-Flags */
+unsigned long add, i;
+void *base;
+
+/* Mit ioremap bekommen wir einen Handle auf unseren Bereich */
+base = ioremap(ISA_REGION_BEGIN, ISA_REGION_END - ISA_REGION_BEGIN);
+base -= ISA_REGION_BEGIN;  /* Einmal versetzen */
+
+/* Das gesamte Speicherloch in 2-KByte-Schritten absuchen */
+for (add = ISA_REGION_BEGIN; add &#60; ISA_REGION_END; add += STEP) {
+   /*
+    * Bereits alloziert?
+    */
+   if (check_mem_region (add, 2048)) {
+          printk(KERN_INFO "%lx: Allocated\n", add);
+          continue;
+   }
+   /*
+    * Am Anfang des Bereichs lesen und schreiben und abwarten, was passiert.
+    */
+   save_flags(flags);
+   cli();
+   oldval = readb (base + add);  /* Ein Byte lesen */
+   writeb (oldval&#8257;0xff, base + add);
+   mb();
+   newval = readb (base + add);
+   writeb (oldval, base + add);
+   restore_flags(flags);
+
+   if ((oldval&#8257;newval) == 0xff) {  /* unsere Aenderung ist noch da: das ist RAM */
+       printk(KERN_INFO "%lx: RAM\n", add);
+       continue;
+   }
+   if ((oldval&#8257;newval) != 0) {  /* Zufaellige Bits haben sich veraendert: leer */
+       printk(KERN_INFO "%lx: empty\n", add);
+       continue;
+   }
+
+   /*
+    * Erweiterungs-ROM (das beim Booten vom BIOS ausgeführt wird) hat
+    * eine Signatur, bei der das erste Byte 0x55 und das zweite 0xaa ist
+    * und das dritte Byte die Groeße des Speichers angibt.
+    */
+   if ( (oldval == 0x55) &#38;&#38; (readb (base + add + 1) == 0xaa)) {
+       int size = 512 * readb (base + add + 2);
+       printk(KERN_INFO "%lx: Expansion ROM, %i bytes\n",
+              add, size);
+       add += (size &#38; &#732;2048) - 2048; /* skip it */
+       continue;
+   }
+
+   /*
+    * Wenn die obigen Tests fehlgeschlagen sind, wissen wir immer noch
+    * nicht, ob es sich um ROM handelt oder ob der Bereich leer ist. Weil
+    * leerer Speicher als 0x00, 0xff oder als unteres Adreßbyte erscheinen
+    * kann, muessen wir mehrere Bytes ausprobieren: Wenn wenigstens eines
+    * davon unterschiedlich von diesen drei Werten ist, dann ist dies ROM
+    * (allerdings kein Boot-ROM).
+    */
+   printk(KERN_INFO "%lx: ", add);
+   for (i=0; i&#60;5; i++) {
+       unsigned long radd = add + 57*(i+1);  /* ein "zufaelliger" Wert */
+       unsigned char val = readb (base + radd);
+       if (val &#38;&#38; val != 0xFF &#38;&#38; val != ((unsigned long) radd&#38;0xFF))
+          break;
+   }
+   printk("%s\n", i==5 ? "empty" : "ROM");
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+
+
+
+
+
+Die Erkennung von Speicher verursacht keine Kollisionen mit anderen
+Geräten, solange Sie während der Suche alle veränderten Bytes wieder
+in den Ursprungszustand zurücksetzen. Allerdings kann das
+Schreiben in den Speicher eines anderen Geräts immer unerwünschte Konsequenzen haben. Daher sollte ein solches Absuchen des
+Speichers vermieden werden, was aber nicht immer möglich ist, wenn man
+es mit älterer Hardware zu tun hat.&#13;</P
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN10925"
+HREF="hardmem.html#AEN10925"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Das stimmt eigentlich nicht ganz. Der
+Speicherbereich ist so klein und wird so oft verwendet, daß der Kernel
+beim Booten Seitentabellen für den Zugriff auf diese Adressen
+aufbaut. Die virtuellen Adressen für den Zugriff sind aber nicht die
+gleichen wie die des physikalischen Speichers, weswegen
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+> trotzdem benötigt wird. Außerdem war
+dieser Bereich in der Version 2.0 des Kernels direkt abgebildet; siehe
+dazu &#8220;<A
+HREF="hardback.html"
+>the Section called <I
+>Abwärtskompatibilität</I
+></A
+>&#8221;.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="harddigio.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="hardback.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Digitale I/O-Ports verwenden</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="hard.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Abwärtskompatibilität</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

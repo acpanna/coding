@@ -1,0 +1,598 @@
+<HTML
+><HEAD
+><TITLE
+>Hardware-Verwaltung</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="PREVIOUS"
+TITLE="Schnellreferenz"
+HREF="x9938.html"><LINK
+REL="NEXT"
+TITLE="I/O-Ports benutzen"
+HREF="hardports.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x9938.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="hardports.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="HARD"
+>Kapitel 8. Hardware-Verwaltung</A
+></H1
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Inhalt</B
+></DT
+><DT
+><A
+HREF="hard.html#HARDCLASS"
+>I/O-Ports und I/O-Speicher</A
+></DT
+><DT
+><A
+HREF="hardports.html"
+>I/O-Ports benutzen</A
+></DT
+><DT
+><A
+HREF="harddigio.html"
+>Digitale I/O-Ports verwenden</A
+></DT
+><DT
+><A
+HREF="hardmem.html"
+>I/O-Speicher verwenden</A
+></DT
+><DT
+><A
+HREF="hardback.html"
+>Abwärtskompatibilität</A
+></DT
+><DT
+><A
+HREF="x11066.html"
+>Schnellreferenz</A
+></DT
+></DL
+></DIV
+><P
+>&#13;Obwohl das Spielen mit <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> und
+ähnlichen Spielzeugen eine gute Einführung in die Software-Schnittstellen
+eines Linux-Gerätetreibers ist, erfordert das Implementieren eines
+<SPAN
+><I
+CLASS="EMPHASIS"
+>echten</I
+></SPAN
+> Treibers Hardware. Der Treiber ist die
+Abstraktionsschicht zwischen Software-Konzepten und
+Hardware-Schaltkreisen und muß deswegen mit beiden Seiten
+kommunizieren. Wir haben uns bisher die Interna der Software-Konzepte
+angeschaut; in diesem Kapitel vervollständigen wir das Bild, indem wir
+Ihnen zeigen, wie ein Treiber auf I/O-Ports und I/O-Speicher zugreifen kann
+und trotzdem noch portabel über Linux-Plattformen hinweg bleibt.</P
+><P
+>Dieses Kapitel setzt die Tradition fort, so unabhängig von der
+Hardware wie möglich zu bleiben. Wenn wir aber bestimmte Beispiele
+benötigen, verwenden wir einfache digitale I/O-Ports (wie den
+Standard-Parallel-Port in PCs), um die I/O-Anweisungen vorzuführen,
+sowie normalen Framebuffer-basierten Videospeicher, um I/O mit
+Memory-Mapping zu demonstrieren.</P
+><P
+>&#13;
+Wir verwenden einfache digitale I/O-Ports, weil dies die einfachste Form von
+Eingabe-/Ausgabe-Ports sind. Außerdem implementiert der
+Centronics-Parallel-Port rohe I/O und steht in den meisten Computern
+zur Verfügung: Datenbits, die an das Gerät geschickt werden,
+erscheinen direkt an den Ausgabe-Pins, und Spannungsniveaus an den
+Eingabe-Pins können vom Prozessor direkt abgefragt werden. In der
+Praxis müssen Sie LEDs an den Port anschließen, um die Ergebnisse
+einer digitalen I/O-Operation tatsächlich sehen zu können, aber die
+zugrundeliegende Hardware ist extrem einfach zu benutzen.</P
+><P
+>&#13;
+
+
+
+
+
+
+
+&#13;</P
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="HARDCLASS"
+>I/O-Ports und I/O-Speicher</A
+></H1
+><P
+>&#13;
+Jedes Peripherie-Gerät wird durch das Beschreiben und Auslesen seiner
+Register gesteuert. Die meisten Geräte haben mehrere Register, auf die
+als aufeinanderfolgende Adressen entweder im
+Speicher-Adreßraum oder im I/O-Adreßraum zugegriffen wird.</P
+><P
+>Auf Hardware-Ebene gibt es keinen konzeptionellen Unterschied zwischen
+Speicherbereichen und I/O-Bereichen: Der Zugriff auf beide erfolgt dadurch, daß man elektrische Signale auf den Adreßbus und den Steuerbus legt (d. h. die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>- und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>-Signale)<A
+NAME="AEN10158"
+HREF="#FTN.AEN10158"
+>[1]</A
+>
+bzw. vom Datenbus liest bzw. auf ihn schreibt.</P
+><P
+>Während manche CPU-Hersteller einen einzigen Adreßraum in ihren Chips
+implementieren, meinen andere, daß Peripherie-Geräte sich
+von Speicher unterscheiden und deswegen einen separaten Adreßraum
+verdient haben. Manche Prozessoren (vor allem die x86-Familie) haben
+separate elektrische <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>- und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>-Leitungen für I/O-Ports sowie spezielle
+CPU-Anweisungen, um auf diese Ports zuzugreifen.</P
+><P
+>Da Peripherie-Geräte so gebaut werden, daß sie an einem bestimmten
+Peripherie-Bus verwendet werden können, und weil die beliebtesten
+I/O-Busse auf dem PC implementiert sind, müssen selbst Prozessoren, die
+keinen separaten Adreßraum für I/O-Ports haben, das Lesen und
+Schreiben von I/O-Ports vortäuschen, wenn sie auf bestimmte
+Peripherie-Geräte zugreifen wollen; dies geschieht normalerweise durch
+externe Chipsätze oder zusätzliche Schaltkreise im CPU-Kern. Die zweite
+Lösung findet man hauptsächlich bei winzigen Prozessoren für
+eingebettete Geräte.</P
+><P
+>Aus dem gleichen Grund implementiert Linux das Konzept der I/O-Ports
+auf allen unterstützten Computer-Plattformen &#8211; selbst auf Plattformen,
+auf denen die CPU einen einzigen Adreßraum unterstützt. Die
+Implementation des Port-Zugriffs hängt manchmal von dem Hersteller und
+dem Modell des Host-Computers ab (weil verschiedene Modelle auch
+verschiedene Chipsätze verwenden, um Bus-Transaktionen in den
+Speicher-Adreßraum abzubilden).</P
+><P
+>Selbst wenn der Peripherie-Bus einen separaten Adreßraum für
+I/O-Ports hat, bilden trotzdem nicht alle Geräte ihre Register auf
+I/O-Ports ab. Die Verwendung von I/O-Ports kommt üblicherweise auf
+ISA-Peripherie-Karten vor; die meisten PCI-Geräte bilden Register in
+einen Speicher-Adreßbereich ab. Dieser I/O-Speicher-Ansatz ist im
+allgemeinen vorzuziehen, weil keine speziellen Prozessor-Anweisungen
+notwendig sind; der CPU-Kern kann auf Speicher sehr viel effizienter
+zugreifen, und der Compiler hat größere Freiheiten bei der
+Register-Zuweisung und bei der Auswahl des Adressierungsmodus, wenn er
+auf Speicher zugreift.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="HARDCLASSMEM"
+>I/O-Register und konventioneller Speicher</A
+></H2
+><P
+>&#13;
+
+
+
+
+
+
+Trotz der großen Ähnlichkeit zwischen Hardware-Registern und Speicher
+muß ein Programmierer, der auf I/O-Register zugreift, vorsichtig sein,
+um nicht von CPU- oder Compiler-Optimierungen ausgetrickst zu werden, die
+das erwartete I/O-Verhalten verändern können.</P
+><P
+>Der Hauptunterschied zwischen I/O-Registern und RAM besteht darin, daß
+I/O-Operationen Nebeneffekte haben, Speicheroperationen aber nicht:
+Der einzige Effekt des Schreibens in eine Speicherzelle besteht darin,
+einen Wert an dieser Stelle zu speichern; das Auslesen einer
+Speicherzelle gibt den letzten dort gespeicherten Wert zurück. Weil
+die Geschwindigkeit beim Speicherzugriff so entscheidend für die
+CPU-Performance ist, ist das Nicht-Vorhandensein von Nebeneffekten auf verschiedene
+Weise optimiert worden: Werte werden zwischengespeichert und
+Lese-/Schreiboperationen umgestellt.</P
+><P
+>Der Compiler kann Datenwerte in CPU-Registern zwischenspeichern, ohne
+sie in den Speicher zu schreiben; und selbst wenn die Werte
+gespeichert werden, können sowohl Schreib- als auch Lese-Operationen
+auf Cache-Speicher ablaufen, ohne jemals im physikalischen RAM
+anzukommen. Auch das Umstellen von Operationen kann sowohl auf
+Compiler- als auch auf Hardware-Ebene vorkommen: Oft kann eine Folge
+von Anweisungen schneller ausgeführt werden, wenn sie in einer anderen
+Reihenfolge als im Programmtext vorgenommen wird &#8211; beispielsweise um
+Verklemmungen in der RISC-Pipeline zu vermeiden. Auf CISC-Prozessoren
+können Operationen, die längere Zeit andauern, gleichzeitig mit
+anderen, schnelleren, durchgeführt werden.</P
+><P
+>Diese Optimierungen sind transparent und gutartig, wenn sie auf
+konventionellen Speicher angewendet werden (zumindest auf
+Einzelprozessor-Systemen), können aber fatal sein, wenn es um
+I/O-Operationen geht, weil sie dann mit den &#8220;Nebeneffekten&#8221; ins
+Gehege kommen, die der Hauptgrund sind, weshalb ein Treiber überhaupt
+auf I/O-Register zugreift. Der Prozessor kann eine Situation nicht
+abschätzen, in der ein anderer Prozeß (der auf einem anderen Prozessor
+oder gar in einem I/O-Controller läuft) von der Reihenfolge des
+Speicherzugriffs abhängt. Treiber müssen daher sicherstellen, daß kein
+Caching verwendet wird und Lese- und Schreiboperationen nicht
+umgestellt werden, wenn es um den Zugriff auf Register geht: Der
+Compiler oder die CPU könnten sonst versuchen, schlauer als Sie zu
+sein, und die angeforderten Operationen umstellen. Das Ergebnis können
+merkwürdige Fehler sein, die sehr schwer zu debuggen sind.</P
+><P
+>&#13;
+Das Problem der Hardware-Caches ist am einfachsten zu lösen: Die
+zugrundeliegende Hardware ist bereits (entweder automatisch oder durch
+den Initialisierungscode in Linux) so konfiguriert, daß
+Hardware-Caches beim Zugriff auf I/O-Bereiche (Speicher- oder
+Port-Bereiche) abgeschaltet werden.</P
+><P
+>&#13;Die Lösung für die Compiler-Optimierung und das Umstellen
+durch die Hardware besteht darin, daß zwischen Operationen, die für
+Hardware (oder einen anderen Prozessor) in einer bestimmten
+Reihenfolge sichtbar sein müssen, eine
+<I
+CLASS="FIRSTTERM"
+>Speicherbarriere</I
+> gesetzt wird. Es gibt in
+Linux vier Makros für alle denkbaren Notwendigkeiten der Sortierung:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/kernel.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>void barrier(void)</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+Diese Funktion weist den Compiler an, eine Speicherbarriere
+einzusetzen, hat aber keinen Einfluß auf die Hardware. Kompilierter
+Code wird alle derzeit geänderten und in CPU-Registern befindlichen
+Werte im Speicher ablegen und später bei Bedarf zurücklesen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;asm/system.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>void rmb(void);</TT
+>, <TT
+CLASS="LITERAL"
+>void wmb(void);</TT
+>, <TT
+CLASS="LITERAL"
+>void mb(void);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+
+
+Diese Funktionen fügen Hardware-Speicherbarrieren in den kompilierten
+Instruktionsfluß ein; die eigentliche Instantiierung ist
+plattformabhängig. Ein <SPAN
+><I
+CLASS="EMPHASIS"
+>rmb</I
+></SPAN
+> (read memory
+barrier) garantiert, daß alle Lesevorgänge vor der Barriere
+abgeschlossen sind, bevor weitere Lesevorgänge ausgeführt
+werden. <SPAN
+><I
+CLASS="EMPHASIS"
+>wmb</I
+></SPAN
+> garantiert die Reihenfolge der
+Schreiboperationen, und <SPAN
+><I
+CLASS="EMPHASIS"
+>mb</I
+></SPAN
+> garantiert
+beides. Jede dieser Funktionen ist eine Obermenge von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>barrier</I
+></SPAN
+>.</P
+></DD
+></DL
+></DIV
+><P
+>Ein typischer Anwendungsfall für Speicherbarrieren in einem
+Gerätetreiber kann die folgende Form haben:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;writel(dev-&#62;registers.addr, io_destination_address);
+writel(dev-&#62;registers.size, io_size);
+writel(dev-&#62;registers.operation, DEV_READ);
+wmb();
+writel(dev-&#62;registers.control, DEV_GO);</PRE
+></TD
+></TR
+></TABLE
+><P
+>In diesem Fall ist es wichtig sicherzustellen, daß alle
+Geräteregister, die eine bestimmte Operation steuern, ordnungsgemäß
+eingestellt sind, bevor die Ausführung der Operation angefordert
+wird. Die Speicherbarriere stellt sicher, daß die Schreiboperationen in der notwendigen Reihenfolge abgeschlossen werden.</P
+><P
+>&#13;
+Da Speicherbarrieren die Performance beeinflussen, sollten sie nur wo unbedingt nötig verwendet werden. Die verschiedenen Barrieren können auch
+verschiedene Performance-Eigenschaften haben, weswegen es sinnvoll ist,
+immer den spezifischsten Typ zu verwenden. Auf der x86-Architektur macht
+<SPAN
+><I
+CLASS="EMPHASIS"
+>wmb()</I
+></SPAN
+> derzeit beispielsweise nichts, weil
+Schreiboperationen außerhalb des Prozessors ohnehin nicht umgestellt
+werden. Leseoperationen werden aber umgestellt, weswegen
+<SPAN
+><I
+CLASS="EMPHASIS"
+>mb()</I
+></SPAN
+> langsamer als <SPAN
+><I
+CLASS="EMPHASIS"
+>wmb()</I
+></SPAN
+>
+ist.</P
+><P
+>Beachten Sie auch, daß die meisten anderen Kernelprimitive, die zur
+Synchronisation dienen, etwa <TT
+CLASS="LITERAL"
+>spinlock</TT
+>- und
+<TT
+CLASS="LITERAL"
+>atomic_t</TT
+>-Operationen, ebenfalls als
+Speicherbarrieren fungieren.</P
+><P
+>&#13;
+
+Manche Architekturen erlauben die effiziente Kombination einer
+Zuweisung und einer Speicherbarriere. Version 2.4 des Kernels stellt
+einige Makros bereit, die diese Kombination durchführen; im Default-Fall
+sind sie folgendermaßen definiert:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;#define set_mb(var, value)  do {var = value; mb();}  while 0
+#define set_wmb(var, value) do {var = value; wmb();} while 0
+#define set_rmb(var, value) do {var = value; rmb();} while 0</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wo es möglich ist, definiert <TT
+CLASS="LITERAL"
+>&#60;asm/system.h&#62;</TT
+> diese
+Makros so um, daß sie architekturspezifische Instruktionen verwenden,
+die die Aufgabe schneller erledigen.</P
+><P
+>&#13;
+
+
+Die Header-Datei <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> definiert die in diesem
+Abschnitt beschriebenen Makros für die Plattformen und
+Kernel-Versionen, in denen sie nicht vorhanden sind.&#13;</P
+></DIV
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN10158"
+HREF="hard.html#AEN10158"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Nicht alle Computer-Plattformen verwenden ein
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>- und ein <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>-Signal;
+manche haben andere Verfahren, um auf externe Schaltkreise
+zuzugreifen. Der Unterschied ist auf Software-Ebene aber irrelevant;
+wir nehmen hier immer <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+> an, um die Diskussion zu vereinfachen.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x9938.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="hardports.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Schnellreferenz</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>I/O-Ports benutzen</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

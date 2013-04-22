@@ -1,0 +1,405 @@
+<HTML
+><HEAD
+><TITLE
+>Paket-Empfang</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Netzwerk-Treiber"
+HREF="net.html"><LINK
+REL="PREVIOUS"
+TITLE="Paket-Übertragung"
+HREF="nettx.html"><LINK
+REL="NEXT"
+TITLE="Der Interrupt-Handler"
+HREF="netirq.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="nettx.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 14. Netzwerk-Treiber</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="netirq.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="NETRX"
+>Paket-Empfang</A
+></H1
+><P
+>&#13;Das Empfangen von Daten aus dem Netzwerk ist schwieriger als die
+Übertragung, weil ein <TT
+CLASS="LITERAL"
+>sk_buff</TT
+> im
+Interrupt-Handler alloziert und an die oberen Schichten hochgereicht
+werden muß, denn die beste Möglichkeit, ein Paket zu empfangen, ist in
+einem Interrupt-Handler &#8212; es sei denn, es handelt sich um eine
+reine Software-Schnittstelle wie <SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> oder
+<SPAN
+CLASS="APPLICATION"
+>loopback</SPAN
+>. Es ist zwar möglich, einen Treiber
+zu schreiben, der immer wieder fragt, ob Daten vorliegen, und es gibt
+auch einige davon im offiziellen Kernel, aber eine
+Interrupt-gesteuerte Operation ist viel besser, weil sie höhere
+Datendurchsätze erreicht und die CPU weniger belastet. Da die
+meisten Netzwerk-Schnittstellen Interrupt-gesteuert
+arbeitet, werden wir hier nicht auf die andere Implementation eingehen,
+die einfach nur Kernel-Timer benutzt.&#13;</P
+><P
+>Die Implementation von <SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> trennt die
+Hardware-Details von der geräteunabhängigen Verwaltung. Daher wird
+die Funktion <SPAN
+CLASS="APPLICATION"
+>snull_rx</SPAN
+> aufgerufen,
+nachdem die Hardware ein Paket empfangen hat und wenn sich dieses Paket
+bereits im Speicher des Computers
+befindet. <SPAN
+><I
+CLASS="EMPHASIS"
+>snull_rx</I
+></SPAN
+> bekommt daher einen
+Zeiger auf die Daten sowie die Länge der Daten übergeben. Diese
+Funktion hat nur die eine Aufgabe, das Paket zusammen mit einigen
+zusätzlichen Informationen an die oberen Schichten des Netzwerk-Codes
+weiterzuleiten. Der Code ist unabhängig davon, wie man an den Zeiger
+auf die Daten und deren Länge herankommt.&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+void snull_rx(struct net_device *dev, int len, unsigned char *buf)
+{
+    struct sk_buff *skb;
+    struct snull_priv *priv = (struct snull_priv *) dev-&#62;priv;
+
+    /*
+     * Das Paket wurde vom Uebertragungsmedium entgegengenommen. Einen
+     * skb dazu aufbauen, damit die oberen Schichten etwas damit
+     * anzufangen wissen.
+     */
+    skb = dev_alloc_skb(len+2);
+    if (!skb) {
+        printk("snull rx: low on mem - packet dropped\n");
+        priv-&#62;stats.rx_dropped++;
+        return;
+    }
+    memcpy(skb_put(skb, len), buf, len);
+
+    /* Metadaten schreiben und an die empfangende Ebene uebergeben */
+    skb-&#62;dev = dev;
+    skb-&#62;protocol = eth_type_trans(skb, dev);
+    skb-&#62;ip_summed = CHECKSUM_UNNECESSARY; /* keine Pruefsumme */
+    priv-&#62;stats.rx_packets++;
+    priv-&#62;stats.rx_bytes += len;
+    netif_rx(skb);
+    return;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Diese Funktion ist allgemein genug, um als Vorlage für jeden
+Netzwerk-Treiber dienen zu können, aber trotzdem müssen wir einiges
+erklären, bevor Sie dieses Code-Fragment sicher verwenden können.&#13;</P
+><P
+>Als erstes muß ein Puffer für das Paket alloziert werden.
+Beachten Sie, daß die Funktion zum Allozieren des Puffers
+(<SPAN
+><I
+CLASS="EMPHASIS"
+>dev_alloc_skb</I
+></SPAN
+>) die
+Datenlänge wissen möchte. Diese Information wird von der Funktion
+verwendet, um Platz für den Puffer zu allozieren.
+Die Allokationsfunktion <SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+>
+wird von <SPAN
+><I
+CLASS="EMPHASIS"
+>dev_alloc_skb</I
+></SPAN
+> mit
+atomarer Priorität aufgerufen und kann daher sicher zur
+Interrupt-Zeit benutzt werden. Der Kernel bietet auch noch andere
+Schnittstellen zur Allokation von Socket-Buffern an, aber es lohnt
+sich nicht, diese hier einzuführen; wir erklären Socket-Buffer
+detaillierter in &#8220;<A
+HREF="netskb.html"
+>the Section called <I
+>Die Socket-Buffer</I
+></A
+>&#8221; weiter unten in
+diesem Kapitel.&#13;</P
+><P
+>Wenn wir einmal einen gültigen <TT
+CLASS="LITERAL"
+>skb</TT
+>-Zeiger haben,
+werden die Paketdaten mit <SPAN
+><I
+CLASS="EMPHASIS"
+>memcpy</I
+></SPAN
+> in den Puffer
+kopiert; dabei aktualisiert die Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>skb_put</I
+></SPAN
+> den Datenende-Zeiger im Puffer
+und gibt einen Zeiger auf den neu erzeugten Platz zurück.</P
+><P
+>&#13;
+Wenn Sie einen hochleistungsfähigen Treiber für eine Schnittstelle
+schreiben, die vollständig Busmastering-fähig ist, gibt es eine
+mögliche Optimierung, die sich anzuschauen lohnt. Manche Treiber
+allozieren Socket-Buffer für eingehende Pakete vor dem Empfang und
+weisen dann die Schnittstelle an, die Paketdaten direkt in den Platz
+des Socket-Buffers zu schreiben. Die Netzwerk-Schicht kooperiert mit
+dieser Strategie, indem sie alle Socket-Buffer in DMA-fähigem
+Speicher alloziert. Dadurch wird eine separate Kopieroperation zum Füllen des
+Socket-Buffers vermieden, aber man muß vorsichtig mit den Puffer-Größen
+sein, weil man nicht im voraus weiß, wie groß das eingehende Paket
+ist. Die Implementation einer
+<SPAN
+><I
+CLASS="EMPHASIS"
+>change_mtu</I
+></SPAN
+>-Methode ist in dieser Situation
+ebenfalls wichtig, weil sie dem Treiber erlaubt, auf die Änderung
+der maximalen Paketgröße zu reagieren.&#13;</P
+><P
+>Die Netzwerk-Schicht muß einige Informationen haben, bevor sie mit dem
+Paket etwas anfangen kann. Die
+Felder <TT
+CLASS="LITERAL"
+>dev</TT
+> und <TT
+CLASS="LITERAL"
+>protocol</TT
+> müssen
+daher gefüllt werden, bevor der Puffer nach oben weitergereicht
+wird. Anschließend müssen wir angeben, ob und wie Prüfsummen über das
+Paket gebildet werden sollen (<TT
+CLASS="LITERAL"
+>snull</TT
+> benutzt keine
+Prüfsummen). Die möglichen Werte für
+<TT
+CLASS="LITERAL"
+>skb-&#62;ip_summed</TT
+> sind:&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>CHECKSUM_HW</TT
+></DT
+><DD
+><P
+>&#13;Die Netzwerkkarte berechnet die Prüfsumme in der Hardware. Ein
+Beispiel wäre die HME-Schnittstelle auf SPARCs.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>CHECKSUM_NONE</TT
+></DT
+><DD
+><P
+>Prüfsummen müssen noch überprüft werden, dies ist die Aufgabe
+der System-Software. Dies ist der Default in neu allozierten
+Puffern.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>CHECKSUM_UNNECESSARY</TT
+></DT
+><DD
+><P
+>Keine Prüfsummen berechnen. Dies ist die Policy bei
+        <TT
+CLASS="LITERAL"
+>snull</TT
+> und <SPAN
+CLASS="APPLICATION"
+>loopback</SPAN
+>.</P
+></DD
+></DL
+></DIV
+><P
+>Schließlich aktualisiert der Treiber seine Statistik-Zähler, um
+festzuhalten, daß ein Paket empfangen worden ist. Die
+Statistik-Struktur besteht aus mehreren Feldern, deren wichtigste
+<TT
+CLASS="LITERAL"
+>rx_packets</TT
+>, <TT
+CLASS="LITERAL"
+>rx_bytes</TT
+>,
+<TT
+CLASS="LITERAL"
+>tx_packets</TT
+> und
+<TT
+CLASS="LITERAL"
+>tx_bytes</TT
+> sind. Diese Felder enthalten die Anzahl der
+empfangenen beziehungsweise versendeten Pakete und die
+Gesamtanzahl der übertragenen Oktette. Alle Felder
+werden noch ausführlich im Abschnitt &#8220;<A
+HREF="netstats.html"
+>the Section called <I
+>Statistische Informationen</I
+></A
+>&#8221; beschrieben.&#13;</P
+><P
+>Der letzte Schritt beim Empfangen eines Paketes ist der Aufruf von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>netif_rx</I
+></SPAN
+>, mit dem der Socket-Buffer an
+die oberen Schichten übergeben wird.
+
+&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="nettx.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="netirq.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Paket-Übertragung</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="net.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Der Interrupt-Handler</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

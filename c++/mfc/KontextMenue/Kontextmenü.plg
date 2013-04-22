@@ -1,0 +1,37 @@
+<html>
+<body>
+<pre>
+<h1>Erstellungsprotokoll</h1>
+<h3>
+--------------------Konfiguration: Kontextmenü - Win32 Debug--------------------
+</h3>
+<h3>Befehlszeilen</h3>
+Erstellen der temporären Datei  "C:\TEMP\RSP6105.TMP" mit Inhalten
+[
+/nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_AFXDLL" /D "_MBCS" /Fp"Debug/Kontextmenü.pch" /Yu"stdafx.h" /Fo"Debug/" /Fd"Debug/" /FD /GZ   /c 
+"C:\C-Files\Projekte\Kontextmenü\KontextmenüView.cpp"
+]
+Creating command line "cl.exe @C:\TEMP\RSP6105.TMP" 
+Erstellen der temporären Datei  "C:\TEMP\RSP6106.TMP" mit Inhalten
+[
+/nologo /subsystem:windows /incremental:yes /pdb:"Debug/Kontextmenü.pdb" /debug /machine:I386 /out:"Debug/Kontextmenü.exe" /pdbtype:sept 
+".\Debug\Kontextmenü.obj"
+".\Debug\StdAfx.obj"
+".\Debug\MainFrm.obj"
+".\Debug\KontextmenüDoc.obj"
+".\Debug\KontextmenüView.obj"
+".\Debug\Kontextmenü.res"
+]
+Erstellen der Befehlzeile "link.exe @C:\TEMP\RSP6106.TMP"
+<h3>Ausgabefenster</h3>
+Kompilierung läuft...
+KontextmenüView.cpp
+Linker-Vorgang läuft...
+
+
+
+<h3>Ergebnisse</h3>
+Kontextmenü.exe - 0 Fehler, 0 Warnung(en)
+</pre>
+</body>
+</html>

@@ -1,0 +1,838 @@
+<HTML
+><HEAD
+><TITLE
+>vmalloc und Freunde</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Speicher ergattern"
+HREF="get.html"><LINK
+REL="PREVIOUS"
+TITLE="get_&#8201;free_&#8201;page und Freunde"
+HREF="getgfp.html"><LINK
+REL="NEXT"
+TITLE="Allozierung während des Bootens"
+HREF="getboot.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="getgfp.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 7. Speicher ergattern</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="getboot.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="GETVMALLOC"
+>vmalloc und Freunde</A
+></H1
+><P
+>&#13;
+
+Die nächste Funktion zur Allokation von Speicher, die wir Ihnen
+vorführen werden, ist <SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+>. Sie alloziert einen
+zusammenhängenden Speicherbereich im <SPAN
+><I
+CLASS="EMPHASIS"
+>virtuellen</I
+></SPAN
+>
+Adreßraum. Obwohl die Seiten im physikalischen Speicher nicht
+notwendigerweise zusammenhängend sind (jede Seite wird mit einem neuen
+Aufruf von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>__get_free_page</I
+></SPAN
+>
+angefordert), sieht der Speicherbereich für den Kernel wie ein
+zusammenhängender Adreßbereich aus. <SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+> gibt
+0 zurück, wenn
+ein Fehler aufgetreten ist, ansonsten einen Zeiger auf einen
+linearen Speicherbereich von mindestens der Größe <TT
+CLASS="LITERAL"
+>size</TT
+>.&#13;</P
+><P
+>Die Prototypen dieser Funktion und ihrer Verwandten
+(<SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+>, die aber streng genommen keine
+Allokationsfunktion ist, wird später behandelt) sehen folgendermaßen aus:
+&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+#include &#60;linux/vmalloc.h&#62;
+
+void * vmalloc(unsigned long size);
+void vfree(void * addr);
+void *ioremap(unsigned long offset, unsigned long size);
+void iounmap(void * addr);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+
+
+Man sollte hier betonen, daß die von <SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>get_free_pages</I
+></SPAN
+> zurückgegebenen
+Adressen ebenfalls virtuelle Adressen sind. Die Werte werden noch
+einmal von der MMU (der Speicherverwaltungseinheit, die normalerweise ein
+Bestandteil der CPU ist) durchgeknetet.<A
+NAME="AEN9679"
+HREF="#FTN.AEN9679"
+>[1]</A
+> <SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+> unterscheidet sich
+nicht dadurch, wie die Hardware alloziert wird, sondern dadurch, wie der
+Kernel die Allokation durchführt.</P
+><P
+>Der von <SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>get_free_pages</I
+></SPAN
+> verwendete
+(virtuelle) Adreßbereich enthält eine Eins-zu-Eins-Abbildung auf den
+physikalischen Speicher, möglicherweise um den konstanten Wert
+<TT
+CLASS="LITERAL"
+>PAGE_OFFSET</TT
+> verschoben; die Funktionen
+müssen die Seitentabellen für diesen Adreßbereich nicht
+modifizieren. Der von <SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+> verwendete Adreßbereich ist dagegen
+vollkommen synthetisch, und jede Allokation baut den (virtuellen)
+Speicherbereich auf, indem sie die Seitentabellen passend einrichtet.</P
+><P
+>&#13;
+Sie können diesen Unterschied beobachten, wenn Sie die Zeiger vergleichen, die von den Allokationsfunktionen zurückgegeben werden. Auf
+manchen Plattformen (wie etwa x86) sind die von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+> zurückgegebenen Adressen einfach höher
+als die von <SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> zurückgegebenen. Auf anderen
+Plattformen (wie MIPS und IA-64) gehören sie zu einem vollständig
+anderen Adreßbereich. Die für <SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+> zur
+Verfügung stehenden Adressen liegen im Bereich von
+<TT
+CLASS="LITERAL"
+>VMALLOC_START</TT
+> bis
+<TT
+CLASS="LITERAL"
+>VMALLOC_END</TT
+>. Beide Symbole sind in
+<TT
+CLASS="LITERAL"
+>&#60;asm/pgtable.h&#62;</TT
+> definiert.</P
+><P
+>Adressen, die von <SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+> alloziert wurden,
+können nicht außerhalb des Mikroprozessors verwendet werden, weil sie
+nur im Zusammenhang mit der MMU des Prozessors
+einen Sinn ergeben. Wenn ein Treiber eine echte physikalische Adresse
+benötigt (wie eine DMA-Adresse, die von Peripherie-Geräten verwendet
+wird, um den System-Bus zu steuern), können Sie
+<SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+> nicht
+ohne weiteres verwenden. <SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+> ist dann die richtige Wahl,
+wenn Sie Speicher für einen großen sequentiellen Puffer allozieren
+wollen, der nur in der Software existiert. Es ist wichtig zu wissen,
+daß <SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+> mehr Verwaltungsaufwand als
+<SPAN
+><I
+CLASS="EMPHASIS"
+>__get_free_pages</I
+></SPAN
+>
+bedeutet, weil es sowohl den Speicher besorgen als auch die
+Seitentabellen aufbauen muß. Deswegen ist es nicht sinnvoll,
+<SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+> aufzurufen, wenn man nur eine Seite
+benötigt.&#13;</P
+><P
+>Der Systemaufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>create_module</I
+></SPAN
+> ist ein
+Beispiel für eine Funktion, die <SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+>
+verwendet; hier wird mit <SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+> Speicher für das
+zu erzeugende Modul angefordert. Code und Daten des Moduls werden
+später mit <SPAN
+><I
+CLASS="EMPHASIS"
+>copy_from_user</I
+></SPAN
+> in den
+allozierten Speicherbereich kopiert,
+nachdem <SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+> den Code reloziert hat. Damit
+sieht es so aus, als ob das Modul in zusammenhängenden Speicher
+geladen worden ist. Indem Sie in
+<TT
+CLASS="FILENAME"
+>/proc/ksyms</TT
+> nachschauen, können Sie überprüfen, daß die von Modulen
+exportierten Kernel-Symbole in einem anderen Speicherbereich liegen
+als die vom Kernel selbst exportierten Symbole.</P
+><P
+>Speicher, der mit <SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+> alloziert wurde, wird
+mit <SPAN
+><I
+CLASS="EMPHASIS"
+>vfree</I
+></SPAN
+> wieder freigegeben, genau wie
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kfree</I
+></SPAN
+> mit <SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+>
+allozierten Speicher wieder freigibt.&#13;</P
+><P
+>Wie <SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+> baut <SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+>
+neue Seitentabellen auf, alloziert
+aber im Gegensatz zu <SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+> keinen Speicher. Der
+Rückgabewert von <SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+> ist eine virtuelle
+Adresse, die verwendet werden kann, um auf den angegebenen
+physikalischen Adreßbereich zuzugreifen; die angeforderte virtuelle
+Adresse wird schließlich von <SPAN
+><I
+CLASS="EMPHASIS"
+>iounmap</I
+></SPAN
+> wieder
+freigegeben.  Beachten Sie, daß der Rückgabewert von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+> nicht auf allen Plattformen sicher
+dereferenziert werden kann; statt dessen sollten Funktionen wie
+<SPAN
+><I
+CLASS="EMPHASIS"
+>readb</I
+></SPAN
+> verwendet werden. In &#8220;<A
+HREF="hardmem.html#HARDMEMDIRECT"
+>the Section called <I
+>Direkt abgebildeter Speicher</I
+> in Kapitel 8</A
+>&#62;&#8221; in <A
+HREF="hard.html"
+>Kapitel 8</A
+>&#62; finden Sie die
+Details dazu.
+&#13;</P
+><P
+><SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+> ist besonders nützlich, wenn die
+(physikalische) Adresse eines PCI-Puffers in den (virtuellen) Kernel
+Space abgebildet werden soll. Beispielsweise kann die Funktion für den
+Zugriff auf den Frame-Buffer eines Videogeräts verwendet werden. Solche
+Puffer werden normalerweise an hohen physikalischen Adressen abgebildet,
+die außerhalb des Adreßbereichs liegen, für den der Kernel beim Booten
+Seitentabellen aufbaut. Wir gehen in &#8220;<A
+HREF="pci.html#PCIPCI"
+>the Section called <I
+>Die PCI-Schnittstelle</I
+> in Kapitel 15</A
+>&#8221; in <A
+HREF="pci.html"
+>Kapitel 15</A
+> näher auf PCI-Fragen
+ein.</P
+><P
+>Wenn Ihr Treiber über verschiedene Architekturen hinweg portabel sein soll,
+dann sollten Sie von <SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+> zurückgegebene
+Adressen nicht direkt dereferenzieren, sondern immer
+<SPAN
+><I
+CLASS="EMPHASIS"
+>readb</I
+></SPAN
+> und die anderen in <A
+HREF="hardmem.html"
+>the Section called <I
+>I/O-Speicher verwenden</I
+> in Kapitel 8</A
+>
+in <A
+HREF="hard.html"
+>Kapitel 8</A
+> eingeführten I/O-Funktionen verwenden. Das
+      liegt daran, daß manche Plattformen wie die Alpha-Plattform
+      PCI-Speicherbereiche nicht direkt in den Adreßbereich abbilden
+      können, weil es Unterschiede zwischen der PCI-Spezifikation und
+      den Alpha-Prozessoren hinsichtlich des Datentransports gibt.</P
+><P
+>Es gibt fast keine Einschränkung, wieviel Speicher
+<SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+> allozieren und <SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+>
+verfügbar machen kann, auch wenn <SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+> sich
+weigert, mehr Speicher zu allozieren, als physikalisch verfügbar ist,
+um typische Fehler oder Tippfehler von Programmierern aufzudecken. Sie
+sollten aber nicht vergessen, daß das Anfordern von zuviel Speicher
+mit <SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+> zu den gleichen Problemen führt wie
+mit <SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+>.&#13;</P
+><P
+>Sowohl <SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+> als auch
+<SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+> sind seitenorientiert (sie arbeiten mit
+Modifikationen der Seitentabellen), weswegen die relozierte oder
+allozierte Größe auf die nächste Seitengrenze aufgerundet
+wird. Außerdem fängt die Linux 2.0-Implementierung von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+> gar nicht erst an,
+eine physikalische Adresse abzubilden, die nicht auf einer
+Seitengrenze liegt. Neuere Kernel erlauben dies durch das &#8220;Abrunden&#8221; der
+abzubildenden Adresse und geben einen Offset auf die erste abgebildete
+Seite zurück.
+&#13;</P
+><P
+><SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+> kann leider nicht zur Interrupt-Zeit
+verwendet werden, weil es intern
+<TT
+CLASS="LITERAL"
+>kmalloc(GFP_KERNEL)</TT
+> verwendet, um
+Speicherplatz für die Seitentabellen anzufordern, und deswegen
+schlafen gehen kann. Das sollte aber kein
+Problem sein &#8212; wenn die Verwendung von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>__get_free_page</I
+></SPAN
+> für
+einen Interrupt-Handler nicht gut genug ist, dann liegt vermutlich
+etwas beim Design im Argen.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN9754"
+>Ein scull mit virtuellen Adressen: scullv</A
+></H2
+><P
+>&#13;Im Modul <SPAN
+CLASS="APPLICATION"
+>scullv</SPAN
+> finden Sie Beispiel-Code
+zur Verwendung von <SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+>. Wie
+<SPAN
+CLASS="APPLICATION"
+>scullp</SPAN
+> ist auch dieses Modul eine
+zusammengestrichene Version von <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>, die
+eine andere Allokationsfunktion verwendet, um für das Gerät Platz zum
+Speichern von Daten zu schaffen.&#13;</P
+><P
+>Das Modul alloziert Speicher in Blocks à 16 Seiten. Diese
+Allokation wird in größeren Blocks
+durchgeführt, um eine bessere Performance als mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>scullp</I
+></SPAN
+> zu erzielen und vorzuführen, daß etwas, das bei
+den anderen Allokationstechniken zu lange dauert, doch noch durchführbar
+ist. Das Allozieren von mehr als einer Seite mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>__get_free_pages</I
+></SPAN
+> birgt die Gefahr des Scheiterns, und selbst wenn es gelingt, wird es wahrscheinlich langsam sein. Wie wir schon gesehen haben, ist
+<SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+> schneller als andere Funktionen, wenn es
+darum geht, mehrere Seiten anzufordern, aber langsamer, wenn nur eine
+Seite benötigt wird, weil zusätzlich noch die Seitentabellen aufgebaut
+werden müssen. <SPAN
+CLASS="APPLICATION"
+>scullv</SPAN
+> hat genau das gleiche
+Design wie <SPAN
+CLASS="APPLICATION"
+>scullp</SPAN
+>. <TT
+CLASS="LITERAL"
+>order</TT
+>
+gibt die <SPAN
+><I
+CLASS="EMPHASIS"
+>Größenordnung</I
+></SPAN
+> jeder Allokation an und hat einen
+Default von 4. Der einzige Unterschied zwischen
+<SPAN
+CLASS="APPLICATION"
+>scullv</SPAN
+> und
+<SPAN
+CLASS="APPLICATION"
+>scullp</SPAN
+> liegt in der
+Allokationsverwaltung. Diese Zeilen verwenden
+<SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+>, um neuen Speicher zu holen:
+&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+/* Ein Quantum mit virtuellen Adressen allozieren */
+if (!dptr-&#62;data[s_pos]) {
+    dptr-&#62;data[s_pos] =
+        (void *)vmalloc(PAGE_SIZE &#60;&#60; dptr-&#62;order);
+    if (!dptr-&#62;data[s_pos])
+        goto nomem;
+    memset(dptr-&#62;data[s_pos], 0, PAGE_SIZE &#60;&#60; dptr-&#62;order);
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Und diese geben ihn wieder frei:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+/* Quantum-Menge freigeben */
+for (i = 0; i &#60; qset; i++)
+    if (dptr-&#62;data[i])
+        vfree(dptr-&#62;data[i]);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wenn Sie beide Module mit eingeschalteten Debugging-Informationen
+kompilieren, können Sie das Allozieren beobachten, indem Sie die in
+<TT
+CLASS="FILENAME"
+>/proc</TT
+> erzeugten Dateien auslesen. Die
+folgenden Momentaufnahmen stammen von zwei verschiedenen Systemen:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>&#13;
+salma% cat /tmp/bigfile &#62; /dev/scullp0; head -5 /proc/scullpmem
+
+Device 0: qset 500, order 0, sz 1048576
+  item at e00000003e641b40, qset at e000000025c60000
+       0:e00000003007c000
+       1:e000000024778000
+salma% cat /tmp/bigfile &#62; /dev/scullv0; head -5 /proc/scullvmem
+
+Device 0: qset 500, order 4, sz 1048576
+  item at e0000000303699c0, qset at e000000025c87000
+       0:a000000000034000
+       1:a000000000078000
+salma% uname -m
+ia64
+
+rudo% cat /tmp/bigfile &#62; /dev/scullp0; head -5 /proc/scullpmem
+
+Device 0: qset 500, order 0, sz 1048576
+  item at c4184780, qset at c71c4800
+       0:c262b000
+       1:c2193000
+rudo%  cat /tmp/bigfile &#62; /dev/scullv0; head -5 /proc/scullvmem
+
+Device 0: qset 500, order 4, sz 1048576
+  item at c4184b80, qset at c71c4000
+       0:c881a000
+       1:c882b000
+rudo% uname -m
+i686</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die Werte zeigen zwei verschiedene Verhaltensweisen. Auf IA-64 werden
+physikalische und virtuelle Adressen auf vollständig unterschiedliche
+Adreßbereiche (0xE und 0xA) abgebildet, während
+<SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+> auf x86-Computern virtuelle Adressen
+direkt über der für physikalischen Speicher verwendeten Abbildung
+zurückgibt.
+
+
+
+
+&#13;</P
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN9679"
+HREF="getvmalloc.html#AEN9679"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Einige Architekturen reservieren Bereiche von
+&#8220;virtuellen&#8221; Adressen für den Zugriff auf den physikalischen
+Speicher. Wenn dies passiert, macht der Linux-Kernel davon
+Gebrauch, und die Adressen des Kernels und von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>get_free_pages</I
+></SPAN
+> liegen in einem
+dieser Speicherbereiche. Der Unterschied ist für Gerätetreiber und
+anderen Code, der nicht direkt am Speicherverwaltungssubsystem des
+Kernels beteiligt ist, transparent.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="getgfp.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="getboot.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>get_&#8201;free_&#8201;page und Freunde</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="get.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Allozierung während des Bootens</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

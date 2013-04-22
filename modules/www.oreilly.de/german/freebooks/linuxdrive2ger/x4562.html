@@ -1,0 +1,1161 @@
+<HTML
+><HEAD
+><TITLE
+>Debugging mit Abfragen</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Debugging-Techniken"
+HREF="debug.html"><LINK
+REL="PREVIOUS"
+TITLE="Debugging-Techniken"
+HREF="debug.html"><LINK
+REL="NEXT"
+TITLE="Debugging durch Beobachten"
+HREF="x4834.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="debug.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 4. Debugging-Techniken</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x4834.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN4562"
+>Debugging mit Abfragen</A
+></H1
+><P
+>&#13;
+Im vorigen Abschnitt sind wir darauf eingegangen, wie
+<SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+> arbeitet und eingesetzt werden kann. Über
+die Nachteile haben wir allerdings noch nicht gesprochen.&#13;</P
+><P
+>&#13;
+Das System kann durch die intensive Verwendung von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+> deutlich verlangsamt werden, weil
+<SPAN
+CLASS="APPLICATION"
+>syslogd</SPAN
+> ständig seine Ausgabedateien
+synchronisiert und so jede Zeile zu einem Festplattenzugriff führt. Aus
+der Sicht von <SPAN
+CLASS="APPLICATION"
+>syslogd</SPAN
+> ist das auch die
+korrekte Implementation. Der Daemon versucht, alles sofort auf die
+Platte zu schreiben,
+um für den Fall vorzubeugen, daß das System unmittelbar nach der
+Ausgabe einer Meldung abstürzt. Andererseits wollen Sie Ihr System
+natürlich nicht bloß wegen der Debugging-Meldungen
+verlangsamen. Dieses Problem kann gelöst werden, indem Sie dem Namen
+der Protokolldatei in <TT
+CLASS="FILENAME"
+>/etc/syslogd.conf</TT
+>
+ein Minuszeichen voranstellen, aber manchmal wollen Sie Ihre
+Konfigurationsdateien vielleicht nicht ändern.<A
+NAME="AEN4582"
+HREF="#FTN.AEN4582"
+>[1]</A
+> Das Ändern der Konfiguration bringt das Problem
+mit sich, daß die Änderung vermutlich da verbleiben wird, nachdem Sie
+mit dem Debuggen fertig sind, obwohl während des normalen Systembetriebs
+Meldungen tatsächlich so schnell es geht auf die Festplatte
+geschrieben werden sollen. Alternativ zu so einer permanenten Änderung
+können Sie ein anderes Programm als <SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+>
+(wie etwa das bereits vorgeschlagene <B
+CLASS="COMMAND"
+>cat
+/proc/mksg</B
+>) verwenden, was aber möglicherweise keine
+passende Umgebung für den normalen Systembetrieb ist.&#13;</P
+><P
+>Häufig besteht die beste Möglichkeit, an relevante Informationen heranzukommen,
+darin, das System nach diesen Informationen zu fragen, wenn Sie sie
+benötigen, anstatt ständig Daten zu produzieren. Jedes Unix-System
+stellt eine Reihe von Werkzeugen zur Verfügung, mit denen
+Systeminformationen abgefragt werden können:
+<SPAN
+CLASS="APPLICATION"
+>ps</SPAN
+>, <SPAN
+CLASS="APPLICATION"
+>netstat</SPAN
+>,
+<SPAN
+CLASS="APPLICATION"
+>vmstat</SPAN
+> usw.&#13;</P
+><P
+>Es gibt zwei Techniken für Treiber-Entwickler, mit denen Anfragen
+an das System gestellt werden können: das Erzeugen einer Datei im
+<TT
+CLASS="FILENAME"
+>/proc</TT
+>-Dateisystem und das Verwenden der
+Treiber-Methode <SPAN
+CLASS="APPLICATION"
+>ioctl</SPAN
+>. Als Alternative zu
+<TT
+CLASS="FILENAME"
+>/proc</TT
+> steht auch <SPAN
+><I
+CLASS="EMPHASIS"
+>devfs</I
+></SPAN
+> zur
+Verfügung, aber <TT
+CLASS="FILENAME"
+>/proc</TT
+> ist für die Abfrage von
+Informationen normalerweise einfacher zu verwenden.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="DEBPROC"
+>Das /proc-Dateisystem verwenden</A
+></H2
+><P
+>&#13;
+Das <TT
+CLASS="FILENAME"
+>/proc</TT
+>-Dateisystem ist ein spezielles, von der
+Software erzeugtes Dateisystem, das vom Kernel dazu verwendet wird,
+Informationen unter die Leute zu bringen. Jede Datei in
+<TT
+CLASS="FILENAME"
+>/proc</TT
+> gehört zu einer Kernel-Funktion, die den
+"Inhalt" der Datei bei Bedarf erzeugt, wenn die Datei gelesen
+wird. Einige dieser Dateien haben wir bereits in Aktion gesehen, etwa
+<TT
+CLASS="FILENAME"
+>/proc/modules</TT
+>, die immer eine Liste der gerade
+geladenen Module zurückgibt.</P
+><P
+><TT
+CLASS="FILENAME"
+>/proc</TT
+> wird im Linux-System intensiv
+verwendet. Viele Hilfsprogramme in einer modernen Linux-Distribution
+wie <SPAN
+CLASS="APPLICATION"
+>ps</SPAN
+>, <SPAN
+CLASS="APPLICATION"
+>top</SPAN
+> und
+<SPAN
+CLASS="APPLICATION"
+>uptime</SPAN
+> holen sich ihre Informationen aus
+<TT
+CLASS="FILENAME"
+>/proc</TT
+>. Manche Gerätetreiber stellen ebenfalls
+Informationen über <TT
+CLASS="FILENAME"
+>/proc</TT
+> bereit, und auch Ihnen
+steht diese Möglichkeit offen. Das
+<TT
+CLASS="FILENAME"
+>/proc</TT
+>-Dateisystem ist dynamisch; Ihr Modul kann
+also Einträge jederzeit nach Belieben hinzufügen und entfernen.</P
+><P
+>Vollständige <TT
+CLASS="FILENAME"
+>/proc</TT
+>-Einträge können komplizierte
+Angelegenheiten sein; unter anderem kann man daraus sowohl lesen als
+auch dorthinein schreiben. Meistens sind
+<TT
+CLASS="FILENAME"
+>/proc</TT
+>-Einträge aber Dateien, die nur gelesen
+werden können. In diesem Abschnitt beschäftigen wir uns mit dem letzteren,
+einfacheren Fall. Diejenigen, die etwas Komplizierteres implementieren
+wollen, können diesen Abschnitt als Grundlage verwenden und dann in
+den Kernel-Quellen weiterlesen.</P
+><P
+>&#13;
+Alle Module, die mit <TT
+CLASS="FILENAME"
+>/proc</TT
+> arbeiten, sollten
+<TT
+CLASS="LITERAL"
+>&#60;linux/proc_fs.h&#62;</TT
+> einbinden, um die passenden
+Funktionen zu definieren.</P
+><P
+>&#13;
+
+Um eine nur lesbare <TT
+CLASS="FILENAME"
+>/proc</TT
+>-Datei zu erzeugen, muß
+Ihr Treiber eine Funktion implementieren, die die Daten erzeugt, wenn
+die Datei gelesen wird. Wenn ein Prozeß die Datei liest (normalerweise
+mit dem Systemaufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>), dann erreicht diese
+Anfrage Ihr Modul über eine von zwei verschiedenen Schnittstellen, je
+nachdem, was Sie registriert haben. Wir sparen uns die Registrierung
+für später auf und springen direkt zur Beschreibung der Schnittstellen
+zum Lesen.</P
+><P
+>In beiden Fällen alloziert der Kernel eine Speicherseite (also
+<TT
+CLASS="LITERAL"
+>PAGE_SIZE</TT
+> Bytes), in die der Treiber Daten
+schreiben kann, die er in den User-Space übergeben möchte.
+
+
+
+
+
+&#13;</P
+><P
+>&#13;
+Die empfohlene Schnittstelle ist <SPAN
+><I
+CLASS="EMPHASIS"
+>read_proc</I
+></SPAN
+>, aber
+es gibt auch eine ältere namens <SPAN
+><I
+CLASS="EMPHASIS"
+>get_info</I
+></SPAN
+>.</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>int (*read_proc)(char *page, char **start, off_t offset, int count, int *eof, void *data);</TT
+></DT
+><DD
+><P
+>Der Zeiger <TT
+CLASS="LITERAL"
+>page</TT
+> ist der Puffer, in den Sie Ihre
+Daten schreiben; <TT
+CLASS="LITERAL"
+>start</TT
+> wird von der Funktion
+verwendet, um mitzuteilen, wo in <TT
+CLASS="LITERAL"
+>page</TT
+> die
+interessanten Daten hingeschrieben worden sind (mehr dazu später);
+<TT
+CLASS="LITERAL"
+>offset</TT
+> und <TT
+CLASS="LITERAL"
+>count</TT
+> haben die
+gleiche Bedeutung wie in der Implementation
+von <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>. Das Argument <TT
+CLASS="LITERAL"
+>eof</TT
+>
+verweist auf einen Integer-Wert, der vom Treiber gesetzt werden muß,
+um anzuzeigen, daß er keine weiteren Daten mehr zurückgeben möchte,
+während <TT
+CLASS="LITERAL"
+>data</TT
+> ein treiberspezifischer Daten-Zeiger
+ist, den Sie für interne Verwaltungsaufgaben verwenden
+können.<A
+NAME="AEN4664"
+HREF="#FTN.AEN4664"
+>[2]</A
+> Diese Funktion steht in der Version 2.4 des
+Kernels zur Verfügung, außerdem in 2.2, wenn Sie unsere Header-Datei
+<SPAN
+><I
+CLASS="EMPHASIS"
+>sysdep.h</I
+></SPAN
+> verwenden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int (*get_info)(char *page, char **start, off_t offset, int count);</TT
+></DT
+><DD
+><P
+><SPAN
+><I
+CLASS="EMPHASIS"
+>get_info</I
+></SPAN
+> ist eine ältere Schnittstelle zum Lesen
+aus einer <TT
+CLASS="FILENAME"
+>/proc</TT
+>-Datei. Die Argumente haben die
+gleiche Bedeutung wie bei <SPAN
+><I
+CLASS="EMPHASIS"
+>read_proc</I
+></SPAN
+>. Was hier
+fehlt, ist der Zeiger, um das Dateiende zu melden, sowie die
+Objektorientierung, die der <TT
+CLASS="LITERAL"
+>data</TT
+>-Zeiger mit sich
+bringt. Die Funktion steht in allen Kernel-Versionen, die wir in diesem
+Buch behandeln, zur Verfügung (hatte aber in der 2.0-Implementation
+ein zusätzliches, nicht verwendetes Argument).</P
+></DD
+></DL
+></DIV
+><P
+>Beide Funktionen sollten die Anzahl der Bytes, die sie in den
+<TT
+CLASS="LITERAL"
+>page</TT
+>-Buffer geschrieben haben, zurückgeben, genau
+wie <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> das für andere Dateien macht. Andere
+Ausgabewerte sind <TT
+CLASS="LITERAL"
+>*eof</TT
+> und
+<TT
+CLASS="LITERAL"
+>*start</TT
+>. <TT
+CLASS="LITERAL"
+>eof</TT
+> ist ein einfaches
+Flag, aber die Verwendung des <TT
+CLASS="LITERAL"
+>start</TT
+>-Werts ist etwas
+komplizierter.</P
+><P
+>Das Hauptproblem mit der ursprünglichen Implementation der
+benutzerdefinierten Erweiterungen des
+<TT
+CLASS="FILENAME"
+>/proc</TT
+>-Dateisystems bestand darin, daß eine
+einzige Speicherseite für die Datenübertragung verwendet wurde. Dies
+schränkte die Gesamtgröße auf eine Benutzerdatei von 4 KByte (oder was
+auch immer auf der jeweiligen Plattform galt) ein. Das
+<TT
+CLASS="LITERAL"
+>start</TT
+>-Argument dient dazu, große Datendateien zu
+implementieren, kann aber ignoriert werden.</P
+><P
+>Wenn Ihre <SPAN
+><I
+CLASS="EMPHASIS"
+>proc_read</I
+></SPAN
+>-Funktion den
+<TT
+CLASS="LITERAL"
+>*start</TT
+>-Zeiger nicht zuweist (initial ist er
+<TT
+CLASS="LITERAL"
+>NULL</TT
+>), dann nimmt der Kernel an, daß der
+<TT
+CLASS="LITERAL"
+>offset</TT
+>-Parameter ignoriert worden ist und daß die
+Datenseite die gesamte Datei enthält, die Sie an den User-Space
+übergeben wollen. Wenn Sie dagegen eine größere Datei aus mehreren
+Stückchen zusammensetzen müssen, dann können Sie
+<TT
+CLASS="LITERAL"
+>*start</TT
+> auf den gleichen Wert wie
+<TT
+CLASS="LITERAL"
+>page</TT
+> setzen, so daß der Aufrufer weiß, daß Ihre
+neuen Daten am Anfang des Puffers stehen. Dann müssen Sie natürlich
+die ersten <TT
+CLASS="LITERAL"
+>offset</TT
+> Datenbytes überspringen, die
+bereits in einem früheren Aufruf übergeben worden sind.
+&#13;</P
+><P
+>&#13;Es gibt seit langem ein weiteres größeres Problem mit
+<TT
+CLASS="FILENAME"
+>/proc</TT
+>-Dateien, das <TT
+CLASS="LITERAL"
+>start</TT
+>
+ebenfalls lösen soll. Manchmal ändert sich die ASCII-Repräsentation
+der Kernel-Datenstrukturen zwischen den
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>-Aufrufen, so daß der lesende Prozeß
+inkonsistente Daten vorfinden kann. Wenn <TT
+CLASS="LITERAL"
+>*start</TT
+>
+auf einen kleinen Integer-Wert gesetzt wird, dann wird der Aufrufer
+diesen verwenden, um <TT
+CLASS="LITERAL"
+>filp-&#62;f_pos</TT
+> unabhängig von
+der zurückgegebenen Datenmenge zu inkrementieren, und so
+<TT
+CLASS="LITERAL"
+>f_pos</TT
+> zu einer internen Datensatznummer Ihrer
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read_proc</I
+></SPAN
+>- oder
+<SPAN
+><I
+CLASS="EMPHASIS"
+>get_info</I
+></SPAN
+>-Funktion machen. Wenn Ihre
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read_proc</I
+></SPAN
+>-Funktion beispielsweise Informationen
+aus einem großen Array von Datenstrukturen zurückgibt und fünf dieser
+Strukturen im ersten Aufruf zurückgegeben wurden, dann könnte
+<TT
+CLASS="LITERAL"
+>start</TT
+> auf 5 gesetzt werden. Der nächste Aufruf
+liefert den gleichen Wert als Offset und der Treiber weiß dann, daß er
+Daten ab der sechsten Struktur im Array zurückgeben muß. Die Autoren
+bezeichnen dies als &#8220;Hack&#8221;, in <TT
+CLASS="FILENAME"
+>fs/proc/generic.c</TT
+> können Sie sich selbst eine Meinung bilden.</P
+><P
+>Es ist Zeit für ein Beispiel. Hier ist eine einfache Implementation
+von <SPAN
+><I
+CLASS="EMPHASIS"
+>read_proc</I
+></SPAN
+> für das
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Gerät:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+int scull_read_procmem(char *buf, char **start, off_t offset,
+                   int count, int *eof, void *data)
+{
+    int i, j, len = 0;
+    int limit = count - 80; /* Nicht mehr als diesen Wert ausgeben */
+
+    for (i = 0; i &#60; scull_nr_devs &#38;&#38; len &#60;= limit; i++) {
+        Scull_Dev *d = &#38;scull_devices[i];
+        if (down_interruptible(&#38;d-&#62;sem))
+                return -ERESTARTSYS;
+        len += sprintf(buf+len,"\nDevice %i: qset %i, q %i, sz %li\n",
+                       i, d-&#62;qset, d-&#62;quantum, d-&#62;size);
+        for (; d &#38;&#38; len &#60;= limit; d = d-&#62;next) { /* die Liste durchsuchen */
+            len += sprintf(buf+len, "  item at %p, qset at %p\n", d,
+                                    d-&#62;data);
+            if (d-&#62;data &#38;&#38; !d-&#62;next) /* nur das letzte Element
+                                                    ausgeben - Platz sparen */
+                for (j = 0; j &#60; d-&#62;qset; j++) {
+                    if (d-&#62;data[j])
+                        len += sprintf(buf+len,"    % 4i: %8p\n",
+                                                    j,d-&#62;data[j]);
+                }
+        }
+        up(&#38;scull_devices[i].sem);
+    }
+    *eof = 1;
+    return len;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Dies ist eine recht typische Implementation von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read_proc</I
+></SPAN
+>, die davon ausgeht, daß es nie
+notwendig ist, mehr als eine Seite voll Daten auszugeben, und deswegen
+die Werte <TT
+CLASS="LITERAL"
+>start</TT
+> und <TT
+CLASS="LITERAL"
+>offset</TT
+>
+ignoriert. Die Implementation paßt allerdings für alle Fälle darauf
+auf, den Puffer nicht zu überschreiben.</P
+><P
+>Eine <TT
+CLASS="FILENAME"
+>/proc</TT
+>-Funktion, die die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>get_info</I
+></SPAN
+>-Schnittstelle verwendet, würde der eben
+gezeigten Funktion sehr ähnlich sehen, aber die letzten beiden Argumente nicht
+haben. Das Ende der Datei wird in diesem Fall dadurch angezeigt, daß
+weniger Daten zurückgegeben werden, als der Aufrufer erwartet (also
+weniger als <TT
+CLASS="LITERAL"
+>count</TT
+>).</P
+><P
+>&#13;
+
+Wenn Sie eine <SPAN
+><I
+CLASS="EMPHASIS"
+>read_proc</I
+></SPAN
+>-Funktion definiert haben,
+dann müssen Sie diese mit einem Eintrag in der
+<TT
+CLASS="FILENAME"
+>/proc</TT
+>-Hierarchie verbinden. Dazu gibt es je nach
+verwendetem Kernel zwei Möglichkeiten. Die einfachste, die nur im
+2.4-Kernel (und in 2.2, wenn Sie unsere Header-Datei
+<SPAN
+><I
+CLASS="EMPHASIS"
+>sysdep.h</I
+></SPAN
+> verwenden) zur Verfügung steht, besteht darin, einfach
+<SPAN
+><I
+CLASS="EMPHASIS"
+>create_proc_read_entry</I
+></SPAN
+> aufzurufen. Hier ist dem
+von <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> verwendete Aufruf, mit der die
+<TT
+CLASS="FILENAME"
+>/proc</TT
+>-Funktion als
+<TT
+CLASS="FILENAME"
+>/proc/scullmem</TT
+> verfügbar gemacht wird:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+create_proc_read_entry("scullmem",
+                       0    /* Default-Modus */,
+                       NULL /* Elternverzeichnis */,
+                       scull_read_procmem,
+                       NULL /* Client-Daten */);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Die Argumente dieser Funktion sind (in der gezeigten Reihenfolge):</P
+><P
+></P
+><UL
+><LI
+STYLE="list-style-type: disc"
+><P
+>der
+Name des <TT
+CLASS="FILENAME"
+>/proc</TT
+>-Eintrags</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>die Dateizugriffsrechte
+des Eintrags (wobei 0 ein Sonderfall ist, der den Default, eine von
+jedem lesbare Maske, bezeichnet)</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>der
+<TT
+CLASS="LITERAL"
+>proc_dir_entry</TT
+>-Zeiger auf das Elternverzeichnis
+dieser Datei (wir verwenden <TT
+CLASS="LITERAL"
+>NULL</TT
+>, damit der Treiber
+direkt unterhalb von <TT
+CLASS="FILENAME"
+>/proc</TT
+> erscheint)</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>der Zeiger
+auf die <SPAN
+><I
+CLASS="EMPHASIS"
+>read_proc</I
+></SPAN
+>-Funktion</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>und der Datenzeiger,
+der an die <SPAN
+><I
+CLASS="EMPHASIS"
+>read_proc-Funktion</I
+></SPAN
+> übergeben wird.</P
+></LI
+></UL
+>ark=bullet&#62;
+
+<P
+>Der Zeiger für den Verzeichniseintrag kann dazu verwendet werden, eine
+ganze Verzeichnishierarchie unterhalb von <TT
+CLASS="FILENAME"
+>/proc</TT
+>
+anzulegen. Beachten Sie aber, daß ein Eintrag einfacher in ein
+Unterverzeichnis von <TT
+CLASS="FILENAME"
+>/proc</TT
+> gestellt werden kann,
+indem Sie den Verzeichnisnamen als Bestandteil des Namens angeben. Das
+setzt aber voraus, daß das Verzeichnis selbst
+existiert. Beispielsweise kristallisiert sich langsam eine Konvention
+heraus, nach der <TT
+CLASS="FILENAME"
+>/proc</TT
+>-Einträge von Gerätetreibern
+in das Unterverzeichnis <TT
+CLASS="FILENAME"
+>driver/</TT
+> gehören;
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> könnte seinen Eintrag einfach durch
+Angabe von <TT
+CLASS="FILENAME"
+>driver/scullmem</TT
+> verlegen.</P
+><P
+>&#13;
+Einträge in <TT
+CLASS="FILENAME"
+>/proc</TT
+> sollten natürlich beim Entladen
+des Moduls entfernt werden. <SPAN
+><I
+CLASS="EMPHASIS"
+>remove_proc_entry</I
+></SPAN
+> ist
+die Funktion, die <SPAN
+><I
+CLASS="EMPHASIS"
+>create_proc_read_entry</I
+></SPAN
+> wieder
+rückgängig macht:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+ remove_proc_entry("scullmem", NULL /* Elternverzeichnis */);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+
+Alternativ zum bisher gezeigten Verfahren kann man eine
+<TT
+CLASS="LITERAL"
+>proc_dir_entry</TT
+>-Struktur erzeugen und initialisieren
+und an <SPAN
+><I
+CLASS="EMPHASIS"
+>proc_register_dynamic</I
+></SPAN
+> (Version 2.0) oder
+<SPAN
+><I
+CLASS="EMPHASIS"
+>proc_register</I
+></SPAN
+> übergeben (Version 2.2 nimmt an, daß es sich
+um eine dynamische Datei handelt, wenn die Inode-Nummer der Struktur 0
+ist). Schauen Sie sich als Beispiel den folgenden Code an,
+den <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> verwendet, wenn der Treiber mit
+2.0-Headern kompiliert wird:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+static int scull_get_info(char *buf, char **start, off_t offset,
+                int len, int unused)
+{
+    int eof = 0;
+    return scull_read_procmem (buf, start, offset, len, &#38;eof, NULL);
+}
+
+struct proc_dir_entry scull_proc_entry = {
+        namelen:    8,
+        name:       "scullmem",
+        mode:       S_IFREG | S_IRUGO,
+        nlink:      1,
+        get_info:   scull_get_info,
+};
+
+static void scull_create_proc()
+{
+    proc_register_dynamic(&#38;proc_root, &#38;scull_proc_entry);
+}
+
+static void scull_remove_proc()
+{
+    proc_unregister(&#38;proc_root, scull_proc_entry.low_ino);
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Der Code deklariert eine Funktion mit der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>get_info</I
+></SPAN
+>-Schnittstelle und füllt eine
+<TT
+CLASS="LITERAL"
+>proc_dir_entry</TT
+>-Struktur aus, die beim Dateisystem
+registriert ist.</P
+><P
+>&#62;
+&#62;
+&#62;
+&#62;
+Dieser Code sorgt für die Kompatibilität zwischen 2.0- und
+2.2-Kerneln, mit ein wenig Unterstützung durch die Makrodefinitionen
+in <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+>. Er verwendet die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>get_info</I
+></SPAN
+>-Schnittstelle, weil der
+2.0-Kernel <SPAN
+><I
+CLASS="EMPHASIS"
+>read_proc</I
+></SPAN
+> noch nicht unterstützte. Mit
+etwas mehr Einsatz von <TT
+CLASS="LITERAL"
+>#ifdef</TT
+>-Arbeit könnte man auch
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read_proc</I
+></SPAN
+> unter Linux 2.2 verwenden, aber der
+Gewinn wäre nur gering.
+
+
+&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN4804"
+>Die Methode ioctl</A
+></H2
+><P
+>&#13;
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+> (näher im nächsten Kapitel besprochen) ist
+ein Systemaufruf, der auf einem Dateideskriptor arbeitet. Dazu wird
+eine &#8220;Befehls&#8221;-Nummer und (optional) ein weiteres
+Argument, üblicherweise ein Zeiger, übergeben.&#13;</P
+><P
+>Als Alternative zur Verwendung des
+<TT
+CLASS="FILENAME"
+>/proc</TT
+>-Dateisystems können Sie einige wenige
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Befehle implementieren, die speziell auf
+das Debugging ausgerichtet sind. Diese Befehle können relevante
+Datenstrukturen vom Treiber in den User-Space kopieren, wo Sie sie näher
+untersuchen können.&#13;</P
+><P
+>Die Verwendung von <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+> auf diese Art und Weise
+ist etwas schwieriger als die Verwendung von
+<TT
+CLASS="FILENAME"
+>/proc</TT
+>, weil Sie ein zusätzliches Programm
+benötigen, das <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+> aufruft und die Ergebnisse
+ausgibt. Auch dieses Programm muß geschrieben, kompiliert und mit dem
+Modul, das Sie gerade testen, synchronisiert werden. Auf der anderen
+Seite ist es einfacher, den Treiber-Code zu schreiben, als eine
+<TT
+CLASS="FILENAME"
+>/proc</TT
+>-Datei zu implementieren.&#13;</P
+><P
+>Trotzdem gibt es Situationen, in denen <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+> die
+beste Möglichkeit ist, an Informationen heranzukommen, weil es
+schneller ist, als <TT
+CLASS="FILENAME"
+>/proc</TT
+> auszulesen. Wenn
+Daten vor der Ausgabe bearbeitet werden müssen, kann es effizienter
+sein, die Daten in binärer Form anstatt als Textdatei zu
+bekommen. Außerdem erfordert <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+> auch nicht
+das Aufteilen der Daten in Fragmente, die auf eine Seite passen.&#13;</P
+><P
+>Ein weiterer interessanter Vorteil des <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Ansatzes
+besteht darin, daß Befehle zur Informationsabfrage auch dann im
+Treiber verbleiben
+können, wenn das Debugging ansonsten abgeschaltet ist. Im Gegensatz zu einer
+<TT
+CLASS="FILENAME"
+>/proc</TT
+>-Datei, die für jeden sichtbar ist, der
+in das Verzeichnis schaut (und viel zu viele Leute werden sich
+vermutlich wundern, &#8220;was das für eine merkwürdige Datei
+ist&#8221;), bleiben undokumentierte
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Befehle höchstwahrscheinlich
+unentdeckt. Außerdem sind sie immer noch da, wenn etwas Merkwürdiges
+mit dem Treiber passiert. Der einzige Nachteil ist ein geringfügig
+größeres Modul.
+
+
+&#13;</P
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN4582"
+HREF="x4562.html#AEN4582"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Das Minuszeichen ist eine &#8220;magische&#8221; Markierung, mit
+der <SPAN
+CLASS="APPLICATION"
+>syslogd</SPAN
+> davon abgehalten wird, die Datei
+bei jeder neuen Meldung auf die Festplatte herauszuschreiben. Dies ist
+in der Manual-Page <SPAN
+><I
+CLASS="EMPHASIS"
+>syslog.conf(5)</I
+></SPAN
+> dokumentiert, die
+ohnehin eine sehr lesenswerte Lektüre ist.</P
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN4664"
+HREF="x4562.html#AEN4664"
+>[2]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Von diesen Zeigern werden wir noch mehrere in
+diesem Buch antreffen; sie repräsentieren das &#8220;Objekt&#8221;, um das es
+geht, und entsprechen in etwa dem <TT
+CLASS="LITERAL"
+>this</TT
+>-Zeiger in
+C++.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="debug.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x4834.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Debugging-Techniken</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="debug.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Debugging durch Beobachten</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

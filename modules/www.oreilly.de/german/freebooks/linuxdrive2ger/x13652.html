@@ -1,0 +1,289 @@
+<HTML
+><HEAD
+><TITLE
+>Schnellreferenz</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Überlegte Verwendung von Datentypen"
+HREF="judas.html"><LINK
+REL="PREVIOUS"
+TITLE="Verkettete Listen"
+HREF="judaslist.html"><LINK
+REL="NEXT"
+TITLE="kmod und fortgeschrittene Modularisierung"
+HREF="kerneld.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="judaslist.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 10. Überlegte Verwendung von Datentypen</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="kerneld.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN13652"
+>Schnellreferenz</A
+></H1
+><P
+>In diesem Kapitel wurden die folgenden Symbole eingeführt:&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/types.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>typedef u8;</TT
+>, <TT
+CLASS="LITERAL"
+>typedef u16;</TT
+>, <TT
+CLASS="LITERAL"
+>typedef u32;</TT
+>, <TT
+CLASS="LITERAL"
+>typedef u64;</TT
+></DT
+><DD
+><P
+>Diese Typen sind vorzeichenlose Integer-Werte mit einer garantierten
+Größe von 8, 16, 32 und 64 Bit. Es gibt auch die zugehörigen
+vorzeichenbehafteten Typen. Im User-Space können Sie auf diese Typen
+als <TT
+CLASS="LITERAL"
+>__u8</TT
+>,
+<TT
+CLASS="LITERAL"
+>__u16</TT
+> usw. zugreifen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;asm/page.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>PAGE_SIZE</TT
+>, <TT
+CLASS="LITERAL"
+>PAGE_SHIFT</TT
+></DT
+><DD
+><P
+>Diese Symbole definieren die Anzahl der Bytes pro Seite in der
+jeweiligen Architektur und die Anzahl der Bits im Seiten-Offset (12
+bei 4 KByte-Seiten und 13 bei 8 KByte-Seiten).</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;asm/byteorder.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>_&#8201;_LITTLE_ENDIAN</TT
+>, <TT
+CLASS="LITERAL"
+>_&#8201;_BIG_ENDIAN</TT
+></DT
+><DD
+><P
+>Nur eines dieser beiden Symbole ist &#8212; je nach Architektur
+&#8212; definiert.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;asm/byteorder.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>u32 _&#8201;_cpu_to_le32 (u32);</TT
+>, <TT
+CLASS="LITERAL"
+>u32 _&#8201;_le32_to_cpu (u32);</TT
+>, <TT
+CLASS="LITERAL"
+></TT
+></DT
+><DD
+><P
+>&#13;
+Funktionen zum Konvertieren zwischen bekannten Byte-Reihenfolgen und
+der Byte-Reihenfolge des Prozessors. Es gibt mehr als sechzig solcher
+Funktionen; die diversen Dateien in
+<TT
+CLASS="FILENAME"
+>include/linux/byteorder/</TT
+> enthalten die
+vollständige Liste und die Definitionen dieser Funktionen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;asm/unaligned.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>get_unaligned(ptr);</TT
+>, <TT
+CLASS="LITERAL"
+>put_unaligned(val, ptr);</TT
+></DT
+><DD
+><P
+>Manche Architekturen benötigen diese Makros, um auf nicht-ausgerichtete
+Daten zuzugreifen. Diese Makros werden auf Architekturen, die Zugriff
+auf nicht-ausgerichtete Daten erlauben, zur einfachen Dereferenzierung
+von Zeigern expandiert.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/list.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>list_add(struct list_head *new, struct list_head *head);</TT
+>, <TT
+CLASS="LITERAL"
+>list_add_tail(struct list_head *new, struct list_head *head);</TT
+>, <TT
+CLASS="LITERAL"
+>list_del(struct list_head *entry);</TT
+>, <TT
+CLASS="LITERAL"
+>list_empty(struct list_head *head);</TT
+>, <TT
+CLASS="LITERAL"
+>list_entry(entry, type, member);</TT
+>, <TT
+CLASS="LITERAL"
+>list_splice(struct list_head *list, struct list_head *head);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+
+
+
+
+Funktionen zum Manipulieren zirkulärer, doppelt verketteter Listen.</P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="judaslist.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="kerneld.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Verkettete Listen</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="judas.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>kmod und fortgeschrittene Modularisierung</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

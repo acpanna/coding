@@ -1,0 +1,42 @@
+<html>
+<body>
+<pre>
+<h1>Erstellungsprotokoll</h1>
+<h3>
+--------------------Konfiguration: Mauese - Win32 Debug--------------------
+</h3>
+<h3>Befehlszeilen</h3>
+Erstellen der temporären Datei  "C:\TEMP\RSP7345.TMP" mit Inhalten
+[
+/nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_AFXDLL" /D "_MBCS" /Fp"Debug/Mauese.pch" /Yu"stdafx.h" /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"C:\C-Files\Projekte\Mauese\MaueseView.cpp"
+]
+Creating command line "cl.exe @C:\TEMP\RSP7345.TMP" 
+Erstellen der temporären Datei  "C:\TEMP\RSP7346.TMP" mit Inhalten
+[
+/nologo /subsystem:windows /incremental:yes /pdb:"Debug/Mauese.pdb" /debug /machine:I386 /out:"Debug/Mauese.exe" /pdbtype:sept 
+".\Debug\Koord.obj"
+".\Debug\MainFrm.obj"
+".\Debug\Mauese.obj"
+".\Debug\MaueseDoc.obj"
+".\Debug\MaueseView.obj"
+".\Debug\StdAfx.obj"
+".\Debug\Mauese.res"
+]
+Erstellen der Befehlzeile "link.exe @C:\TEMP\RSP7346.TMP"
+<h3>Ausgabefenster</h3>
+Kompilierung läuft...
+MaueseView.cpp
+C:\C-Files\Projekte\Mauese\MaueseView.cpp(83) : warning C4244: '+=' : Konvertierung von 'double' in 'int', moeglicher Datenverlust
+C:\C-Files\Projekte\Mauese\MaueseView.cpp(84) : warning C4244: '+=' : Konvertierung von 'double' in 'int', moeglicher Datenverlust
+C:\C-Files\Projekte\Mauese\MaueseView.cpp(88) : warning C4244: '+=' : Konvertierung von 'double' in 'int', moeglicher Datenverlust
+C:\C-Files\Projekte\Mauese\MaueseView.cpp(89) : warning C4244: '+=' : Konvertierung von 'double' in 'int', moeglicher Datenverlust
+Linker-Vorgang läuft...
+
+
+
+<h3>Ergebnisse</h3>
+Mauese.exe - 0 Fehler, 4 Warnung(en)
+</pre>
+</body>
+</html>

@@ -1,0 +1,326 @@
+<HTML
+><HEAD
+><TITLE
+>Abwärtskompatibilität</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Interrupt-Handler"
+HREF="irq.html"><LINK
+REL="PREVIOUS"
+TITLE="Race Conditions"
+HREF="irqrace.html"><LINK
+REL="NEXT"
+TITLE="Schnellreferenz"
+HREF="x12869.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="irqrace.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 9. Interrupt-Handler</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x12869.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN12799"
+>Abwärtskompatibilität</A
+></H1
+><P
+>&#13;
+Wie am Anfang des Kapitels bereits erwähnt wurde, bringt die
+Interrupt-Verarbeitung in Linux relativ wenig Inkompatibilitäten mit
+älteren Kernel mit sich. Es gibt aber doch einige Probleme, die wir hier
+besprechen wollen. Die meisten Änderungen sind zwischen den Kernel-Versionen
+2.0 und 2.2 geschehen, seitdem ist das Interrupt-Handling auffällig
+stabil.</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN12808"
+>Unterschiede im 2.2-Kernel</A
+></H2
+><P
+>Die größte Änderung seit der 2.2-Reihe war das Hinzufügen von
+Tasklets im Kernel 2.3.43. Vor dieser Änderung war der BH-Mechanismus
+die einzige Möglichkeit für Interrupt-Handler, Aufgaben zu einem späteren Zeitpunkt abarbeiten zu lassen.</P
+><P
+>&#13;Die Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>set_current_state</I
+></SPAN
+> gab es in Linux
+2.2 noch nicht (<TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> implementiert sie aber).
+Um den aktuellen Prozeßzustand zu ändern, mußte man die Task-Struktur
+direkt manipulieren, wie in:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;current-&#62;state = TASK_INTERRUPTIBLE;&#13;</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN12818"
+>Weitere Unterschiede im 2.0-Kernel</A
+></H2
+><P
+>&#13;
+
+In Linux 2.0 gab es sehr viel mehr Unterschiede zwischen schnellen und
+langsamen Handlern. Langsame Handler waren wegen des zusätzlichen
+Organisationsaufwandes im Kernel schon vor der Ausführung
+langsamer. Schnellere Handler waren nicht nur dadurch schneller, daß die
+Interrupts abgeschaltet blieben, sondern auch dadurch, daß
+vor dem Rücksprung aus dem Interrupt nicht nach unteren Hälften
+gesucht wurde. Die Verzögerung vor der Ausführung einer unteren
+Hälfte, die in einem Interrupt-Handler vorgemerkt wurde, konnte
+daher im 2.0-Kernel länger sein. Und schließlich mußten im 2.0-Kernel
+alle registrierten Handler entweder langsam oder schnell sein, wenn
+eine IRQ-Leitung gemeinsam genutzt werden sollte; die beiden Modi
+konnten nicht gemischt werden.</P
+><P
+>Die meisten SMP-Probleme existierten in 2.0 natürlich
+nicht. Interrupt-Handler konnten nur jeweils auf einer CPU ausgeführt
+werden, so daß es keinen Unterschied zwischen dem lokalen und dem
+globalen Abschalten von Interrupts gab.</P
+><P
+>&#13;
+
+Die Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>disable_irq_nosync</I
+></SPAN
+> gab es in 2.0
+noch nicht; außerdem durften die Aufrufe von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>disable_irq</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>enable_irq</I
+></SPAN
+>
+nicht verschachtelt werden.</P
+><P
+>&#13;
+Die atomaren Operationen waren in 2.0 anders. Die Funktionen
+<SPAN
+><I
+CLASS="EMPHASIS"
+>test_and_set_bit</I
+></SPAN
+>,
+<SPAN
+><I
+CLASS="EMPHASIS"
+>test_and_clear_bit</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>test_and_change_bit</I
+></SPAN
+> gab es gar nicht; statt
+dessen gaben
+<SPAN
+><I
+CLASS="EMPHASIS"
+>set_bit</I
+></SPAN
+>, <SPAN
+><I
+CLASS="EMPHASIS"
+>clear_bit</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>change_bit</I
+></SPAN
+> einen Wert zurück und funktionierten
+wie die modernen <SPAN
+><I
+CLASS="EMPHASIS"
+>test_and_</I
+></SPAN
+>-Versionen. Für die
+Integer-Versionen war <TT
+CLASS="LITERAL"
+>atomic_t</TT
+> einfach ein
+<TT
+CLASS="LITERAL"
+>typedef</TT
+> auf <TT
+CLASS="LITERAL"
+>int</TT
+>; und Variablen
+des Typs <TT
+CLASS="LITERAL"
+>atomic_t</TT
+> konnten wie
+<TT
+CLASS="LITERAL"
+>int</TT
+>s verarbeitet werden. Die Funktionen
+<SPAN
+><I
+CLASS="EMPHASIS"
+>atomic_set</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>atomic_read</I
+></SPAN
+> gab es gar nicht.</P
+><P
+>Die Makros <SPAN
+><I
+CLASS="EMPHASIS"
+>wait_event</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>wait_event_interruptible</I
+></SPAN
+> gab es in Linux 2.0 noch
+nicht.
+&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="irqrace.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x12869.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Race Conditions</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="irq.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Schnellreferenz</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

@@ -1,0 +1,316 @@
+<HTML
+><HEAD
+><TITLE
+>Der init-Prozeß</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Der physikalische Aufbau der Kernel-Quellen"
+HREF="tour.html"><LINK
+REL="PREVIOUS"
+TITLE="Vor dem Booten"
+HREF="x22653.html"><LINK
+REL="NEXT"
+TITLE="Das Verzeichnis kernel"
+HREF="x22772.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x22653.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 16. Der physikalische Aufbau der Kernel-Quellen</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x22772.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="TOURINIT"
+>Der init-Prozeß</A
+></H1
+><P
+>&#13;
+Wenn <SPAN
+><I
+CLASS="EMPHASIS"
+>start_kernel</I
+></SPAN
+> den
+<SPAN
+CLASS="APPLICATION"
+>init</SPAN
+>-Thread startet (der von der Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>init</I
+></SPAN
+> in <TT
+CLASS="FILENAME"
+>init/main.c</TT
+>
+implementiert wird), läuft die Funktion immer noch im Kernel-Modus, und
+damit auch der <SPAN
+CLASS="APPLICATION"
+>init</SPAN
+>-Thread. Wenn alle oben
+beschriebenen Initialisierungen erledigt sind, gibt der Thread die
+Kernel-Sperre auf und bereitet sich auf die Ausführung des
+<SPAN
+CLASS="APPLICATION"
+>init</SPAN
+>-Prozesses im User-Space vor. Die
+auszuführende Datei steht in <TT
+CLASS="FILENAME"
+>/sbin/init</TT
+>,
+<TT
+CLASS="FILENAME"
+>/etc/init</TT
+> oder
+<TT
+CLASS="FILENAME"
+>/bin/init</TT
+>. Wenn keine dieser Dateien gefunden
+wird, wird <TT
+CLASS="FILENAME"
+>/bin/sh</TT
+> als Notmaßnahme gestartet,
+damit eine eventuell zerstörte <SPAN
+CLASS="APPLICATION"
+>init</SPAN
+>-Datei
+wiederhergestellt werden kann. Als Alternative dazu kann der Benutzer
+auf der Kommandozeile angeben, welches
+<SPAN
+CLASS="APPLICATION"
+>init</SPAN
+>-Programm der
+<SPAN
+CLASS="APPLICATION"
+>init</SPAN
+>-Thread ausführen soll.</P
+><P
+>&#13;Der Eintritt in den User-Space ist einfach. Der Code öffnet
+<TT
+CLASS="FILENAME"
+>/dev/console</TT
+> als Standardeingabe durch
+Aufrufen des Systemaufrufs <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>  und verbindet die
+Konsole durch Aufrufen von <SPAN
+><I
+CLASS="EMPHASIS"
+>dup</I
+></SPAN
+> mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>stdout</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>stderr</I
+></SPAN
+>;
+schließlich wird <SPAN
+><I
+CLASS="EMPHASIS"
+>execve</I
+></SPAN
+> verwendet, um das User
+Space-Programm auszuführen.</P
+><P
+>&#13;
+Der Thread kann Systemaufrufe vom Kernel-Modus aus aufrufen, weil
+<TT
+CLASS="FILENAME"
+>init/main.c</TT
+> vor dem Einbinden von
+<TT
+CLASS="LITERAL"
+>&#60;asm/unistd.h&#62;</TT
+>
+<TT
+CLASS="LITERAL"
+>__KERNEL_SYSCALLS__</TT
+>
+deklariert hat. Die Header-Datei definiert speziellen Code, mit dem
+Kernel-Code eine begrenzte Anzahl von Systemaufrufen genau wie der
+User-Space verwenden kann. Weitere Informationen zu
+Kernel-Systemaufrufen finden Sie in
+<SPAN
+CLASS="SYSTEMITEM"
+>http://www.linux.it/kerneldocs/ksys</SPAN
+>.</P
+><P
+>Der Aufruf von <SPAN
+><I
+CLASS="EMPHASIS"
+>execve</I
+></SPAN
+> beendet den Übergang in den
+User-Space. Daran ist überhaupt nichts Geheimnisvolles. Wie jeder
+andere <SPAN
+><I
+CLASS="EMPHASIS"
+>execve</I
+></SPAN
+>-Aufruf in Unix ersetzt auch dieser
+die Speichertabellen des aktuellen Prozesses durch neue, die von der
+ausgeführten Binärdatei definiert werden (Sie werden sich erinnern, daß das
+Ausführen einer Datei bedeutet, daß sie in den virtuellen Adreßraum
+des aktuellen Prozesses eingeblendet wird). Es spielt keine Rolle, daß
+der aufrufende Prozeß in diesem Fall im Kernel-Space läuft. Dies ist
+für die Implementation von <SPAN
+><I
+CLASS="EMPHASIS"
+>execve</I
+></SPAN
+> transparent,
+die einfach nur feststellt, daß es keine vorherigen Speichertabellen
+freizugeben gibt, bevor die neuen aktiviert werden.</P
+><P
+>Wie auch immer das System eingerichtet war und die Kommandozeile
+aussah, jetzt wird der <SPAN
+CLASS="APPLICATION"
+>init</SPAN
+>-Prozeß im User
+Space ausgeführt, und alle weiteren Kernel-Operationen erfolgen als
+Antwort auf Systemaufrufe von <SPAN
+CLASS="APPLICATION"
+>init</SPAN
+> selbst
+oder von Prozessen, die von <SPAN
+CLASS="APPLICATION"
+>init</SPAN
+> gestartet
+werden.</P
+><P
+>Weitere Informationen darüber, wie der
+<SPAN
+CLASS="APPLICATION"
+>init</SPAN
+>-Prozeß das gesamte System hochfährt,
+finden Sie in <SPAN
+CLASS="SYSTEMITEM"
+>http://www.linux.it/kerneldocs/init</SPAN
+>. Wir
+machen jetzt mit unserer Tour weiter, indem wir uns die in den
+einzelnen Verzeichnissen implementierten Systemaufrufe anschauen sowie
+dann einen Blick darauf werfen, wie die Gerätetreiber im Quellbaum
+organisiert sind.&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x22653.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x22772.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Vor dem Booten</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="tour.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Das Verzeichnis kernel</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

@@ -1,0 +1,651 @@
+<HTML
+><HEAD
+><TITLE
+>Die Ausführung verzögern</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Der Lauf der Zeit"
+HREF="flow.html"><LINK
+REL="PREVIOUS"
+TITLE="Die aktuelle Zeit ermitteln"
+HREF="x8127.html"><LINK
+REL="NEXT"
+TITLE="Task-Schlangen"
+HREF="flowqueue.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x8127.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 6. Der Lauf der Zeit</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="flowqueue.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN8199"
+>Die Ausführung verzögern</A
+></H1
+><P
+>&#13;
+
+Gerätetreiber müssen oft die Ausführung eines bestimmten
+Code-Abschnitts um einen gewissen Zeitraum verzögern, normalerweise um
+der Hardware die Zeit zu geben, eine bestimmte Aufgabe zu
+erledigen. In diesem Abschnitt behandeln wir eine Reihe von Techniken
+für Verzögerungen. Die jeweiligen Umstände bestimmen, welche Technik wann
+am besten ist; wir gehen alle durch und zeigen jeweils die Vor- und
+Nachteile auf.&#13;</P
+><P
+>Dabei muß man berücksichtigen, ob die Verzögerung länger als ein
+Clock-Tick sein soll. Längere Verzögerungen können die Systemuhr
+verwenden, kürzere müssen normalerweise mit Software-Schleifen
+implementiert werden.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="FLOWDELAY"
+>Lange Verzögerungen</A
+></H2
+><P
+>&#13;Wenn Sie die Ausführung um ein Mehrfaches des Ticks verzögern wollen
+oder keine besondere Präzision benötigen (wenn Sie beispielsweise eine
+ganzzahlige Anzahl von Sekunden warten wollen), dann ist die
+einfachste (und dümmste) Implementation die folgende, die auch als
+<SPAN
+><I
+CLASS="EMPHASIS"
+>Busy Waiting</I
+></SPAN
+> bezeichnet wird:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+unsigned long j = jiffies + jit_delay * HZ;
+
+while (jiffies &#60; j)
+    /* nichts */;</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die Art von Implementation sollte auf jeden Fall vermieden
+werden. Wir zeigen sie Ihnen hier, weil Sie diesen Code
+                  vielleicht einmal ausprobieren wollen, um die internen
+                  Vorgänge der anderen Lösungen besser zu verstehen.&#13;</P
+><P
+>Schauen wir uns aber kurz an, wie dieser Code funktioniert. Die
+Schleife funktioniert auf jeden Fall, weil <TT
+CLASS="LITERAL"
+>jiffies</TT
+>
+in den Kernel-Header-Dateien als <TT
+CLASS="LITERAL"
+>volatile</TT
+>
+deklariert ist und daher jedesmal ausgelesen wird, wenn C-Code darauf
+zugreift. Obwohl diese Schleife also &#8220;korrekt&#8221; ist,
+blockiert sie den Computer während der Verzögerung völlig; der
+Scheduler hält einen Prozeß, der im Kernel-Space läuft, nie an. Wenn
+Interrupts abgeschaltet worden sind, bevor Sie in
+die Schleife eintreten, werden die <TT
+CLASS="LITERAL"
+>jiffies</TT
+> nicht
+aktualisiert, und die <TT
+CLASS="LITERAL"
+>while</TT
+>-Bedingung bleibt für
+immer wahr. Als Folge müssen Sie den großen roten Knopf drücken.&#13;</P
+><P
+>&#13;Diese Implementation einer Verzögerung steht wie die folgenden auch im
+<SPAN
+CLASS="APPLICATION"
+>jit</SPAN
+>-Modul zur Verfügung. Die vom Modul
+erzeugten <TT
+CLASS="FILENAME"
+>/proc/jit*</TT
+>-Dateien sorgen bei
+jedem Lesen für eine Verzögerung von einer ganzen Sekunde. Wenn Sie den Busy Waiting-Code
+ausprobieren wollen, können Sie von
+<TT
+CLASS="FILENAME"
+>/proc/jitbusy</TT
+> lesen, was jedesmal zu einer
+Busy-Schleife führt, wenn die <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>-Methode
+aufgerufen wird; ein Befehl wie <SPAN
+><I
+CLASS="EMPHASIS"
+>dd if=/proc/jitbusy
+bs=1</I
+></SPAN
+> sorgt bei jedem Lesen eines Zeichens für eine Verzögerung um eine
+Sekunde.&#13;</P
+><P
+>Sie haben wahrscheinlich schon Verdacht geschöpft, daß das Lesen von
+<TT
+CLASS="FILENAME"
+>/proc/jitbusy</TT
+>  ziemlich übel für die
+Performance des Systems ist, weil der Prozessor die anderen Prozesse
+nur einmal pro Sekunde laufen lassen kann.&#13;</P
+><P
+>Eine bessere Lösung, die andere Prozesse auch während der Wartezeit
+laufen läßt, ist die folgende, auch wenn diese Methode nicht bei
+harten Echtzeit-Anforderungen oder anderen zeitkritischen Situationen
+verwendet werden kann:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+while (jiffies &#60; j)
+    schedule();</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die Variable <TT
+CLASS="LITERAL"
+>j</TT
+> in diesem und den folgenden
+Beispielen ist der Wert von <TT
+CLASS="LITERAL"
+>jiffies</TT
+> am Ende der
+Schleife und wird immer so berechnet, wie im Busy Waiting-Beispiel gezeigt
+wurde.&#13;</P
+><P
+>Diese Schleife (die durch das Lesen von
+<TT
+CLASS="FILENAME"
+>/proc/jitsched</TT
+> getestet werden kann), ist
+immer noch nicht optimal. Der System kann andere Tasks laufen lassen;
+der aktuelle Prozeß gibt lediglich die CPU wieder frei, bleibt aber
+in der Schlange der startbereiten Prozesse. Wenn es sich um den
+einzigen startbereiten Prozeß handelt, wird auch dieser wieder
+gestartet (er ruft den Scheduler auf, der wieder diesen Prozeß
+auswählt, der den Scheduler aufruft, der ...). Mit anderen Worten:
+Die Last der Maschine (die durchschnittliche Anzahl laufender
+Prozesse) wird mindestens 1 sein, und der Leerlauf-Task (Prozeßnummer 0, aus
+historischen Gründen auch <SPAN
+><I
+CLASS="EMPHASIS"
+>swapper</I
+></SPAN
+> genannt) kommt nie an
+die Reihe. Obwohl das vielleicht irrelevant erscheint, führt das
+Starten des Leerlauf-Tasks, wenn der Computer im Leerlauf ist, dazu,
+daß die Last des Prozessors herabgesetzt wird, was wiederum die
+Temperatur verringert und seine Lebenserwartung erhöht; zusätzlich halten
+auch die Batterien länger, wenn Sie auf einem Laptop arbeiten. Da der
+Prozeß während der Verzögerung tatsächlich ausgeführt wird, wird ihm
+alle verbrauchte Zeit angerechnet. Sie können sich davon überzeugen,
+wenn Sie <SPAN
+><I
+CLASS="EMPHASIS"
+>time cat /proc/jitsched</I
+></SPAN
+>
+starten.</P
+><P
+>Wenn das System dagegen sehr ausgelastet ist, könnte der Treiber auch
+länger als angenommen warten. Sobald ein Prozeß den Prozessor mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>schedule</I
+></SPAN
+> abgegeben hat, gibt es keine Garantien
+mehr dafür, daß der Prozeß den Prozessor bald wieder zurückbekommt. Wenn es
+eine obere Grenze für die akzeptable Antwortzeit gibt, dann ist ein
+solcher Aufruf von <SPAN
+><I
+CLASS="EMPHASIS"
+>schedule</I
+></SPAN
+> keine sichere Lösung
+für die Bedürfnisse des Treibers.</P
+><P
+>Trotz der Nachteile ist diese Art von Schleife eine schnelle
+Möglichkeit, um das Arbeiten eines Treibers zu beobachten. Wenn ein
+Fehler in Ihrem Modul das System gründlich aufhängt,  dann können Sie
+nach jeder <SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+>-Anweisung zum Debugging eine
+kurze Verzögerung einfügen, die sicherstellt, daß jede ausgegebene
+Meldung auch wirklich im Systemprotokoll landet, bevor der Prozessor
+auf den häßlichen Fehler stößt und der Rechner anhält. Ohne solche
+Verzögerungen werden die Meldungen zwar korrekt in den Speicher-Puffer
+geschrieben, aber das System bleibt stehen, bevor
+<SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+> seine Arbeit tun kann.</P
+><P
+>&#13;Am besten ist es aber, den Kernel um die Verzögerung zu bitten. Es
+gibt für Kurzzeit-Timeouts zwei Möglichkeiten, je nachdem, ob Ihr
+Treiber auf andere Ereignisse wartet oder nicht.</P
+><P
+>&#13;
+
+Wenn Ihr Treiber eine Warteschlange verwendet, um auf ein anderes
+Ereignis zu warten, Sie aber auch sicher sein wollen, daß das Warten
+innerhalb eines bestimmten Zeitraums beendet ist, dann können Sie die
+Timeout-Versionen der sleep-Funktionen verwenden, die in &#8220;&#62;&#8221; in <A
+HREF="extra.html"
+>Kapitel 5</A
+>&#62; genannt worden sind:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; sleep_on_timeout(wait_queue_head_t *q, unsigned long timeout);
+ interruptible_sleep_on_timeout(wait_queue_head_t *q,
+                                unsigned long timeout);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Beide Versionen schlafen in der angegebenen Warteschlange, kehren aber
+nach dem (in Jiffies) angegebenen Timeout zurück. Damit implementieren
+diese Funktionen einen begrenzten Schlaf, der nicht ewig andauern
+kann. Beachten Sie, daß der Timeout-Wert die Anzahl der zu wartenden
+Jiffies repräsentiert, nicht etwa einen absoluten Zeit-Wert. Eine
+solche Verzögerung ist in der Implementation von
+<TT
+CLASS="FILENAME"
+>/proc/jitqueue</TT
+> zu sehen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+ wait_queue_head_t wait;
+
+ init_waitqueue_head (&#38;wait);
+ interruptible_sleep_on_timeout(&#38;wait, jit_delay*HZ);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+
+In einem normalen Treiber kann die Ausführung auf zwei Arten
+fortgesetzt werden: Jemand ruft <SPAN
+><I
+CLASS="EMPHASIS"
+>wake_up</I
+></SPAN
+> an
+der Warteschlange auf, oder der Timeout läuft ab. In dieser speziellen
+Implementation ruft niemand jemals <SPAN
+><I
+CLASS="EMPHASIS"
+>wake_up</I
+></SPAN
+>
+an der Warteschlange auf (es weiß ja niemand davon), so daß der Prozeß
+immer durch Ablaufen des Timeouts aufwacht. Dies ist eine völlig
+akzeptable Implementation, aber wenn Ihr Treiber an keinen anderen
+Ereignissen interessiert ist, dann kann man Verzögerungen auch noch
+einfacher mit <SPAN
+><I
+CLASS="EMPHASIS"
+>schedule_timeout</I
+></SPAN
+> bekommen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+ set_current_state(TASK_INTERRUPTIBLE);
+ schedule_timeout (jit_delay*HZ);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+Die obengenannte Zeile (für <TT
+CLASS="FILENAME"
+>/proc/jitself</TT
+>) läßt
+den Prozeß schlafen, bis die angegebene Zeit verstrichen
+ist. <SPAN
+><I
+CLASS="EMPHASIS"
+>schedule_timeout</I
+></SPAN
+> erwartet ebenfalls
+die zu wartende Zeit, nicht die totale Anzahl von Jiffies. Wieder
+einmal sollten Sie beachten, daß zwischen dem Ablaufen des Timeouts
+und dem Zeitpunkt, an dem Ihr Prozeß mit der Ausführung dran ist,
+weitere Zeit verstreichen kann.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="FLOWUDELAY"
+>Kurze Verzögerungen</A
+></H2
+><P
+>&#13;
+Manchmal muß ein Treiber eine sehr kurze Verzögerung berechnen, um
+sich mit der Hardware zu synchronisieren. In diesem Fall ist
+<TT
+CLASS="LITERAL"
+>jiffies</TT
+> keine Lösung.&#13;</P
+><P
+>&#13;
+Die Kernel-Funktionen <SPAN
+><I
+CLASS="EMPHASIS"
+>udelay</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>mdelay</I
+></SPAN
+> dienen diesem Zweck.<A
+NAME="AEN8303"
+HREF="#FTN.AEN8303"
+>[1]</A
+>
+Ihre Prototypen lauten:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+#include &#60;linux/delay.h&#62;
+void udelay(unsigned long usecs);
+void mdelay(unsigned long usecs);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die Funktionen werden auf den meisten Architekturen inline
+kompiliert. Die erste Funktion verwendet eine Software-Schleife, um die
+angegebene Anzahl von
+Mikrosekunden zu warten, die zweite ist eine Schleife um
+<SPAN
+><I
+CLASS="EMPHASIS"
+>udelay</I
+></SPAN
+>, die aus Bequemlichkeitsgründen eingeführt
+wurde. In <SPAN
+><I
+CLASS="EMPHASIS"
+>udelay</I
+></SPAN
+> wird der BogoMips-Wert verwendet:
+Die Funktion benutzt den Integer-Wert
+<TT
+CLASS="LITERAL"
+>loops_per_second</TT
+>, der wiederum das
+Ergebnis der BogoMips-Berechnung beim Booten ist.
+&#13;</P
+><P
+>Der <SPAN
+><I
+CLASS="EMPHASIS"
+>udelay</I
+></SPAN
+>-Aufruf sollte nur für sehr kurze
+Intervalle verwendet werden, weil die Präzision von
+<TT
+CLASS="LITERAL"
+>loops_per_second</TT
+> nur 8 Bits beträgt
+und sich bei der Berechnung langer Verzögerungen spürbare Fehler
+ansammeln. Auch wenn die maximal zulässige Verzögerung fast eine
+Sekunde beträgt (weil die Berechnungen bei längeren Verzögerungen
+überlaufen), ist der empfohlene Maximalwert für
+<SPAN
+><I
+CLASS="EMPHASIS"
+>udelay</I
+></SPAN
+> 1000 Mikrosekunden (eine
+Millisekunde). Die Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>mdelay</I
+></SPAN
+> hilft, wenn
+die Verzögerung länger als eine Millisekunde dauern muß.&#13;</P
+><P
+>Es ist auch wichtig, nicht zu vergessen, daß
+<SPAN
+><I
+CLASS="EMPHASIS"
+>udelay</I
+></SPAN
+> (und damit auch
+<SPAN
+><I
+CLASS="EMPHASIS"
+>mdelay</I
+></SPAN
+>) eine Busy-Waiting-Funktion ist und da?
+andere Tasks in der Zwischenzeit nicht laufen können. Sie müssen daher
+(besonders mit <SPAN
+><I
+CLASS="EMPHASIS"
+>mdelay</I
+></SPAN
+>) sehr vorsichtig sein und
+diese Funktionen nur verwenden, wenn Sie keine andere Möglichkeit
+haben.&#13;</P
+><P
+>Die Kernel-Unterstützung für Verzögerungen, die
+kürzer als ein Timer-Tick, aber länger als ein paar Mikrosekunden
+sind, ist derzeit sehr ineffizient. Das ist
+aber üblicherweise kein Problem, weil Verzögerungen lang genug sein
+müssen, damit entweder Menschen oder die Hardware sie bemerken. Eine
+Hundertstelsekunde ist eine angemessene Präzision für
+Intervalle, die für Menschen spürbar sein sollen, während eine
+Millisekunde ausreichend lang für Hardware-Aktivitäten ist.</P
+><P
+><SPAN
+><I
+CLASS="EMPHASIS"
+>mdelay</I
+></SPAN
+> steht in Linux 2.0 nicht zur Verfügung,
+<TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> füllt aber die Lücke.
+
+
+&#13;</P
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN8303"
+HREF="x8199.html#AEN8303"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Das <TT
+CLASS="LITERAL"
+>u</TT
+> repräsentiert den
+                        griechischen Buchstaben &#8220;my&#8221; und steht für
+                        &#8220;Mikro-&#8221;.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x8127.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="flowqueue.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Die aktuelle Zeit ermitteln</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="flow.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Task-Schlangen</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

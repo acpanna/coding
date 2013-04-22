@@ -1,0 +1,605 @@
+<HTML
+><HEAD
+><TITLE
+>Asynchrone Benachrichtigung</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Fortgeschrittene Operationen in Zeichen-Treibern"
+HREF="extra.html"><LINK
+REL="PREVIOUS"
+TITLE="poll und select"
+HREF="exselect.html"><LINK
+REL="NEXT"
+TITLE="Ein Gerät positionieren"
+HREF="x7108.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="exselect.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 5. Fortgeschrittene Operationen in Zeichen-Treibern</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x7108.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="EXASYNC"
+>Asynchrone Benachrichtigung</A
+></H1
+><P
+>&#13;
+
+Obwohl die Kombination aus blockierenden und nicht-blockierenden
+Operationen sowie die <SPAN
+><I
+CLASS="EMPHASIS"
+>select</I
+></SPAN
+>-Methode für fast
+alle Fälle, in denen Geräte angesprochen werden sollen, ausreichend
+sind, können die bisher vorgestellten Techniken doch mit einigen
+Situationen nicht effizient umgehen.</P
+><P
+>Stellen wir uns beispielsweise
+vor, daß ein Prozeß eine lange Berechnung in einer Schleife bei
+niedriger Priorität durchführt, eingehende Daten aber so schnell wie
+möglich bearbeiten muß. Wenn der Eingabe-Kanal die Tastatur ist, dann
+dürfen Sie der Anwendung ein Signal schicken (normalerweise das
+&#8216;INTR&#8217;-Zeichen, üblicherweise Strg-C) aber diese Fähigkeit
+        ist ein Teil der
+TTY-Schicht, die nichts mit den allgemeinen Zeichen-Geräten zu tun
+hat. Für asynchrone Benachrichtungen benötigen wir etwas
+anderes. Außerdem sollten alle Eingabedaten einen Interrupt erzeugen,
+nicht nur Strg-C.&#13;</P
+><P
+>Anwendungsprogramme müssen zwei Schritte ausführen, um
+die asynchrone Benachrichtung für eine Eingabedatei
+einzuschalten. Zunächst wird ein Prozeß als &#8220;Eigentümer&#8221;
+der Datei angegeben. Die Benutzer-ID des Datei-Eigentümers wird vom
+Systemaufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>fcntl</I
+></SPAN
+> zur späteren Verwendung in
+<TT
+CLASS="LITERAL"
+>filp-&#62;f_owner</TT
+> abgelegt, wenn eine
+Anwendung den <TT
+CLASS="LITERAL"
+>F_SETOWN</TT
+>-Befehl
+verwendet. Dieser Schritt ist notwendig, damit der Kernel weiß, wen er
+        benachrichtigen muß.
+ Außerdem muß das Programm den Schalter
+<SPAN
+><I
+CLASS="EMPHASIS"
+>FASYNC</I
+></SPAN
+> mit einem weiteren
+<TT
+CLASS="LITERAL"
+>F_SETFL </TT
+><SPAN
+><I
+CLASS="EMPHASIS"
+>fcntl</I
+></SPAN
+>-Aufruf im Gerät
+        setzen, um die asynchrone
+Benachrichtigung tatsächlich einzuschalten.
+&#13;</P
+><P
+>&#13;Nachdem diese beiden Aufrufe ausgeführt worden sind, kann die
+Eingabedatei die Verwendung eines <TT
+CLASS="LITERAL"
+>SIGIO</TT
+>-Signals
+        anfordern, wann immer neue
+Daten eintreffen. Das Signal wird an den Prozeß (oder die
+Prozeßgruppe, wenn der Wert negativ ist) geschickt, der in
+<TT
+CLASS="LITERAL"
+>filp-&#62;f_owner</TT
+> abgelegt ist.</P
+><P
+>Die folgenden Zeilen schalten beispielsweise die asynchrone
+Benachrichtigung an den aktuellen Prozeß für die Eingabedatei
+<TT
+CLASS="LITERAL"
+>stdin</TT
+> ein:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+signal(SIGIO, &#38;input_handler); /* unschoenes Verfahren; */
+                                   /* sigaction() waere besser */
+fcntl(STDIN_FILENO, F_SETOWN, getpid());
+oflags=fcntl(STDIN_FILENO, F_GETFL);
+fcntl(STDIN_FILENO, F_SETFL, oflags | FASYNC);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Das Programm <SPAN
+CLASS="APPLICATION"
+>asynctest</SPAN
+> in den Quellen ist
+ein einfaches Programm, das wie gezeigt <TT
+CLASS="LITERAL"
+>stdin</TT
+>
+ausliest. Es kann verwendet werden, um die asynchronen Fähigkeiten von
+<SPAN
+CLASS="APPLICATION"
+>scullpipe</SPAN
+> zu testen. Das Programm ist
+<SPAN
+CLASS="APPLICATION"
+>cat</SPAN
+> ähnlich, beendet sich aber nicht am
+Dateiende; es antwortet nur auf Eingaben, nicht auf die Abwesenheit
+von Eingaben.&#13;</P
+><P
+>Nicht alle Geräte unterstützen jedoch die asynchrone Benachrichtigung, und Sie
+müssen das für Ihr Gerät auch nicht tun. Anwendungen erwarten
+asynchrone Fähigkeiten normalerweise nur von Sockets und
+TTYs. Beispielsweise unterstützen in den aktuellen Kerneln Pipes und
+FIFOs keine asynchrone Benachrichtigung. Mäuse haben eine asynchrone
+Benachrichtigung, weil einige Programme
+erwarten, daß eine Maus genau wie ein TTY ein <TT
+CLASS="LITERAL"
+>SIGIO</TT
+>
+schicken kann.
+&#13;</P
+><P
+>Es gibt noch ein weiteres Problem bei der Benachrichtigung über
+Eingaben. Wenn ein Prozeß ein <TT
+CLASS="LITERAL"
+>SIGIO</TT
+>-Signal bekommt,
+weiß er nicht, in welcher Eingabedatei neue Eingaben anliegen. Wenn
+für mehr als eine Datei für diesen Prozeß asynchrone Benachrichtigung
+eingeschaltet worden ist, muß die Anwendung doch
+<SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+> oder <SPAN
+><I
+CLASS="EMPHASIS"
+>select</I
+></SPAN
+> verwenden, um herauszufinden, was
+eigentlich passiert ist.</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN7030"
+>Die Sicht des Treibers</A
+></H2
+><P
+>&#13;
+Wichtiger für uns ist aber, wie ein Gerätetreiber die asynchrone
+Benachrichtigung implementieren kann. Die folgende Liste führt die
+Operationen aus der Sicht des Kernels auf:&#13;</P
+><P
+></P
+><UL
+><LI
+STYLE="list-style-type: disc"
+><P
+>Wenn <TT
+CLASS="LITERAL"
+>F_SETOWN</TT
+> aufgerufen
+wird, passiert nichts weiter, es wird lediglich der Wert an
+<TT
+CLASS="LITERAL"
+>filp-&#62;f_owner</TT
+> zugewiesen.</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>        Wenn <TT
+CLASS="LITERAL"
+>F_SETFL</TT
+> aufgerufen wird, um
+        <TT
+CLASS="LITERAL"
+>FASYNC</TT
+> einzuschalten, wird die
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>fasync</I
+></SPAN
+>-Methode des Treibers aufgerufen. Diese
+        Methode wird immer dann aufgerufen, wenn der Wert von
+        <TT
+CLASS="LITERAL"
+>FASYNC</TT
+> in
+        <TT
+CLASS="LITERAL"
+>filp-&#62;f_flags</TT
+> geändert wird, damit
+        sich der Treiber darauf einstellen kann. Wenn die Datei geöffnet
+        wird, ist der Schalter default-mäßig nicht gesetzt. Wir werden uns
+        die Standardimplementation der Treiber-Methode gleich ansehen.</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>        Wenn Daten eintreffen, muß an alle Prozesse, die sich für
+        die asynchrone Benachrichtigung registriert haben, ein
+        <TT
+CLASS="LITERAL"
+>SIGIO</TT
+>-Signal geschickt werden.</P
+></LI
+></UL
+><P
+>Die Implementation des ersten Schritts ist trivial &#8212; der Treiber
+muß überhaupt nichts machen &#8212;, aber in den weiteren Schritten
+muß eine dynamische Datenstruktur verwaltet werden, in der die
+verschiedenen asynchronen Leser festgehalten werden; es kann ja
+mehrere davon geben. Diese dynamische Datenstruktur hängt aber nicht
+vom jeweiligen Gerät ab, und der Kernel bietet eine passende allgemein
+verwendbare Implementation an, so daß Sie diesen Code nicht für jeden
+Treiber neu schreiben müssen.</P
+><P
+>Die allgemeine Implementation, die Linux anbietet, besteht aus einer
+Datenstruktur und zwei Funktionen (die im zweiten und im dritten der
+          oben genannten Schritte
+aufgerufen werden). Die benötigte Header-Datei ist
+<TT
+CLASS="LITERAL"
+>&#60;linux/fs.h&#62;</TT
+> &#8212; nichts Neues also
+&#8212;, und die Datenstruktur heißt <TT
+CLASS="LITERAL"
+>struct
+fasync_struct</TT
+>. So, wie wir es mit den Warteschlangen
+gemacht haben, müssen wir auch hier einen Zeiger auf die Struktur in
+die gerätespezifische Struktur mit aufnehmen. Wir haben dieses Feld
+auch schon im Abschnitt &#8220;<A
+HREF="exblocking.html#EXIMPL"
+>the Section called <I
+>Eine Beispiel-Implementation: scullpipe</I
+></A
+>&#8221;
+gesehen.
+&#13;</P
+><P
+>Die beiden Funktionen, die der Treiber aufruft, haben die
+folgenden Prototypen:
+
+&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+
+int fasync_helper(struct inode *inode, struct file *filp,
+                  int mode, struct fasync_struct **fa);
+void kill_fasync(struct fasync_struct *fa, int sig);</PRE
+></TD
+></TR
+></TABLE
+><P
+><TT
+CLASS="LITERAL"
+>fasync_helper</TT
+> wird aufgerufen, um Dateien zur Liste
+          der interessierten Prozesse hinzuzufügen oder um Dateien aus ihr zu
+          entfernen, wenn sich das <TT
+CLASS="LITERAL"
+>FASYNC</TT
+>-Flag für
+          eine offene Datei ändert. Alle Argumente mit Ausnahme des
+          letzten werden an die Methode
+          <SPAN
+><I
+CLASS="EMPHASIS"
+>fasync</I
+></SPAN
+> übergeben und können direkt
+          durchgereicht werden. <TT
+CLASS="LITERAL"
+>kill_fasync</TT
+> wird
+          verwendet, um die interessierten Prozesse zu
+          benachrichtigen, wenn Daten eintreffen. Die Argumente sind
+          das zu schickende Signal (normalerweise
+          <TT
+CLASS="LITERAL"
+>SIGIO</TT
+>) und das Band, das fast immer
+          <TT
+CLASS="LITERAL"
+>POLL_IN</TT
+> ist (aber das auch dazu verwendet
+          werden kann, &#8220;dringende&#8221; oder Out-of-Band-Daten im
+          Netzwerk-Code zu schicken).&#13;</P
+><P
+><SPAN
+CLASS="APPLICATION"
+>scullpipe</SPAN
+> implementiert die Methode
+<SPAN
+><I
+CLASS="EMPHASIS"
+>fasync</I
+></SPAN
+> folgendermaßen:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+int scull_p_fasync (fasync_file fd, struct file *filp, int mode)
+{
+    Scull_Pipe *dev = filp-&#62;private_data;
+
+    return fasync_helper(fd, filp, mode, &#38;dev-&#62;async_queue);
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Offensichtlich wird alle Arbeit von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>fasync_helper</I
+></SPAN
+> erledigt.  Ganz ohne die
+Mithilfe des Treibers geht es allerdings doch nicht, weil diese
+Funktion Zugriff auf den korrekten Zeiger in der <TT
+CLASS="LITERAL"
+>struct
+fasync_struct *</TT
+> (hier
+<TT
+CLASS="LITERAL"
+>&#38;dev-&#62;async_queue</TT
+>) benötigt, den nur
+der Treiber bereitstellen kann.&#13;</P
+><P
+>Wenn Daten eintreffen, muß die folgende Anweisung ausgeführt werden,
+um den asynchronen Lesern Bescheid zu geben. Weil neue Daten für
+<SPAN
+CLASS="APPLICATION"
+>scullpipe</SPAN
+>-Leser von einem schreibenden
+Prozeß erzeugt werden, steht die folgende Anweisung in der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>-Methode von
+<SPAN
+CLASS="APPLICATION"
+>scullpipe</SPAN
+>.</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+if (dev-&#62;async_queue)
+    kill_fasync (dev-&#62;async_queue, SIGIO, POLL_IN);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Es sieht vielleicht so aus, als wären wir damit fertig, aber eines
+fehlt noch. Wir müssen beim Schließen der Datei noch einmal
+<SPAN
+><I
+CLASS="EMPHASIS"
+>fasync</I
+></SPAN
+> aufrufen, um die geschlossene Datei von
+der Liste der aktiven asynchronen Leser zu entfernen. Zwar ist dieser
+Aufruf eigentlich nur nötig, wenn <TT
+CLASS="LITERAL"
+>FASYNC</TT
+> in
+<TT
+CLASS="LITERAL"
+>filp-&#62;f_flags</TT
+> gesetzt ist, aber es
+schadet nichts, die Funktion auf jeden Fall aufzurufen, was auch
+normalerweise gemacht wird. Die folgenden Zeilen stehen beispielsweise
+in der <SPAN
+><I
+CLASS="EMPHASIS"
+>close</I
+></SPAN
+>-Methode von
+<SPAN
+CLASS="APPLICATION"
+>scullpipe</SPAN
+>:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+/* diesen filp von der Liste der asynchron benachrichtigten filps entfernen */
+scull_p_fasync(-1, filp, 0);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die Datenstruktur, die der asynchronen Benachrichtigung zugrundeliegt, ist
+fast identisch mit der Struktur <TT
+CLASS="LITERAL"
+>struct
+wait_queue</TT
+>, weil in beiden Situationen auf ein
+Ereignis gewartet wird. Der Unterschied ist hauptsächlich, daß
+<TT
+CLASS="LITERAL"
+>struct file</TT
+> anstelle von <TT
+CLASS="LITERAL"
+>struct
+task_struct</TT
+> verwendet wird. Mittels der
+<TT
+CLASS="LITERAL"
+>struct file</TT
+> in der Warteschlange wird dann der
+<TT
+CLASS="LITERAL"
+>f_owner</TT
+> geholt, damit der Prozeß
+benachrichtigt werden kann.
+
+&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="exselect.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x7108.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>poll und select</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="extra.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Ein Gerät positionieren</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

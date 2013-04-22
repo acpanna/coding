@@ -1,0 +1,1627 @@
+<HTML
+><HEAD
+><TITLE
+>Task-Schlangen</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Der Lauf der Zeit"
+HREF="flow.html"><LINK
+REL="PREVIOUS"
+TITLE="Die Ausführung verzögern"
+HREF="x8199.html"><LINK
+REL="NEXT"
+TITLE="Kernel-Timer"
+HREF="flowtimers.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x8199.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 6. Der Lauf der Zeit</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="flowtimers.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="FLOWQUEUE"
+>Task-Schlangen</A
+></H1
+><P
+>&#13;
+Ein Feature, das viele Treiber benötigen, ist das Vormerken der
+Ausführung von Tasks zu einem späteren Zeitpunkt, ohne daß Interrupts
+verwendet werden. Linux bietet zu diesem Zweck drei verschiedene
+Interfaces an: Task-Schlangen, Tasklets (ab Kernel 2.3.43) und
+Kernel-Timer. Task-Schlangen und Tasklets sind
+flexible Werkzeuge, um die Ausführung zu einem
+späteren Zeitpunkt vorzumerken, wobei &#8220;später&#8221; verschiedene Bedeutungen
+haben kann. Sie sind besonders nützlich, wenn man Interrupt-Handler
+schreibt; wir werden daher noch einige davon in &#8220;<A
+HREF="irqbottom.html"
+>the Section called <I
+>Tasklets und untere Hälften</I
+> in Kapitel 9</A
+>&#8221; in <A
+HREF="irq.html"
+>Kapitel 9</A
+>
+sehen. Kernel-Timer werden verwendet, um einen Task für einen
+bestimmten späteren Zeitpunkt vorzumerken; wir kommen darauf später in
+&#8220;<A
+HREF="flowtimers.html"
+>the Section called <I
+>Kernel-Timer</I
+></A
+>&#8221; zurück.&#13;</P
+><P
+>Die Verwaltung von Hardware, die keine Interrupts erzeugen kann, aber
+trotzdem ein blockierendes Lesen zuläßt, ist eine typische Situation, in
+der Sie Task-Schlangen oder Tasklets verwenden könnten. Sie müssen
+regelmäßig das
+Gerät abfragen, dabei aber aufpassen, daß Sie die CPU nicht mit
+unnötigen Operationen belasten. Es ist keine gute Idee, den
+lesenden Prozeß in festen Intervallen aufzuwecken (beispielsweise mit
+<TT
+CLASS="LITERAL"
+>current-&#62;timeout</TT
+>), weil jede Abfrage zwei
+Kontextwechsel benötigen würde(einen, um den Polling-Code im lesenden Prozeß
+auszuführen, und einen, um zum Prozeß zurückzukehren, der die
+eigentliche Arbeit tut)  und oft ein sinnvoller
+Abfragemechanismus nur außerhalb des Prozeß-Kontextes
+implementiert werden kann.&#13;</P
+><P
+>Ein ähnliches Problem liegt vor, wenn Sie einem einfachen
+Hardware-Gerät regelmäßige Eingaben liefern müssen. Beispielsweise
+kann es notwendig sein, Schrittwerte an einen Schrittmotor zu
+schicken, der direkt mit dem Parallel-Port verbunden ist &#8212; der
+Motor muß in gleichmäßigen einzelnen Schritten bewegt werden. In
+diesem Fall kommuniziert der kontrollierende Prozeß mit Ihrem
+Gerätetreiber, um die Bewegung zu veranlassen, aber die eigentliche
+Bewegung sollte Schritt für Schritt durchgeführt werden, nachdem
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+> schon längst wieder verlassen wurde.&#13;</P
+><P
+>Solche Operationen können am schnellsten durchgeführt werden, indem
+ein Task zur späteren Ausführung vorgemerkt wird. Der Kernel kennt
+sogenannte Task-&#8220;Schlangen&#8221;, in denen sich Tasks
+ansammeln, die dann ausgeführt werden, wenn die Schlange abgearbeitet
+wird. Sie können eine eigene Task-Schlange erzeugen und nach Belieben
+starten oder Ihre Tasks in vordefinierten Schlangen registrieren, die
+vom Kernel selbst gesteuert werden.&#13;</P
+><P
+>Dieser Abschnitt beschreibt zunächst Task-Schlangen, stellt dann
+die vordefinierten Task-Schlangen vor, die schon einmal ein guter
+Start für vordefinierte Tests sind (und den Computer zum Stehen
+bringen, wenn etwas schiefgeht), und geht schließlich darauf ein, wie
+Sie Ihre eigenen Task-Schlangen definieren können. Anschließend
+beschreiben wir die neue <SPAN
+><I
+CLASS="EMPHASIS"
+>Tasklet</I
+></SPAN
+>-Schnittstelle,
+die im 2.4-Kernel bei vielen Anwendungen die Task-Schlangen ersetzt.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="FLOWQUEUENATURE"
+>Wie Task-Schlangen aufgebaut sind</A
+></H2
+><P
+>Eine Task-Schlange ist eine Liste von Tasks, wobei jeder Task durch
+einen Funktionszeiger und ein Argument repräsentiert wird. Wenn ein
+Task gestartet wird, bekommt er ein <TT
+CLASS="LITERAL"
+>void *</TT
+>-Argument
+übergeben und gibt <TT
+CLASS="LITERAL"
+>void</TT
+> zurück. Das Zeiger-Argument
+kann verwendet werden, um eine Datenstruktur an die Routine zu
+übergeben, oder auch ignoriert werden. Die Schlange selbst ist eine
+Liste von Strukturen (den Tasks), die dem Kernel-Modul gehören, das
+sie deklariert oder in die Warteschlange gestellt hat. Das Modul ist
+völlig selbst dafür verantwortlich, die Strukturen zu allozieren und
+zu deallozieren; oft werden dafür statische Strukturen verwendet.&#13;</P
+><P
+>&#13;Ein Eintrag in der Warteschlange wird durch die folgende Struktur
+beschrieben, die direkt aus
+<TT
+CLASS="LITERAL"
+>&#60;linux/tqueue.h&#62;</TT
+> kopiert wurde:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+struct tq_struct {
+    struct tq_struct *next;         /* verkettete Liste der aktiven bhs */
+    int sync;                       /* muss mit 0 initialisiert werden */
+    void (*routine)(void *);        /* aufzurufende Funktion */
+    void *data;                     /* Argument fuer die Funktion */
+};</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Das &#8220;bh&#8221; im ersten Kommentar steht für
+<SPAN
+><I
+CLASS="EMPHASIS"
+>Bottom Half</I
+></SPAN
+> (untere Hälfte). Eine Bottom Half ist
+&#8220;die Hälfte eines Interrupt-Handlers&#8221;. Wir gehen auf
+dieses Thema ausführlich ein, wenn wir uns im Abschnitt &#8220;<A
+HREF="irqbottom.html"
+>the Section called <I
+>Tasklets und untere Hälften</I
+> in Kapitel 9</A
+>&#8221; in <A
+HREF="irq.html"
+>Kapitel 9</A
+> mit
+                        Interrupt-Handlern beschäftigen. Im Moment
+reicht es zu wissen, daß die untere Hälfte ein Mechanismus ist, der
+von einem Gerätetreiber eingesetzt wird, um asynchrone Tasks zu
+verarbeiten, die normalerweise zu groß sind, um in einem
+Hardware-Interrupt durchgeführt zu werden. Dieses Kapitel sollte auch
+ohne das Wissen um untere Hälften verständlich sein, wir werden aber
+trotzdem von Zeit zu Zeit darauf eingehen.&#13;</P
+><P
+>Die wichtigsten Felder in der oben gezeigten Datenstruktur sind
+<TT
+CLASS="LITERAL"
+>routine</TT
+> und <TT
+CLASS="LITERAL"
+>data</TT
+>. Um einen Task
+zur späteren Ausführung vorzumerken, müssen Sie diesen beiden Feldern
+Werte zuweisen, bevor Sie die Struktur in die Schlange einstellen,
+während <TT
+CLASS="LITERAL"
+>next</TT
+> und <TT
+CLASS="LITERAL"
+>sync</TT
+> leer sein
+sollten. Der <TT
+CLASS="LITERAL"
+>sync</TT
+>-Schalter in der Struktur wird
+verwendet, um zu verhindern, daß ein und derselbe Task mehrfach in
+eine Schlange gestellt wird, weil damit der
+<TT
+CLASS="LITERAL"
+>next</TT
+>-Zeiger nicht mehr stimmen würde. Wenn ein Task
+einmal in die Schlange  gestellt worden ist, gilt die Struktur als
+dem Kernel &#8220;gehörend&#8221; und sollte nicht mehr verändert
+werden, bis der Task ausgeführt worden ist.&#13;</P
+><P
+>&#13;Die andere bei Task-Schlangen verwendete Datenstruktur ist
+<TT
+CLASS="LITERAL"
+>task_queue</TT
+>, die derzeit nur ein Zeiger auf
+<TT
+CLASS="LITERAL"
+>struct tq_struct</TT
+> ist. Man hat sich
+entschieden, diesen Zeiger per <TT
+CLASS="LITERAL"
+>typedef</TT
+> über ein
+anderes Symbol zu definieren, um später bei Bedarf
+<TT
+CLASS="LITERAL"
+>task_queue</TT
+> erweitern zu
+können. <TT
+CLASS="LITERAL"
+>task_queue</TT
+>-Zeiger sollten vor der
+Verwendung mit <TT
+CLASS="LITERAL"
+>NULL</TT
+> initialisiert werden.&#13;</P
+><P
+>Die folgende Liste faßt alle Operationen zusammen, die auf
+Task-Schlangen und <TT
+CLASS="LITERAL"
+>struct
+tq_struct</TT
+>-Datenstrukturen
+durchgeführt werden.&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>DECLARE_TASK_QUEUE(name);</TT
+></DT
+><DD
+><P
+>&#13;Dieses Makro deklariert eine Task-Schlange mit dem angegebenen Namen
+und initialisiert die Schlange mit einem leeren Zustand.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int queue_task(struct tq_struct *task, task_queue *list);</TT
+></DT
+><DD
+><P
+>&#13;        Wie der Name schon andeutet, stellt diese Funktion einen Task in
+        die Schlange. Der Rückgabewert ist 0, wenn sich der Task
+bereits in der Schlange befand. Ansonsten ist er von 0 verschieden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void run_task_queue(task_queue *list);</TT
+></DT
+><DD
+><P
+>&#13;        Diese Funktion wird verwendet,
+        um eine Schlange voller angesammelter Tasks abzuarbeiten. Sie
+        werden diese Funktion nicht aufrufen müssen, wenn Sie keine
+        eigenen Schlangen deklarieren und verarbeiten.</P
+></DD
+></DL
+></DIV
+><P
+>Bevor wir in die Details der Verwendung der Task-Schlangen einsteigen,
+müssen wir einen Moment innehalten und uns anschauen, wie diese im
+Kernel funktionieren.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN8406"
+>Wie Task-Schlangen ausgeführt werden</A
+></H2
+><P
+>&#13;
+Eine Task-Schlange ist, wie wir bereits gesehen haben, praktisch eine
+verkettete Liste von aufzurufenden Funktionen. Wenn
+<SPAN
+><I
+CLASS="EMPHASIS"
+>run_task_queue</I
+></SPAN
+> gebeten wird, eine
+bestimmte Schlange auszuführen, wird jeder Eintrag in der Liste
+ausgeführt. Wenn Sie Funktionen schreiben, die mit Task-Schlangen
+arbeiten, müssen Sie wissen, wann der Kernel
+<SPAN
+><I
+CLASS="EMPHASIS"
+>run_task_queue</I
+></SPAN
+> aufruft; der genaue
+Kontext legt Ihnen eine Beschränkungen hinsichtlich dessen auf, was
+Sie tun dürfen. Sie sollten außerdem keine Annahmen hinsichtlich der
+Reihenfolge machen, in denen die Tasks ausgeführt werden; jeder muß
+seine Aufgabe unabhängig von den anderen erfüllen.</P
+><P
+>Und wann werden nun Task-Schlangen ausgeführt? Wenn Sie eine der im
+nächsten Abschnitt besprochenen vordefinierten Task-Schlangen
+verwenden, dann lautet die Antwort: &#8220;Wenn der Kernel dazu Zeit hat.&#8221;
+Verschiedene Schlangen werden zu verschiedenen Zeitpunkten ausgeführt,
+aber sie werden alle ausgeführt, wenn der Kernel gerade nichts anderes
+Wichtiges zu tun hat.</P
+><P
+>&#13;Am wichtigsten ist, daß die Task-Schlangen fast sicher
+<SPAN
+><I
+CLASS="EMPHASIS"
+>nicht</I
+></SPAN
+> ausgeführt werden, wenn der Prozeß, der den
+Task eingestellt hat, gerade ausgeführt wird. Statt dessen werden die
+Task-Schlangen asynchron ausgeführt. Bisher ist alles, was wir in
+unseren Beispiel-Treibern gemacht haben, im Kontext eines Prozesses
+geschehen, der Systemaufrufe ausführt. Wenn eine Task-Schlange
+ausgeführt wird, könnte dieser Prozeß aber gerade schlafen, auf einem
+anderen Prozessor ausgeführt werden oder sogar ganz beendet worden
+sein.</P
+><P
+>&#13;Die asynchrone Ausführung ähnelt dem, was passiert, wenn ein
+Hardware-Interrupt eintrifft (das wird in <A
+HREF="irq.html"
+>Kapitel 9</A
+> genau
+besprochen). Task-Schlangen werden oft als Folge eines
+"Software-Interrupts" ausgeführt. Wenn Ihr Code so im
+<I
+CLASS="FIRSTTERM"
+>Interrupt-Modus</I
+> (oder: &#8220;zur
+<SPAN
+><I
+CLASS="EMPHASIS"
+>Interrupt-Zeit</I
+></SPAN
+>&#8221;) ausgeführt wird, gibt es eine
+Reihe von Einschränkungen. Wir stellen diese hier vor und werden an
+verschiedenen Stellen in diesem Buch wieder darauf stoßen. Die
+Wiederholungen sind hier angebracht, denn die Regeln für den
+Interrupt-Modus müssen befolgt werden, ansonsten kommt das System in
+große Schwierigkeiten.</P
+><P
+>Eine Reihe von Aktionen brauchen den Kontext eines Prozesses, um
+ausgeführt werden zu können. Wenn Sie sich außerhalb von
+Prozeß-Kontexten (also im Interrupt-Modus) befinden, müssen Sie die
+folgenden Regeln beachten:</P
+><P
+></P
+><UL
+><LI
+><P
+>Es ist kein Zugriff auf den User-Space möglich. Weil es keinen
+Prozeß-Kontext gibt, gibt es auch keinen Pfad in den User-Space, der
+zu einem bestimmten Prozeß gehören könnte.</P
+></LI
+><LI
+><P
+>Der Zeiger <TT
+CLASS="LITERAL"
+>current</TT
+> ist im Interrupt-Modus nicht
+gültig und kann nicht verwendet werden.</P
+></LI
+><LI
+><P
+>Es darf nicht geschlafen werden, und es darf kein Scheduling vorkommen. Code im
+Interrupt-Modus darf weder <SPAN
+><I
+CLASS="EMPHASIS"
+>schedule</I
+></SPAN
+> noch
+<SPAN
+><I
+CLASS="EMPHASIS"
+>sleep_on</I
+></SPAN
+> aufrufen, außerdem auch keine
+andere Funktion, die schlafen könnte. Beispielsweise verstößt der
+Aufruf von <TT
+CLASS="LITERAL"
+>kmalloc(...,
+GFP_KERNEL)</TT
+> gegen die Regeln. Semaphore dürfen auch nicht
+verwendet werden, weil auch diese schlafen können.</P
+></LI
+></UL
+><P
+>&#13;Kernel-Code kann durch Aufruf der Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>in_interrupt()</I
+></SPAN
+> feststellen, ob er sich im
+Interrupt-Modus befindet oder nicht. Diese Funktion erwartet keine
+Argumente und gibt einen von Null verschiedenen Wert zurück, wenn sich
+der Prozessor im Interrupt-Modus befindet.&#13;</P
+><P
+>&#13;
+
+
+Ein weiteres Merkmal der aktuellen Implementation von Task-Schlangen
+besteht darin, daß ein Task sich selbst wieder durch Aufrufen von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>queue_task</I
+></SPAN
+> in die gleiche Schlange
+einreihen kann, in der er ausgeführt wurde. Das ist möglich, weil der
+Kopf der Schlange durch einen <TT
+CLASS="LITERAL"
+>NULL</TT
+>-Zeiger ersetzt
+wird, bevor Tasks konsumiert werden. Als Folge davon wird eine neue
+Schlange aufgebaut, sobald die Ausführung der alten beginnt.</P
+><P
+>Obwohl das erneute Einstellen des gleichen Tasks nutzlos erscheinen
+mag, es ist manchmal doch nützlich. Denken Sie beispielsweise an einen
+Treiber, der ein Paar von Schrittmotoren schrittweise bewegt, indem er
+sich immer wieder in der Schlange einträgt, bis das Ziel erreicht
+ist. Ein weiteres Beispiel ist das Modul
+<SPAN
+CLASS="APPLICATION"
+>jiq</SPAN
+>, in dem sich die Druckfunktion selbst
+wieder vormerkt, um die Ausgabe zu erreichen &#8212; als Folge davon
+wird die Timer-Schlange mehrfach durchlaufen.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="FLOWPREDEFQ"
+>Vordefinierte Task-Schlangen</A
+></H2
+><P
+>&#13;
+Eine verzögerte Ausführung ist am einfachsten zu erreichen, wenn Sie die
+Schlangen verwenden, die bereits vom Kernel verwaltet werden. Es gibt
+vier solche Schlangen, die unten beschrieben werden, aber Ihr Treiber kann nur
+die ersten drei verwenden. Die Schlangen werden in
+<TT
+CLASS="LITERAL"
+>&#60;linux/tqueue.h&#62;</TT
+> definiert; diese
+Header-Datei sollte in Ihren Quellen eingebunden werden.
+
+&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>Die Scheduler-Schlange</TT
+></DT
+><DD
+><P
+>&#13;
+
+Diese Schlange unterscheidet sich von allen anderen vordefinierten
+Task-Schlangen dadurch, daß sie im Prozeß-Kontext ausgeführt wird, was
+bedeutet, daß die Tasks etwas mehr Freiheit bei der Ausführung ihrer
+Aufgaben haben. In Linux 2.4 wird diese Schlange aus einem dafür
+abgestellten Kernel-Thread namens <SPAN
+><I
+CLASS="EMPHASIS"
+>keventd</I
+></SPAN
+> heraus
+ausgeführt und über eine Funktion namens
+<SPAN
+><I
+CLASS="EMPHASIS"
+>schedule_task</I
+></SPAN
+> manipuliert. In älteren
+Kernel-Versionen wurde <SPAN
+><I
+CLASS="EMPHASIS"
+>keventd</I
+></SPAN
+> nicht verwendet
+und die Schlange (<TT
+CLASS="LITERAL"
+>tq_scheduler</TT
+>) direkt
+manipuliert.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>tq_timer</TT
+></DT
+><DD
+><P
+>&#13;
+
+        Diese Schlange wird vom Timer gestartet. Weil der Timer (die
+        Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>do_timer</I
+></SPAN
+>) zur Interrupt-Zeit
+        läuft, laufen auch alle Tasks in dieser Queue zur Interrupt-Zeit.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>tq_immediate</TT
+></DT
+><DD
+><P
+>&#13;
+
+        Diese Schlange läuft so schnell wie möglich, entweder beim
+        Rücksprung aus dem Systemaufruf oder wenn der Scheduler aufgerufen
+        wird &#8212; je nachdem, was zuerst passiert. Die Schlange wird zur
+        Interrupt-Zeit ausgeführt.</P
+></DD
+></DL
+></DIV
+><P
+>Es gibt auch noch weitere vordefinierte Task-Schlangen, diese sind
+aber für Treiber-Autoren nicht interessant.</P
+><P
+>Der zeitliche Ablauf in einem Treiber, der eine Task-Schlange
+verwendet, ist in
+<A
+HREF="flowqueue.html#FLOWQUEUEFIG"
+>Abbildung 6-1</A
+> abgebildet. Die Abbildung zeigt einen
+Treiber, der eine Funktion in einem Interrupt-Handler in die Schlange
+<TT
+CLASS="LITERAL"
+>tq_immediate</TT
+> einreiht.
+
+    </P
+><DIV
+CLASS="FIGURE"
+><A
+NAME="FLOWQUEUEFIG"
+></A
+><P
+><B
+>Abbildung 6-1. Zeitlicher Ablauf bei der Verwendung von Task-Schlangen</B
+></P
+><P
+><IMG
+SRC="ldr_0601.jpg"></P
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN8521"
+>Wie die Beispiele arbeiten</A
+></H3
+><P
+>&#13;Beispiele für die verzögerte Ausführung finden Sie im Modul
+<SPAN
+CLASS="APPLICATION"
+>jiq</SPAN
+> ("Just In Queue"), aus dem auch die
+Quellbeispiele in diesem Abschnitt entnommen sind. Dieses Modul
+erzeugt <TT
+CLASS="FILENAME"
+>/proc</TT
+>-Dateien, die ähnlich wie bei
+<SPAN
+CLASS="APPLICATION"
+>jit</SPAN
+> von <SPAN
+CLASS="APPLICATION"
+>dd</SPAN
+> oder
+anderen Programmen ausgelesen können.&#13;</P
+><P
+>&#13;Der Prozeß, der eine <SPAN
+CLASS="APPLICATION"
+>jiq</SPAN
+>-Datei liest, wird
+schlafen gelegt, bis der Puffer voll ist.<A
+NAME="AEN8535"
+HREF="#FTN.AEN8535"
+>[1]</A
+> Dieses Schlafen wird durch eine
+einfache Schleife erreicht, die so deklariert ist:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+DECLARE_WAIT_QUEUE_HEAD (jiq_wait);
+&#13;</PRE
+></TD
+></TR
+></TABLE
+><P
+>Der Puffer wird durch aufeinanderfolgende Läufe einer
+Task-Schlange gefüllt. Jeder Durchlauf durch die Schlange hängt einen
+Text-String an den zu füllenden Puffer an; jeder String meldet die
+aktuelle Uhrzeit (in Jiffies), den Prozeß, der während dieses
+Durchlaufs den Prozessor hat (<TT
+CLASS="LITERAL"
+>current</TT
+>) und den
+Rückgabewert von <SPAN
+><I
+CLASS="EMPHASIS"
+>in_interrupt</I
+></SPAN
+>.</P
+><P
+>&#13;Der Code zum Füllen des Puffers ist auf die Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>jiq_print_tq</I
+></SPAN
+> beschränkt, die bei jedem
+Durchlauf durch die verwendete Schlange ausgeführt wird. Die Funktion,
+die für die Ausgaben sorgt, ist nicht interessant und wird deswegen hier
+nicht gezeigt; statt dessen schauen wir uns an, wie der Task, der in
+die Schlange gestellt werden soll, initialisiert wird:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+struct tq_struct jiq_task; /* global: mit 0 initialisiert */
+
+/* diese Zeilen stehen in jiq_init() */
+jiq_task.routine = jiq_print_tq;
+jiq_task.data = (void *)&#38;jiq_data;</PRE
+></TD
+></TR
+></TABLE
+><P
+>Es ist nicht nötig, die Felder <TT
+CLASS="LITERAL"
+>sync</TT
+> und
+<TT
+CLASS="LITERAL"
+>next</TT
+> in <TT
+CLASS="LITERAL"
+>jiq_task</TT
+> auf Null
+zu setzen, weil statische Variablen vom Compiler ohnehin mit Null
+initialisiert werden.&#13;</P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="FLOWSCHEDQ"
+>Die Scheduler-Schlange</A
+></H3
+><P
+>&#13;
+
+Die Scheduler-Schlange ist in mancherlei Hinsicht am einfachsten zu
+benutzen. Weil Tasks, die aus dieser Schlange heraus ausgeführt
+werden, nicht im Interrupt-Modus laufen, können sie mehr tun &#8212; vor
+allem schlafen. Viele Teile des Kernels verwenden diese Schlange, um
+eine Vielzahl von Aufgaben zu erfüllen.</P
+><P
+>&#13;
+Ab Kernel 2.4.0-test11 ist die eigentliche Warteschlange, die die
+Scheduler-Schlange implementiert, vor dem Rest des Kernels
+verborgen. Anstatt <SPAN
+><I
+CLASS="EMPHASIS"
+>queue_task</I
+></SPAN
+> direkt zu
+verwenden, muß Code, der diese Queue benutzt,
+<SPAN
+><I
+CLASS="EMPHASIS"
+>schedule_task</I
+></SPAN
+> aufrufen, um einen Task in
+die Schlange zu stellen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; int schedule_task(struct tq_struct *task);</PRE
+></TD
+></TR
+></TABLE
+><P
+><TT
+CLASS="LITERAL"
+>task</TT
+> ist natürlich der einzustellende Task. Der
+Rückgabewert wird von <SPAN
+><I
+CLASS="EMPHASIS"
+>queue_task</I
+></SPAN
+>
+übernommen und ist von Null verschieden, wenn sich der Task noch nicht
+in der Schlange befand.</P
+><P
+>&#13;Ebenfalls ab 2.4.0-test11 startet der Kernel einen speziellen Prozeß
+namens <SPAN
+CLASS="APPLICATION"
+>keventd</SPAN
+>, dessen einzige Aufgabe darin
+besteht, Tasks aus der Scheduler-Schlange
+auszuführen. <SPAN
+CLASS="APPLICATION"
+>keventd</SPAN
+> stellt einen
+vorhersagbaren Prozeß-Kontext für die auszuführenden Tasks zur Verfügung (im
+Gegensatz zur früheren Implementation, die die Tasks im Prinzip in
+einem zufälligen Prozeß-Kontext ausführte).</P
+><P
+>Es gibt eine Reihe von Auswirkungen der
+<SPAN
+CLASS="APPLICATION"
+>keventd</SPAN
+>-Implementation, die es wert sind,
+im Kopf behalten zu werden. Zunächst können die Tasks in dieser
+Schlange schlafen; mancher Kernel-Code macht von dieser Freiheit
+Gebrauch. Gut geschriebener Code sollte aber nur sehr kurze Zeit
+schlafen, weil keine anderen Tasks aus der Scheduler-Schlange
+ausgeführt werden können, während <SPAN
+CLASS="APPLICATION"
+>keventd</SPAN
+>
+schläft. Sie sollten auch nicht vergessen, daß Ihr Task die
+Scheduler-Schlange mit anderen Tasks teilt, die ebenfalls schlafen
+können. In normalen Situationen werden in die Scheduler-Schlange
+gestellte Tasks sehr schnell ausgeführt (möglicherweise sogar, bevor
+<SPAN
+><I
+CLASS="EMPHASIS"
+>schedule_task</I
+></SPAN
+> zurückkehrt). Wenn ein
+anderer Task aber schläft, kann sich die Zeit, die vergeht, bis Ihre
+Tasks ausgeführt werden, deutlich vergrößern. Tasks, die unbedingt in
+einem bestimmten engen Zeitraum ausgeführt werden müssen, sollten eine
+der anderen Schlangen verwenden.</P
+><P
+><TT
+CLASS="FILENAME"
+>/proc/jiqsched</TT
+> ist eine Beispiel-Datei, die die
+Scheduler-Schlange verwendet. Die Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>
+für die Datei leitet alles folgendermaßen an die Task-Schlange weiter:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+int jiq_read_sched(char *buf, char **start, off_t offset,
+                   int len, int *eof, void *data)
+{
+
+    jiq_data.len = 0;               /* noch nichts ausgegeben */
+    jiq_data.buf = buf;             /* hier ausgeben */
+    jiq_data.jiffies = jiffies;     /* initiale Zeit */
+
+    /* jiq_print ruft queue_task() in jiq_data.queue erneut auf */
+    jiq_data.queue = SCHEDULER_QUEUE;
+
+    schedule_task(&#38;jiq_task);             /* bereit zur Ausfuehrung */
+    interruptible_sleep_on(&#38;jiq_wait);    /* schlafen bis zum Beenden */
+
+    *eof = 1;
+    return jiq_data.len;
+}
+
+
+
+
+
+
+&#13;</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wenn man <TT
+CLASS="FILENAME"
+>/proc/jiqsched</TT
+> ausliest, bekommt man
+etwa folgende Ausgabe:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; time  delta interrupt  pid cpu command
+601687   0        0       2   1 keventd
+601687   0        0       2   1 keventd
+601687   0        0       2   1 keventd
+601687   0        0       2   1 keventd
+601687   0        0       2   1 keventd
+601687   0        0       2   1 keventd
+601687   0        0       2   1 keventd
+601687   0        0       2   1 keventd
+601687   0        0       2   1 keventd</PRE
+></TD
+></TR
+></TABLE
+><P
+>In dieser Ausgabe ist das Feld <TT
+CLASS="LITERAL"
+>time</TT
+> der Wert von
+<TT
+CLASS="LITERAL"
+>jiffies</TT
+> zum Zeitpunkt der Ausführung des Tasks,
+<TT
+CLASS="LITERAL"
+>delta</TT
+> ist die Veränderung in
+<TT
+CLASS="LITERAL"
+>jiffies</TT
+> seit der letzten Ausführung des Tasks,
+<TT
+CLASS="LITERAL"
+>interrupt</TT
+> ist der Rückgabewert der Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>in_interrupt</I
+></SPAN
+>, <TT
+CLASS="LITERAL"
+>pid</TT
+> ist
+die ID des laufenden Prozesses, <TT
+CLASS="LITERAL"
+>CPU</TT
+> ist die Nummer
+der verwendeten CPU (immer 0 auf Einzelprozessor-Systemen), und
+<TT
+CLASS="LITERAL"
+>command</TT
+> ist der Befehl, der vom aktuellen Prozeß
+ausgeführt wird.</P
+><P
+>&#62;
+&#62;
+&#62;
+Wir sehen in diesem Fall, daß der Task immer unter dem Prozeß
+<SPAN
+CLASS="APPLICATION"
+>keventd</SPAN
+> läuft. Außerdem läuft er sehr
+schnell &#8212; ein Task, der sich selbst wieder in die
+Scheduler-Schlange stellt, kann in einem einzigen Timer-Tick Hunderte
+oder Tausende von Malen laufen. Selbst auf einem stark belasteten
+System ist die Latenz in der Scheduler-Schlange ziemlich klein.</P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="FLOWTIMERQUEUE"
+>Die Timer-Schlange</A
+></H3
+><P
+>&#13;
+
+Die Timer-Schlange unterscheidet sich dahingehend von der
+Scheduler-Schlange, daß die Schlange
+(<TT
+CLASS="LITERAL"
+>tq_timer</TT
+>) direkt verfügbar ist. Außerdem
+werden Tasks in der Timer-Schlange natürlich im Interrupt-Modus
+ausgeführt. Weiterhin ist garantiert, daß die Schlange beim nächsten
+Clock-Tick ausgeführt wird, was die Latenz bei hoher Systemlast
+beseitigt.</P
+><P
+>Der Beispielcode implementiert <TT
+CLASS="FILENAME"
+>/proc/jiqtimer</TT
+> in
+der Timer-Schlange. Für diese Schlange muß
+<SPAN
+><I
+CLASS="EMPHASIS"
+>queue_task</I
+></SPAN
+> verwendet werden:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+int jiq_read_timer(char *buf, char **start, off_t offset,
+                   int len, int *eof, void *data)
+{
+
+    jiq_data.len = 0;            /* noch nichts ausgegeben */
+    jiq_data.buf = buf;          /* an dieser Stelle ausgeben */
+    jiq_data.jiffies = jiffies;  /* initiale Zeit */
+    jiq_data.queue = &#38;tq_timer;  /* selbst wieder hier registrieren */
+
+    queue_task(&#38;jiq_task, &#38;tq_timer);     /* bereit zur Ausfuehrung */
+    interruptible_sleep_on(&#38;jiq_wait);    /* schlafen bis zur Beendigung */
+
+    *eof = 1;
+    return jiq_data.len;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Hier folgt die Ausgabe von <SPAN
+><I
+CLASS="EMPHASIS"
+>head /proc/jiqtimer</I
+></SPAN
+>
+auf einem System, das gerade einen neuen Kernel kompiliert:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;    time  delta interrupt  pid cpu command
+ 45084845   1        1    8783   0 cc1
+ 45084846   1        1    8783   0 cc1
+ 45084847   1        1    8783   0 cc1
+ 45084848   1        1    8783   0 cc1
+ 45084849   1        1    8784   0 as
+ 45084850   1        1    8758   1 cc1
+ 45084851   1        1    8789   0 cpp
+ 45084852   1        1    8758   1 cc1
+ 45084853   1        1    8758   1 cc1
+ 45084854   1        1    8758   1 cc1
+ 45084855   1        1    8758   1 cc1</PRE
+></TD
+></TR
+></TABLE
+><P
+>Beachten Sie, daß hier genau ein Timer-Tick zwischen zwei Aufrufen
+dieses Tasks vergeht und daß gerade ein willkürlicher Prozeß läuft.</P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="FLOWIMMQ"
+>Die unmittelbare Schlange</A
+></H3
+><P
+>&#13;
+
+
+Die letzte vordefinierte Schlange, die modularisierter Code verwenden
+kann, ist die unmittelbare Schlange (<SPAN
+><I
+CLASS="EMPHASIS"
+>immediate
+queue</I
+></SPAN
+>). Diese Schlange wird über den Mechanismus der
+unteren Hälften (bottom-half-mechanism) ausgeführt, was bedeutet, daß ein zusätzlicher Schritt
+zur Benutzung notwendig ist. Untere Hälften werden nur ausgeführt,
+wenn dem Kernel mitgeteilt worden ist, daß das notwendig ist; dies
+geschieht durch das &#8220;Markieren&#8221; der unteren Hälfte. Im Falle von
+<TT
+CLASS="LITERAL"
+>tq_immediate</TT
+> geschieht das durch den Aufruf von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>mark_bh(IMMEDIATE_BH)</I
+></SPAN
+>. Das muß immer geschehen,
+<SPAN
+><I
+CLASS="EMPHASIS"
+>nachdem</I
+></SPAN
+> der Task in die Schlange gestellt
+worden ist, ansonsten kann der Kernel die Task-Schlange ausführen,
+bevor Ihr Task hinzugefügt worden ist.</P
+><P
+>Die unmittelbare Schlange ist die schnellste Schlange im System, sie
+wird mit der kürzesten Verzögerung ausgeführt und läuft zur
+Interrupt-Zeit. Die Schlange wird entweder vom Scheduler oder sobald
+ein Prozeß aus seinem Systemaufruf zurückkehrt ausgeführt. Eine
+typische Ausgabe kann folgendermaßen aussehen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;    time  delta interrupt  pid cpu command
+ 45129449   0        1    8883   0 head
+ 45129453   4        1       0   0 swapper
+ 45129453   0        1     601   0 X
+ 45129453   0        1     601   0 X
+ 45129453   0        1     601   0 X
+ 45129453   0        1     601   0 X
+ 45129454   1        1       0   0 swapper
+ 45129454   0        1     601   0 X
+ 45129454   0        1     601   0 X
+ 45129454   0        1     601   0 X
+ 45129454   0        1     601   0 X
+ 45129454   0        1     601   0 X
+ 45129454   0        1     601   0 X
+ 45129454   0        1     601   0 X</PRE
+></TD
+></TR
+></TABLE
+><P
+>Natürlich kann diese Schlange nicht dazu verwendet werden, die
+Ausführung eines Tasks zu verzögern, sie ist ja gerade eine
+"unmittelbare" Schlange. Statt dessen ist sie dafür da, einen Task so
+schnell wie möglich, aber zu einem sicheren Zeitpunkt
+auszuführen. Damit ist sie sehr nützlich in Interrupt-Handlern, weil
+sie einen Einstiegspunkt für die Ausführung von Programm-Code
+außerhalb der Interrupt-Routine selbst bietet. Der Mechanismus zum
+Abholen von Netzwerkpaketen basiert beispielsweise auf einem ähnlichen
+Mechanismus.</P
+><P
+>&#13;
+Beachten Sie, daß Sie Ihren Task nicht neu in der Schlange
+registrieren sollten (auch wenn wir das in
+<SPAN
+CLASS="APPLICATION"
+>jiqimmed</SPAN
+> zu Demonstrationszwecken tun). Sie
+gewinnen dadurch nichts und bringen Ihren Computer auf manchen
+Plattformen vollständig zum Halten. Manche Implementationen pflegten
+die Schlange auszuführen, bis sie leer war. Dies war beispielsweise in
+der Version 2.0 auf der PC-Plattform der Fall.</P
+></DIV
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="FLOWOWNQ"
+>Eigene Task-Schlangen anlegen</A
+></H2
+><P
+>&#13;
+Es ist nicht besonders schwierig, eine neue Task-Schlange zu
+deklarieren. Ein Treiber kann jederzeit eine oder mehrere
+Task-Schlangen deklarieren; die Tasks werden dann so in die Schlange gestellt,
+wie wir es bereits für die vordefinierten Schlangen gezeigt haben.&#13;</P
+><P
+>Im Gegensatz zu den vordefinierten Task-Schlangen werden
+benutzerdefinierte Schlangen nicht automatisch vom Kernel
+ausgelöst. Der Programmierer, der die Queue verwaltet, muß sich selbst
+darum kümmern, daß die Schlange ausgeführt wird.&#13;</P
+><P
+>&#13;Das folgende Makro deklariert eine Task-Schlange und wird zu einer
+Variablendeklaration expandiert. Normalerweise steht es am Anfang der
+Datei, außerhalb jeder Funktion:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+DECLARE_TASK_QUEUE(tq_custom);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Nach der Deklaration der Schlange können Sie die bekannten Funktionen
+aufrufen, um Tasks einzureihen. Der obige Aufruf geht meistens mit
+dem folgenden einher:
+&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+queue_task(&#38;custom_task, &#38;tq_custom);&#13;</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die folgende Zeile führt <TT
+CLASS="LITERAL"
+>tq_custom</TT
+> aus, wenn
+es an der Zeit ist:
+&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+run_task_queue(&#38;tq_custom);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wenn Sie jetzt mit benutzerdefinierten Task-Schlangen experimentieren
+wollen, müssen Sie eine Funktion registrieren, die die Task-Schlange
+aus einer der vordefinierten Schlangen heraus steuert. Obwohl das etwas
+umständlich aussieht, ist es doch praktisch. Eine benutzerdefinierte
+Schlange kann beispielsweise hilfreich sein, wenn Sie Jobs ansammeln
+wollen, die dann alle zur gleichen Zeit ausgeführt werden
+sollen,
+selbst wenn Sie eine andere Schlange verwenden müssen, um diesen
+Zeitpunkt auszuwählen.
+
+&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="TASKLET"
+>Tasklets</A
+></H2
+><P
+>&#13;
+
+Kurz vor der Freigabe des 2.4-Kernels haben die Entwickler noch einen
+weiteren Mechanismus zum Herauszögern von Kernel-Tasks
+hinzugefügt. Dieser Mechanismus namens <SPAN
+><I
+CLASS="EMPHASIS"
+>Tasklets</I
+></SPAN
+>
+ist jetzt der bevorzugte Mechanismus für untere Hälften, ja die unteren
+Hälften werden selbst mit Tasklets implementiert.</P
+><P
+>Tasklets ähneln Task-Schlangen in mehrerer Hinsicht. Sie stellen eine
+Möglichkeit dar, die Ausführung eines Tasks bis zu einem sicheren
+Zeitpunkt zu verzögern, und werden immer zur Interrupt-Zeit
+ausgeführt. Wie Task-Schlangen werden auch Tasklets nur einmal
+ausgeführt, selbst wenn sie mehrfach vorgemerkt sind, aber Tasklets
+können auf SMP-Systemen parallel mit anderen (verschiedenen) Tasklets
+ausgeführt werden. Außerdem ist auf SMP-Systemen gerantiert, daß
+Tasklets auf der CPU ausgeführt werden, die sie zuerst zur Ausführung
+vorgemerkt hat, was ein besseres Cache-Verhalten und damit eine bessere
+Performance bringt.</P
+><P
+>Jedes Tasklet ist mit einer Funktion verbunden, die aufgerufen wird,
+wenn das Tasklet ausgeführt werden soll. Das Leben einiger
+Kernel-Entwickler wurde dadurch einfacher, daß diese Funktion ein
+Argument des Typs <TT
+CLASS="LITERAL"
+>unsigned long</TT
+> bekam, was das
+Leben wiederum für diejenigen ein wenig schwieriger macht, die lieber
+einen Zeiger übergeben möchten; das Casten des
+<TT
+CLASS="LITERAL"
+>long</TT
+>-Arguments auf einen Zeigertyp ist auf allen
+unterstützten Architekturen sicher und in der Speicherverwaltung
+ziemlich gang und gäbe (wie in <A
+HREF="mem.html"
+>Kapitel 13</A
+> besprochen
+wird). Die Tasklet-Funktion gibt keinen Wert zurück.</P
+><P
+>&#13;
+Die Software-Unterstützung für Tasklets findet sich in
+<TT
+CLASS="LITERAL"
+>&#60;linux/interrupt.h&#62;</TT
+>, das Tasklet selbst muß
+mit einem der folgenden Makros deklariert werden:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>DECLARE_TASKLET(name, function, data);</TT
+></DT
+><DD
+><P
+>&#13;Deklariert ein Tasklet mit dem angegebenen Namen; wenn das Tasklet
+ausgeführt werden soll (wie unten beschrieben), wird die angegebene
+Funktion mit dem <TT
+CLASS="LITERAL"
+>unsigned long</TT
+>-Datenwert
+aufgerufen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>DECLARE_TASKLET_DISABLED(name, function, data);</TT
+></DT
+><DD
+><P
+>&#13;Deklariert ein Tasklet wie das vorstehende Makro. Der anfängliche
+Zustand des Tasklets ist aber &#8220;gesperrt&#8221;, was bedeutet, daß es zur
+Ausführung vorgemerkt werden kann, aber nicht ausgeführt wird, bevor
+es irgendwann in der Zukunft freigegeben wird.</P
+></DD
+></DL
+></DIV
+><P
+>Wenn der Beispiel-Treiber <SPAN
+CLASS="APPLICATION"
+>jiq</SPAN
+> mit
+2.4-Header-Dateien kompiliert wird, wird
+<TT
+CLASS="FILENAME"
+>/proc/jiqtasklet</TT
+> implementiert, das genau wie
+die anderen <SPAN
+CLASS="APPLICATION"
+>jiq</SPAN
+>-Einträge funktioniert, aber
+Tasklets verwendet; wir haben in <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> keine
+Tasklets für ältere Kernel-Versionen emuliert. Das Modul deklariert
+sein Tasklet wie folgt:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+void jiq_print_tasklet (unsigned long);
+DECLARE_TASKLET (jiq_tasklet, jiq_print_tasklet, (unsigned long)
+   &#38;jiq_data);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+Wenn Ihr Treiber ein Tasklet zur Ausführung vormerken möchte, ruft er
+<SPAN
+><I
+CLASS="EMPHASIS"
+>tasklet_schedule</I
+></SPAN
+> auf:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+ tasklet_schedule(&#38;jiq_tasklet);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wenn ein Tasklet vorgemerkt ist, ist es garantiert, daß es einmal
+(sofern es eingeschaltet ist) zu einem sicheren Zeitpunkt ausgeführt
+wird. Tasklets können sich selbst weitgehend genauso wie
+Task-Schlangen selbst vormerken. Ein Tasklet muß sich keine Gedanken
+über Multiprozessor-Systeme machen, weil der Kernel sicherstellt, daß
+jedes Tasklet nur an einer Stelle ausgeführt wird. Wenn Ihr Treiber
+mehrere Tasklets implementiert, sollte er aber darauf vorbereitet
+sein, daß eines davon gleichzeitig ausgeführt werden könnte. In diesem
+Fall müssen Spinlocks zum Schutz kritischer Code-Abschnitte verwendet
+werden (Semaphore, die schlafen können, dürfen in Tasklets nicht
+verwendet werden, weil diese zur Interrupt-Zeit laufen).</P
+><P
+>Die Ausgabe von <TT
+CLASS="FILENAME"
+>/proc/jiqtasklet</TT
+> sieht
+folgendermaßen aus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;    time  delta interrupt  pid cpu command
+ 45472377   0        1    8904   0 head
+ 45472378   1        1       0   0 swapper
+ 45472379   1        1       0   0 swapper
+ 45472380   1        1       0   0 swapper
+ 45472383   3        1       0   0 swapper
+ 45472383   0        1     601   0 X
+ 45472383   0        1     601   0 X
+ 45472383   0        1     601   0 X
+ 45472383   0        1     601   0 X
+ 45472389   6        1       0   0 swapper</PRE
+></TD
+></TR
+></TABLE
+><P
+>Beachten Sie, daß das Tasklet immer auf der gleichen CPU läuft, obwohl
+diese Ausgabe von einem Multiprozessor-System stammt.</P
+><P
+>Das Tasklet-Subsystem enthält noch einige weitere Funktionen für die
+fortgeschrittene Tasklet-Verwendung:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>void tasklet_disable(struct tasklet_struct *t);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion sperrt das angegebene Tasklet. Das Tasklet kann immer
+noch mit <SPAN
+><I
+CLASS="EMPHASIS"
+>tasklet_schedule</I
+></SPAN
+> vorgemerkt
+werden, aber die Ausführung wird bis zu dem Zeitpunkt verzögert, zu
+dem das Tasklet wieder freigeschaltet wird.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void tasklet_enable(struct tasklet_struct *t);</TT
+></DT
+><DD
+><P
+>&#13;Schaltet ein zuvor gesperrtes Tasklet wieder frei. Wenn das Tasklet
+bereits vorgemerkt worden ist, wird es bald ausgeführt werden (aber
+nicht direkt aus <SPAN
+><I
+CLASS="EMPHASIS"
+>tasklet_enable</I
+></SPAN
+> heraus).</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void tasklet_kill(struct tasklet_struct *t);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion kann bei Tasklets verwendet werden, die sich selbst
+immer wieder vormerken. <SPAN
+><I
+CLASS="EMPHASIS"
+>tasklet_kill</I
+></SPAN
+>
+entfernt das Tasklet aus allen Schlangen, in denen es steht. Um Race
+Conditions mit dem Tasklet, das sich selbst wieder vormerkt, zu
+vermeiden, wartet diese Funktion, bis das Tasklet ausgeführt wird, und
+nimmt es dann aus der Schlange. Sie können also sicher sein, daß
+Tasklets nicht mitten in der Ausführung gestört werden. Wenn das
+Tasklet aber gerade nicht läuft und sich selbst vormerkt, kann
+<SPAN
+><I
+CLASS="EMPHASIS"
+>tasklet_kill</I
+></SPAN
+> hängen
+bleiben. <SPAN
+><I
+CLASS="EMPHASIS"
+>tasklet_kill</I
+></SPAN
+> darf nicht zur
+Interrupt-Zeit aufgerufen werden.</P
+></DD
+></DL
+></DIV
+><P
+>&#13;
+&#62;
+&#62;
+&#62;&#13;</P
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN8535"
+HREF="flowqueue.html#AEN8535"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Der Puffer einer
+                          <TT
+CLASS="FILENAME"
+>/proc</TT
+>-Datei ist eine
+                          Speicherseite, also 4 KByte oder was auch immer
+auf Ihrer Plattform gilt.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x8199.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="flowtimers.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Die Ausführung verzögern</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="flow.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Kernel-Timer</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

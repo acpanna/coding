@@ -1,0 +1,378 @@
+<HTML
+><HEAD
+><TITLE
+>Eigene ioctl-Befehle</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Netzwerk-Treiber"
+HREF="net.html"><LINK
+REL="PREVIOUS"
+TITLE="MAC-Adreßauflösung"
+HREF="netarp.html"><LINK
+REL="NEXT"
+TITLE="Statistische Informationen"
+HREF="netstats.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="netarp.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 14. Netzwerk-Treiber</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="netstats.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="NETIOCTL"
+>Eigene ioctl-Befehle</A
+></H1
+><P
+>&#13;
+Wir haben schon gesehen, daß der Systemaufruf
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+> für Sockets implementiert wird. Beispiele
+von Socket-<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Befehlen sind
+<TT
+CLASS="LITERAL"
+>SIOCSIFADDR</TT
+> und
+<TT
+CLASS="LITERAL"
+>SIOCSIFMAP</TT
+>. Schauen wir uns jetzt an, wie das
+dritte Argument des Systemaufrufs vom Netzwerk-Code verwendet wird.&#13;</P
+><P
+>Wenn der Systemaufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+> an einem Socket
+aufgerufen wird, dann ist die Befehlsnummer eines der in
+<TT
+CLASS="LITERAL"
+>&#60;linux/sockios.h&#62;</TT
+>
+definierten Symbole, und die Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>sock_ioctl</I
+></SPAN
+> ruft direkt eine
+protokollspezifische Funktion auf (wobei sich der Begriff &#8220;Protokoll&#8221;
+hier auf das verwendete Netzwerk-Protokoll wie IP oder AppleTalk
+bezieht).&#13;</P
+><P
+>Jeder <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Befehl, der von der Protokoll-Schicht
+nicht erkannt wird, wird an die Geräteschicht weitergereicht. Diese
+gerätebezogenen <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Befehle akzeptieren ein
+drittes Argument aus dem User-Space, das den Typ <TT
+CLASS="LITERAL"
+>struct ifreq
+*</TT
+> hat. Diese Struktur ist in
+<TT
+CLASS="LITERAL"
+>&#60;linux/if.h&#62;</TT
+> definiert. Auch die
+Befehle <TT
+CLASS="LITERAL"
+>SIOCSIFADDR</TT
+> und
+<TT
+CLASS="LITERAL"
+>SIOCSIFMAP</TT
+> arbeiten mit dieser
+Struktur. Das zusätzliche Argument von
+<TT
+CLASS="LITERAL"
+>SIOCSIFMAP</TT
+> ist einfach nur ein Feld von
+<TT
+CLASS="LITERAL"
+>ifreq</TT
+>, auch wenn es als
+<TT
+CLASS="LITERAL"
+>ifmap</TT
+> definiert ist.
+
+
+&#13;</P
+><P
+>Außer den standardisierten Befehlen kann jede Schnittstelle eigene
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Befehle definieren. Die Schnittstelle
+<SPAN
+CLASS="APPLICATION"
+>plip</SPAN
+> ermöglicht beispielsweise das
+Einstellen der internen Timeout-Werte über
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>. Die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Implementation für Sockets erkennt 16
+zusätzliche Befehle, die schnittstellenspezifisch sind:
+<TT
+CLASS="LITERAL"
+>SIOCDEVPRIVATE</TT
+> bis
+<TT
+CLASS="LITERAL"
+>SIOCDEVPRIVATE+15</TT
+>.
+&#13;</P
+><P
+>Wenn einer dieser Befehle erkannt wird, dann wird
+<TT
+CLASS="LITERAL"
+>dev-&#62;do_ioctl</TT
+> im zugehörigen
+Schnittstellen-Treiber aufgerufen. Diese Funktion bekommt den gleichen
+<TT
+CLASS="LITERAL"
+>struct ifreq *</TT
+>-Zeiger wie die allgemeine
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Funktion:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+int (*do_ioctl)(struct net_device *dev, struct ifreq *ifr, int cmd);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Der Zeiger <TT
+CLASS="LITERAL"
+>ifr</TT
+> zeigt auf eine Adresse im Kernel
+Space, die eine Kopie der vom Benutzer übergebenen Struktur
+enthält. Nach dem Rücksprung von <SPAN
+><I
+CLASS="EMPHASIS"
+>do_ioctl</I
+></SPAN
+>
+wird diese Struktur in den User-Space zurückkopiert. Der Treiber kann
+daher die privaten Befehle sowohl zum Empfangen wie auch zur
+Herausgabe von Daten verwenden.&#13;</P
+><P
+>Die treiberspezifischen Befehle können die Felder in <TT
+CLASS="LITERAL"
+>struct
+ifreq</TT
+>
+verwenden, aber diese haben bereits eine standardisierte Bedeutung,
+und es ist unwahrscheinlich, daß der Treiber die Struktur für seine
+Zwecke umfunktionieren kann. Das Feld
+<TT
+CLASS="LITERAL"
+>ifr_data</TT
+> ist ein Element des Typs
+<TT
+CLASS="LITERAL"
+>caddr_t</TT
+> (ein Zeiger), das für
+gerätespezifische Bedürfnisse verwendet werden kann. Der Treiber und
+die Programme, die die <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Befehle des Treibers
+aufrufen, sollten sich über die Benutzung von
+<TT
+CLASS="LITERAL"
+>ifr_data</TT
+> einig sein. Beispielsweise
+verwendet <SPAN
+CLASS="APPLICATION"
+>pppstats</SPAN
+> gerätespezifische
+Befehle, um Informationen vom
+<SPAN
+CLASS="APPLICATION"
+>ppp</SPAN
+>-Schnittstellentreiber zu bekommen.
+
+&#13;</P
+><P
+>Es lohnt sich nicht, hier eine Implementation von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>do_ioctl</I
+></SPAN
+> zu zeigen, aber mit den
+Informationen in diesem Kapitel und den Kernel-Beispielen sollten Sie
+in der Lage sein, eine Implementation zu schreiben, wenn Sie eine
+benötigen. Beachten Sie jedoch, daß die Implementation von
+<SPAN
+CLASS="APPLICATION"
+>plip</SPAN
+> <TT
+CLASS="LITERAL"
+>ifr_data</TT
+>
+falsch verwendet und daher nicht als Beispiel für eine
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Implementation herangezogen werden sollte.
+
+&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="netarp.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="netstats.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>MAC-Adreßauflösung</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="net.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Statistische Informationen</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

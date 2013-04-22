@@ -1,0 +1,39 @@
+a) Implementierte Interfaces: ActionListener, MouseMotionListener
+    Implementierte Methoden: actionPerformed(ActionEvent evt) --> ActionListener
+                                        mouseDragged(MouseEvent evt),
+                                        mouseMoved(MouseEvent evt)  --> MouseMotionListener
+
+b) textName = new TextField(15);       
+    textMatrikelNr = new TextField(8);  // Argument 8 bzw. 15 im Konstruktor legt Laenge fest
+
+c) Da alle Objekte von der Klasse java.awt.Component abgeleitet sind, welche die Methode setBackground(Color c) implementiert.
+
+d) Funktionieren, da die Klasse Applet selbst von java.awt.Component abgeleitet ist --> direkter Aufruf von setBackground(Color c)
+    in der Methode init() von EingabeDaten ist moeglich, da EingabeDaten eine Ableitung von Applet darstellt (public - Methoden von
+    Oberklassen koennen direkt aufgerufen werden). 
+    Analog funktioniert setLayout(LayoutManager mgr), da Applet auch von java.awt.Container abgeleitet ist.
+
+e) panelOK.add(buttonOK), add(panelOK) funktionieren, da Panel bzw. Applet die Methode : public Component add(Component comp)
+    von java.awt.Container erben und buttonOK ein Objekt der Klasse Button bzw. panelOK ein Objekt der Klasse Panel darstellen, welche
+    ihrerseits von der Klasse Component abgeleitet sind 
+    --> Component comp = buttonOK bzw. Component comp = panelOK ist gueltige Argumentzuweisung fuer die add - Methode.
+
+f) Leichter Unterschied: addActionListener() wird von der Klasse Button selbst implementiert, waehrend addMouseMotionListener() von
+                               einer Oberklasse geerbt wird. addActionListener() ist fuer Mouse - Klicks zustaendig, waehrend addMouseMotionListener()
+                               fuer Mouse - Bewegungen zustaendig ist.
+
+   Da die Klasse EingabeDaten die Interfaces ActionListener bzw. MouseMotionListener implementiert, ist sie auch davon "abgeleitet".
+   Der Aufruf addActionListener(this) bzw. addMouseMotionListener(this) geht, da die Methoden wie folgt deklariert sind:
+   public void addActionListener(ActionListener l)  bzw.  public void addMouseMotionListener(MouseMotionListener l)
+   Also geht die Zuweisung ActionListener l = this bzw. MouseMotionListener l = this, da this (= EingabeDaten - Objekt ) eine
+   "Ableitung" von ActionListener bzw. MouseMotionListener darstellt.
+
+g) evt ist ein Objekt der Klasse MouseEvent bzw. actionEvent und besitzen die geerbte Methode: public Object getSource()
+    --> Rueckgabewert ist vom Typ Object --> Zuweisung ist legitim
+
+h) showStatus() ist eine geerbte Methode der Klasse Applet --> Aufruf ist moeglich.
+    init() - Methode wird aufgerufen, da EingabeDaten von Applet abgeleitet ist ( bei allen von Applet abgeleiteten Klassen wird vom Browser
+    bzw. appletviewer automatisch die init() - Methode aufgerufen ).
+
+
+      

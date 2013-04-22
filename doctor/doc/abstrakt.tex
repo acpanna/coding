@@ -1,0 +1,31 @@
+\documentclass[11pt]{article}
+\usepackage{amscd,amssymb,amsmath}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx} %extended version vom package 'graphics'
+\DeclareGraphicsRule{.tif}{bmp}{jpg}{}
+\usepackage{ngerman}
+\usepackage{enumerate}
+
+\pagestyle{empty}
+\parindent=0pt
+\setlength{\topmargin}{-1cm} \setlength{\headsep}{0cm}
+\setlength{\headheight}{2.5cm} \setlength{\oddsidemargin}{0cm}
+\setlength{\textwidth}{16cm} \setlength{\textheight}{24cm}
+
+\begin{document}
+
+\centerline{\large \bf Zusammenfassung}
+\vspace{5mm}
+Diese Dissertation beschäftigt sich mit dem mathematischen Teilgebiet der Gitterbasenreduktion. Aufbauend aus den Erkenntnissen der Diplomarbeit „Gitterbasenreduktion mit Random Sampling“ werden verschiedene Modifikationen am ursprünglichen LLL- bzw. BKZ-Verfahren vorgenommen: Es wird der von C. Schnorr entwickelte Ansatz, den LLL-Austauschschritt um Tiefeneinfügungen zu erweitern, aufgegriffen und eine alternative Methode zum Basisaustausch für das BKZ-Verfahren vorgestellt. Ferner werden zwei unterschiedliche Verfahren von A. Wassermann und P. Nguyen zum Abschneiden von Enumerationsbäumen beschrieben.\\
+\\
+Die Random Sampling Strategie von Schnorr wurde überarbeitet, um ein schlechtes GSA-Verhalten des Gitters zu berücksichtigen und eine neuartige Strategie von Buchmann und Ludwig wurde implementiert, bei der das GSA-Verhalten vollkommen irrelevant ist.
+\\
+\\
+Schließlich wird ein grundlegendes, heuristisches Bewertungskonzept für Gittervektoren entwickelt, das im Rahmen eines von T. Vidick und P. Nguyen beschriebenen Siebverfahrens, Anwendung findet.
+\\
+\\
+Mit Hinblick auf die Qualität der erreichten Gitter-Reduktion für schwierige Market-Split-Probleme in Dimensionen $\approx120$, liefern diese neuen Methoden hervorragende Ergebnisse in äußerst kurzer Zeit (ca. 5 Stunden auf einem 3 GHz Rechner). Auch für Problemdimensionen $>500$ sind die Resultate durchaus noch zufriedenstellend - allerdings ist hierbei der Rechenaufwand ($>7$ Tage) nicht mehr zu vernachlässigen.\\
+\\
+Im Vergleich mit dem kommerziellen Programm CPLEX, das einen völlig anderen Ansatz zur Lösung von ganzzahlig-linearen Gleichungssystemen verfolgt, konnten sogar sehr gute Ergebnisse erzielt werden.
+
+\end{document}

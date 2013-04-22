@@ -1,0 +1,36 @@
+Beantwortung der Fragen :
+????????????????????????
+
+zu b)  Strecke :  Man leitet von MyPoint ab und fuehrt als zusaetzliche Datenelmente double xx und double yy ein, und als zusaetzliche Methoden die Methoden getXX(), getYY(), 
+     	           setXX(), setYY() und stretch(). Die geerbten Methoden add(), moveTo() und multSkalar() muessen ueberschrieben werden, da diese fuer eine Strecke anders interpretiert 
+                           werden muessen. Die geerbten Datenelemente double x, double y fast man als Anfangspunkt der Strecke auf; die hinzugefuegten Elemente double xx, double yy als
+                           Endpunkt der Strecke.   
+
+           Kreis :  Man leitet von MyPoint ab und  fuehrt lediglich ein Datenelment double radius, sowie die Methoden setRadius(), getRadius() und stretch() ein. Die geerbten 
+                        Datenelemente dienen zur Speicherung des Mittelpunkts.
+
+           Quadrat : Das Quadrat wuerde ich nicht von MyPoint, sondern von Strecke ableiten, da ein Quadrat eindeutig durch seine Diagonale ( = Strecke) festgelegt ist, somit sind keine
+                            weiteren Datenlemente noetig. Lediglich die stretch() - Methode der Strecke muss ueberschrieben werden.
+
+zu c)  Strecke :  Verschiebung :  moveTo() - Methode des Punktes muss ueberschrieben werden; in der Methode ruft man die moveTo() - Methode der Superklasse ( MyPoint ) auf
+                                                       und addiert anschliessend zu den neuen Datenelmenten xx und yy (analog zur moveTo() - Methode in MyPoint) die Verschiebungskoordinaten.
+                           Skalierung :  multSkalar() - Methode des Punktes muss ueberschrieben werden; in der Methode ruft man die multSkalar() - Methode der Superklasse ( MyPoint ) auf
+		                  und multipliziert anschliessend zu den neuen Datenelmenten xx und yy (analog zur multSkalar() - Methode in MyPoint) den Skalar.
+                           Dehnung :  stretch() - Methode definieren mit folgendem Code :             
+                                                                MyPoint sym = new MyPoint(x,y);
+                                                                sym.add(xx, yy);
+                                                                sym.multSkalar(0.5);
+                                                                add(-sym.x,-sym.y);                    // entspricht add() - Methode fuer Strecken (zum Anfangs-, als auch zum Endpunkt wird ein Punkt addiert)
+                                                                multSkalar(dehnungsfaktor);    // entspricht multSkalar() - Methode fuer Strecken
+                                                                add(sym.x, sym.y);                     // entspricht add() - Methode fuer Strecken
+
+                       Kreis :  Verschiebung : geerbte moveTo() - Methode von MyPoint aufrufen
+                       Skalierung : geerbte multSkalar() - Methode aufrufen
+                       Dehnung : stretch() - Methode definieren mit folgendem Code:
+                                                                radius *= dehnungsfaktor;
+
+          Quadrat :  Verschiebung : geerbte moveTo() - Methode von Strecke aufrufen
+	            Skalierung : geerbte multSkalar() - Methode von Strecke aufrufen
+                            Dehnung :  stretch() - Methode von Strecke ueberschreiben; in der Methode aus x,y und xx,y, sowie aus x,yy und xx,yy jeweils zwei Strecken definieren, die stretch() -
+                                                 Methoden der beiden Strecken anwenden und anschliessend den Anfangspunkt der ersten Strecke wieder x,y zuweisen und den Endpunkt der zweiten Strecke
+                                                 xx,yy zuweisen.

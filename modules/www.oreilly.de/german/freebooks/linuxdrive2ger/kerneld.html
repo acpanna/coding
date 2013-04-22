@@ -1,0 +1,1379 @@
+<HTML
+><HEAD
+><TITLE
+>kmod und fortgeschrittene Modularisierung</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="PREVIOUS"
+TITLE="Schnellreferenz"
+HREF="x13652.html"><LINK
+REL="NEXT"
+TITLE="Kommunikation zwischen Modulen"
+HREF="x14088.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x13652.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x14088.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="KERNELD"
+>Kapitel 11. kmod und fortgeschrittene Modularisierung</A
+></H1
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Inhalt</B
+></DT
+><DT
+><A
+HREF="kerneld.html#KERKER"
+>Module bei Bedarf laden</A
+></DT
+><DT
+><A
+HREF="x14088.html"
+>Kommunikation zwischen Modulen</A
+></DT
+><DT
+><A
+HREF="kerver.html"
+>Versionskontrolle in Modulen</A
+></DT
+><DT
+><A
+HREF="x14360.html"
+>Abwärtskompatibilität</A
+></DT
+><DT
+><A
+HREF="x14393.html"
+>Schnellreferenz</A
+></DT
+></DL
+></DIV
+><P
+>In diesem zweiten Teil des Buches werden wir fortgeschrittenere Themen
+als bisher besprechen. Wieder fangen wir mit der Modularisierung
+an.</P
+><P
+>Die Einführung in die Modularisierung in <A
+HREF="building.html"
+>Kapitel 2</A
+>
+war nur die halbe Wahrheit; der Kernel und das
+<SPAN
+CLASS="APPLICATION"
+>modutils</SPAN
+>-Paket unterstützen einige
+fortgeschrittene Funktionen, die komplexer sind als das, was wir
+bisher benötigt haben, um einen grundlegenden Treiber zum Laufen zu
+bringen. Dazu gehören das Programm
+<SPAN
+CLASS="APPLICATION"
+>kmod</SPAN
+> und die Versionsunterstützung in Modulen
+(womit Sie es vermeiden können, Ihre Module jedesmal neu zu
+kompilieren, wenn Sie eine neue Kernel-Version einspielen). Außerdem
+behandeln wir das Ausführen von Hilfsprogrammen im User-Space vom
+Kernel-Code aus.</P
+><P
+>Die Implementation des Ladens von Kernel-Modulen bei Bedarf hat sich
+mit der Zeit deutlich geändert. Dieses Kapitel behandelt wie üblich
+die Implementation im 2.4-Kernel. Der Beispiel-Code funktioniert aber
+soweit möglich auch mit 2.0- und 2.2-Kerneln; wir behandeln die
+Unterschiede am Ende dieses Kapitels.
+&#13;</P
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="KERKER"
+>Module bei Bedarf laden</A
+></H1
+><P
+>&#13;
+
+
+
+
+Linux unterstützt das automatische Laden und Entladen von Modulen. Damit wird folgendes erreicht:</P
+><P
+></P
+><UL
+><LI
+STYLE="list-style-type: disc"
+><P
+>Für den Benutzer ist das Laden und Entladen der Module leichter.</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>Es wird kein Kernel-Speicher durch Treiber verschwendet, die gerade nicht benutzt werden.</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>Es können &#8220;generische&#8221; Kernel erzeugt werden, die eine Vielzahl unterschiedlicher Hardware unterstützen.</P
+></LI
+></UL
+><P
+>&#13;Um dieses Feature auszunutzen, müssen Sie die Unterstützung
+für den <SPAN
+CLASS="APPLICATION"
+>kmod</SPAN
+> einschalten, wenn Sie Ihren
+Kernel konfigurieren; Kernel von Distributoren haben diese Fähigkeit
+normalerweise von Haus aus. Die Fähigkeit, zusätzliche Module bei Bedarf
+anzufordern, ist besonders nützlich bei Treibern, die voneinander
+abhängige Module verwenden.&#13;</P
+><P
+>Die Idee hinter <SPAN
+CLASS="APPLICATION"
+>kmod</SPAN
+> ist einfach, aber
+effektiv. Wenn der Kernel versucht, auf bestimmte Arten von Ressourcen
+zuzugreifen, diese aber nicht zur Verfügung stehen, ruft er eine
+spezielle Funktion im <SPAN
+CLASS="APPLICATION"
+>kmod</SPAN
+>-Subsystem auf,
+anstatt einfach einen Fehler zurückzugeben. Wenn es
+<SPAN
+CLASS="APPLICATION"
+>kmod</SPAN
+> gelingt, die Ressource durch Laden
+eines oder mehrerer Module verfügbar zu machen, arbeitet der Kernel
+wie gewünscht weiter, ansonsten gibt er den Fehler zurück. Fast alle
+Ressourcen können auf diese Weise angefordert werden: Zeichen- und
+Block-Treiber, Dateisysteme, Line Disciplines (auf einer seriellen Leitung verwendete Parameter), Netzwerk-Protokolle
+usw.</P
+><P
+>Ein Beispiel für einen Treiber, der davon Gebrauch macht, sind die
+Advanced Linux Sound Architecture (ALSA)-Soundtreiber, die eines Tages
+die aktuelle Sound-Implementation (Open Sound System, OSS) im
+Linux-Kernel ersetzen sollen.<A
+NAME="AEN13788"
+HREF="#FTN.AEN13788"
+>[1]</A
+> ALSA ist in viele Teile aufgeteilt. Zuerst wird
+der Kern-Code geladen, den jedes System braucht. Zusätzliche
+Bestandteile werden dann je nach vorhandener Hardware (der jeweiligen
+Soundkarte) und der gewünschten Funktionalität (MIDI-Sequencer,
+Synthesizer, Mixer, OSS-Kompatibilität) geladen. Ein großes und
+kompliziertes System kann so also in seine Bestandteile aufgeteilt
+werden, wobei nur die jeweils benötigten Teile im laufenden System
+vorhanden sein müssen.</P
+><P
+>Eine andere gängige Verwendung des automatischen Ladens von Modulen
+ist das Bauen von Kerneln, die für alle Lagen passen und die von
+Distributionen verwendet werden. Distributoren wollen, daß ihre Kernel
+auf so viel Hardware wie möglich läuft. Es ist aber nicht möglich,
+einfach jeden denkbaren Treiber in den Kernel zu konfigurieren: Der
+resultierende Kernel wäre zu groß zum Laden (und würde viele
+System-Ressourcen verschwenden); außerdem fordert man geradezu
+Konflikte und Verwirrung heraus, wenn man so viele Treiber nach Hardware
+suchen läßt. Dank des automatischen Ladens kann sich der Kernel selbst
+an die auf dem jeweiligen System vorgefundene Hardware anpassen.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN13792"
+>Module im Kernel anfordern</A
+></H2
+><P
+>&#13;
+
+Sämtlicher Code im Kernel-Space kann das Laden eines Moduls durch
+Verwendung von <SPAN
+CLASS="APPLICATION"
+>kmod</SPAN
+>
+anfordern. <SPAN
+CLASS="APPLICATION"
+>kmod</SPAN
+> wurde ursprünglich als
+separater, freistehender Kernel-Prozeß implementiert, der Anfragen
+nach zu ladenden Modulen erledigte, ist aber schon vor längerer Zeit
+so vereinfacht worden, daß er keinen eigenen Prozeß-Kontext mehr
+braucht. Um <SPAN
+CLASS="APPLICATION"
+>kmod</SPAN
+> zu verwenden, müssen Sie
+<TT
+CLASS="LITERAL"
+>&#60;linux/kmod.&#62;</TT
+> in Ihre Treiber-Quellen
+einbinden.</P
+><P
+>&#13;Um das Laden eines Moduls anzufordern, rufen Sie
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request_module</I
+></SPAN
+> auf:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;int request_module(const char *module_name);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Der <TT
+CLASS="LITERAL"
+>module_name</TT
+> kann entweder der Name einer
+bestimmten Moduldatei oder der Name einer generischeren Fähigkeit
+sein; wir schauen uns die Modulnamen im nächsten Abschnitt noch
+genauer an. Der Rückgabewert von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request_module</I
+></SPAN
+> ist entweder 0 oder einer
+der üblichen Fehler-Codes, wenn etwas schiefgeht.</P
+><P
+>&#13;
+Beachten Sie, daß <SPAN
+><I
+CLASS="EMPHASIS"
+>request_module</I
+></SPAN
+> synchron
+ist &#8212; die Funktion schläft, bis der Versuch, das Modul zu laden,
+vollständig abgearbeitet ist. Das bedeutet natürlich auch, daß
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request_module</I
+></SPAN
+> nicht im Interrupt-Kontext
+aufgerufen werden darf. Beachten Sie auch, daß ein erfolgreicher
+Rücksprung aus <SPAN
+><I
+CLASS="EMPHASIS"
+>request_module</I
+></SPAN
+> nicht
+garantiert, daß die gewünschte Fähigkeit jetzt zur Verfügung
+steht. Der Rückgabewert zeigt an, daß
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request_module</I
+></SPAN
+>
+<SPAN
+CLASS="APPLICATION"
+>modprobe</SPAN
+> erfolgreich ausführen konnte, sagt
+aber nichts über den Rückgabewert von
+<SPAN
+CLASS="APPLICATION"
+>modprobe</SPAN
+> selbst aus. Eine Vielzahl von
+Problemen oder fehlerhaften Konfigurationen kann dazu führen, daß
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request_module</I
+></SPAN
+> eine erfolgreiche
+Ausführung meldet, obwohl das gewünschte Modul nicht geladen worden
+ist.</P
+><P
+>Die korrekte Anwendung von <SPAN
+><I
+CLASS="EMPHASIS"
+>request_module</I
+></SPAN
+> setzt
+also normalerweise das zweimalige Abfragen der gewünschten Fähigkeit
+voraus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;if ( (ptr = look_for_feature()) == NULL) {
+    /* wenn das Feature fehlt, einen Anfrage-String erzeugen */
+    sprintf(modname, "fmt-for-feature-%i\n", featureid);
+    request_module(modname); /* und versuchen, es zu laden */
+}
+/* Noch einmal nach dem Feature suchen; Fehler melden, falls nicht vorhanden */
+if ( (ptr = look_for_feature()) == NULL)
+    return -ENODEV;</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die erste Abfrage vermeidet überflüssige Aufrufe von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request_module</I
+></SPAN
+>. Wenn das Feature im
+laufenden Kernel nicht vorhanden ist, wird ein Anfrage-String erzeugt
+und mit <SPAN
+><I
+CLASS="EMPHASIS"
+>request_module</I
+></SPAN
+> danach gesucht. Die
+zweite Abfrage stellt sicher, daß das gewünschte Feature verfügbar
+geworden ist.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN13837"
+>Die Seite des User-Space</A
+></H2
+><P
+>Das Laden eines Moduls benötigt Hilfe vom User
+Space, weil es deutlich einfacher ist, die benötigte Konfigurierbarkeit
+und Flexibilität in diesem Kontext zu implementieren. Wenn der
+Kernel-Code <SPAN
+><I
+CLASS="EMPHASIS"
+>request_module</I
+></SPAN
+> aufruft, wird
+ein neuer &#8220;Kernel-Thread&#8221;-Prozeß gestartet, der ein Hilfsprogramm im
+User-Space ausführt. Dieses Programm heißt
+<SPAN
+CLASS="APPLICATION"
+>modprobe</SPAN
+>, wir sind ihm schon weiter vorn in
+diesem Buch kurz begegnet.</P
+><P
+>&#13;
+<SPAN
+CLASS="APPLICATION"
+>modprobe</SPAN
+> kann vieles. Im einfachsten Fall
+ruft es einfach <SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+> mit dem an
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request_module</I
+></SPAN
+> übergebenen Modulnamen
+auf. Kernel-Code wird <SPAN
+><I
+CLASS="EMPHASIS"
+>request_module</I
+></SPAN
+> aber
+oft mit einem abstrakteren Namen wie
+<SPAN
+><I
+CLASS="EMPHASIS"
+>scsi_hostadapter</I
+></SPAN
+> aufrufen;
+<SPAN
+CLASS="APPLICATION"
+>modprobe</SPAN
+> sucht und lädt dann das passende
+Modul. <SPAN
+CLASS="APPLICATION"
+>modprobe</SPAN
+> kann außerdem
+mit Modulabhängigkeiten umgehen. Wenn ein angefordertes Modul ein
+weiteres Modul benötigt, lädt <SPAN
+CLASS="APPLICATION"
+>modprobe</SPAN
+>
+beide, sofern <SPAN
+CLASS="APPLICATION"
+>depmod -a</SPAN
+> nach der Installation
+der Module aufgerufen worden ist.<A
+NAME="AEN13858"
+HREF="#FTN.AEN13858"
+>[2]</A
+></P
+><P
+>&#13;Das Hilfsprogramm <SPAN
+CLASS="APPLICATION"
+>modprobe</SPAN
+> wird durch die
+Datei <TT
+CLASS="FILENAME"
+>/etc/modules.conf</TT
+> konfiguriert.<A
+NAME="AEN13867"
+HREF="#FTN.AEN13867"
+>[3]</A
+> Die Man-Page zu
+<TT
+CLASS="FILENAME"
+>modules.conf</TT
+> enthält eine vollständige Liste
+aller Einträge, die in dieser Datei stehen dürfen. Die gängigsten Einträge sind:
+
+
+
+
+
+
+
+
+
+
+
+&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>path[misc]=<TT
+CLASS="REPLACEABLE"
+><I
+>directory</I
+></TT
+></TT
+></DT
+><DD
+><P
+>&#13;
+Diese Anweisung teilt <SPAN
+CLASS="APPLICATION"
+>modprobe</SPAN
+> mit, daß die
+diversen Module im Unterverzeichnis <SPAN
+><I
+CLASS="EMPHASIS"
+>misc</I
+></SPAN
+> unter
+dem angegebenen Verzeichnis <TT
+CLASS="REPLACEABLE"
+><I
+>directory</I
+></TT
+> zu
+finden sind. Weitere Pfade, die Sie eventuell setzen möchten, sind
+<TT
+CLASS="LITERAL"
+>boot</TT
+>, der auf ein Verzeichnis von Modulen
+verweist, die beim Booten geladen werden sollen, sowie
+<TT
+CLASS="LITERAL"
+>toplevel</TT
+>, der ein Toplevel-Verzeichnis angibt,
+unter dem ein Baum mit Modul-Unterverzeichnissen zu finden
+ist. Vermutlich wollen Sie auch eine separate
+<TT
+CLASS="LITERAL"
+>keep</TT
+>-Anweisung haben.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>keep</TT
+></DT
+><DD
+><P
+>&#13;Normalerweise führt eine <TT
+CLASS="LITERAL"
+>path</TT
+>-Anweisung dazu, daß
+<SPAN
+CLASS="APPLICATION"
+>modprobe</SPAN
+> alle andere Pfade (einschließlich
+der Defaults) verwirft, die es eventuell kennt. Durch Verwenden von
+<TT
+CLASS="LITERAL"
+>keep</TT
+> <SPAN
+><I
+CLASS="EMPHASIS"
+>vor</I
+></SPAN
+>
+<TT
+CLASS="LITERAL"
+>path</TT
+> fügt <SPAN
+CLASS="APPLICATION"
+>modprobe</SPAN
+> die
+neuen Pfade zur Liste hinzu, anstatt sie zu löschen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>alias <TT
+CLASS="REPLACEABLE"
+><I
+>alias_name</I
+></TT
+> <TT
+CLASS="REPLACEABLE"
+><I
+>real_name</I
+></TT
+></TT
+></DT
+><DD
+><P
+>&#13;Veranlaßt <SPAN
+CLASS="APPLICATION"
+>modprobe</SPAN
+>, das Modul
+<TT
+CLASS="REPLACEABLE"
+><I
+>real_name</I
+></TT
+> zu laden, wenn es um das
+Laden von <TT
+CLASS="LITERAL"
+>alias_name</TT
+> gebeten wird. Der
+Aliasname bezeichnet normalerweise eine bestimmte Fähigkeit wie
+<TT
+CLASS="LITERAL"
+>scsi_hostadapter</TT
+>, <TT
+CLASS="LITERAL"
+>eth0</TT
+> oder
+<TT
+CLASS="LITERAL"
+>sound</TT
+>. So werden generische Anforderungen ("ein
+Treiber für die erste Ethernet-Karte") auf bestimmte Module
+abgebildet. Alias-Zeilen werden normalerweise während der
+Systeminstallation erzeugt; wenn einmal ermittelt worden ist, welche
+Hardware in einem bestimmten System vorhanden ist, werden die
+passenden <TT
+CLASS="LITERAL"
+>alias</TT
+>-Einträge erzeugt, damit die
+richtigen Treiber geladen werden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>options [-k] <TT
+CLASS="REPLACEABLE"
+><I
+>module</I
+></TT
+> <TT
+CLASS="REPLACEABLE"
+><I
+>opts</I
+></TT
+></TT
+></DT
+><DD
+><P
+>&#13;Definiert einen Satz von Optionen (<TT
+CLASS="REPLACEABLE"
+><I
+>opts</I
+></TT
+>) für
+das angegebene Modul <TT
+CLASS="REPLACEABLE"
+><I
+>module</I
+></TT
+>, die beim Laden
+verwendet werden. Wenn das Flag <SPAN
+><I
+CLASS="EMPHASIS"
+>-k</I
+></SPAN
+> angegeben
+wird, wird das Modul durch ein <SPAN
+><I
+CLASS="EMPHASIS"
+>modprobe -r</I
+></SPAN
+> nicht
+automatisch entfernt.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>pre-install <TT
+CLASS="REPLACEABLE"
+><I
+>module</I
+></TT
+> <TT
+CLASS="REPLACEABLE"
+><I
+>command</I
+></TT
+></TT
+>, <TT
+CLASS="LITERAL"
+>post-install <TT
+CLASS="REPLACEABLE"
+><I
+>module</I
+></TT
+> <TT
+CLASS="REPLACEABLE"
+><I
+>command</I
+></TT
+></TT
+>, <TT
+CLASS="LITERAL"
+>pre-remove <TT
+CLASS="REPLACEABLE"
+><I
+>module</I
+></TT
+> <TT
+CLASS="REPLACEABLE"
+><I
+>command</I
+></TT
+></TT
+>, <TT
+CLASS="LITERAL"
+>post-remove <TT
+CLASS="REPLACEABLE"
+><I
+>module</I
+></TT
+> <TT
+CLASS="REPLACEABLE"
+><I
+>command</I
+></TT
+></TT
+></DT
+><DD
+><P
+>&#13;
+
+
+Die ersten beiden Anweisungen geben einen Befehl
+<TT
+CLASS="REPLACEABLE"
+><I
+>command</I
+></TT
+> an, der entweder vor oder nach der
+Installation des angegebenen Moduls ausgeführt werden soll; die
+letzten beiden Anweisungen führen den Befehl vor oder nach dem Entfernen des
+Moduls aus. Diese Anweisungen sind nützlich, wenn eine zusätzliche
+Verarbeitung im User-Space notwendig ist oder wenn ein notwendiger
+Daemon-Prozeß gestartet werden soll. Der Befehl sollte mit seinem
+vollständigen Pfad angegeben werden, um mögliche Probleme zu
+vermeiden.</P
+><P
+>Beachten Sie, daß das Modul mit <SPAN
+CLASS="APPLICATION"
+>modprobe</SPAN
+>
+entfernt werden muß, damit die Anweisungen zum Entfernen ausgeführt
+werden; dies geschieht nicht, wenn das Modul mit
+<SPAN
+CLASS="APPLICATION"
+>rmmod</SPAN
+> entfernt wird oder das System
+(absichtlich oder unabsichtlich) heruntergefahren wird.</P
+></DD
+></DL
+></DIV
+><P
+><SPAN
+CLASS="APPLICATION"
+>modprobe</SPAN
+> unterstützt deutlich mehr
+Anweisungen als hier genannt sind, die anderen werden aber nur in
+komplizierten Situationen benötigt.</P
+><P
+>Eine typische <TT
+CLASS="FILENAME"
+>/etc/modules.conf</TT
+>-Datei sieht so aus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;alias scsi_hostadapter aic7xxx
+alias eth0 eepro100
+pre-install pcmcia_core /etc/rc.d/init.d/pcmcia start
+options short irq=1
+alias sound es1370</PRE
+></TD
+></TR
+></TABLE
+><P
+>Diese Datei teilt <SPAN
+CLASS="APPLICATION"
+>modprobe</SPAN
+> mit, welche
+Treiber zu laden sind, damit das SCSI-System, das Ethernet und die Soundkarten
+funktionieren. Es stellt außerdem sicher, daß, wenn die PCMCIA-Treiber
+geladen werden, ein Startup-Skript ausgeführt wird, das den Card
+Services-Daemon startet. Schließlich wird eine Option angegeben, die
+an den <SPAN
+CLASS="APPLICATION"
+>short</SPAN
+>-Treiber übergeben wird.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN13970"
+>Sicherheitsfragen beim Laden von Modulen</A
+></H2
+><P
+>&#13;Das Laden eines Moduls in den Kernel hat offensichtliche Auswirkungen auf die
+Sicherheit, weil der geladene Code mit höchsten Rechten
+läuft. Aus diesem Grund muß man bei der Arbeit mit dem Modul-Ladesystem
+sorgfältig vorgehen.</P
+><P
+>Beim Editieren der Datei <TT
+CLASS="FILENAME"
+>modules.conf</TT
+> sollten Sie
+immer daran denken, daß jeder, der Kernel-Module laden kann,
+die vollständige Kontrolle über das System hat. Deswegen sollten alle
+Verzeichnisse, die zum Ladepfad hinzugefügt werden, sorgfältig
+geschützt werden, desgleichen die Datei
+<TT
+CLASS="FILENAME"
+>modules.conf</TT
+> selbst.</P
+><P
+>&#13;Beachten Sie, daß sich <SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+> normalerweise
+weigert, Module zu laden, die nicht dem Benutzer root gehören; dieses
+Verhalten ist eine Vorsichtsmaßnahme gegen Angreifer, die sich
+Schreibrechte auf ein Modulverzeichnis verschaffen. Sie können diese
+Abfrage mit einer Option von <SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+> (oder
+einer Zeile in <TT
+CLASS="FILENAME"
+>modules.conf</TT
+>) abschalten, das
+vermindert aber die Sicherheit Ihres Systems.</P
+><P
+>&#13;
+Sie sollten nicht vergessen, daß der Modulnamen-Parameter, den Sie an
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request_module</I
+></SPAN
+> übergeben, am Ende in der
+Kommandozeile von <SPAN
+CLASS="APPLICATION"
+>modprobe</SPAN
+> landet. Wenn
+dieser Modulname von  irgendeinem User-Space-Programm kommt, muß er sehr sorgfältig überprüft werden, bevor er an
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request_module</I
+></SPAN
+> übergeben wird. Denken Sie
+beispielsweise an einen Systemaufruf, der Netzwerk-Schnittstellen
+konfiguriert. Als Antwort auf einen Aufruf von
+<SPAN
+CLASS="APPLICATION"
+>ifconfig</SPAN
+> fordert dieser Systemaufruf
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request_module</I
+></SPAN
+> auf, den Treiber der (vom
+Benutzer angegebenen) Schnittstelle zu laden. Ein feindlich gesinnter
+Benutzer könnte einen fiktiven Schnittstellennamen wählen, der
+<SPAN
+CLASS="APPLICATION"
+>modprobe</SPAN
+> veranlaßt, etwas Unpassendes zu
+tun. Dies ist eine echte Verletzlichkeit, die spät im
+2.4.0-test-Entwicklungszyklus entdeckt wurde; die schlimmsten Probleme
+sind beseitigt worden, aber das System ist immer noch anfällig für
+böswillige Modulnamen.
+
+
+
+
+
+
+
+&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN13999"
+>Ein Beispiel für das Laden von Modulen</A
+></H2
+><P
+>&#13;
+
+
+Schauen wir uns jetzt an, wie das Laden von Modulen bei Bedarf in der
+Praxis funktioniert. Dazu verwenden wir die beiden Module
+<SPAN
+CLASS="APPLICATION"
+>master</SPAN
+> und <SPAN
+CLASS="APPLICATION"
+>slave</SPAN
+>, die Sie
+im Verzeichnis <TT
+CLASS="FILENAME"
+>misc-modules</TT
+> in den Quelldateien
+des O'Reilly-FTP-Servers finden.</P
+><P
+>Um diesen Test-Code auszuführen, ohne die Module im Default-Suchpfad
+für Module zu installieren, können Sie etwa folgende Zeilen zu Ihrer
+<TT
+CLASS="FILENAME"
+>/etc/modules.conf</TT
+> hinzufügen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;keep
+path[misc]=&#732;rubini/driverBook/src/misc-modules&#13;</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Das Slave-Modul erfüllt keine Aufgabe; es verbraucht nur Platz, bis es
+entfernt wird. Das Master-Modul sieht dagegen folgendermaßen aus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+#include &#60;linux/kmod.h&#62;
+#include "sysdep.h"
+
+
+int master_init_module(void)
+{
+    int r[2]; /* Ergebnisse */
+
+    r[0]=request_module("slave");
+    r[1]=request_module("nonexistent");
+    printk(KERN_INFO "master: loading results are %i, %i\n", r[0],r[1]);
+    return 0; /* Erfolg */
+}
+
+void master_cleanup_module(void)
+{ }</PRE
+></TD
+></TR
+></TABLE
+><P
+>Beim Laden versucht <SPAN
+CLASS="APPLICATION"
+>master</SPAN
+>, zwei Module zu
+laden: das Modul <SPAN
+CLASS="APPLICATION"
+>slave</SPAN
+> sowie eines, das
+nicht existiert. Die <SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+>-Meldungen gelangen in
+Ihr System-Protokoll und möglicherweise auf die Konsole. Folgendes
+passiert auf einem System mit
+<SPAN
+CLASS="APPLICATION"
+>kmod</SPAN
+>-Unterstützung, wenn der Daemon aktiv ist
+und die Befehle auf der Text-Konsole eingegeben werden:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>morgana.root# <TT
+CLASS="USERINPUT"
+><B
+>depmod -a</B
+></TT
+>
+morgana.root# <TT
+CLASS="USERINPUT"
+><B
+>insmod ./master.o</B
+></TT
+>
+master: loading results are 0, 0
+morgana.root# <TT
+CLASS="USERINPUT"
+><B
+>cat /proc/modules</B
+></TT
+>
+slave                    248   0  (autoclean)
+master                   740   0  (unused)
+es1370                 34832   1</PRE
+></TD
+></TR
+></TABLE
+><P
+>Sowohl der Rückgabewert aus <SPAN
+><I
+CLASS="EMPHASIS"
+>request_module</I
+></SPAN
+>
+als auch die Datei <TT
+CLASS="FILENAME"
+>/proc/modules</TT
+> (beschrieben in
+``<A
+HREF="buiini.html"
+>the Section called <I
+>Initialisierung und Beendigung</I
+> in Kapitel 2</A
+>'' in <A
+HREF="building.html"
+>Kapitel 2</A
+>) zeigen, daß
+das Modul <SPAN
+CLASS="APPLICATION"
+>slave</SPAN
+> korrekt geladen worden ist.
+Beachten Sie aber, daß auch der Versuch,
+<TT
+CLASS="LITERAL"
+>nonexistent</TT
+> zu laden, einen erfolgreichen
+Rückgabewert zeigt. Weil <SPAN
+CLASS="APPLICATION"
+>modprobe</SPAN
+>
+ausgeführt wurde, meldet <SPAN
+><I
+CLASS="EMPHASIS"
+>request_module</I
+></SPAN
+>
+eine erfolgreiche Ausführung, unabhängig davon, was in
+<SPAN
+CLASS="APPLICATION"
+>modprobe</SPAN
+> passiert ist.</P
+><P
+>Das darauffolgende Entfernen von <SPAN
+CLASS="APPLICATION"
+>master</SPAN
+>
+führt zu folgendem Ergebnis:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>morgana.root# <TT
+CLASS="USERINPUT"
+><B
+>rmmod master</B
+></TT
+>
+morgana.root# <TT
+CLASS="USERINPUT"
+><B
+>cat /proc/modules</B
+></TT
+>
+slave                    248   0  (autoclean)
+es1370                 34832   1</PRE
+></TD
+></TR
+></TABLE
+><P
+>Das Modul <SPAN
+CLASS="APPLICATION"
+>slave</SPAN
+> bleibt im Kernel zurück,
+bis das nächste Aufräumen von Modulen erfolgt (was auf modernen
+Systemen auch nie der Fall sein könnte).</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN14050"
+>User Mode-Hilfsprogramme ausführen</A
+></H2
+><P
+>&#13;
+
+
+
+
+
+
+
+
+
+
+
+Wie wir bereits gesehen haben, führt die Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request_module</I
+></SPAN
+> ein Programm im User Mode
+(also als separaten Prozeß, in einem unprivilegierten Prozessormodus
+und im User-Space) aus, um seine Aufgabe zu erledigen. In der
+2.3-Entwicklungsserie machten die Kernel-Entwickler die Fähigkeit,
+ein User Mode-Hilfsprogramm auszuführen, auch für den Rest des Kernels
+verfügbar. Sollte Ihr Treiber ein User Mode-Programm ausführen müssen,
+um seine Aufgabe durchzuführen, geschieht das mit diesem
+Mechanismus. Weil dies ein Bestandteil der
+<SPAN
+CLASS="APPLICATION"
+>kmod</SPAN
+>-Implementation ist, schauen wir uns
+diese hier an. Bei Interesse sollten Sie auch
+<TT
+CLASS="FILENAME"
+>kernel/kmod.c</TT
+> anschauen; das ist nicht besonders
+viel Code, zeigt aber nett, wie man User Mode-Hilfsprogramme
+verwendet.</P
+><P
+>&#13;
+Das Interface zum Ausführen von Hilfsprogrammen ist recht einfach. Ab
+Kernel 2.4.0-test9 gibt es eine Funktion namens
+<SPAN
+><I
+CLASS="EMPHASIS"
+>call_usermodehelper</I
+></SPAN
+>; diese wird vor allem vom Hot
+Plug-Subsystem (für USB-Geräte und ähnliche) ausgeführt, um das Laden
+von Modulen sowie Konfigurationsaufgaben beim Anschließen eines neuen
+Geräts zu unterstützen. Der Prototyp lautet:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;int call_usermodehelper(char *path, char **argv, char **envp);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die Argumente werden Ihnen bekannt vorkommen: Sie sind der Name des
+ausführbaren Programms, die an dieses zu übergebenden Argumente
+(<TT
+CLASS="LITERAL"
+>argv[0]</TT
+> ist konventionsgemäß der Name
+des Programms selbst) sowie die Werte eventueller
+Umgebungsvariablen. Beide Arrays müssen mit
+<TT
+CLASS="LITERAL"
+>NULL</TT
+>-Werten terminiert werden, genau wie beim
+Systemaufruf
+<SPAN
+><I
+CLASS="EMPHASIS"
+>execve</I
+></SPAN
+>.
+<SPAN
+><I
+CLASS="EMPHASIS"
+>call_usermodehelper</I
+></SPAN
+> schläft, bis das
+Programm gestartet ist, und gibt dann den Status dieser Operation
+zurück.</P
+><P
+>&#13;In diesem Modus ausgeführte Hilfsprogramme werden übrigens als Kinder
+eines Kernel-Threads namens <SPAN
+CLASS="APPLICATION"
+>keventd</SPAN
+>
+ausgeführt. Eine wichtige Folge dieses Designs ist, daß es für Ihren
+Code keine Möglichkeit gibt festzustellen, ob das Hilfsprogramm seine
+Ausführung beendet hat oder welchen Rückgabewert es hatte. Die
+Ausführung von Hilfsprogrammen ist daher auch ein wenig Glückssache.</P
+><P
+>&#13;
+
+
+
+Wir möchten hier noch darauf hinweisen, daß es nur wenige gute Gründe
+für User Mode-Hilfsprogramme gibt. Meistens ist es besser, ein Skript
+zu schreiben, das während der Installation des Moduls ausgeführt wird
+und die gesamte Arbeit während des Ladens des Moduls erledigt, anstatt
+Aufrufe von User Mode-Programmen im Kernel-Code zu verdrahten. So
+etwas sollte nach Möglichkeit dem Benutzer überlassen werden.&#13;</P
+></DIV
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN13788"
+HREF="kerneld.html#AEN13788"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Die ALSA-Treiber finden Sie unter <SPAN
+CLASS="SYSTEMITEM"
+>www.alsa-project.org</SPAN
+>.</P
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN13858"
+HREF="kerneld.html#AEN13858"
+>[2]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Die meisten Distributionen führen
+<SPAN
+CLASS="APPLICATION"
+>depmod -a</SPAN
+> automatisch beim Booten aus, so
+daß Sie sich darüber keine Gedanken machen müssen, sofern Sie nicht
+Ihr neues Modul nach dem Rebooten installiert haben. Nähere Details
+finden Sie in der Dokumentation zu
+<SPAN
+CLASS="APPLICATION"
+>modprobe</SPAN
+>.</P
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN13867"
+HREF="kerneld.html#AEN13867"
+>[3]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Auf älteren Systemen heißt diese Datei oft
+<TT
+CLASS="FILENAME"
+>/etc/conf.modules</TT
+>. Dieser Name funktioniert immer noch,
+sollte aber nicht mehr verwendet werden.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x13652.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x14088.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Schnellreferenz</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Kommunikation zwischen Modulen</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

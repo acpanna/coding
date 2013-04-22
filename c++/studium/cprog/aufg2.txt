@@ -1,0 +1,51 @@
+========================================================================
+
+    Vorname		: Heiko
+    Name    		: Vogel	
+    Matrikelnummer	 	: 0854794
+    Uebungsgruppe  		: mittwochs
+
+    Benutzernummer 		: c06
+    e-mail-Adresse    		: heiko.vogel@stud.uni-bayreuth.de
+
+    Blatt Nr.           		: 01
+    Aufgabennr.   		: 02
+    Teilaufgabe     		: nur für Windows NT - Benutzer und gemeinsame Fragen
+
+    verwendeter
+    Compiler         		: Borland Turbo C++ for Windows V3.1 (c) 1991,92
+                        
+    verwendetes
+    Betriebs-
+    system           		: Windows98
+
+------------------------------------------------------------------------
+
+Nur für Windows NT - Benutzer:
+
+a)
+
+b)	Schritt1	: Wechsle ins Unterverzeichnis d:\c\ueb_01 bzw. g:\java\mm\tex
+    	Schritt2	: Erstelle aus Source-Code ein File mit der Endung EXE                          	      ---  wmake
+    	Schritt2.1 	: Erstelle aus dem Sourcefile ein Objektfile, d.h. der Compiler                 	      ---  wcc bzw. wcc386       
+                                      wandelt das vorliegende Sourcefile (ist eigentlich eine Textdatei)                 
+                                      in ein für den Computer lesbares Format (Maschinensprache) um.                 
+                 	Schritt2.2	: Füge den Objektcode der verwendeten Headerfiles mit ins Objektfile ein.     ---  wlink
+                  Resultat    : Ausführbare EXE - Datei. 
+
+      Unterschied zw.
+     wcc und wcc386	 :  wcc ist der Windows - Compiler (erstellt ausführbare Windows - Datei),
+          		    wcc386 ist der Windows NT - Compiler (erstellt ausführbare Windows NT - Datei).         
+
+
+Gemeinsame Fragen:
+
+c) In einem Unterverzeichnis include im Verzeichnis des verwendeten Compilers.
+Läßt man die include - Anweisung einfach weg, so wird der Compiler in jedem Fall
+eine Fehlermeldung bringen, da dann nämlich keine Funktion vorher deklariert wurde,
+Somit führt ein Aufruf von z.B.  printf(),  scanf(), ... dazu, das der Compiler in Situation gerät,
+das eine Funktion aufgerufen wird, die zuvor noch nicht deklariert wurde; ein Abbruch
+und eine Fehlermeldung sind normalerweise die Folge.
+
+d) pow(x,2), sin(), cos(), tan(), log(), abs()
+Diese Funktion werden allesamt im Include-File math.h deklariert.

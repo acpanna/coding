@@ -1,0 +1,845 @@
+<HTML
+><HEAD
+><TITLE
+>Mit dem Kernel verbinden</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Netzwerk-Treiber"
+HREF="net.html"><LINK
+REL="PREVIOUS"
+TITLE="Netzwerk-Treiber"
+HREF="net.html"><LINK
+REL="NEXT"
+TITLE="Die Struktur net_device im Detail"
+HREF="x19513.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="net.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 14. Netzwerk-Treiber</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x19513.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="NETSETUP"
+>Mit dem Kernel verbinden</A
+></H1
+><P
+>&#13;
+Wir schauen uns die Struktur von Netzwerk-Treibern an, indem wir
+zunächst den Quellcode von <SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+>
+untersuchen. Es wird Ihnen helfen, die folgende Beschreibung zu verstehen und zu sehen, wie echte Linux-Netzwerk-Treiber funktionieren,
+wenn Sie den Quellcode einiger Treiber parat haben. Wir würden die
+Dateien <TT
+CLASS="FILENAME"
+>loopback.c</TT
+>, <TT
+CLASS="FILENAME"
+>plip.c</TT
+>
+und <TT
+CLASS="FILENAME"
+>3c509.c</TT
+> vorschlagen, deren Komplexität in dieser Reihenfolge zunimmt.
+Auch <TT
+CLASS="FILENAME"
+>skeleton.c</TT
+> könnte nützlich
+sein, wenn dieser Beispiel-Treiber auch nicht wirklich
+funktioniert. All diese Dateien stehen in
+<TT
+CLASS="FILENAME"
+>drivers/net</TT
+> in den Kernel-Quellen.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN19315"
+>Module laden</A
+></H2
+><P
+>&#13;
+
+Wenn ein Treiber-Modul in den laufenden Kernel geladen wird, fordert
+es Ressourcen und bietet Fähigkeiten an. Soweit ist das nichts
+Neues. Ebenfalls nichts Neues ist die Art und Weise, wie Ressourcen
+geladen werden. Der Treiber sollte nach seinem Gerät und den
+Hardware-Adressen (I/O-Ports und IRQ-Leitungen) suchen &#8212;
+diese aber nicht registrieren &#8212;, wie es in &#8220;<A
+HREF="irqinstall.html"
+>the Section called <I
+>Einen Interrupt-Handler installieren</I
+> in Kapitel 9</A
+>&#8221; in <A
+HREF="irq.html"
+>Kapitel 9</A
+> beschrieben
+wurde. Ein Netzwerk-Treiber wird in der Modul-Initialisierungsfunktion
+anders registriert als
+Zeichen- und Block-Treiber. Weil es kein Gegenstück zu Major- und
+Minor-Nummern bei Netzwerk-Schnittstellen gibt, fordert ein
+Netzwerk-Treiber auch keine solche Nummer an. Statt dessen
+fügt der Treiber für jede erkannte Schnittstelle eine Datenstruktur in
+die globale Liste der Netzwerk-Geräte ein.
+&#13;</P
+><P
+>&#13;Jede Schnittstelle wird durch ein <TT
+CLASS="LITERAL"
+>struct
+net_device</TT
+>-Datenelement beschrieben. Die beiden Strukturen für
+<TT
+CLASS="LITERAL"
+>sn0</TT
+> und <TT
+CLASS="LITERAL"
+>sn1</TT
+>, die
+<SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+>-Schnittstellen, sind folgendermaßen
+deklariert:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+struct net_device snull_devs[2] = {
+    { init: snull_init, },  /* init, weiter nichts */
+    { init: snull_init, }
+};</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+Die Initialisierung sieht ziemlich einfach aus, es wird nur ein Feld
+gesetzt. Tatsächlich ist die
+<TT
+CLASS="LITERAL"
+>net_device</TT
+>-Struktur riesig, und wir werden
+in der Folge noch weitere Felder füllen. Aber es ergibt keinen Sinn,
+jetzt schon die gesamte Struktur zu behandeln; wir werden statt dessen
+jedes Feld bei Bedarf erklären. Die Definition der Struktur finden
+Sie in <TT
+CLASS="LITERAL"
+>&#60;linux/netdevice.h&#62;</TT
+>, falls Sie sich eingehender dafür interessieren.</P
+><P
+>Das erste Feld in <TT
+CLASS="LITERAL"
+>struct net_device</TT
+>, das wir
+uns anschauen werden, ist <TT
+CLASS="LITERAL"
+>name</TT
+>, das den Namen der
+Schnittstelle (also den String, der die Schnittstelle identifiziert)
+enthält. Der Treiber kann einen Namen für die Schnittstelle hart
+codieren oder eine dynamische Zuweisung erlauben, die folgendermaßen
+funktioniert: Wenn der Name einen
+<TT
+CLASS="LITERAL"
+>%d</TT
+>-Format-String enthält, wird der erste
+verfügbare Name verwendet, der nach dem Ersetzen des Strings durch eine kleine ganze
+Zahl gefunden wurde. <TT
+CLASS="LITERAL"
+>eth%d</TT
+> wird
+also zum ersten verfügbaren
+<TT
+CLASS="LITERAL"
+>eth</TT
+><SPAN
+><I
+CLASS="EMPHASIS"
+>n</I
+></SPAN
+>-Namen; die erste
+Ethernet-Schnittstelle heißt <TT
+CLASS="LITERAL"
+>eth0</TT
+>, die weiteren
+folgen in numerischer Reihenfolge. Die
+<SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+>-Schnittstellen werden defaultmäßig
+<TT
+CLASS="LITERAL"
+>sn0</TT
+> und <TT
+CLASS="LITERAL"
+>sn1</TT
+> genannt. Wenn aber
+beim Laden <TT
+CLASS="LITERAL"
+>eth=1</TT
+> angegeben wird (was dazu führt,
+daß die Integer-Variable <TT
+CLASS="LITERAL"
+>snull_eth</TT
+> den Wert
+1 enthält), dann verwendet <SPAN
+><I
+CLASS="EMPHASIS"
+>snull_init</I
+></SPAN
+>
+eine dynamische Zuweisung, wie hier gezeigt wird:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+
+if (!snull_eth) { /* "sn0" und "sn1" zuweisen */
+    strcpy(snull_devs[0].name, "sn0");
+    strcpy(snull_devs[1].name, "sn1");
+} else { /* automatische Zuweisung verwenden */
+    strcpy(snull_devs[0].name, "eth%d");
+    strcpy(snull_devs[1].name, "eth%d");
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Das andere initialisierte Feld heißt <TT
+CLASS="LITERAL"
+>init</TT
+> und ist ein
+Funktionszeiger. Immer, wenn
+Sie ein Gerät registrieren, fordert der Kernel den Treiber auf, sich
+zu registrieren. Die Initialisierung besteht aus dem Ermitteln der
+physikalischen Schnittstelle und dem Ausfüllen der
+<TT
+CLASS="LITERAL"
+>net_device</TT
+>-Struktur, wie im nächsten Abschnitt
+beschrieben wird. Wenn die Initialisierung fehlschlägt, wird die Struktur
+nicht in die globale Liste der Netzwerk-Geräte eingetragen. Dieses
+ungewöhnliche Verfahren ist besonders beim Hochfahren des Systems
+nützlich; jeder Treiber versucht, seine eigenen Geräte zu
+registrieren, aber nur Geräte, die wirklich existieren, werden in die
+Liste aufgenommen.&#13;</P
+><P
+>Weil die eigentliche Initialisierung an anderer Stelle stattfindet, hat die Initialisierungsfunktion wenig zu tun, so daß
+eine einzige Anweisung ausreicht:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+for (i=0; i&#60;2;  i++)
+    if ( (result = register_netdev(snull_devs + i)) )
+        printk("snull: Fehler %i beim Registrieren von Gerät \"%s\"\n",
+               result, snull_devs[i].name);
+    else device_present++;
+&#13;</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="NETINIT"
+>Jedes Gerät initialisieren</A
+></H2
+><P
+>&#13;
+
+Das Suchen des Gerätes sollte in der <TT
+CLASS="LITERAL"
+>init</TT
+>-Funktion
+der Schnittstelle vorgenommen werden, die oft auch die
+&#8220;Such&#8221;-Funktion genannt wird. Das Argument von
+<TT
+CLASS="LITERAL"
+>init</TT
+> ist ein Zeiger auf das initialisierte Gerät.
+Der Rückgabewert der Funktion ist entweder 0 oder ein negativer
+Fehlercode, normalerweise <TT
+CLASS="LITERAL"
+>-ENODEV</TT
+>.&#13;</P
+><P
+>Bei der <SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+>-Schnittstelle ist natürlich
+kein echtes Suchen notwendig, weil es keine zugehörige Hardware
+gibt. Wenn Sie einen echten Treiber für echte Hardware schreiben, dann
+gelten die üblichen Regeln wie beim Suchen von Zeichen-Geräten:
+Überprüfen Sie die I/O-Ports, bevor Sie sie benutzen, und
+schreiben Sie während des Suchens nicht darauf. Außerdem sollten Sie
+es vermeiden, an dieser Stelle I/O-Ports und Interrupt-Leitungen
+zu registrieren. Die eigentliche Registrierung sollte zurückgehalten
+werden, bis das Gerät geöffnet wird. Das ist besonders wichtig, wenn
+Interrupt-Leitungen mit anderen Geräten gemeinsam genutzt werden. Sie
+wollen ja schließlich nicht, daß Ihre Schnittstelle jedesmal aufgerufen
+wird, wenn ein anderes Gerät eine IRQ-Leitung aktiviert, nur um dann
+zu antworten: &#8220;Nein, das ist nicht für mich.&#8221;</P
+><P
+>&#13;
+
+Die Hauptaufgabe der Initialisierungsroutine ist das Füllen der
+<TT
+CLASS="LITERAL"
+>dev</TT
+>-Struktur für dieses Gerät. Beachten Sie, daß
+diese Struktur bei Netzwerk-Geräten immer zur Laufzeit zusammengesetzt
+wird. Aufgrund der Art und Weise, wie Netzwerk-Geräten gesucht werden, kann
+die <TT
+CLASS="LITERAL"
+>dev</TT
+>-Struktur nicht wie die Strukturen
+<TT
+CLASS="LITERAL"
+>file_operations</TT
+> oder
+<TT
+CLASS="LITERAL"
+>block_device_operations</TT
+> zur Laufzeit
+eingerichtet werden. Beim Beenden von <TT
+CLASS="LITERAL"
+>dev-&#62;init</TT
+>
+sollte die <TT
+CLASS="LITERAL"
+>dev</TT
+>-Struktur daher mit korrekten Werten
+gefüllt sein. Glücklicherweise kümmert sich der Kernel durch die
+Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>ether_setup</I
+></SPAN
+>, die mehrere Felder
+in <TT
+CLASS="LITERAL"
+>struct net_device</TT
+> füllt, um
+Ethernet-weite Defaults.</P
+><P
+>Der Kern von <SPAN
+><I
+CLASS="EMPHASIS"
+>snull_init</I
+></SPAN
+> sieht
+folgendermaßen aus:
+&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+
+ether_setup(dev); /* einige Felder zuweisen */
+
+dev-&#62;open            = snull_open;
+dev-&#62;stop            = snull_release;
+dev-&#62;set_config      = snull_config;
+dev-&#62;hard_start_xmit = snull_tx;
+dev-&#62;do_ioctl        = snull_ioctl;
+dev-&#62;get_stats       = snull_stats;
+dev-&#62;rebuild_header  = snull_rebuild_header;
+dev-&#62;hard_header     = snull_header;
+#ifdef HAVE_TX_TIMEOUT
+dev-&#62;tx_timeout     = snull_tx_timeout;
+dev-&#62;watchdog_timeo = timeout;
+#endif
+/* Default-Flags beibehalten, lediglich NOARP hinzufuegen */
+dev-&#62;flags           |= IFF_NOARP;
+dev-&#62;hard_header_cache = NULL;      /* Caching deaktivieren */
+SET_MODULE_OWNER(dev);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+
+Das einzig Ungewöhnliche an diesem Code ist das Setzen des Flags
+<TT
+CLASS="LITERAL"
+>IFF_NOARP</TT
+>. Damit wird festgelegt, daß diese
+Schnittstelle ARP, das &#8220;Address Resolution Protocol&#8221;, nicht
+benutzen soll. ARP ist ein Ethernet-Protokoll auf einer sehr niedrigen
+Ebene, das die Aufgabe hat, IP-Adressen in Ethernet Medium Access
+Control (MAC)-Adressen umzuwandeln. Weil die von
+<SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> simulierten &#8220;entfernten&#8221; Systeme
+nicht wirklich existieren, gibt es auch niemanden, der für sie
+ARP-Anfragen beantworten kann. Anstatt
+<SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> durch das Hinzufügen einer
+ARP-Implementation zu verkomplizieren, haben wir uns entschieden, die
+Schnittstelle als nicht-ARP-fähig zu markieren. Die Zuweisung von
+<TT
+CLASS="LITERAL"
+>hard_header_cache</TT
+> erfolgt aus einem
+ähnlichen Grund: Damit wird das Caching (nicht-existenter)
+ARP-Antworten auf dieser Schnittstelle abgeschaltet. Dies wird
+detailliert im Abschnitt &#8220;<A
+HREF="netarp.html"
+>the Section called <I
+>MAC-Adreßauflösung</I
+></A
+>&#8221; in diesem Kapitel
+erläutert.</P
+><P
+>&#13;
+Der Initialisierungscode belegt auch einige Felder
+(<TT
+CLASS="LITERAL"
+>tx_timeout</TT
+> und
+<TT
+CLASS="LITERAL"
+>watchdot_timeo</TT
+>), die mit dem Umgang mit
+Übertragungs-Timeouts zu tun haben. Wir behandeln diesen Punkt gründlich im
+Abschnitt &#8220;<A
+HREF="nettx.html#NETTIMEOUT"
+>the Section called <I
+>Übertragungs-Timeouts</I
+></A
+>&#8221; in diesem Kapitel.</P
+><P
+>&#13;Schließlich ruft dieser Code
+<TT
+CLASS="LITERAL"
+>SET_MODULE_OWNER</TT
+> auf, um das
+<TT
+CLASS="LITERAL"
+>owner</TT
+>-Feld der
+<TT
+CLASS="LITERAL"
+>net_device</TT
+>-Struktur mit einem Zeiger auf das
+Modul selbst zu füllen. Der Kernel verwendet diese Information genau
+wie das <TT
+CLASS="LITERAL"
+>owner</TT
+>-Feld der
+<TT
+CLASS="LITERAL"
+>file_operations</TT
+>-Struktur, um den
+Verwendungszähler des Moduls zu pflegen.</P
+><P
+>Wir werden jetzt ein weiteres Feld aus <TT
+CLASS="LITERAL"
+>struct
+net_device</TT
+> einführen, und zwar <TT
+CLASS="LITERAL"
+>priv</TT
+>. Es hat
+eine ähnliche Aufgabe wie der Zeiger
+<TT
+CLASS="LITERAL"
+>private_data</TT
+>, den wir bei Zeichen-Geräten
+benutzt haben. Im Gegensatz zu
+<TT
+CLASS="LITERAL"
+>fops-&#62;private_data</TT
+> wird dieser Zeiger
+bei der Initialisierung und nicht beim Öffnen alloziert, weil das
+Datenelement, auf das <TT
+CLASS="LITERAL"
+>priv</TT
+> verweist, die
+statistischen Daten über die Schnittstellen-Aktivität enthält. Es ist
+wichtig, daß
+diese statistische Information immer zur Verfügung steht &#8212; auch dann,
+wenn die Schnittstelle deaktiviert ist, weil der Benutzer diese
+Statistik jederzeit mit <SPAN
+CLASS="APPLICATION"
+>ifconfig</SPAN
+> abrufen
+kann. Die Speicherverwendung durch das Allozieren von
+<TT
+CLASS="LITERAL"
+>priv</TT
+> bei der Initialisierung statt beim Öffnen
+ist nicht weiter relevant, weil die meisten vorhandenen Schnittstellen
+im System fast immer aktiviert sind. Das Modul
+<SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> deklariert eine Daten-Struktur namens
+<TT
+CLASS="LITERAL"
+>snull_priv</TT
+>, die für <TT
+CLASS="LITERAL"
+>priv</TT
+>
+benutzt werden soll:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+struct snull_priv {
+    struct net_device_stats stats;
+    int status;
+    int rx_packetlen;
+    u8 *rx_packetdata;
+    int tx_packetlen;
+    u8 *tx_packetdata;
+    struct sk_buff *skb;
+    spinlock_t lock;
+};</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Die Struktur enthält eine Instanz von <TT
+CLASS="LITERAL"
+>struct
+net_device_stats</TT
+>, dem normalen
+Aufbewahrungsort für Schnittstellen-Statistiken. Die folgenden Zeilen
+in <TT
+CLASS="LITERAL"
+>snull_init</TT
+> allozieren
+<TT
+CLASS="LITERAL"
+>dev-&#62;priv</TT
+>:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+dev-&#62;priv = kmalloc(sizeof(struct snull_priv), GFP_KERNEL);
+if (dev-&#62;priv == NULL)
+    return -ENOMEM;
+memset(dev-&#62;priv, 0, sizeof(struct snull_priv));
+spin_lock_init(&#38; ((struct snull_priv *) dev-&#62;priv)-&#62;lock);</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN19456"
+>Entladen von Modulen</A
+></H2
+><P
+>&#13;
+
+
+Beim Entladen des Moduls passiert nichts Besonderes. Die Aufräumfunktion
+deregistriert einfach die
+Schnittstelle aus der Liste, nachdem sie den Speicher aus der privaten
+Struktur freigegeben hat:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+void snull_cleanup(void)
+{
+    int i;
+
+    for (i=0; i&#60;2;  i++) {
+        kfree(snull_devs[i].priv);
+        unregister_netdev(snull_devs + i);
+    }
+    return;
+}
+&#13;</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN19473"
+>Modularisierte und nicht-modularisierte Treiber</A
+></H2
+><P
+>&#13;
+
+Bei Block- und Zeichen-Treibern gibt es keinen großen Unterschied
+zwischen modularisierten und nicht-modularisierten Treibern, aber bei
+Netzwerk-Treibern ist die Lage anders.&#13;</P
+><P
+>Wenn ein Treiber als Teil des Standard-Linux-Kernels ausgeliefert
+wird, deklariert er keine eigenen
+<TT
+CLASS="LITERAL"
+>net_device</TT
+>-Strukturen, sondern verwendet statt dessen
+die in <TT
+CLASS="FILENAME"
+>drivers/net/Space.c</TT
+>
+deklarierten. <TT
+CLASS="FILENAME"
+>Space.c</TT
+> deklariert eine verkettete
+Liste aller Netzwerk-Geräte, sowohl treiberspezifische Strukturen wie
+<TT
+CLASS="LITERAL"
+>plip1</TT
+> als auch allgemein verwendete
+Strukturen. Diese <TT
+CLASS="LITERAL"
+>eth</TT
+>-Gerätestrukturen deklarieren
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ethif_probe</I
+></SPAN
+> als ihre
+<TT
+CLASS="LITERAL"
+>init</TT
+>-Funktion. Ein Programmierer, der dem
+Standard-Kernel eine neue Ethernet-Schnittstelle hinzufügt, muß
+lediglich in <SPAN
+><I
+CLASS="EMPHASIS"
+>ethif_probe</I
+></SPAN
+> einen Aufruf
+seiner Treiber-Initialisierungsfunktion hinzufügen. Programmierer von
+Nicht-<TT
+CLASS="LITERAL"
+>eth</TT
+>-Treibern fügen ihre Strukturen dagegen in
+<TT
+CLASS="FILENAME"
+>Space.c</TT
+> ein. In beiden Fällen muß nur die
+Quelldatei <TT
+CLASS="FILENAME"
+>Space.c</TT
+> modifiziert werden, wenn der
+Treiber in den Kernel selbst gelinkt werden soll.&#13;</P
+><P
+>&#13;Beim Hochfahren des Systems durchläuft der Code zur Initialisierung
+des Netzwerk-Subsystems alle <TT
+CLASS="LITERAL"
+>net_device</TT
+>-Strukturen und
+ruft ihre Such-Funktionen (<TT
+CLASS="LITERAL"
+>dev-&#62;init</TT
+>) auf, indem
+er diesen einen Zeiger auf das Gerät selbst übergibt. Wenn ein
+Netzwerk-Gerät gefunden wurde, initialisiert der Kernel die nächste
+verfügbare <TT
+CLASS="LITERAL"
+>net_device</TT
+>-Struktur zur
+Verwendung mit dieser Schnittstelle. Auf diese Art
+und Weise können den Geräten inkrementell Namen wie
+<TT
+CLASS="LITERAL"
+>eth0</TT
+>, <TT
+CLASS="LITERAL"
+>eth1</TT
+> usw. zugewiesen
+werden, ohne jedesmal das <TT
+CLASS="LITERAL"
+>name</TT
+>-Feld ändern zu
+müssen.&#13;</P
+><P
+>Wenn ein modularisierter Treiber geladen wird, dann muß er dagegen
+(wie wir in diesem Kapitel schon gesehen haben) seine eigenen
+<TT
+CLASS="LITERAL"
+>net_device</TT
+>-Strukturen deklarieren, selbst wenn die
+angesteuerte Schnittstelle eine Ethernet-Schnittstelle ist.&#13;</P
+><P
+>Neugierige Leser können durch das Studium von
+<TT
+CLASS="FILENAME"
+>Space.c</TT
+> und
+<TT
+CLASS="FILENAME"
+>net_init.c</TT
+> mehr über die Initialisierung
+von Schnittstellen erfahren.
+
+&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="net.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x19513.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Netzwerk-Treiber</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="net.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Die Struktur net_device im Detail</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

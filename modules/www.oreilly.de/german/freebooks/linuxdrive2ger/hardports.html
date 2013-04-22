@@ -1,0 +1,890 @@
+<HTML
+><HEAD
+><TITLE
+>I/O-Ports benutzen</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Hardware-Verwaltung"
+HREF="hard.html"><LINK
+REL="PREVIOUS"
+TITLE="Hardware-Verwaltung"
+HREF="hard.html"><LINK
+REL="NEXT"
+TITLE=" Digitale I/O-Ports verwenden"
+HREF="harddigio.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="hard.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 8. Hardware-Verwaltung</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="harddigio.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="HARDPORTS"
+>I/O-Ports benutzen</A
+></H1
+><P
+>&#13;
+Über I/O-Ports kommunizieren Treiber mit vielen Geräten &#8212;
+zumindest zeitweise. In diesem Abschnitt behandeln wir die diversen
+Funktionen, mit denen man I/O-Ports verwenden kann, und behandeln auch
+einige Portabilitätsprobleme.</P
+><P
+>&#13;
+
+
+
+Denken Sie zunächst daran, daß I/O-Ports alloziert
+werden müssen, bevor sie von Ihrem Treiber verwendet werden
+können. Wie in &#8220;<A
+HREF="buiresource.html#BUIPROBE"
+>the Section called <I
+>I/O-Ports und I/O-Speicher</I
+> in Kapitel 2</A
+>&#8221; in <A
+HREF="building.html"
+>Kapitel 2</A
+> besprochen, gibt es folgende Funktionen zum
+Allozieren und Freigeben von Ports:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;#include &#60;linux/ioport.h&#62;
+int check_region(unsigned long start, unsigned long len);
+struct resource *request_region(unsigned long start,
+       unsigned long len, char *name);
+void release_region(unsigned long start, unsigned long len);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+
+
+Nachdem ein Treiber einen Bereich von I/O-Ports angefordert hat, den
+er für seine Aufgaben benötigt, muß er diese Ports lesen oder
+  beschreiben. Dazu unterscheiden die meisten Architekturen zwischen
+  8-Bit-, 16-Bit- und 32-Bit-Ports. Normalerweise können Sie diese
+  nicht miteinander vermischen, wie das bei normalem Systemspeicher
+  möglich ist.<A
+NAME="AEN10314"
+HREF="#FTN.AEN10314"
+>[1]</A
+></P
+><P
+>Ein C-Programm muß daher verschiedene Funktionen aufrufen, um auf
+Ports verschiedener Größe zuzugreifen. Wie im vorigen Abschnitt
+bereits erwähnt wurde, täuschen Computer-Architekturen, die nur in den
+Speicher abgebildete I/O-Register unterstützen, die Port-I/O vor, indem sie Port-Adressen auf Speicheradressen abbilden; der Kernel
+versteckt die Details vor dem Treiber, um die Portabilität zu
+verbessern.
+Die Linux-Kernel-Header-Dateien
+(genauer gesagt, die architekturabhängige Header-Datei
+<TT
+CLASS="LITERAL"
+>&#60;asm/io.h&#62;</TT
+>) definieren die unten
+aufgeführten Inline-Funktionen, um auf I/O-Ports zuzugreifen:
+
+&#13;</P
+><DIV
+CLASS="NOTE"
+><BLOCKQUOTE
+CLASS="NOTE"
+><P
+><B
+>Note: </B
+>Von nun an meint <TT
+CLASS="LITERAL"
+>unsigned</TT
+> ohne weitere
+Typangaben eine architekturabhängige Definition, auf deren genaue Art
+es nicht ankommt. Diese Funktionen sind fast immer portabel, weil der
+Compiler die Werte automatisch während der Zuweisung mit dem
+Cast-Operator umwandelt. Sie sind <TT
+CLASS="LITERAL"
+>unsigned</TT
+>, um
+Compiler-Warnungen zu vermeiden. Bei diesen Cast-Operationen geht
+keine Information verloren, solange der Programmierer sinnvolle Werte
+verwendet, um Überläufe zu vermeiden. Wir werden für den Rest des
+Kapitels bei dieser Konvention der &#8220;unvollständigen
+Typisierung&#8221; bleiben.</P
+></BLOCKQUOTE
+></DIV
+><P
+></P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned inb(unsigned port);</TT
+>, <TT
+CLASS="LITERAL"
+>void outb(unsigned char byte, unsigned port);</TT
+></DT
+><DD
+><P
+>&#13;
+Byte-Ports (8 Bit breit) lesen oder schreiben. Das Argument
+<TT
+CLASS="LITERAL"
+>port</TT
+> ist auf manchen Plattformen als
+<TT
+CLASS="LITERAL"
+>unsigned long</TT
+> und auf anderen als <TT
+CLASS="LITERAL"
+>unsigned
+short</TT
+> definiert. Der Rückgabewert von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>inb</I
+></SPAN
+> unterscheidet sich auch auf den einzelnen
+Architekturen. </P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned inw(unsigned port);</TT
+>, <TT
+CLASS="LITERAL"
+>void outw(unsigned short word, unsigned port);</TT
+></DT
+><DD
+><P
+>&#13;
+Diese Funktionen greifen auf 16-Bit-Ports (&#8220;Wort-breit&#8221;)
+zu; sie stehen nicht in der M68k- und der S390-Version von Linux zur
+Verfügung, die nur Byte-I/O unterstützen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned inl(unsigned port);</TT
+>, <TT
+CLASS="LITERAL"
+>void outl(unsigned longword, unsigned port);</TT
+></DT
+><DD
+><P
+>&#13;
+Diese Funktionen greifen auf 32-Bit-Ports
+zu. <TT
+CLASS="LITERAL"
+>longword</TT
+> ist je nach Plattform entweder als
+<TT
+CLASS="LITERAL"
+>unsigned long</TT
+> oder als <TT
+CLASS="LITERAL"
+>unsigned
+int</TT
+> definiert. Wie auch die 16 Bit breite I/O ist auch
+diese nicht auf M68k- und S390-Systemen verfügbar.</P
+></DD
+></DL
+></DIV
+><P
+>Beachten Sie, daß keine 64-Bit-I/O-Operationen definiert
+sind. Selbst auf 64-Bit-Architekturen verwenden I/O-Ports nur
+32 Bit breite Datenpfade.&#13;</P
+><P
+>Die oben genannten Funktionen sind hauptsächlich für die Verwendung in
+Gerätetreibern gedacht, können aber auch vom User-Space aus aufgerufen
+werden &#8212; zumindest auf PC-artigen Computern. Die GNU-C-Bibliothek
+definiert diese Funktionen in <TT
+CLASS="LITERAL"
+>&#60;sys/io.h&#62;</TT
+>. Damit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>inb</I
+></SPAN
+> und Kollegen in User-Space-Code verwendet
+werden können, müssen aber die folgenden Bedingungen erfüllt sein:&#13;</P
+><P
+></P
+><UL
+><LI
+STYLE="list-style-type: disc"
+><P
+>Das Programm muß mit der Option <SPAN
+><I
+CLASS="EMPHASIS"
+>&#8211;O</I
+></SPAN
+>
+kompiliert werden, um die Expansion der Inline-Funktionen zu
+erzwingen.</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>&#13;
+Mit <SPAN
+><I
+CLASS="EMPHASIS"
+>ioperm</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>iopl</I
+></SPAN
+> muß die
+Erlaubnis beantragt werden, I/O-Operationen auf Ports benutzen zu
+dürfen. <SPAN
+><I
+CLASS="EMPHASIS"
+>ioperm</I
+></SPAN
+> holt sich diese Erlaubnis für spezielle
+Ports, während <SPAN
+><I
+CLASS="EMPHASIS"
+>iopl</I
+></SPAN
+> das für den gesamten
+I/O-Adreßraum tut. Beide Funktionen sind Intel-spezifisch.</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>Das Programm muß als Superuser laufen, um <SPAN
+><I
+CLASS="EMPHASIS"
+>ioperm</I
+></SPAN
+>
+oder <SPAN
+><I
+CLASS="EMPHASIS"
+>iopl</I
+></SPAN
+><A
+NAME="AEN10392"
+HREF="#FTN.AEN10392"
+>[2]</A
+>
+ aufrufen zu dürfen. Alternativ dazu
+kann auch einer der Vorfahren die Erlaubnis zum Port-Zugriff erhalten
+haben.</P
+></LI
+></UL
+><P
+>Wenn die Systemaufrufe <SPAN
+><I
+CLASS="EMPHASIS"
+>ioperm</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>iopl</I
+></SPAN
+> auf der Host-Plattform nicht zur Verfügung
+stehen, kann man vom User-Space aus trotzdem noch auf die I/O-Ports
+zugreifen, indem man die Gerätedatei <TT
+CLASS="FILENAME"
+>/dev/port</TT
+>
+verwendet. Beachten Sie aber, daß die Bedeutung dieser Datei sehr
+plattformabhängig ist und die Datei vermutlich außerhalb der
+PC-Plattform nicht sinnvoll verwendet werden kann.</P
+><P
+>Die Beispielprogramme <TT
+CLASS="FILENAME"
+>misc-progs/inp.c</TT
+> und
+<TT
+CLASS="FILENAME"
+>misc-progs/outp.c</TT
+> sind ein minimales Werkzeug
+für das Lesen und Schreiben von Ports von der Kommandozeile im
+User-Space aus. Sie erwarten, unter verschiedenen Namen
+(<TT
+CLASS="FILENAME"
+>inpb</TT
+>, <TT
+CLASS="FILENAME"
+>inpw</TT
+>,
+<TT
+CLASS="FILENAME"
+>inpl</TT
+> usw.) installiert zu werden, und arbeiten
+dann auf 8, 16 oder 32 Bit breiten Ports, je nachdem, unter welchem
+Namen sie aufgerufen worden sind. Wenn
+<SPAN
+CLASS="APPLICATION"
+>ioperm</SPAN
+> nicht zur Verfügung steht, verwenden
+sie <TT
+CLASS="FILENAME"
+>/dev/port</TT
+>.</P
+><P
+>Den Programmen kann das <TT
+CLASS="LITERAL"
+>setuid root</TT
+>-Bit gesetzt werden, wenn Sie gerne gefährlich leben und mit Ihrer Hardware spielen möchten, ohne explizite Zugriffsrechte zu erwerben.</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="HARDSTRING"
+>String-Operationen</A
+></H2
+><P
+>&#13;
+
+Neben den einzelnen Eingabe- und Ausgabe-Operationen implementieren
+manche Prozessoren spezielle Anweisungen, um eine Folge von Bytes,
+Wörtern oder Langwörtern in einen oder aus einem I/O-Port der gleichen Größe
+zu übertragen. Diese Anweisungen heißen
+<I
+CLASS="FIRSTTERM"
+>String-Anweisungen</I
+> und erledigen diese Aufgabe
+schneller, als das eine in C programmierte Schleife könnte. Die
+folgenden Makros implementieren das Konzept der String-I/O, indem sie
+entweder eine einzelne Maschinenanweisung verwenden oder eine kurze
+Schleife ausführen, wenn der Ziel-Prozessor keine Anweisung für
+String-I/O hat. Die Makros sind überhaupt nicht definiert, wenn für
+M68k- und S390-Plattformen kompiliert werden soll. Dies sollte kein
+Portabilitätsproblem sein, da Treiber für diese Plattformen normalerweise ohnehin nicht auf anderen Plattformen verwendet werden; die
+Peripherie-Busse sind zu unterschiedlich.&#13;</P
+><P
+>Die Prototypen der String-Funktionen sehen folgendermaßen aus:&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>void insb(unsigned port, void *addr, unsigned long count);</TT
+>, <TT
+CLASS="LITERAL"
+>void outsb(unsigned port, void *addr, unsigned long count);</TT
+></DT
+><DD
+><P
+>&#13;
+Lesen oder Schreiben von <TT
+CLASS="LITERAL"
+>count</TT
+> Bytes ab der
+Speicheradresse <TT
+CLASS="LITERAL"
+>addr</TT
+>. Daten werden aus dem
+einzelnen Port <TT
+CLASS="LITERAL"
+>port</TT
+> gelesen oder auf ihn
+geschrieben.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void insw(unsigned port, void *addr, unsigned long count);</TT
+>, <TT
+CLASS="LITERAL"
+>void outsw(unsigned port, void *addr, unsigned long count);</TT
+></DT
+><DD
+><P
+>&#13;
+Lesen oder Schreiben von 16-Bit-Werten aus einem bzw. auf einen 16-Bit-Port.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void insl(unsigned port, void *addr, unsigned long count);</TT
+>, <TT
+CLASS="LITERAL"
+>void outsl(unsigned port, void *addr, unsigned long count);</TT
+></DT
+><DD
+><P
+>&#13;
+Lesen oder Schreiben von 32-Bit-Werten aus einem bzw. auf einen 32-Bit-Port.</P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN10464"
+>Wartende I/O</A
+></H2
+><P
+>&#13;
+Einige Plattformen &#8212; besonders i386 &#8212; können Probleme
+bekommen, wenn der Prozessor versucht, Daten zu schnell von oder zum
+Bus zu transportieren. Diese Probleme können auftreten, wenn der
+Prozessor im Verhältnis zum ISA-Bus zu schnell getaktet ist, und zeigen
+sich, wenn das Gerät zu langsam ist. Eine Lösung für dieses Problem
+besteht darin, eine kurze Pause nach einer I/O-Anweisung
+einzufügen, wenn eine weitere solche Anweisung folgt. Wenn Ihr Gerät
+Daten übersieht, oder Sie auch nur befürchten, daß das
+passieren könnte, dann können Sie die wartenden Funktionen anstelle
+der normalen verwenden. Die wartenden Funktionen sind die gleichen wie die
+oben aufgeführten, haben aber Namen, die auf
+<TT
+CLASS="LITERAL"
+>_p</TT
+> enden; sie heißen
+<SPAN
+><I
+CLASS="EMPHASIS"
+>inb_p</I
+></SPAN
+>,
+<SPAN
+><I
+CLASS="EMPHASIS"
+>outb_p</I
+></SPAN
+> usw. Die Funktionen sind auf den
+meisten unterstützten Architekturen nicht definiert, werden aber oft
+zum gleichen Code wie nicht-wartende I/O expandiert, weil es keinen
+Grund dafür gibt, extra zu warten, wenn die Architektur keinen
+veralteten Peripherie-Bus verwendet.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="HARDDEP"
+>Plattformabhängigkeiten</A
+></H2
+><P
+>&#13;
+
+
+I/O-Anweisungen sind von Natur aus stark prozessorabhängig. Da Sie
+die Details nutzen, mit denen der Prozessor Daten
+transportiert, ist es sehr schwer, die Unterschiede zwischen den
+Plattformen zu verbergen. Als Folge davon ist ein großer Teil des
+Port-I/O-Codes plattformabhängig.</P
+><P
+>Ein Beispiel für solche Inkompatibilitäten, nämlich bei den Datentypen, können Sie sehen, wenn Sie
+sich die Liste der Funktionen ansehen, in der die Argumente je nach
+Architektur-Unterschieden zwischen den Plattformen unterschiedliche
+Typen haben. Beispielsweise ist ein Port auf der x86-Plattform (auf
+der der Prozessor einen I/O-Raum von 64 KByte unterstützt) ein
+<TT
+CLASS="LITERAL"
+>unsigned short</TT
+>. Auf anderen Plattformen aber, auf
+denen Ports nur spezielle Plätze im gleichen Adreßraum sind, ist er ein
+<TT
+CLASS="LITERAL"
+>unsigned long</TT
+>.</P
+><P
+>Andere Plattformabhängigkeiten entstehen aus den grundlegenden
+strukturellen Unterschieden in den Prozessoren und können daher nicht
+vermieden werden. Wir werden hier nicht detailliert auf die
+Unterschiede eingehen, da wir annehmen, daß Sie keinen Gerätetreiber
+für ein bestimmtes System schreiben werden, ohne die zugrundeliegende
+Hardware zu verstehen. Statt dessen folgt hier ein Überblick über die
+Fähigkeiten der in der Kernel-Version 2.4 unterstützten Architekturen:&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+>IA-32 (x86)</DT
+><DD
+><P
+>&#13;
+Die Architektur unterstützt alle Funktionen, die in diesem Kapitel
+beschrieben werden. Port-Nummern haben den Typ <TT
+CLASS="LITERAL"
+>unsigned
+short</TT
+>.</P
+></DD
+><DT
+>IA-64 (Itanium)</DT
+><DD
+><P
+>Alle Funktionen werden unterstützt; Ports sind
+<TT
+CLASS="LITERAL"
+>unsigned long</TT
+> (und werden in den Speicher
+abgebildet). String-Funktionen sind in C implementiert.</P
+></DD
+><DT
+>Alpha</DT
+><DD
+><P
+>&#13;Alle Funktionen werden unterstützt, Ports werden in den Speicher
+abgebildet. Die Implementation der Port-I/O unterscheidet sich in den
+verschiedenen Alpha-Plattformen je nach verwendetem
+Chipsatz. String-Funktionen sind in C implementiert und werden in
+<TT
+CLASS="FILENAME"
+>arch/alpha/lib/io.c</TT
+> definiert. Ports sind
+<TT
+CLASS="LITERAL"
+>unsigned long</TT
+>.</P
+></DD
+><DT
+>ARM</DT
+><DD
+><P
+>Ports werden in den Speicher abgebildet; alle
+Funktionen werden unterstützt. String-Funktionen sind in C
+implementiert. Ports haben den Typ <TT
+CLASS="LITERAL"
+>unsigned
+int</TT
+>.</P
+></DD
+><DT
+>M68k</DT
+><DD
+><P
+>&#13;Ports werden in den Speicher abgebildet; nur Byte-Funktionen werden
+unterstützt. String-Funktionen werden nicht unterstützt; der Port-Typ
+ist <TT
+CLASS="LITERAL"
+>unsigned char*</TT
+>.</P
+></DD
+><DT
+>MIPS, MIPS64</DT
+><DD
+><P
+>Die MIPS-Portierung unterstützt alle
+Funktionen. String-Operationen sind mit kleinen Assembler-Schleifen
+implementiert, weil der Prozessor keine String-I/O auf Maschinenebene
+kennt. Ports werden in den Speicher abgebildet und sind
+<TT
+CLASS="LITERAL"
+>unsigned int</TT
+> auf 32-Bit-Prozessoren sowie
+<TT
+CLASS="LITERAL"
+>unsigned long</TT
+> auf 64-Bit-Prozessoren.</P
+></DD
+><DT
+>PowerPC</DT
+><DD
+><P
+>&#13;Alle Funktionen werden unterstützt; Ports haben den Typ
+<TT
+CLASS="LITERAL"
+>unsigned char*</TT
+>.</P
+></DD
+><DT
+>S390</DT
+><DD
+><P
+>Ähnlich M68k, die Header-Datei für diese Plattform
+unterstützt nur Byte-breite Port-I/O ohne String-Operationen. Ports
+sind <TT
+CLASS="LITERAL"
+>char</TT
+>-Zeiger und werden in den Speicher
+abgebildet.</P
+></DD
+><DT
+>Super-H</DT
+><DD
+><P
+>Ports sind <TT
+CLASS="LITERAL"
+>unsigned int</TT
+> (und werden in
+den Speicher abgebildet). Alle Funktionen werden unterstützt.</P
+></DD
+><DT
+>SPARC, SPARC64</DT
+><DD
+><P
+>&#13;Auch hier wird der I/O-Raum in den Speicher abgebildet. Die Versionen
+der Port-Funktionen arbeiten mit <TT
+CLASS="LITERAL"
+>unsigned
+long</TT
+>-Ports.</P
+></DD
+></DL
+></DIV
+><P
+>Neugierige Leser können weitere Informationen in den Dateien
+<TT
+CLASS="FILENAME"
+>io.h</TT
+> finden, die manchmal noch einige zusätzliche
+architekturspezifische Funktionen außer den in diesem Kapitel
+angegebenen definieren. Beachten Sie aber, daß diese Dateien recht
+schwer zu lesen sind.&#13;</P
+><P
+>Es ist interessant, daß kein Prozessor außer den Prozessoren der x86-Familie getrennte
+Adreßräume
+für Ports hat, auch wenn mehrere der unterstützten Familien mit ISA- und/oder
+PCI-Steckplätzen ausgeliefert werden (und beide Busse unterschiedliche
+I/O- und Speicher-Adreßräume definieren).</P
+><P
+>Außerdem fehlen manchen Prozessoren (vor allem frühen
+Alphas) Anweisungen, mit denen ein oder zwei Bytes gleichzeitig verschoben
+werden können.<A
+NAME="AEN10577"
+HREF="#FTN.AEN10577"
+>[3]</A
+> Daher simulieren deren Peripherie-Chipsätze
+8-Bit- und 16-Bit-I/O-Zugriffe durch Abbilden auf spezielle
+Adreßbereiche im Speicher-Adreßraum. Eine <SPAN
+><I
+CLASS="EMPHASIS"
+>inb</I
+></SPAN
+>-
+und eine <SPAN
+><I
+CLASS="EMPHASIS"
+>inw</I
+></SPAN
+>-Anweisung, die auf dem gleichen Port
+arbeiten, sind also als zwei 32-Bit-Leseoperationen implementiert, die
+auf verschiedenen Adressen arbeiten. Glücklicherweise bleibt all dies
+durch die in diesem Abschnitt beschriebenen Makros vor dem Autor
+eines Gerätetreibers verborgen, aber wir halten es doch für
+interessant genug, um es zu erwähnen. Wenn Sie sich weiter informieren
+wollen, dann schauen Sie in
+<TT
+CLASS="FILENAME"
+>include/asm-alpha/core_lca.h</TT
+>.</P
+><P
+>Wie I/O-Operationen auf den einzelnen Plattformen ausgeführt werden,
+ist im Programmierhandbuch der jeweiligen Plattform gut beschrieben;
+diese Handbücher sind normalerweise als PDF-Dateien im Web
+erhältlich.</P
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN10314"
+HREF="hardports.html#AEN10314"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Übrigens sind I/O-Ports manchmal tatsächlich wie Speicher
+angeordnet, und Sie können beispielsweise zwei 8-Bit-Schreiboperationen zu einer 16-Bit-Operation kombinieren. Das gilt zum
+Beispiel für PC-Grafikkarten, aber Sie können sich nicht
+generell darauf  verlassen.</P
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN10392"
+HREF="hardports.html#AEN10392"
+>[2]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Technisch gesehen muß die Fähigkeit
+<TT
+CLASS="LITERAL"
+>CAP_SYS_RAWIO</TT
+> vorhanden sein, das ist aber auf
+aktuellen Systemen das gleiche, wie Superuser zu sein.</P
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN10577"
+HREF="hardports.html#AEN10577"
+>[3]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>I/O mit einzelnen Bytes ist nicht so wichtig, wie
+Sie vielleicht denken, denn diese Operation wird nur selten
+gebraucht. Um ein einzelnes Byte aus einem beliebigen Adreßraum zu
+lesen oder in ihn zu schreiben, müssen Sie einen Datenpfad
+implementieren, der die unteren Bits des Datenbus zum Setzen der
+Register mit Byte-Positionen im externen Datenbus verbindet. Diese
+Datenpfade erfordern zusätzliche Logik-Gatter, die bei jeder
+Datenübertragung im Weg sind. Das Weglassen von Byte-breiten Lade- und
+Speicheroperationen kann die gesamte Systemperformance verbessern.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="hard.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="harddigio.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Hardware-Verwaltung</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="hard.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Digitale I/O-Ports verwenden</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

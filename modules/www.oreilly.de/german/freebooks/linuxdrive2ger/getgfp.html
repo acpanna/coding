@@ -1,0 +1,586 @@
+<HTML
+><HEAD
+><TITLE
+>get_&#8201;free_&#8201;page und Freunde</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Speicher ergattern"
+HREF="get.html"><LINK
+REL="PREVIOUS"
+TITLE="Lookaside-Caches"
+HREF="getcache.html"><LINK
+REL="NEXT"
+TITLE="vmalloc und Freunde"
+HREF="getvmalloc.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="getcache.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 7. Speicher ergattern</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="getvmalloc.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="GETGFP"
+>get_&#8201;free_&#8201;page und Freunde</A
+></H1
+><P
+>&#13;
+
+Wenn ein Modul große Speicherblocks allozieren muß, ist es besser,
+eine seitenorientierte Technik zu verwenden. Das hat auch noch
+weitere Vorteile, die in &#8220;<A
+HREF="memmap.html"
+>the Section called <I
+>Die Geräteoperation mmap</I
+> in Kapitel 13</A
+>&#8221; in
+<A
+HREF="mem.html"
+>Kapitel 13</A
+> eingeführt werden.&#13;</P
+><P
+>Die folgenden Funktionen stehen zur Allokation von Seiten zur
+Verfügung:&#13;</P
+><P
+></P
+><UL
+><LI
+STYLE="list-style-type: disc"
+><P
+><SPAN
+><I
+CLASS="EMPHASIS"
+>get_&#8201;zeroed_page</I
+></SPAN
+> Gibt einen Zeiger
+auf eine neue Seite zurück und füllt diese Seite mit Nullen.
+
+
+&#13;</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+><SPAN
+><I
+CLASS="EMPHASIS"
+>_&#8201;_get_&#8201;free_page</I
+></SPAN
+>
+Entspricht <SPAN
+><I
+CLASS="EMPHASIS"
+>get_&#8201;zeroed_page</I
+></SPAN
+>, füllt die Seite aber nicht mit Nullen auf.</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+><SPAN
+><I
+CLASS="EMPHASIS"
+>_&#8201;_get_&#8201;free_pages</I
+></SPAN
+>
+Alloziert und gibt
+einen Zeiger auf das erste Byte eines physikalisch zusammenhängenden Speicherbereichs zurück, der
+mehrere Seiten lang ist. Der Bereich wird nicht mit Nullen gefüllt.</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+><SPAN
+><I
+CLASS="EMPHASIS"
+>_&#8201;_get_dma_pages</I
+></SPAN
+>
+Ähnelt <SPAN
+><I
+CLASS="EMPHASIS"
+>get_free_pages</I
+></SPAN
+>, garantiert
+aber, daß der allozierte Speicher DMA-fähig ist. Wenn Sie Version 2.2
+oder neuer verwenden, können Sie einfach
+<SPAN
+><I
+CLASS="EMPHASIS"
+>__get_free_pages</I
+></SPAN
+>
+verwenden und das Flag
+<TT
+CLASS="LITERAL"
+>__GFP_DMA</TT
+> übergeben. Wenn Sie
+abwärtskompatibel mit 2.0 sein wollen, müssen Sie statt dessen diese
+Funktion aufrufen.</P
+></LI
+></UL
+><P
+>Die Prototypen für die Funktionen sind
+folgendermaßen definiert:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+
+unsigned long get_zeroed_page(int flags);
+unsigned long _&#8201;_get_free_page(int flags);
+unsigned long _&#8201;_get_free_pages(int flags,
+                              unsigned long order);
+unsigned long _&#8201;_get_dma_pages(int flags,
+                               unsigned long order);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+
+
+Das Argument <TT
+CLASS="LITERAL"
+>flags</TT
+> in den Allokationsfunktionen
+hat die gleiche Bedeutung wie bei
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+>. Normalerweise wird entweder
+<TT
+CLASS="LITERAL"
+>GFP_KERNEL</TT
+> oder
+<TT
+CLASS="LITERAL"
+>GFP_ATOMIC</TT
+> verwendet, möglicherweise unter
+Hinzufügung von <TT
+CLASS="LITERAL"
+>__GFP_DMA</TT
+> (für
+Speicher, auf den mit DMA-Operationen zugegriffen werden soll) oder <TT
+CLASS="LITERAL"
+>__GFP_HIGHMEM</TT
+> für die Verwendung des oberen Speicherbereichs.
+<TT
+CLASS="LITERAL"
+>order</TT
+> ist die Zweierpotenz der Anzahl der
+Seiten, die Sie anfordern oder freigeben wollen (also
+log<SUB
+>2</SUB
+>N). Beispielsweise nutzen Sie
+<TT
+CLASS="LITERAL"
+>order</TT
+> <TT
+CLASS="LITERAL"
+>0</TT
+>, wenn Sie nur eine Seite
+haben wollen, oder <TT
+CLASS="LITERAL"
+>3</TT
+> für acht Seiten. Wenn
+<TT
+CLASS="LITERAL"
+>order</TT
+> zu groß ist, da kein zusammenhängender Speicherbereich der angegebenen Größe vorhanden ist, schlägt die Allokation
+fehl. In Linux 2.0 war der größte Wert für <TT
+CLASS="LITERAL"
+>order</TT
+> 5
+(entsprechend 32 Seiten) und in neueren Versionen 9 (entsprechend 512
+Seiten, 2 MByte auf den meisten Plattformen). Natürlich ist es um so
+wahrscheinlicher, daß die
+Allokation fehlschlägt, je größer <TT
+CLASS="LITERAL"
+>order</TT
+> ist.</P
+><P
+>&#13;
+Wenn ein Programm die Seiten nicht mehr benötigt, kann es sie mit
+einer der folgenden Funktionen zurückgeben. Die erste ist ein Makro,
+das die zweite verwendet:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;void free_page(unsigned long addr);
+void free_pages(unsigned long addr, unsigned long order);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wenn Sie versuchen, eine andere Zahl von Seiten freizugeben, als Sie
+alloziert haben, dann kommt die Speichertabelle durcheinander, und das
+System wird später in Schwierigkeiten geraten.</P
+><P
+>&#13;Es muß betont werden, daß
+<SPAN
+><I
+CLASS="EMPHASIS"
+>get_free_pages</I
+></SPAN
+> und die anderen
+Funktionen jederzeit aufgerufen werden können, natürlich mit den
+gleichen Einschränkungen wie bei <SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+>. Es
+kann in gewissen Situationen passieren, daß kein Speicher alloziert
+werden kann; insbesondere dann, wenn die Priorität
+<TT
+CLASS="LITERAL"
+>GFP_ATOMIC</TT
+> ist.  Programme, die diese Allokationsfunktionen
+verwenden, müssen also in der Lage sein, Allokationsfehler
+behandeln zu können.&#13;</P
+><P
+>Es ist behauptet worden, daß Sie &#8212; wenn Sie das Risiko lieben
+&#8212; annehmen können, daß weder
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> noch das zugrundeliegende
+<SPAN
+><I
+CLASS="EMPHASIS"
+>get_free_pages</I
+></SPAN
+> jemals
+fehlschlägt, wenn es mit der Priorität
+<TT
+CLASS="LITERAL"
+>GFP_KERNEL</TT
+> verwendet wird. Das ist
+<SPAN
+><I
+CLASS="EMPHASIS"
+>beinahe</I
+></SPAN
+> wahr, aber nicht ganz: Kleine Systeme mit
+wenig Speicher können immer noch in Schwierigkeiten
+geraten. Treiber-Autoren ignorieren die Gefahr des Fehlschlagens der
+Allokation auf eigene Gefahr (und auf Gefahr der Anwender).&#13;</P
+><P
+>Obwohl <TT
+CLASS="LITERAL"
+>kmalloc(GFP_KERNEL)</TT
+> manchmal fehlschlägt,
+wenn kein Speicher zur Verfügung steht, versucht der Kernel doch sein
+Bestes, um Allokationsanforderungen zu erfüllen. Daher ist es ziemlich
+einfach, das Antwortverhalten durch das Anfordern von zuviel Speicher
+herabzusetzen. Beispielsweise können Sie den Computer in die Knie zwingen, wenn Sie zu viele Daten in ein
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Gerät schreiben. Das System wird nur
+noch kriechen, wenn es versucht, so viele Seiten wie möglich
+auszulagern, um die Anforderung von <SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> zu
+erfüllen. Da jede Ressource von dem wachsenden Gerät aufgesaugt wird,
+ist der Computer bald unbenutzbar. Das geht so weit, daß Sie
+irgendwann keinen neuen Prozeß von Ihrer Shell starten können. Wir
+gehen darauf in <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> nicht ein, da es
+sich nur um ein Beispiel-Modul und nicht um ein echtes Werkzeug in
+einem Multiuser-System handelt. Als Programmierer müssen Sie trotzdem
+vorsichtig sein, weil ein Modul privilegierter Code ist und neue
+Sicherheitslöcher in das System reißen kann (das wahrscheinlichste
+dieser Löcher ist ein &#8220;Denial-of-service&#8221;-Loch, wie jenes, das wir
+gerade beschrieben haben).&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN9609"
+>Ein scull, das ganze Seiten verwendet: scullp</A
+></H2
+><P
+>&#13;
+Um die Allokation der Testseiten im Ernstfall testen zu können, haben
+wir das Modul <SPAN
+CLASS="APPLICATION"
+>scullp</SPAN
+> geschrieben. Es ist
+wie das oben eingeführte <SPAN
+CLASS="APPLICATION"
+>scullc</SPAN
+> ein
+eingeschränktes <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>.</P
+><P
+>Die von <SPAN
+CLASS="APPLICATION"
+>scullp</SPAN
+> allozierten Speicher-Quanta
+sind ganze Seiten oder Seitenmengen: Die Variable
+<TT
+CLASS="LITERAL"
+>scullp_order</TT
+> hat den Defaultwert 0 und kann
+entweder beim Kompilieren oder beim Laden angegeben werden.</P
+><P
+>Die folgenden Zeilen zeigen, wie die Allokation vor sich geht:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+/* Hier wird ein Quantum alloziert */
+if (!dptr-&#62;data[s_pos]) {
+    dptr-&#62;data[s_pos] =
+      (void *)_&#8201;_get_free_pages(GFP_KERNEL, dptr-&#62;order);
+    if (!dptr-&#62;data[s_pos])
+        goto nomem;
+    memset(dptr-&#62;data[s_pos], 0, PAGE_SIZE &#60;&#60; dptr-&#62;order);
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Der Code zum Deallozieren von Speicher in
+<SPAN
+CLASS="APPLICATION"
+>scullp</SPAN
+> sieht dagegen so aus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+/* Gibt eine ganze Quanten-Menge frei */
+for (i = 0; i &#60; qset; i++)
+    if (dptr-&#62;data[i])
+        free_pages((unsigned long)(dptr-&#62;data[i]),
+                   dptr-&#62;order);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Als Benutzer kann man hauptsächlich einen Geschwindigkeitsgewinn
+und eine bessere Speicherverwendung feststellen, weil es keine interne Fragmentierung
+des Speichers gibt. Wir haben einige Tests laufen lassen,
+bei denen erst 4
+Megabyte von <SPAN
+CLASS="APPLICATION"
+>scull0</SPAN
+> nach
+<SPAN
+CLASS="APPLICATION"
+>scull1</SPAN
+> und dann von
+<SPAN
+CLASS="APPLICATION"
+>scullp0</SPAN
+> nach
+<SPAN
+CLASS="APPLICATION"
+>scullp1</SPAN
+> kopiert wurden; dabei verringerte sich
+die Last des Prozessors im Kernel-Space leicht.&#13;</P
+><P
+>Der Performance-Gewinn ist nicht so dramatisch, weil
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> schon so entworfen wurde, daß es schnell
+ist. Der Hauptvorteil der Allokation auf Seitenebene ist nicht die
+Geschwindigkeit, sondern die effizientere Verwendung des
+Speichers. Werden ganze Seiten alloziert, wird dabei kein
+Speicher verschwendet, während <SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> aufgrund der
+Allokations-Granularität eine nicht
+vorhersagbare Menge an Speicher verschwendet.&#13;</P
+><P
+>Der größte Vorteil von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>__get_free_page</I
+></SPAN
+> ist
+aber, daß Ihnen die Seite ganz allein gehört; Sie könnten theoretisch
+sogar die Seiten durch Manipulieren der Seitentabellen in einen
+linearen Speicherbereich bringen. Damit kann ein Benutzer-Prozeß
+Speicherbereiche, die als einzelne, nicht zusammenhängende Seiten
+angefordert wurden, mit <SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+> einblenden. Wir
+werden darauf in &#8220;<A
+HREF="memmap.html"
+>the Section called <I
+>Die Geräteoperation mmap</I
+> in Kapitel 13</A
+>&#8221; in <A
+HREF="mem.html"
+>Kapitel 13</A
+> eingehen, wo wir Ihnen zeigen werden, wie
+<SPAN
+CLASS="APPLICATION"
+>scullp</SPAN
+> das Abbilden von Speicher
+ermöglicht &#8212; etwas, was <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> nicht kann.
+
+&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="getcache.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="getvmalloc.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Lookaside-Caches</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="get.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>vmalloc und Freunde</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

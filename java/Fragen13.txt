@@ -1,0 +1,17 @@
+Schon beim Start der Applikation kann es zu einer ArrayIndexOutOfBoundsException kommen,
+wenn vergessen wurde in der Kommandozeile ein File mit anzugeben  --  Konsequenz: Abbruch
+
+Es kann auch eine ZipException auftreten, wenn das File in keinem gueltigen Zip-Format vorliegt
+ --  Konsequenz: Abbruch
+
+Eine SecurityException ist auch moeglich, wenn man z.B. keine Zugriffsrechte fuer das File besitzt
+ --  Konsequenz: Abbruch 
+
+Die uebliche IOException kann natuerlich auch auftreten, wenn man z.B. keinen gueltigen Filenamen 
+eingegeben hat  --  Konsequenz: Abbruch
+
+Ansonsten kann es noch zu diversen IOException beim Aufruf der Eingabe, beim Schliessen des 
+Zip - Files oder beim Schliessen der Eingabe kommen  --  Konsequenz: Abbruch
+
+Zu guter Letzt kann noch eine NumberFormatException auftreten, bei der Umwandlung eines Strings
+in eine Integer - Zahl  -- Konsequenz: Setze Defaultwert 0, Weiterausfuehrung des Programms 

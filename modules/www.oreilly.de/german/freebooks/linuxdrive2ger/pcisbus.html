@@ -1,0 +1,196 @@
+<HTML
+><HEAD
+><TITLE
+>SBus</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Ein Überblick über die Peripherie-Busse"
+HREF="pci.html"><LINK
+REL="PREVIOUS"
+TITLE="Andere PC-Busse"
+HREF="pciother.html"><LINK
+REL="NEXT"
+TITLE="NuBus"
+HREF="x22248.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="pciother.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 15. Ein Überblick über die Peripherie-Busse</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x22248.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="PCISBUS"
+>SBus</A
+></H1
+><P
+>&#13;Während die meisten Computer mit PCI- oder ISA-Bussen
+ausgestattet sind, verwenden die meisten älteren SPARC-basierten Workstations
+SBus, um die Verbindung zu den Peripherie-Geräten herzustellen.&#13;</P
+><P
+>Das Design von SBus ist ziemlich fortschrittlich, auch wenn es den SBus
+schon ziemlich lange gibt. Es soll prozessorunabhängig sein (auch
+wenn der SBus nur von SPARC-Computern verwendet wird) und ist
+für I/O-Peripherie-Karten optimiert. Sie können also kein
+zusätzliches RAM in SBus-Slots stecken. Diese Optimierung soll sowohl
+die Entwicklung von Hardware als auch von Systemsoftware vereinfachen,
+wenn auch auf Kosten zusätzlicher Komplexität auf der Hauptplatine.&#13;</P
+><P
+>&#13;Diese I/O-Ausrichtung des Busses führt dazu, daß Peripherie-Geräte
+virtuelle Adressen verwenden, um Daten zu übertragen, wodurch es nicht
+mehr notwendig ist, einen zusammenhängenden Puffer zu allozieren. Die
+Hauptplatine ist dafür zuständig, die virtuellen Adressen zu
+decodieren und sie auf physikalische Adressen abzubilden. Dazu
+benötigt der SBus einige MMU-Fähigkeiten (Memory Management Unit); der
+zuständige Schaltkreis heißt &#8220;IOMMU&#8221;. Obwohl dieser etwas
+komplexer als die Verwendung physikalischer Adressen auf dem
+Schnittstellen-Bus ist, wird dieses Design deutlich durch die Tatsache
+vereinfacht, daß SPARC-Prozessoren schon immer so entworfen waren,
+daß der MMU-Kern vom CPU-Kernel getrennt bleibt (entweder physikalisch
+oder zumindest konzeptionell). Diese Entwurfsentscheidung wird auch
+von anderen intelligenteren Prozessor-Designs verwendet und hat ganz
+allgemein Vorteile. Es ist ein weiteres
+Merkmal dieses Busses, daß die Geräte geographisch adressiert werden,
+so daß es nicht notwendig ist, in jedem Peripherie-Gerät einen
+Adreßdecoder zu implementieren oder sich um Adreßkonflikte zu
+kümmern.&#13;</P
+><P
+>SBus-Peripherie-Geräte verwenden in ihren PROMs die Programmiersprache
+Forth, um sich selbst zu initialisieren. Forth wurde gewählt, weil der
+Interpreter sehr klein ist und daher leicht in die Firmware jedes
+Computers eingebettet werden kann. Außerdem gibt die
+SBus-Spezifikation den Vorgang des Hochfahrens vor, so daß Geräte, die
+der Spezifikation gehorchen, sich leicht in das System einfügen und
+beim Hochfahren erkannt werden. Dies war ein großer Schritt in
+Richtung auf Multiplattform-Geräte und eine vollständig andere Welt
+als der PC-zentrierte ISA-Kram, an den wir gewöhnt waren. Aus einer
+Reihe von kommerziellen Gründen war dem SBus allerdings kein Erfolg
+beschieden.&#13;</P
+><P
+>Obwohl aktuelle Kernel-Versionen SBus-Geräte recht umfassend
+unterstützen, wird dieser Bus heutzutage so wenig verwendet, daß es
+sich nicht lohnt, ihn hier detailliert zu behandeln. Interessierte
+Leser können einen Blick auf die Quellen in
+<TT
+CLASS="FILENAME"
+>arch/sparc/kernel</TT
+> und
+<TT
+CLASS="FILENAME"
+>arch/sparc/mm</TT
+> werfen.
+
+&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="pciother.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x22248.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Andere PC-Busse</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="pci.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>NuBus</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

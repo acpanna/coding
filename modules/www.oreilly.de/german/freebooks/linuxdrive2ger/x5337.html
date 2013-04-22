@@ -1,0 +1,1199 @@
+<HTML
+><HEAD
+><TITLE
+>Debugger und verwandte Werkzeuge</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Debugging-Techniken"
+HREF="debug.html"><LINK
+REL="PREVIOUS"
+TITLE="Debuggen von Systemfehlern"
+HREF="debfaults.html"><LINK
+REL="NEXT"
+TITLE="Fortgeschrittene Operationen in Zeichen-Treibern"
+HREF="extra.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="debfaults.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 4. Debugging-Techniken</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="extra.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN5337"
+>Debugger und verwandte Werkzeuge</A
+></H1
+><P
+>&#13;
+Der letzte Ausweg beim Debuggen von Modulen besteht in der Benutzung
+eines Debuggers, um den Code schrittweise zu durchlaufen und dabei den
+Wert von Variablen und Maschinenregistern zu beobachten. Dieser Ansatz
+kostet viel Zeit und sollte, wo immer möglich, vermieden
+werden. Trotzdem kann der genaue Einblick in den Code, den man mit
+einem Debugger bekommt, wertvoll sein.</P
+><P
+>Die Verwendung eines interaktiven Debuggers im Kernel ist allerdings
+eine Herausforderung. Der Kernel läuft in einem eigenen Adreßraum im
+Namen aller Prozesse im System. Als Folge davon sind eine Reihe von
+gängigen Funktionen in User-Space-Debuggern - wie Breakpoints und
+Einzelschrittausführung im Kernel - schwieriger zu erreichen. In diesem
+Abschnitt schauen wir uns mehrere Möglichkeiten an, den Kernel zu
+debuggen. Alle haben ihre Vor- und Nachteile.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN5347"
+>gdb verwenden</A
+></H2
+><P
+>&#13;<SPAN
+CLASS="APPLICATION"
+>gdb</SPAN
+> kann sehr nützlich sein, wenn Sie einen
+Blick in die System-Interna werfen wollen. Eine effiziente Verwendung
+des Debuggers auf dieser Ebene verlangt eine gewisse Vertrautheit mit
+den <SPAN
+CLASS="APPLICATION"
+>gdb</SPAN
+>-Befehlen, ein paar Kenntnisse über den
+Assembler-Codes der zugrundeliegenden Plattform und die Fähigkeit,
+Quellcode und optimierten Assembler-Code zusammenzubringen.</P
+><P
+> Der Debugger muß so
+aufgerufen werden, als wäre der Kernel ein
+Anwendungsprogramm. Zusätzlich zu dem Dateinamen eines
+unkomprimierten Kernel-Images
+sollten Sie auf der Kommandozeile den Namen einer Core-Datei
+angeben. Bei einem laufenden Kernel ist diese Core-Datei das
+Kernel-Core-Image <TT
+CLASS="FILENAME"
+>/proc/kcore</TT
+>. Ein typischer
+Aufruf des <SPAN
+CLASS="APPLICATION"
+>gdb</SPAN
+> sieht also so aus:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+gdb /usr/src/linux/vmlinux /proc/kcore</PRE
+></TD
+></TR
+></TABLE
+><P
+>Das erste Argument ist der Name des unkomprimierten Kernels, nicht von
+<TT
+CLASS="FILENAME"
+>zImage</TT
+> oder <TT
+CLASS="FILENAME"
+>bzImage</TT
+> oder von
+irgend etwas anderem Komprimiertem.
+&#13;</P
+><P
+>Das zweite Argument auf der Kommandozeile von
+<SPAN
+CLASS="APPLICATION"
+>gdb</SPAN
+> ist der Name der Core-Datei. Wie jede
+Datei in <TT
+CLASS="FILENAME"
+>/proc</TT
+> wird auch
+<TT
+CLASS="FILENAME"
+>/proc/kcore</TT
+> erzeugt, wenn sie ausgelesen
+wird. Wenn der Systemaufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> im Dateisystem
+<TT
+CLASS="FILENAME"
+>/proc</TT
+> ausgeführt wird, wird dieser auf eine
+Funktion zur Generierung und nicht auf eine Funktion zur Abfrage von Daten
+abgebildet; wir haben davon bereits im Abschnitt &#8220;Verwenden des <SPAN
+><I
+CLASS="EMPHASIS"
+>/proc</I
+></SPAN
+>-Dateisystems&#8221; Gebrauch gemacht. <TT
+CLASS="FILENAME"
+>kcore</TT
+>
+repräsentiert die <I
+CLASS="FIRSTTERM"
+>ausführbare Kernel-Datei</I
+> in Form einer
+Core-Datei. Diese Datei ist riesig, weil sie den gesamten Adreßraum
+des Kernels wiedergibt, der wiederum dem gesamten physikalischen
+Speicher entspricht. Aus dem <SPAN
+CLASS="APPLICATION"
+>gdb</SPAN
+> heraus
+können Sie Kernel-Variablen mit den normalen
+<SPAN
+CLASS="APPLICATION"
+>gdb</SPAN
+>-Befehlen ansehen. Beispielsweise gibt
+<B
+CLASS="COMMAND"
+>p jiffies</B
+> die Anzahl der System-Ticks seit dem
+Starten des Systems an.
+
+&#13;</P
+><P
+>&#13;Wenn Sie Daten aus dem <SPAN
+CLASS="APPLICATION"
+>gdb</SPAN
+>  ausgeben, läuft
+der Kernel noch, und die diversen Datenelemente haben zu verschiedenen
+Zeitpunkten verschiedene Werte. <SPAN
+CLASS="APPLICATION"
+>gdb</SPAN
+>
+optimiert allerdings den Zugriff auf die Core-Datei, indem einmal
+eingelesene Daten im Cache zwischengespeichert werden. Wenn Sie sich die Variable
+<TT
+CLASS="LITERAL"
+>jiffies</TT
+> noch einmal ansehen, bekommen Sie die gleiche Antwort
+wie beim letzten Mal. Bei normalen Core-Dateien ist das Cachen von
+Werten zur Vermeidung zusätzlicher Festplattenzugriffe eine gute
+Sache, bei Verwendung eines <I
+CLASS="FIRSTTERM"
+>dynamischen</I
+> Cores aber
+natürlich unangenehm. Sie können das Programm umgehen, indem Sie jedesmal,
+wenn Sie den Cache des <SPAN
+CLASS="APPLICATION"
+>gdb</SPAN
+> leeren
+wollen, den Befehl <B
+CLASS="COMMAND"
+>core-file /proc/kcore</B
+>
+eingeben. Der Debugger verwirft dann alle alten Informationen im
+Cache. Sie müssen aber nicht jedesmal <TT
+CLASS="LITERAL"
+>core-file</TT
+>
+benutzen, wenn Sie einen neuen Wert auslesen wollen, denn
+<SPAN
+CLASS="APPLICATION"
+>gdb</SPAN
+> liest die Core-Datei in Blocks von wenigen Kilobytes und bewahrt nur solche Blocks im Cache auf,
+auf die bereits einmal zugegriffen wurde.
+&#13;</P
+><P
+>Viele normalerweise in <SPAN
+CLASS="APPLICATION"
+>gdb</SPAN
+> vorhandene
+Fähigkeiten stehen nicht zur Verfügung, wenn man mit dem Kernel
+arbeitet. Beispielsweise ist <SPAN
+CLASS="APPLICATION"
+>gdb</SPAN
+> nicht in
+der Lage, die Kernel-Daten zu ändern; er erwartet, das zu debuggende
+Programm unter eigener Kontrolle auszuführen, bevor mit dem Speicher
+herumgespielt werden kann. Außerdem ist es nicht möglich, Breakpoints
+oder Watchpoints zu setzen oder Kernel-Funktionen im
+Einzelschrittmodus zu durchlaufen.</P
+><P
+>&#13;Wenn Sie den Kernel mit Debug-Symbolen übersetzen
+(<SPAN
+><I
+CLASS="EMPHASIS"
+>&#8211;g</I
+></SPAN
+>), dann ist die daraus resultierende
+<TT
+CLASS="FILENAME"
+>vmlinux</TT
+>-Datei für die Verwendung mit
+<SPAN
+CLASS="APPLICATION"
+>gdb</SPAN
+> besser geeignet als eine ohne
+<SPAN
+><I
+CLASS="EMPHASIS"
+>&#8211;g</I
+></SPAN
+> übersetzte Datei. Zum
+Übersetzen eines Kernels mit der Option <SPAN
+><I
+CLASS="EMPHASIS"
+>&#8211;g</I
+></SPAN
+>
+benötigen Sie allerdings enorm viel Festplattenplatz (jede Objektdatei
+und der Kernel selbst sind dreimal (oder mehr) so groß wie sonst).</P
+><P
+>Auf Nicht-PCs sieht die Sache anders aus. Auf Alpha-Systemen entfernt
+<TT
+CLASS="LITERAL"
+>make boot</TT
+> die Debugging-Symbole aus dem Kernel,
+bevor das bootfähige Image erzeugt wird, so daß Sie am Ende sowohl die
+Datei <TT
+CLASS="FILENAME"
+>vmlinux</TT
+> als auch
+<TT
+CLASS="FILENAME"
+>vmlinux.gz</TT
+> haben. Erstere kann mit dem
+<SPAN
+CLASS="APPLICATION"
+>gdb</SPAN
+>, letztere zum Booten verwendet
+werden. Auf Sparc-Systemen (zumindest im 2.0-Kernel) werden die
+Debugging-Symbole defaultmäßig nicht entfernt.&#13;</P
+><P
+>Wenn Sie den Kernel mit <SPAN
+><I
+CLASS="EMPHASIS"
+>&#8211;g</I
+></SPAN
+> kompilieren und
+den Debugger zusammen mit <TT
+CLASS="FILENAME"
+>/proc/kcore</TT
+> auf
+<TT
+CLASS="FILENAME"
+>vmlinux</TT
+> ansetzen, dann kann
+<SPAN
+CLASS="APPLICATION"
+>gdb</SPAN
+> eine Menge an Informationen über die
+Kernel-Interna ausgeben. Beispielsweise können Sie Befehle wie
+<B
+CLASS="COMMAND"
+>p *module_list</B
+>, <B
+CLASS="COMMAND"
+>p
+*module_list-&#62;next</B
+> und <B
+CLASS="COMMAND"
+>p
+*chrdevs[4]-&#62;fops</B
+> verwenden, um an Strukturen
+heranzukommen. Diese Operationen sind vor allem dann hilfreich, wenn
+Sie die Symboltabelle des Kernels und den Quellcode parat haben.&#13;</P
+><P
+>&#13;
+Eine weitere nützliche Funktion von <SPAN
+CLASS="APPLICATION"
+>gdb</SPAN
+> ist
+das Disassemblieren von Funktionen im laufenden Kernel mit dem
+<B
+CLASS="COMMAND"
+>disassemble</B
+>-Befehl (der auch als
+<B
+CLASS="COMMAND"
+>disass</B
+> abgekürzt werden kann)
+oder mit dem Befehl zum Anzeigen von Maschinenanweisungen
+(<B
+CLASS="COMMAND"
+>x/i</B
+>). Der Befehl
+<TT
+CLASS="LITERAL"
+>disassemble</TT
+> erwartet als Argumente entweder einen
+Funktionsnamen oder einen Speicherbereich, während
+<TT
+CLASS="LITERAL"
+>x/i</TT
+> eine Speicheradresse, ebenfalls in Form
+eines Symbolnamens, benötigt. Sie können beispielsweise mit
+<TT
+CLASS="LITERAL"
+>x/20i</TT
+> zwanzig Anweisungen
+disassemblieren. Beachten Sie, daß Sie eine Modulfunktion nicht
+disassemblieren können, denn der Debugger arbeitet auf der Datei
+<TT
+CLASS="FILENAME"
+>vmlinux</TT
+>, die von Ihrem Modul nichts weiß. Wenn
+Sie versuchen, ein Modul unter Angabe seiner Adresse zu
+disassemblieren, wird <SPAN
+CLASS="APPLICATION"
+>gdb</SPAN
+>
+höchstwahrscheinlich mit &#8220;Cannot access memory at xxxx&#8221;
+antworten. Aus dem gleichen Grund können Sie auch keine Moduldaten
+ansehen. Wenn Sie die Adresse der Variablen kennen, können diese aus
+<TT
+CLASS="FILENAME"
+>/dev/mem</TT
+> ausgelesen werden, aber es ist
+schwierig, die aus dem System-RAM  ausgelesenen Daten zu
+interpretieren.
+&#13;</P
+><P
+>&#13;Wenn Sie eine Modulfunktion disassemblieren wollen, sollten Sie
+besser das Hilfsprogramm <SPAN
+CLASS="APPLICATION"
+>objdump</SPAN
+>
+verwenden. Unglücklicherweise arbeitet dieses Programm auf der
+Festplattenkopie der Datei und nicht auf der laufenden. Daher sind die
+von <SPAN
+CLASS="APPLICATION"
+>objdump</SPAN
+> angezeigten Adressen die
+Adressen vor der Relozierung und haben nichts mit der
+Ausführungsumgebung des Moduls zu tun. Ein weiterer Nachteil beim
+Disassemblieren der ungelinkten Objektdatei besteht darin, daß noch
+kein Funktionsaufruf aufgelöst ist, so daß es nicht so leicht ist,
+einen <SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+>-Aufruf von einem
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+>-Aufruf zu unterscheiden.&#13;</P
+><P
+>Wie Sie sehen, ist <SPAN
+CLASS="APPLICATION"
+>gdb</SPAN
+> ein nützliches
+Werkzeug, wenn Sie in einen laufenden Kernel hineinschauen wollen,
+aber es fehlen doch noch einige Funktionen, die man zum Debuggen von
+Gerätetreibern dringend braucht.&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN5444"
+>Der Kernel-Debugger kdb</A
+></H2
+><P
+>&#13;
+
+Viele Leser fragen sich vielleicht, warum keine besseren
+Debugging-Möglichkeiten in den Kernel eingebaut sind. Die Antwort
+lautet schlicht und einfach, daß Linus nichts von interaktiven
+Debuggern hält. Er befürchtet, daß diese zu schlechten Fixes führen,
+die nur Symptome kurieren, anstatt die eigentliche Ursache des Problems
+zu beheben. Also gibt es keine eingebauten Debugger.</P
+><P
+>Andere Kernel-Entwickler hätten aber schon von Zeit zu Zeit ganz gern
+einmal interaktive Debugging-Werkzeuge. Ein solches Werkzeug ist der
+eingebaute Kernel-Debugger <SPAN
+CLASS="APPLICATION"
+>kdb</SPAN
+>, der als
+nicht-offizieller Patch von <SPAN
+><I
+CLASS="EMPHASIS"
+>oss.sgi.com</I
+></SPAN
+>
+heruntergeladen werden kann. Um <SPAN
+CLASS="APPLICATION"
+>kdb</SPAN
+>
+verwenden zu können, müssen Sie sich diesen Patch holen (stellen Sie
+sicher, daß Sie eine Version haben, die zu Ihrer Kernel-Version paßt),
+diesen anwenden und den Kernel neu bauen und installieren. Beachten
+Sie, daß <SPAN
+CLASS="APPLICATION"
+>kdb</SPAN
+> derzeit nur für IA-32-(x86)-Systeme existiert (auch wenn eine IA-64-Version für einige Zeit
+in den Haupt-Kernel-Quellen vorhanden war, bis sie entfernt wurde).</P
+><P
+>Wenn Sie einen <SPAN
+CLASS="APPLICATION"
+>kdb</SPAN
+>-fähigen Kernel
+verwenden, gibt es einige Möglichkeiten, den Debugger zu starten. Das
+Drücken der Pause- (oder Break-)Taste auf der Konsole startet den
+Debugger. <SPAN
+CLASS="APPLICATION"
+>kdb</SPAN
+> startet auch, wenn ein
+Kernel-Oops auftritt oder wenn ein Breakpoint getroffen wird. In
+allen Fällen bekommen Sie eine Meldung wie die folgende:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>Entering kdb (0xc1278000) on processor 1 due to Keyboard Entry
+[1]kdb&#62;</PRE
+></TD
+></TR
+></TABLE
+><P
+>Beachten Sie, daß so ziemlich alles im Kernel anhält, während
+<SPAN
+CLASS="APPLICATION"
+>kdb</SPAN
+> läuft. Es sollte nichts auf einem
+System laufen, wenn Sie <SPAN
+CLASS="APPLICATION"
+>kdb</SPAN
+> aufrufen,
+insbesondere sollte das Netzwerk abgeschaltet sein (selbstverständlich
+nicht, wenn Sie einen Netzwerktreiber debuggen). Es ist im allgemeinen
+eine gute Idee, das System im Single User-Modus zu booten, wenn Sie
+<SPAN
+CLASS="APPLICATION"
+>kdb</SPAN
+> verwenden wollen.</P
+><P
+>Als Beispiel schauen wir uns eine schnelle Debugging-Sitzung mit
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> an. Nehmen wir an, daß der Treiber
+bereits geladen ist. Dann können wir <SPAN
+CLASS="APPLICATION"
+>kdb</SPAN
+>
+mit folgendem Befehl veranlassen, einen Breakpoint in
+<SPAN
+><I
+CLASS="EMPHASIS"
+>scull_read</I
+></SPAN
+> zu setzen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[1]kdb&#62; bp scull_read
+Instruction(i) BP #0 at 0xc8833514 (scull_read)
+    is enabled on cpu 1
+[1]kdb&#62; go</PRE
+></TD
+></TR
+></TABLE
+><P
+>Der Befehl <SPAN
+><I
+CLASS="EMPHASIS"
+>bp</I
+></SPAN
+> weist
+<SPAN
+CLASS="APPLICATION"
+>kdb</SPAN
+> an, anzuhalten, wenn der Kernel das
+nächste Mal in die Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>scull_read</I
+></SPAN
+>
+gelangt. Danach setzen wir die Ausführung mit <SPAN
+CLASS="bold"
+><B
+CLASS="EMPHASIS"
+>go</B
+></SPAN
+> fort. Nachdem wir etwas in eines der
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Geräte geschrieben haben, können wir
+in einer Shell auf einem anderen Terminal
+<SPAN
+CLASS="APPLICATION"
+>cat</SPAN
+> ausführen, um das folgende Ergebnis zu
+bekommen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>Entering kdb (0xc3108000) on processor 0 due to Breakpoint @ 0xc8833515
+Instruction(i) breakpoint #0 at 0xc8833514
+scull_read+0x1:   movl   %esp,%ebp
+[0]kdb&#62;</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wir stehen jetzt am Anfang von <SPAN
+><I
+CLASS="EMPHASIS"
+>scull_read</I
+></SPAN
+>. Ein
+Stack Trace zeigt uns, wie wir dorthin geraten sind:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[0]kdb&#62; bt
+    EBP       EIP         Function(args)
+0xc3109c5c 0xc8833515  scull_read+0x1
+0xc3109fbc 0xfc458b10  scull_read+0x33c255fc( 0x3, 0x803ad78, 0x1000, 0x1000, 0x804ad78)
+0xbffffc88 0xc010bec0  system_call
+[0]kdb&#62;</PRE
+></TD
+></TR
+></TABLE
+><P
+><SPAN
+CLASS="APPLICATION"
+>kdb</SPAN
+> versucht, die Argumente aller
+Funktionen im Stack Trace auszugeben. Optimierungstricks des Compilers
+können den Debugger aber verwirren. Deswegen werden fünf Argumente bei
+<SPAN
+><I
+CLASS="EMPHASIS"
+>scull_read</I
+></SPAN
+> ausgegeben, obwohl es nur vier gibt.</P
+><P
+>Es ist Zeit, sich einige Daten anzuschauen. Der Befehl
+<SPAN
+><I
+CLASS="EMPHASIS"
+>mds</I
+></SPAN
+> manipuliert Daten; wir können damit den Wert
+des Zeigers <TT
+CLASS="LITERAL"
+>scull_devices</TT
+> pointer abfragen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[0]kdb&#62; mds scull_devices 1
+c8836104: c4c125c0 ....</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wir fragen hier nach einem Datenwort (vier Bytes), das an der Position
+<TT
+CLASS="LITERAL"
+>scull_devices</TT
+> beginnt; die Antwort teilt uns mit,
+daß unser Geräte-Array ab der Adresse <TT
+CLASS="LITERAL"
+>c4c125c0</TT
+>
+alloziert worden ist. Um sich die Gerätestruktur selbst anzuschauen,
+verwenden wir diese Adresse:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[0]kdb&#62; mds c4c125c0
+c4c125c0: c3785000  ....
+c4c125c4: 00000000  ....
+c4c125c8: 00000fa0  ....
+c4c125cc: 000003e8  ....
+c4c125d0: 0000009a  ....
+c4c125d4: 00000000  ....
+c4c125d8: 00000000  ....
+c4c125dc: 00000001  ....</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die hier gezeigten acht Zeilen entsprechen den acht Feldern in der
+Struktur <TT
+CLASS="LITERAL"
+>Scull_Dev</TT
+>. Wir sehen also, daß der
+Speicher des ersten Geräts ab der Adresse
+<TT
+CLASS="LITERAL"
+>0xc3785000</TT
+> alloziert ist, daß es kein weiteres
+Element in der Liste gibt, daß das Quantum
+4000 (hex fa0) und die Array-Größe 1000 (hex 3e8) ist, daß es 154
+Datenbytes (hex 9a) im Gerät gibt und so weiter.</P
+><P
+><SPAN
+CLASS="APPLICATION"
+>kdb</SPAN
+> kann die Daten auch ändern. Wenn wir
+etwa Daten aus dem Gerät löschen wollen, könnten wir folgendes eingeben:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>[0]kdb&#62; mm c4c125d0 0x50
+0xc4c125d0 = 0x50</PRE
+></TD
+></TR
+></TABLE
+><P
+>Der nächste <SPAN
+CLASS="APPLICATION"
+>cat</SPAN
+>-Aufruf auf diesem Gerät
+gibt weniger Daten zurück als vorher.</P
+><P
+>&#62;
+&#62;
+&#62;
+<SPAN
+CLASS="APPLICATION"
+>kdb</SPAN
+> hat eine Reihe weiterer Fähigkeiten wie
+Einzelschrittausführung (anweisungsweise, nicht per
+C-Quellcode-Zeile), Setzen von Breakpoints bei Datenzugriff,
+Disassemblieren von Code, Durchlaufen verketteter Listen, Zugriff auf
+Registerdaten und andere. Nach dem Anwenden des
+<SPAN
+CLASS="APPLICATION"
+>kdb</SPAN
+>-Patches finden Sie die vollständigen
+Manual-Pages im Verzeichnis <TT
+CLASS="FILENAME"
+>Documentation/kdb</TT
+>
+in den Kernel-Quellen.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN5509"
+>Der Integrated Kernel Debugger-Patch</A
+></H2
+><P
+>&#13;
+
+
+Eine Reihe von Kernel-Entwicklern haben einen inoffiziellen Patch
+namens <SPAN
+><I
+CLASS="EMPHASIS"
+>Integrated Kernel Debugger</I
+></SPAN
+> oder IKD
+beigesteuert. IKD liefert eine Reihe nützlicher Funktionen zum
+Debuggen von Kerneln. x86 ist die Hauptplattform für diesen Patch,
+aber ein großer Teil davon funktioniert auch auf anderen
+Architekturen. Sie finden den Patch derzeit unter
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ftp://ftp.kernel.org/pub/linux/kernel/people/andrea/ikd</I
+></SPAN
+>.
+Sie müssen ihn auf Ihre Kernel-Quellen anwenden; der Patch ist
+versionsabhängig; laden Sie also die zu Ihrem Kernel passende Version
+herunter.</P
+><P
+>&#13;
+Eines der Features des IKD-Patches ist ein Kernel Stack Debugger. Wenn
+Sie dieses Feature einschalten, überprüft der Kernel bei jedem
+Funktionsaufruf die Menge des freien Platzes auf dem Kernel-Stack und
+erzwingt ein Oops, wenn dieser zu klein wird.
+
+Wenn etwas in Ihrem Kernel den Stack durcheinanderbringt, dann können
+Sie das mit diesem Werkzeug herausfinden. Es gibt auch ein &#8220;Stack
+Meter&#8221;, mit dem Sie jederzeit sehen können, wie dicht Sie an die
+Füllgrenze des Stacks herangekommen sind.</P
+><P
+>&#13;
+
+
+
+Der IKD-Patch enthält auch Werkzeuge zum Einkreisen von
+Kernel-Lockups. Ein &#8220;Soft Lockup&#8221;-Detektor erzwingt ein Oops, wenn
+eine Kernel-Prozedur zu lange läuft, ohne den Scheduler aufzurufen.
+Dies wird durch Zählen der Funktionsaufrufe implementiert;
+wenn diese Zahl einen vorkonfigurierten Grenzwert überschreitet,
+bricht der Prozeß die Ausführung ab. Ein anderes Feature kann
+ununterbrochen den Programmzähler auf einer virtuellen Konsole
+ausgeben; dieses ist das allerletzte Mittel, wenn Sie nach Lockups
+suchen. Der Semaphor-Deadlock-Detektor erzwingt ein Oops, wenn ein
+Prozeß zuviel Zeit in einem <SPAN
+><I
+CLASS="EMPHASIS"
+>down</I
+></SPAN
+>-Aufruf
+verbringt.</P
+><P
+>Weitere Debugging-Funktionalitäten in IKD sind die Kernel-Trace-Fähigkeit, mit der die Pfade aufgezeichnet werden können, die
+der Kernel-Code nimmt. Es gibt einige Werkzeuge zum
+Debuggen des Speichers, darunter einen Leak-Detektor und mehrere &#8220;Speichermusterprüfer&#8221;, die nützlich
+sein können, wenn Sie Speicherkorruptionsproblemen auf die Spur kommen
+wollen.</P
+><P
+>Schließlich enthält IKD auch eine Version des
+<SPAN
+CLASS="APPLICATION"
+>kdb</SPAN
+>-Debuggers, den wir im letzten Abschnitt
+besprochen haben. Derzeit ist die im IKD-Patch enthaltene
+<SPAN
+CLASS="APPLICATION"
+>kdb</SPAN
+>-Version aber etwas älter. Wenn Sie
+<SPAN
+CLASS="APPLICATION"
+>kdb</SPAN
+> benötigen, empfehlen wir Ihnen, sich
+die neueste Version direkt von <SPAN
+CLASS="SYSTEMITEM"
+>oss.sgi.com</SPAN
+> zu holen.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN5549"
+>Der kgdb-Patch</A
+></H2
+><P
+>&#13;
+
+
+<SPAN
+CLASS="APPLICATION"
+>kgdb</SPAN
+> ist ein Patch, der die vollständige
+Verwendung von <SPAN
+CLASS="APPLICATION"
+>gdb</SPAN
+> auf dem Linux-Kernel
+erlaubt, allerdings nur auf x86-Systemen. Der Patch hakt sich in das
+zu debuggende System über eine serielle Leitung ein, auf deren anderem
+Ende <SPAN
+CLASS="APPLICATION"
+>gdb</SPAN
+> läuft. Sie brauchen also zwei
+Systeme, um <SPAN
+CLASS="APPLICATION"
+>kgdb</SPAN
+> verwenden zu können:
+eines, um den Debugger laufen zu lassen, und eines, das den zu
+debuggenden Kernel enthält. Wie <SPAN
+CLASS="APPLICATION"
+>kdb</SPAN
+> kann
+auch <SPAN
+CLASS="APPLICATION"
+>kgdb</SPAN
+> von <SPAN
+CLASS="SYSTEMITEM"
+>oss.sgi.com</SPAN
+> heruntergeladen werden.</P
+><P
+>Das Einrichten von <SPAN
+CLASS="APPLICATION"
+>kgdb</SPAN
+> erfordert das
+Einspielen eines Kernel-Patches und das Booten des geänderten
+Kernels. Sie müssen die beiden Systeme mit einem seriellen Kabel
+(einem Null-Modem-Kabel) verbinden und einige Hilfsdateien auf der
+<SPAN
+CLASS="APPLICATION"
+>gdb</SPAN
+>-Seite der Verbindung installieren. Der
+Patch enthält detaillierte Anweisungen in der Datei
+<TT
+CLASS="FILENAME"
+>Documentation/i386/gdb-serial.txt</TT
+>; wir drucken
+diese hier nicht ab. Lesen Sie sich auf jeden Fall die Anweisungen zum
+Debuggen von Modulen durch; gegen Ende finden Sie einige nützliche
+<SPAN
+CLASS="APPLICATION"
+>gdb</SPAN
+>-Makros, die genau zu diesem Zweck
+geschrieben worden sind.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN5575"
+>Kernel Crash Dump Analyzer</A
+></H2
+><P
+>&#13;
+
+Crash Dump Analyzer ermöglichen es dem System, seinen Zustand
+aufzuzeichnen, wenn ein Oops auftritt, so daß der Zustand hinterher
+nach Belieben analysiert werden kann. Dies kann besonders nützlich
+sein, wenn Sie es mit einem Treiber eines Benutzers an einem anderen
+Ort zu tun haben. Viele Benutzer wollen nicht gern Oops-Meldungen
+abschreiben, so daß Sie durch die Installation eines solchen Systems
+Informationen über das Problem des Benutzers bekommen können, ohne daß
+dieser dazu einen Finger rühren muß. Es ist daher auch nicht
+erstaunlich, daß die verfügbaren Crash Dump Analyzer von Firmen
+geschrieben worden sind, die Support für Benutzersysteme anbieten.</P
+><P
+>Es gibt derzeit zwei Crash Dump Analyzer-Patches für Linux. Beide
+waren relativ neu, als wir diesen Abschnitt geschrieben haben, und
+befanden sich noch mitten in der Entwicklung. Anstatt hier vermutlich
+veraltete Informationen zu präsentieren, beschränken wir uns darauf,
+Ihnen einen Überblick zu geben und auf weitere Informationsquellen zu
+verweisen.</P
+><P
+>&#13;
+
+Der erste Analyzer ist LKCD (Linux Kernel Crash Dumps). Auch dieses
+Programm stammt von <SPAN
+><I
+CLASS="EMPHASIS"
+>oss.sgi.com</I
+></SPAN
+>. Wenn ein
+Kernel-Oops auftritt, schreibt LKCD eine Kopie des aktuellen
+Systemzustands (hauptsächlich den Speicher) in das Dump-Gerät, das Sie
+vorher angegeben haben. Dieses muß ein System-Swap-Bereich sein. Ein
+Hilfsprogramm namens <SPAN
+><I
+CLASS="EMPHASIS"
+>LCRASH</I
+></SPAN
+> wird nach dem
+nächsten Neustart (vor dem Einschalten des Swapping) ausgeführt, um eine
+Zusammenfassung des Crashs zu erzeugen und optional eine Kopie des
+Auszugs in einer konventionellen Datei zu
+speichern. <SPAN
+><I
+CLASS="EMPHASIS"
+>LCRASH</I
+></SPAN
+> kann interaktiv ausgeführt
+werden und liefert eine Reihe von Debugger-artigen Befehlen zum
+Abfragen des Systemzustands.</P
+><P
+>LKCD wird derzeit nur für die Intel-32-Bit-Architektur unterstützt und
+funktioniert nur mit Swap-Partitionen auf SCSI-Festplatten.
+&#13;</P
+><P
+>Ein weiteres Crash Dump-Programm finden Sie auf
+<SPAN
+><I
+CLASS="EMPHASIS"
+>www.missioncriticallinux.com</I
+></SPAN
+>. Dieses erzeugt
+Crash Dump-Dateien direkt in <TT
+CLASS="FILENAME"
+>/var/dumps</TT
+> und
+verwendet den Swap-Bereich nicht. Dies macht manches einfacher,
+bedeutet aber auch, daß das System das Dateisystem zu einem Zeitpunkt
+modifizieren muß, zu dem schon etwas schiefgegangen ist. Die
+erzeugten Crash Dumps liegen im Standardformat für Core-Dateien vor;
+Werkzeuge wie <SPAN
+CLASS="APPLICATION"
+>gdb</SPAN
+> können also für die
+Post-Mortem-Analyse verwendet werden. Dieses Package enthält auch
+einen separaten Analyzer, der mehr Informationen als
+<SPAN
+CLASS="APPLICATION"
+>gdb</SPAN
+> aus Crash Dump-Dateien extrahieren kann.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN5601"
+>Die User-Modus-Linux-Portierung</A
+></H2
+><P
+>&#13;
+User-Modus-Linux ist ein interessantes Konzept. Es ist als separate
+Portierung des Linux-Kernels mit eigenem
+<TT
+CLASS="FILENAME"
+>arch/um</TT
+>-Unterverzeichnis strukturiert. Es läuft
+aber nicht auf einer neuen Art von Hardware, sondern als virtuelle
+Maschine, die unter Verwendung der Linux-Systemaufrufe
+implementiert ist. User-Modus-Linux erlaubt es dem Linux-Kernel also,
+als separater Prozeß im User-Modus auf einem Linux-System zu laufen.</P
+><P
+>Die Verfügbarkeit einer Kernel-Kopie, die im User-Modus läuft, bringt
+eine Reihe von Vorteilen mit sich. Weil es sich um einen beschränkten,
+virtuellen Prozessor handelt, kann ein fehlerhafter Kernel nicht das
+"richtige" System zerstören. Verschiedene Hardware- und
+Software-Konfigurationen können leicht auf dem gleichen Rechner
+ausprobiert werden. Und, was vielleicht am wichtigsten für
+Kernel-Entwickler ist, der User-Modus-Kernel kann leicht mit
+<SPAN
+CLASS="APPLICATION"
+>gdb</SPAN
+> oder einem anderen Debugger manipuliert
+werden &#8212; schließlich ist er einfach nur ein weiterer
+Prozeß. User-Modus-Linux hat eindeutig das Potential, die
+Kernel-Entwicklung zu beschleunigen.</P
+><P
+>Derzeit wird User-Modus-Linux nicht im normalen Kernel mitgeliefert,
+sondern muß separat von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>http://user-mode-linux.sourceforge.net</I
+></SPAN
+>
+heruntergeladen werden. Es heißt, daß User-Modus-Linux in eine der
+2.4-Versionen nach 2.4.0 integriert werden soll; das könnte schon der
+Fall sein, wenn Sie dies lesen.</P
+><P
+>User-Modus-Linux weist derzeit auch noch einige wesentliche
+Einschränkungen auf, von denen die meisten sicherlich bald behoben
+werden. Der virtuelle Prozessor arbeitet derzeit nur im
+Einzelprozessor-Modus; die Portierung läuft problemlos auf einem
+SMP-System, kann aber nur einen Einzelprozessor-Host emulieren. Das
+größte Problem für Treiber-Autoren ist aber, daß der User-Modus-Kernel
+keinen Zugriff auf die Hardware des Host-Systems hat. Er kann
+daher zwar nützlich sein, um die meisten der Beispiel-Treiber in diesem
+Buch zu debuggen, aber nicht für Treiber verwendet werden, bei denen
+es um echte Hardware geht. Schließlich gibt es User-Modus-Linux nur
+für die IA-32-Architektur.</P
+><P
+>Weil an all diesen Problemen bereits gearbeitet wird, wird
+User-Mode-Linux in naher Zukunft ein unverzichtbares Werkzeug für
+Programmierer von Linux-Gerätetreibern sein.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN5616"
+>Das Linux Trace Toolkit</A
+></H2
+><P
+>&#13;
+
+
+Das Linux Trace Toolkit (LTT) ist ein Kernel-Patch samt dazugehörigen
+Hilfsprogrammen, mit denen Ereignisse im Kernel verfolgt werden
+können. Der Trace enthält Timing-Informationen und kann ein ziemlich
+vollständiges Bild darüber liefern, was zu einem bestimmten Zeitpunkt
+passiert ist. Daher kann LTT nicht nur zum Debuggen, sondern auch zum
+Einkreisen von Performance-Problemen verwendet werden.</P
+><P
+>LTT finden Sie zusammen mit einer ausführlichen Dokumentation unter
+<SPAN
+><I
+CLASS="EMPHASIS"
+>www.opersys.com/LTT</I
+></SPAN
+>.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN5631"
+>Dynamic Probes</A
+></H2
+><P
+>&#13;
+
+Dynamic Probes (oder DProbes) ist ein Debugging-Werkzeug, das von IBM
+unter der GPL für die IA-32-Architektur freigegeben wurde. Es erlaubt
+das Einsetzen einer &#8220;Sonde&#8221; an fast jeder Stelle im System, sowohl im
+User als auch im Kernel-Space. Die Sonde besteht aus Code (der in
+einer speziellen, Stack-orientierten Sprache geschrieben wird), der
+ausgeführt wird, wenn die jeweilige Stelle erreicht wird. Dieser Code
+kann Informationen an den User-Space zurückliefern, Register ändern
+oder eine Reihe anderer Dinge tun. DProbes ist deswegen so nützlich, weil
+Sonden ohne ein Neukompilieren des Kernels oder ein Rebooten an beliebigen
+Stellen in einem laufenden System eingefügt werden können, wenn
+DProbes einmal in den Kernel eingebaut worden ist. DProbes kann auch
+mit dem Linux Trace Toolkit zusammenarbeiten, um neue
+Tracing-Ereignisse an beliebigen Stellen einzusetzen.</P
+><P
+>&#62;
+&#62;
+DProbes kann vom IBMs Open Source-Site
+<SPAN
+><I
+CLASS="EMPHASIS"
+>oss.software.ibm.com</I
+></SPAN
+> heruntergeladen werden.</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="debfaults.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="extra.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Debuggen von Systemfehlern</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="debug.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Fortgeschrittene Operationen in Zeichen-Treibern</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

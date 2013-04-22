@@ -1,0 +1,175 @@
+<HTML
+><HEAD
+><TITLE
+>include und arch</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Der physikalische Aufbau der Kernel-Quellen"
+HREF="tour.html"><LINK
+REL="PREVIOUS"
+TITLE="ipc und lib"
+HREF="x23105.html"><LINK
+REL="NEXT"
+TITLE="Treiber"
+HREF="x23143.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x23105.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 16. Der physikalische Aufbau der Kernel-Quellen</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x23143.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN23127"
+>include und arch</A
+></H1
+><P
+>&#13;
+
+In einer schnellen Übersicht über den Kernel-Quellcode gibt es wenig
+über Header-Dateien und architekturspezifischen Code zu sagen. Die
+Header-Dateien sind schon über das ganze Buch verstreut eingeführt
+worden, weswegen ihre Rolle (und die Trennung zwischen
+<TT
+CLASS="FILENAME"
+>include/linux</TT
+> und
+<TT
+CLASS="FILENAME"
+>include/asm</TT
+>) bereits klar sein sollte.</P
+><P
+>Architekturspezifischer Code ist dagegen noch nicht detailliert
+eingeführt worden, läßt sich aber auch nicht so leicht besprechen. In
+jedem Architektur-Verzeichnis finden Sie normalerweise eine
+Dateihierarchie, die die Top-Level-Hierarchie wiederholt (es gibt also
+Unterverzeichnisse <TT
+CLASS="FILENAME"
+>mm</TT
+> und
+<TT
+CLASS="FILENAME"
+>kernel</TT
+> usw.), aber auch Boot-Code und
+Assembler-Dateien. Die wichtigste Assembler-Datei auf jeder
+unterstützten Architektur ist <TT
+CLASS="FILENAME"
+>kernel/entry.S</TT
+>;
+dies ist das Backend des Systemaufrufmechanismus (also die Stelle, an
+der Benutzerprozesse in den Kernel Mode eintreten). Abgesehen davon
+haben die einzelnen Architekturen wenig gemein, sie alle zu beschreiben wäre
+nicht so nützlich.&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x23105.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x23143.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>ipc und lib</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="tour.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Treiber</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

@@ -1,0 +1,306 @@
+<HTML
+><HEAD
+><TITLE
+>Schnittstellenspezifische Typen</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Überlegte Verwendung von Datentypen"
+HREF="judas.html"><LINK
+REL="PREVIOUS"
+TITLE="Datenelementen eine explizite
+Größe zuweisen"
+HREF="judassize.html"><LINK
+REL="NEXT"
+TITLE="Andere Portabilitätsfragen"
+HREF="x13402.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="judassize.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 10. Überlegte Verwendung von Datentypen</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x13402.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="JUDASIF"
+>Schnittstellenspezifische Typen</A
+></H1
+><P
+>&#13;
+
+
+Für die am häufigsten benutzten Datentypen im Kernel gibt es eigene
+<TT
+CLASS="LITERAL"
+>typedef</TT
+>-Anweisungen, um Portabilitätsprobleme zu
+vermeiden. Beispielsweise ist die Prozeß-ID (PID) normalerweise ein
+<TT
+CLASS="LITERAL"
+>pid_t</TT
+> anstelle eines
+<TT
+CLASS="LITERAL"
+>int</TT
+>. Die Verwendung von
+<TT
+CLASS="LITERAL"
+>pid_t</TT
+> versteckt mögliche Unterschiede in den
+tatsächlichen Datentypen. Wir verwenden den Ausdruck
+<I
+CLASS="FIRSTTERM"
+>schnittstellenspezifisch</I
+> für einen Typ, der von einer Bibliothek definiert wird, um eine
+Schnittstelle zu einer spezifischen Datenstruktur bereitzustellen.&#13;</P
+><P
+>Selbst wenn kein schnittstellenspezifischer Typ definiert ist, ist
+es immer wichtig, den passenden Datentyp auf eine Weise zu verwenden,
+die mit dem Rest des Kernels konsistent ist. Ein Jiffy-Zähler ist immer
+<TT
+CLASS="LITERAL"
+>unsigned long</TT
+>, unabhängig von seiner tatsächlichen
+Größe. Aber möchten Sie immer <TT
+CLASS="LITERAL"
+>jiffy_t</TT
+>
+schreiben? Wir konzentrieren uns hier auf die erste Klasse der
+schnittstellenspezifischen Typen: auf diejenigen, deren Namen auf
+<TT
+CLASS="LITERAL"
+>_t</TT
+> enden.&#13;</P
+><P
+>&#13;
+Die vollständige Liste aller <TT
+CLASS="LITERAL"
+>_t</TT
+>-Typen steht
+in <TT
+CLASS="LITERAL"
+>&#60;linux/types.h&#62;</TT
+>, nützt einem aber
+selten. Wenn Sie einen bestimmten Typ benötigen, finden Sie ihn im
+Prototyp der Funktionen, die Sie aufrufen müssen, oder in den
+Datenstrukturen, die Sie verwenden.&#13;</P
+><P
+>Wenn Ihr Treiber Funktionen verwendet, die solche
+&#8220;speziellen&#8221; Typen erwarten und der Konvention nicht
+folgen, wird der Compiler eine Warnung melden. Wenn Sie den
+Compiler-Schalter <SPAN
+><I
+CLASS="EMPHASIS"
+>&#8211;Wall</I
+></SPAN
+> verwenden und
+sorgfältig alle Warnungen beseitigen, können Sie ziemlich sicher sein,
+daß Ihr Code portabel ist.&#13;</P
+><P
+>Das Hauptproblem bei den <TT
+CLASS="LITERAL"
+>_t</TT
+>-Datenelementen
+ist, daß Sie sie nicht so einfach ausgeben können, weil es nicht so
+leicht ist, das richtige Ausgabeformat für
+<SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+> oder <SPAN
+><I
+CLASS="EMPHASIS"
+>printf</I
+></SPAN
+> zu
+finden; Warnungen, die Sie auf einer Architektur beseitigt haben,
+treten auf einer anderen wieder auf. Wie wollen Sie beispielsweise
+einen Wert des Typs <TT
+CLASS="LITERAL"
+>size_t</TT
+> ausgeben, wo
+<TT
+CLASS="LITERAL"
+>size_t</TT
+> auf manchen Plattformen
+<TT
+CLASS="LITERAL"
+>unsigned long</TT
+>, auf anderen aber <TT
+CLASS="LITERAL"
+>unsigned
+int</TT
+> ist?&#13;</P
+><P
+>&#13;Wenn Sie schnittstellenspezifische Daten ausgeben wollen, ist es am
+besten, wenn Sie den Wert per Cast-Operation auf den größtmöglichen
+Typ (normalerweise <TT
+CLASS="LITERAL"
+>long</TT
+> oder <TT
+CLASS="LITERAL"
+>unsigned
+long</TT
+>) umwandeln und dann mit dem entsprechenden Format
+ausgeben. Damit werden keine Warnungen oder Fehler gemeldet, weil das
+Format zum Typ paßt, und Sie verlieren auch keine Datenbits, weil die
+Cast-Operation entweder keine Wirkung hat oder das Element zu einem
+größeren Datentyp erweitert.&#13;</P
+><P
+>In der Praxis sind die Datentypen, über die wir hier reden, aber gar
+nicht dazu gedacht, ausgegeben zu werden, so daß dieses Problem
+ohnehin nur bei Debugging-Meldungen auftritt. Meistens muß der Code
+die Interface-spezifischen Typen nur speichern und vergleichen, sowie
+sie als Argumente von Bibliotheks- oder Kernel-Funktionen
+weiterreichen.&#13;</P
+><P
+>Obwohl die <TT
+CLASS="LITERAL"
+>_t</TT
+>-Typen in den meisten Fällen
+die richtige Lösung sind, gibt es manchmal nicht den richtigen
+Typ. Das ist zum Beispiel bei alten Schnittstellen der Fall, die noch
+nicht aufgeräumt worden sind.&#13;</P
+><P
+>Wir haben in den Header-Dateien des Kernels eine einzige mehrdeutige
+Stelle gefunden, und zwar in den nur lose definierten Datentypen von
+I/O-Funktionen (siehe dazu den Abschnitt &#8220;<A
+HREF="hardports.html#HARDDEP"
+>the Section called <I
+>Plattformabhängigkeiten</I
+> in Kapitel 8</A
+>&#8221; in <A
+HREF="hard.html"
+>Kapitel 8</A
+>). Das liegt
+hauptsächlich an historischen Gründen, kann aber beim Programmieren zu
+Problemen führen. Beispielsweise kann man in Schwierigkeiten geraten,
+wenn man die Argumente von Funktionen wie <SPAN
+><I
+CLASS="EMPHASIS"
+>outb</I
+></SPAN
+>
+vertauscht; wenn es einen Typ <TT
+CLASS="LITERAL"
+>port_b</TT
+> gäbe,
+würde der Compiler solche Fehler finden.
+
+
+
+&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="judassize.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x13402.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Datenelementen eine explizite
+Größe zuweisen</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="judas.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Andere Portabilitätsfragen</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

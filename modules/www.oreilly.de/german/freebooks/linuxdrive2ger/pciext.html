@@ -1,0 +1,465 @@
+<HTML
+><HEAD
+><TITLE
+>Externe Bus-Systeme</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Ein Überblick über die Peripherie-Busse"
+HREF="pci.html"><LINK
+REL="PREVIOUS"
+TITLE="NuBus"
+HREF="x22248.html"><LINK
+REL="NEXT"
+TITLE="Abwärtskompatibilität"
+HREF="x22325.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x22248.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 15. Ein Überblick über die Peripherie-Busse</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x22325.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="PCIEXT"
+>Externe Bus-Systeme</A
+></H1
+><P
+>&#13;In jüngerer Zeit ist mit den Interface-Bus-Systemen eine ganze Klasse
+von externen Bus-Systemen hinzugekommen. Dazu gehören USB, FireWire
+und IEEE1284 (ein Parallel-Port-basierter externer Bus). Diese
+Interfaces ähneln älterer und nicht so externer Technologie wie
+PCMCIA/CardBUS und sogar SCSI.</P
+><P
+>Konzeptionell sind diese Busse weder vollständige Interface-Busse (wie
+PCI) noch dumme Kommunikationskanäle (wie serielle Ports). Es ist
+schwer, die Software zu klassifizieren, mit der die Fähigkeiten dieser
+Busse ausgenutzt werden, weil sie normalerweise in zwei Ebenen
+aufgeteilt wird: in den Treiber für den Hardware-Controller (wie Treiber
+für PCI-SCSI-Adapter oder die in &#8220;<A
+HREF="pci.html#PCIPCI"
+>the Section called <I
+>Die PCI-Schnittstelle</I
+></A
+>&#8221;
+eingeführten PCI-Controller) einerseits und in die Treiber für die
+jeweiligen &#8220;Client&#8221;-Geräte andererseits (ähnlich wie
+<SPAN
+><I
+CLASS="EMPHASIS"
+>sd.c</I
+></SPAN
+> generische SCSI-Festplatten steuert und
+sogenannte PCI-Treiber für in den Bus eingesteckte Karten zuständig
+sind).</P
+><P
+>Es gibt aber noch ein anderes Problem mit diesen neuen Bussen. Mit
+Ausnahme von USB ist die Unterstützung entweder noch nicht ausgereift
+oder muß überarbeitet werden (letzteres trifft insbesondere auf das
+SCSI-Kernel-Subsystem zu, das nach Aussage mehrerer der besten
+Kernel-Hacker alles andere als optimal ist).</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN22268"
+>USB</A
+></H2
+><P
+>&#13;USB, der Universal Serial Bus, ist der einzige externe Bus, der
+derzeit so ausgereift ist, daß es sich lohnt, ihn hier zu
+besprechen. Topologisch ist ein USB-Subsystem nicht als Bus gestaltet,
+sondern eher als Baum aus mehreren Punkt-zu-Punkt-Verbindungen. Die
+Verbindungen sind vierdrahtige Kabel (Masse, Spannung und zwei
+Signalleitungen), die ein Gerät und einen Hub verbinden (wie bei
+Twisted Pair-Ethernet). Computer der PC-Klasse sind normalerweise mit
+einem &#8220;Wurzel-Hub&#8221; ausgerüstet und enthalten zwei Buchsen für externe
+Verbindungen. Sie können hier entweder Geräte oder weitere Hubs
+anschließen.</P
+><P
+>Aus technologischer Sicht ist der Bus nicht weiter aufregend, ist
+handelt sich um eine Single-Master-Implementation, in der der
+Host-Computer die diversen Geräte der Reihe nach abfragt. Trotz dieser
+eingebauten Beschränkung hat der Bus eine Reihe interessanter Merkmale.
+So bietet er beispielsweise einem Gerät die Möglichkeit, für seine Übertragungen eine
+feste Bandbreite anzufordern, um Video- und Audio-I/O verläßlich zu
+unterstützen. Außerdem arbeitet USB als reiner Kommunikationskanal
+zwischen dem Gerät und dem Host und verlangt keine spezielle Bedeutung oder
+Struktur der gelieferten Daten.<A
+NAME="AEN22274"
+HREF="#FTN.AEN22274"
+>[1]</A
+></P
+><P
+>Dadurch unterscheidet sich USB von SCSI und anderen standardisierten
+seriellen Medien.</P
+><P
+>Diese Merkmale machen USB gemeinsam mit der eingebauten
+Hot-Plug-Fähigkeit zu einer praktischen und billigen Lösung, wenn es
+um das Verbinden (und das Aufheben von Verbindungen) mehrerer Geräte mit
+einem Computer geht, ohne das System herunterfahren, das Gehäuse
+öffnen und über die Schrauben und Kabel fluchen zu müssen. USB wird im
+PC-Markt beliebt, bleibt aber für Hochgeschwindigkeitsgeräte
+ungeeignet, weil die maximale Übertragungsrate 12 MByte pro Sekunde
+beträgt.&#13;</P
+><P
+>USB wird von der Version 2.2.18 (und neuer) sowie von den
+2.4.<SPAN
+><I
+CLASS="EMPHASIS"
+>x</I
+></SPAN
+>-Versionen des Linux-Kernels unterstützt. Der
+USB-Controller gehört immer zu einer von zwei Arten, und beide werden
+vom Standard-Kernel mit einem Treiber unterstützt.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN22280"
+>Einen USB-Treiber schreiben</A
+></H2
+><P
+>&#13;Was &#8220;Client&#8221;-Gerätetreiber angeht, ist der Ansatz bei USB ähnlich wie
+beim <TT
+CLASS="LITERAL"
+>pci_driver</TT
+>-Layout: Der Gerätetreiber
+registriert sein Treiber-Objekt beim USB-Subsystem und verwendet
+später die Hersteller- und Geräte-Bezeichner, um das Ankoppeln
+"seiner" Hardware zu erkennen.</P
+><P
+>&#13;
+
+Die relevante Datenstruktur ist <TT
+CLASS="LITERAL"
+>struct
+usb_driver</TT
+> und wird typischerweise folgendermaßen
+verwendet:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;#include &#60;linux/usb.h&#62;
+
+static struct usb_driver sample_usb_driver = {
+        name:        "sample",
+        probe:       sample_probe,
+        disconnect:  sample_disconnect,
+};
+
+int init_module(void)
+{
+    /* nur registrieren, gibt 0 oder einen Fehler-Code zurück */
+    return usb_register(&#38;sample_usb_driver);
+}
+
+void cleanup_module(void)
+{
+    usb_deregister(&#38;sample_usb_driver);
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die in der Datenstruktur deklarierte
+<SPAN
+><I
+CLASS="EMPHASIS"
+>probe</I
+></SPAN
+>-Funktion wird vom USB-Subsystem im Kernel
+immer dann aufgerufen, wenn ein neues Gerät mit dem System verbunden
+wird (oder wenn ein Treiber geladen wird und sich noch herrenlose Geräte
+am Bus befinden).</P
+><P
+>Jedes Gerät identifiziert sich selbst, indem es dem System die
+Bezeichner für Hersteller, Gerät und Klasse mitteilt, ähnlich wie bei
+PCI-Geräten. Die Aufgabe von <SPAN
+><I
+CLASS="EMPHASIS"
+>sample_probe</I
+></SPAN
+>
+ist es daher, sich diese Informationen anzuschauen und gegebenenfalls
+ein Gerät für sich zu beanspruchen.</P
+><P
+>Um ein Gerät zu beanspruchen, gibt die Funktion einen von
+<TT
+CLASS="LITERAL"
+>NULL</TT
+> verschiedenen Zeiger zurück, der zur
+Identifikation des Geräts verwendet wird. Dies wird normalerweise ein
+Zeiger auf die gerätespezifische Datenstruktur sein, die dem
+Gerätetreiber als Ganzes zugrundeliegt.</P
+><P
+>Um Informationen mit dem Gerät auszutauschen, müssen Sie dem
+USB-Subsystem dann mitteilen, wie Sie kommunizieren wollen. Dazu wird eine Struktur <TT
+CLASS="LITERAL"
+>struct urb</TT
+> (für
+<SPAN
+><I
+CLASS="EMPHASIS"
+>USB Request Block</I
+></SPAN
+>) ausgefüllt an <SPAN
+><I
+CLASS="EMPHASIS"
+>usb_submit_urb</I
+></SPAN
+> übergeben. Dieser
+Schritt wird normalerweise in der <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>-Methode,
+die zur Gerätedatei gehört, oder in einer äquivalenten Funktion
+durchgeführt.</P
+><P
+>Beachten Sie, daß nicht jeder USB-Treiber seine eigenen Gerätedateien
+samt Anfordern von Major-Nummern und so weiter implementieren
+muß. Geräte, die in eine Klasse fallen, für die der Kernel
+verallgemeinerte Unterstützung anbietet, haben keine eigenen
+Gerätedateien und melden ihre Informationen auf andere Weise.</P
+><P
+>Ein Beispiel solcher verallgemeinerter Verwaltung sind
+Eingabegeräte. Wenn Ihr USB-Gerät ein Eingabegerät (wie ein
+Grafiktablett) ist, allozieren Sie keine Major-Nummern, sondern
+registrieren Ihre Hardware durch Aufrufen von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>input_register_device</I
+></SPAN
+>. In diesem
+Fall ist der <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>-Callback Ihres Eingabegeräts
+dafür zuständig, durch einen Aufruf von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>usb_submit_urb</I
+></SPAN
+> die Kommunikation
+aufzubauen.</P
+><P
+>Ein USB-Eingabe-Treiber muß sich daher auf mehrere andere
+Systembestandteile verlassen, von denen die meisten wiederum Module
+sein können. Die Modul-Stapel-Architektur für USB-Eingabegeräte-Treiber
+ist in <A
+HREF="pciext.html#FIGUSBINPUT"
+>Abbildung 15-3</A
+> zu sehen.</P
+><DIV
+CLASS="FIGURE"
+><A
+NAME="FIGUSBINPUT"
+></A
+><P
+><B
+>Abbildung 15-3. Für USB-Eingabegeräte verwendete Module</B
+></P
+><P
+><IMG
+SRC="ldr_1503.jpg"></P
+></DIV
+><P
+>Einen vollständigen USB-Gerätetreiber finden Sie in den
+Beispieldateien auf dem O'Reilly-FTP-Server. Es handelt sich dabei um
+einen stark vereinfachten Tastatur- und Maus-Treiber, an dem Sie sehen
+können, wie man einen vollständigen USB-Treiber aufbaut. Um diesen
+einfach zu halten, verwendet er nicht das Eingabe-Subsystem, um
+Ereignisse zu melden, sondern schreibt Meldungen mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+>. Sie brauchen mindestens eine USB-Tastatur
+oder eine USB-Maus, um den Treiber auszuprobieren.</P
+><P
+>&#62;
+&#62;
+&#62;
+Über USB gibt es derzeit eine ganze Menge an Dokumentation, darunter
+zwei Artikel von einem der Autoren, deren Stil und technisches Niveau
+dem von <SPAN
+><I
+CLASS="EMPHASIS"
+>Linux-Gerätetreiber</I
+></SPAN
+> ähnelt. Diese Artikel
+enthalten sogar einen vollständigeren Beispiel-USB-Gerätetreiber, der das Eingabe-Subsystem des Kernels verwendet
+und auch auf alternative Weise betrieben werden kann, wenn Sie
+gerade keine USB-Geräte parat haben. Sie finden den Artikel unter
+<SPAN
+CLASS="SYSTEMITEM"
+>http://www.linux.it/kerneldocs</SPAN
+>.
+
+
+
+
+
+
+
+
+
+&#13;</P
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN22274"
+HREF="pciext.html#AEN22274"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Ein wenig Struktur gibt es allerdings schon, aber
+diese läßt sich im wesentlichen auf die Anforderung reduzieren, daß
+jede Kommunikation in eine von wenigen vordefinierten Klassen passen
+muß. So wird eine Tastatur keine Bandbreite reservieren, während eine
+Kamera das durchaus tun kann.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x22248.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x22325.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>NuBus</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="pci.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Abwärtskompatibilität</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

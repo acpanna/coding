@@ -1,0 +1,549 @@
+<HTML
+><HEAD
+><TITLE
+>Paket-Übertragung</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Netzwerk-Treiber"
+HREF="net.html"><LINK
+REL="PREVIOUS"
+TITLE="Öffnen und Schließen"
+HREF="onoff.html"><LINK
+REL="NEXT"
+TITLE="Paket-Empfang"
+HREF="netrx.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="onoff.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 14. Netzwerk-Treiber</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="netrx.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="NETTX"
+>Paket-Übertragung</A
+></H1
+><P
+>&#13;
+
+Die wichtigsten Aufgaben einer Netzwerk-Schnittstelle sind die
+Übertragung und der Empfang von Daten. Wir fangen hier mit der
+Übertragung an, weil sie etwas einfacher zu verstehen ist.&#13;</P
+><P
+>&#13;Immer wenn der Kernel ein Datenpaket übertragen will, ruft er die
+Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>hard_start_transmit</I
+></SPAN
+> auf, um
+die Daten in die ausgehende Warteschlange zu stellen. Jedes Paket, das
+vom Kernel verarbeitet wird, ist in einer Socket-Buffer-Struktur
+(<TT
+CLASS="LITERAL"
+>struct sk_buff</TT
+>) enthalten. Die Definition
+dieser Struktur steht in
+<TT
+CLASS="LITERAL"
+>&#60;linux/skbuff.h&#62;</TT
+>. Der Name dieser
+Struktur stammt aus der Unix-Abstraktion, mit der eine
+Netzwerk-Verbindung repräsentiert wird, dem
+<I
+CLASS="FIRSTTERM"
+>Socket</I
+>. Selbst, wenn die Schnittstelle nichts
+mit Sockets zu tun hat, gehört doch jedes Netzwerk-Paket zu einem
+Socket in den höheren Netzwerk-Schichten, und die
+Eingabe-/Ausgabe-Puffer jedes Sockets sind Listen mit
+<TT
+CLASS="LITERAL"
+>struct sk_buff</TT
+>-Strukturen. Die gleiche
+<TT
+CLASS="LITERAL"
+>sk_buff</TT
+>-Struktur wird auch verwendet, um
+Netzwerkdaten überall in den Netzwerk-Subsystemen von Linux zu
+speichern. Für die Schnittstelle ist ein Socket-Buffer aber nichts
+weiter als ein Paket.
+
+
+&#13;</P
+><P
+>Ein Zeiger auf <TT
+CLASS="LITERAL"
+>sk_buff</TT
+> wird normalerweise
+<TT
+CLASS="LITERAL"
+>skb</TT
+> genannt. Wir folgen dieser Konvention sowohl im
+Beispiel-Code als auch im Text.&#13;</P
+><P
+>Der Socket-Buffer ist eine komplexe Struktur, weswegen der Kernel eine
+Reihe von Funktionen bereitstellt, die darauf operieren. Diese werden
+später in &#8220;<A
+HREF="netskb.html"
+>the Section called <I
+>Die Socket-Buffer</I
+></A
+>&#8221; beschrieben; im Moment
+reichen uns einige Grundlagen über <TT
+CLASS="LITERAL"
+>sk_buff</TT
+>, um
+einen funktionierenden Treiber schreiben zu können.&#13;</P
+><P
+>&#13;Der Socket-Buffer, der an
+<SPAN
+><I
+CLASS="EMPHASIS"
+>hard_start_xmit</I
+></SPAN
+> übergeben wird,
+enthält das physikalische Paket, wie es auf dem Medium erscheinen
+soll, mit den Headern für die
+Übertragung. Die Schnittstelle muß die zu übertragenden Daten nicht
+modifizieren. <TT
+CLASS="LITERAL"
+>skb-&#62;data</TT
+> zeigt auf das zu
+übertragende Paket, und <TT
+CLASS="LITERAL"
+>skb-&#62;len</TT
+> ist dessen Länge
+in Oktetten.&#13;</P
+><P
+>Der Paket-Übertragungscode von <SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> ist
+unten angeführt, wobei der Mechanismus zur physikalischen Übertragung
+in einer anderen Funktion isoliert worden ist, weil jeder Treiber das
+passend für die angesteuerte Hardware implementieren muß.&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+int snull_tx(struct sk_buff *skb, struct net_device *dev)
+{
+    int len;
+    char *data;
+    struct snull_priv *priv = (struct snull_priv *) dev-&#62;priv;
+    len = skb-&#62;len &#60; ETH_ZLEN ? ETH_ZLEN : skb-&#62;len;
+    data = skb-&#62;data;
+    dev-&#62;trans_start = jiffies; /* Zeitstempel speichern */
+
+    /* skb merken, damit wir ihn zur Interrupt-Zeit freigeben koennen */
+    priv-&#62;skb = skb;
+
+    /* die eigentliche Datenuebertragung ist geraetespezifisch und wird
+       hier nicht gezeigt */
+    snull_hw_tx(data, len, dev);
+
+    return 0; /* Unser Geraet gelingt immer und klebt nicht */
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die Übertragungsfunktion führt also nur einige Konsistenzüberprüfungen
+auf dem Paket durch und überträgt die Daten dann mittels der
+Hardware-abhängigen Funktion. Diese Funktion
+(<SPAN
+><I
+CLASS="EMPHASIS"
+>snull_hw_tx</I
+></SPAN
+>) wird hier nicht
+gezeigt, weil sie sich ausschließlich mit der Implementation der Tricks im
+<SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+>-Gerät (einschließlich der
+Manipulation der Quell- und Ziel-Adressen) beschäftigt und für Autoren
+echter Netzwerk-Treiber wenig interessant ist. Natürlich finden Sie
+den Code aber in den Beispiel-Programmen, wenn Sie daran interessiert
+sind.
+
+&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN20179"
+>Steuerung der Nebenläufigkeit von Übertragungen</A
+></H2
+><P
+>&#13;
+
+Die Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>hard_start_xmit</I
+></SPAN
+> wird vor
+nebenläufigen Aufrufen durch ein Spinlock
+(<TT
+CLASS="LITERAL"
+>xmit_lock</TT
+>) in der Struktur
+<TT
+CLASS="LITERAL"
+>net_device</TT
+> geschützt. Sobald die Funktion
+zurückkehrt, kann sie aber wieder aufgerufen werden. Die Funktion kehrt
+zurück, wenn die Software damit fertig ist, der Hardware Anweisungen
+zur Paket-Übertragung zu geben; die Hardware wird aber wahrscheinlich
+noch nicht fertig sein. Bei <SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+>, wo alle
+Arbeit in der CPU geschieht, ist das kein Problem, so daß die
+Paket-Übertragung beendet ist, bevor die Übertragungsfunktion
+zurückkehrt.</P
+><P
+>Echte Hardware-Schnittstellen übertragen ihre Pakete dagegen asynchron
+und haben nur eine begrenzte Menge von Speicher zur Verfügung, in dem
+sie ausgehende Pakete speichern können. Wenn dieser Speicher voll ist
+(was bei mancher Hardware schon bei einem einzigen zur Übertragung ausstehenden Paket der Fall sein kann), muß der Treiber das
+Netzwerk-System anweisen, keine weiteren Übertragungen zu starten,
+bis die Hardware bereit ist, neue Daten zu schicken.</P
+><P
+>&#13;
+Diese Benachrichtigung geschieht durch das Aufrufen von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>netif_stop_queue</I
+></SPAN
+>, der Funktion, die
+wir schon oben zum Anhalten der Warteschlange eingeführt hatten. Wenn
+Ihr Treiber seine Warteschlange angehalten hat,
+<SPAN
+><I
+CLASS="EMPHASIS"
+>muß</I
+></SPAN
+> er das Neustarten der Warteschlange
+irgendwann in der Zukunft organisieren, nämlich dann, wenn wieder
+Pakete zur Übertragung angenommen werden können. Dazu wird folgende
+Funktion aufgerufen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;void netif_wake_queue(struct net_device *dev);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Diese Funktion macht das gleiche wie
+<SPAN
+><I
+CLASS="EMPHASIS"
+>netif_start_queue</I
+></SPAN
+>, stubst aber auch
+das Netzwerk-System an, damit dieses wieder Pakete überträgt.</P
+><P
+>Die meisten modernen Netzwerk-Schnittstellen unterhalten eine interne
+Warteschlange mit mehreren zu übertragenden Paketen; auf diese Art und
+Weise können sie die beste Performance aus dem Netzwerk
+herausholen. Netzwerk-Treiber für diese Geräte unterstützen mehrere
+ausstehende Übertragungen zu einem beliebigen Zeitpunkt, aber der
+Geräte-Speicher kann voll werden, ob die Hardware nun mehrere
+ausstehende Übertragungen unterstützt oder nicht. Immer wenn der
+Gerätespeicher so weit gefüllt ist, daß das größtmögliche Paket nicht
+mehr hineinpaßt, sollte der Treiber die Warteschlange anhalten, bis
+wieder Platz ist.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="NETTIMEOUT"
+>Übertragungs-Timeouts</A
+></H2
+><P
+>&#13;
+Die meisten Treiber, die es mit richtiger Hardware zu tun haben,
+müssen darauf vorbereitet sein, daß die Hardware gelegentlich
+versagt. Schnittstelle können vergessen, was sie gerade machen, oder
+das System kann einen Interrupt verlieren. Diese Art von Problemen
+tritt bei manchen Geräten für Personal Computer besonders häufig auf.</P
+><P
+>Viele Treiber behandeln dieses Problem durch Timer. Wenn die Operation
+in einem gewissen Zeitraum nicht abgeschlossen worden ist, ist etwas
+falsch. Das Netzwerk-System ist übrigens im wesentlichen eine
+komplizierte Ansammlung von Zustandsmaschinen, die von einer Unmenge
+von Timern kontrolliert wird. Als solche kann der Netzwerk-Code gut
+Übertragungs-Timeouts automatisch entdecken.</P
+><P
+>&#13;Netzwerk-Treiber müssen sich daher keine Gedanken über das Entdecken
+solcher Probleme machen. Statt dessen legen sie lediglich einen
+Timeout-Zeitraum fest, der in das Feld
+<TT
+CLASS="LITERAL"
+>watchdog_timeo</TT
+> der Struktur
+<TT
+CLASS="LITERAL"
+>net_device</TT
+> geschrieben wird. Dieser
+Zeitraum, der in Jiffies angegeben wird, sollte lang genug sein, um
+normale Verzögerungen bei der Übertragung (wie Kollisionen, die durch
+Verstopfungen des Netzwerk-Mediums hervorgerufen werden) zu
+berücksichtigen.</P
+><P
+>Wenn die aktuelle Systemzeit die
+<TT
+CLASS="LITERAL"
+>trans_start</TT
+>-Zeit des Geräts um wenigstens
+den Timeout-Zeitraum überschreitet, wird die Netzwerk-Schicht
+irgendwann die Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>tx_timeout</I
+></SPAN
+> des
+Treibers aufrufen. Die Aufgabe dieser Methode ist es, alles zu tun, was
+notwendig ist, um das Problem zu beheben und die
+ordnungsgemäße Beendigung noch ausstehender Übertragungen zu
+gewährleisten. Es ist besonders wichtig, daß der Treiber keine
+Socket-Buffer verliert, die ihm vom Netzwerk-Code anvertraut worden
+sind.</P
+><P
+><SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> kann Übertragungsblockaden
+simulieren; dies geschieht durch zwei Lade-Parameter:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+static int lockup = 0;
+MODULE_PARM(lockup, "i");
+
+#ifdef HAVE_TX_TIMEOUT
+static int timeout = SNULL_TIMEOUT;
+MODULE_PARM(timeout, "i");
+#endif</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wenn der Treiber mit dem Parameter <TT
+CLASS="LITERAL"
+>lockup=n</TT
+> geladen
+wird, dann wird alle <TT
+CLASS="LITERAL"
+>n</TT
+> übertragenen Pakete eine
+Blockade simuliert, und das Feld
+<TT
+CLASS="LITERAL"
+>watchdog_timeo</TT
+> wird auf den
+<TT
+CLASS="LITERAL"
+>timeout</TT
+>-Wert gesetzt. Beim Simulieren von Blockaden
+ruft <SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> auch
+<SPAN
+><I
+CLASS="EMPHASIS"
+>netif_stop_queue</I
+></SPAN
+> auf, um andere
+Übertragungsversuche zu verhindern.</P
+><P
+>Der Timeout-Handler von <SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> sieht
+folgendermaßen aus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+void snull_tx_timeout (struct net_device *dev)
+{
+    struct snull_priv *priv = (struct snull_priv *) dev-&#62;priv;
+
+    PDEBUG("Übertragung-Timeout bei %ld, latency %ld\n", jiffies,
+                    jiffies - dev-&#62;trans_start);
+    priv-&#62;status = SNULL_TX_INTR;
+    snull_interrupt(0, dev, NULL);
+    priv-&#62;stats.tx_errors++;
+    netif_wake_queue(dev);
+    return;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Wenn ein Übertragungs-Timeout geschieht, muß der Treiber den Fehler in
+der Schnittstellenstatistik markieren und dafür sorgen, daß das Gerät
+auf einen sinnvollen Zustand zurückgesetzt wird, in dem neue Pakete
+übertragen werden können. Wenn ein Timeout in
+<SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> auftritt, ruft der Treiber
+<SPAN
+><I
+CLASS="EMPHASIS"
+>snull_interrupt</I
+></SPAN
+> auf, um den &#8220;fehlenden&#8221;
+Interrupt zu ergänzen und die Übertragungs-Warteschlange mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>netif_wake_queue</I
+></SPAN
+> neu zu starten.&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="onoff.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="netrx.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Öffnen und Schließen</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="net.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Paket-Empfang</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

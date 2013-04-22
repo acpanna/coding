@@ -1,0 +1,845 @@
+<HTML
+><HEAD
+><TITLE
+>Netzwerk-Treiber</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="PREVIOUS"
+TITLE="Schnellreferenz"
+HREF="x18853.html"><LINK
+REL="NEXT"
+TITLE="Mit dem Kernel verbinden"
+HREF="netsetup.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x18853.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="netsetup.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="NET"
+>Kapitel 14. Netzwerk-Treiber</A
+></H1
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Inhalt</B
+></DT
+><DT
+><A
+HREF="net.html#NETSNULL"
+>Das Design von snull</A
+></DT
+><DT
+><A
+HREF="netsetup.html"
+>Mit dem Kernel verbinden</A
+></DT
+><DT
+><A
+HREF="x19513.html"
+>Die Struktur net_device im Detail</A
+></DT
+><DT
+><A
+HREF="onoff.html"
+>Öffnen und Schließen</A
+></DT
+><DT
+><A
+HREF="nettx.html"
+>Paket-Übertragung</A
+></DT
+><DT
+><A
+HREF="netrx.html"
+>Paket-Empfang</A
+></DT
+><DT
+><A
+HREF="netirq.html"
+>Der Interrupt-Handler</A
+></DT
+><DT
+><A
+HREF="x20332.html"
+>Änderungen im Verbindungszustand</A
+></DT
+><DT
+><A
+HREF="netskb.html"
+>Die Socket-Buffer</A
+></DT
+><DT
+><A
+HREF="netarp.html"
+>MAC-Adreßauflösung</A
+></DT
+><DT
+><A
+HREF="netioctl.html"
+>Eigene ioctl-Befehle</A
+></DT
+><DT
+><A
+HREF="netstats.html"
+>Statistische Informationen</A
+></DT
+><DT
+><A
+HREF="netmulti.html"
+>Multicasting</A
+></DT
+><DT
+><A
+HREF="x20925.html"
+>Abwärtskompatibilität</A
+></DT
+><DT
+><A
+HREF="x21078.html"
+>Schnellreferenz</A
+></DT
+></DL
+></DIV
+><P
+>Wir lassen jetzt die Zeichen- und Block-Treiber hinter uns und begeben
+uns in die faszinierende Welt der Netzwerke. Netzwerk-Schnittstellen
+sind die dritte Standardklasse von Linux-Geräten, und in diesem
+Kapitel wird beschrieben, wie sie mit dem Rest des Kernels
+zusammenarbeiten.
+
+&#13;</P
+><P
+>Die Rolle einer Netzwerk-Schnittstelle im System ähnelt der eines
+eingehängten Block-Geräts. Ein Block-Gerät registriert seine
+Fähigkeiten im Array <TT
+CLASS="LITERAL"
+>blk_dev</TT
+> und in anderen
+Kernel-Strukturen. Danach &#8220;überträgt&#8221; und
+&#8220;empfängt&#8221; es auf Anfrage Blocks mit seiner
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion. Analog dazu muß sich
+auch eine Netzwerk-Schnittstelle in bestimmten Datenstrukturen
+registrieren, damit sie aufgerufen wird, wenn Pakete mit der Außenwelt
+ausgetauscht werden sollen.&#13;</P
+><P
+>Es gibt einige wichtige Unterschiede zwischen eingehängten Festplatten
+und Schnittstellen zur Paket-Übertragung. Zunächst einmal wird eine
+Festplatte durch eine Gerätedatei im Verzeichnis
+<TT
+CLASS="FILENAME"
+>/dev</TT
+> repräsentiert, während eine
+Netzwerk-Schnittstelle keine solche Einsprungstelle hat. Die normalen
+Datei-Operationen (Lesen, Schreiben usw.) sind bei
+Netzwerk-Schnittstellen nicht sinnvoll, weswegen man hier nicht den
+üblichen Unix-Ansatz &#8220;alles ist eine Datei&#8221; anwenden kann. Daher
+existieren Netzwerk-Schnittstellen in einem eigenen Namensraum und
+exportieren einen eigenen Satz von Operationen.</P
+><P
+>Sie mögen vielleicht einwerfen, daß Applikationen die Systemaufrufe
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+> verwenden,
+wenn sie Sockets benutzen, aber diese arbeiten auf einer Art
+Software-Objekt, das nicht die Schnittstelle selbst ist. Mehrere
+hundert Sockets können gleichzeitig auf der gleichen physikalischen
+Schnittstelle arbeiten.</P
+><P
+>Der wichtigste Unterschied ist aber, daß Block-Treiber nur auf
+Anforderung durch den Kernel arbeiten, wohingegen Netzwerk-Treiber
+auch asynchron Pakete von außen empfangen. Während also ein
+Block-Treiber <SPAN
+><I
+CLASS="EMPHASIS"
+>gebeten</I
+></SPAN
+> wird, einen Puffer an den
+Kernel zu schicken, <SPAN
+><I
+CLASS="EMPHASIS"
+>bittet</I
+></SPAN
+> das Netzwerk-Gerät
+darum, eingehende Pakete an den Kernel weiterreichen zu dürfen. Die
+Kernel-Schnittstelle für Netzwerk-Treiber ist auf diese andere
+Betriebsart ausgerichtet.</P
+><P
+>Netzwerk-Treiber müssen auch darauf eingestellt sein, eine Reihe von
+administrativen Aufgaben wie das Setzen von Adressen, das Ändern von
+Übertragungsparametern und die Pflege von Statistiken über übertragene
+Daten und Fehler zu unterstützen. Die API für Netzwerk-Treiber
+spiegelt diese Bedürfnisse wider und sieht daher etwas anders aus als
+die Schnittstellen, die wir bisher kennengelernt haben.</P
+><P
+>Das Netzwerk-Subsystem des Linux-Kernels ist vollständig
+protokollunabhängig entworfen worden. Das gilt sowohl für
+Netzwerk-Protokolle (IP, IPX oder andere Protokolle) als auch für
+Hardware-Protokolle (Ethernet, Token Ring und andere). Die Interaktion
+zwischen dem Netzwerk-Treiber und dem eigentlichen Kernel geschieht
+paketweise. Damit können Protokoll-Fragen vor dem Treiber und die
+physikalische Übertragung vor dem Protokoll versteckt werden.&#13;</P
+><P
+>&#13;In diesem Kapitel wird beschrieben, wie die Netzwerk-Schnittstellen in
+den Rest des Linux-Kernels passen, und eine speicherbasierte
+modularisierte Netzwerk-Schnittstelle namens &#8212; Sie werden es
+sich gedacht haben &#8212; <SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+>
+vorgeführt. Um die Diskussion zu vereinfachen, benutzt die
+Schnittstelle das Ethernet-Hardware-Protokoll und überträgt
+IP-Pakete. Das Wissen, das Sie anhand von
+<SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> erwerben, kann leicht auf andere
+Protokolle als IP angewendet werden, und das Schreiben von
+Nicht-Ethernet-Treibern unterscheidet sich nur durch kleine Details, die
+für das jeweilige Protokoll spezifisch sind.</P
+><P
+>Wir sprechen in diesem Kapitel nicht über IP-Nummern-Vergabe,
+Netzwerkprotokolle oder andere allgemeine Netzwerkkonzepte. Solche
+Themen betreffen Treiber-Autoren (normalerweise) nicht, und es wäre
+ohnehin unmöglich, in weniger als einigen hundert Seiten einen
+befriedigenden Überblick über diese Themen zu geben.</P
+><P
+>Das Netzwerk-Subsystem ist in den letzten Jahren mehrfach verändert
+worden, weil die Kernel-Entwickler versucht haben, die bestmögliche
+Performance herauszuholen. Der Großteil dieses Kapitels behandelt
+Netzwerk-Treiber für den 2.4-Kernel, aber die Code-Beispiele
+funktionieren wieder einmal auch für 2.0- und 2.2-Kernel. Wir
+behandeln die Unterschiede zwischen den Kernel-Versionen am Ende des
+Kapitels.</P
+><P
+>Eine Anmerkung zur Terminologie, bevor wir in die Welt der
+Netzwerk-Geräte einsteigen: In der Netzwerk-Welt verwendet man den
+Begriff <SPAN
+><I
+CLASS="EMPHASIS"
+>Oktett</I
+></SPAN
+> für eine Gruppe von acht
+Bits. Dies ist im allgemeinen die kleinste Einheit, die
+Netzwerk-Geräte und Protokolle kennen. Der Begriff Byte wird in diesem
+Kontext fast nie verwendet. Wir werden hier daher auch von Oktetten
+sprechen.</P
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="NETSNULL"
+>Das Design von snull</A
+></H1
+><P
+>In diesem Abschnitt werden die Design-Überlegungen beschrieben, die
+beim Entwurf von <SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> erfolgten. Auch
+wenn diese Informationen vielleicht zunächst nur marginal nützlich
+erscheinen, könnten Sie beim Spielen mit dem Beispiel-Code auf Probleme
+stoßen, wenn Sie diese Überlegungen nicht verstehen.&#13;</P
+><P
+>Die erste und wichtigste Entwurfsentscheidung ist die, daß
+Beispiel-Schnittstellen nicht an real existierende Hardware gebunden
+sein sollten &#8212; genau wie der gesamte Beispiel-Code dieses
+Buches. Aus dieser
+Einschränkung ist etwas hervorgegangen, das der Loopback-Schnittstelle
+ähnelt. <SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> ist aber keine
+Loopback-Schnittstelle, sondern simuliert Konversationen zwischen
+echten entfernten Hosts, um das Schreiben von Netzwerk-Treibern besser
+zu demonstrieren. Der Linux-Loopback-Treiber ist sehr einfach; Sie
+finden ihn in <TT
+CLASS="FILENAME"
+>drivers/net/loopback.c</TT
+>.&#13;</P
+><P
+>Ein weiteres wichtiges Merkmal von <SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+>
+ist die Funktion als IP-Schnittstelle. Das ist eine Folge der internen
+Verarbeitungsvorgänge in der Schnittstelle &#8212;
+<SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> muß sich die Pakete anschauen und
+interpretieren, um ein Paar von Hardware-Schnittstellen korrekt
+emulieren zu können. Echte Schnittstellen sind
+unabhängig vom übertragenen Protokoll, und diese Einschränkung von
+<SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> hat auch keinen Einfluß auf den
+Beispiel-Code in diesem Kapitel, der protokollunabhängig ist.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN19191"
+>Zuweisen von IP-Nummern</A
+></H2
+><P
+>&#13;Das Modul <SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> erzeugt zwei
+Schnittstellen. Diese unterscheiden sich von einer einfachen
+Loopback-Schnittstelle dadurch, daß alles, was über die eine
+Schnittstelle übertragen wird, auf der anderen ankommt, und nicht auf
+sich selbst. Es wirkt so, als hätten Sie zwei Verbindungen nach außen,
+aber in Wirklichkeit antwortet Ihr Computer nur sich selbst.&#13;</P
+><P
+>Leider kann dieser Effekt nicht allein durch Zuweisung von IP-Nummern
+erreicht werden, weil der Kernel kein Paket über die Schnittstelle A
+schicken würde, das an seine eigene Schnittstelle B gerichtet
+ist. Statt dessen würde es den Loopback-Kanal verwenden, ohne die
+Daten durch <SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> zu schicken. Um trotzdem
+eine Kommunikation über die
+<SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+>-Schnittstellen zu bekommen, müssen
+die Quell- und Zieladressen während der Übertragung modifiziert
+werden. Pakete, die durch eine der Schnittstellen geschickt werden,
+sollten also von der anderen empfangen werden, der Empfänger des ausgehenden
+Paketes sollte aber nicht als der lokale Rechner erkannt werden. Das gleiche
+gilt für die Quelladresse der empfangenen Pakete.&#13;</P
+><P
+>Um dieses &#8220;versteckte Loopback&#8221; zu erreichen, schaltet die
+<SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+>-Schnittstelle das niedrigstwertige
+Bit des dritten Oktetts der Quell- und Zieladressen um. Es wird also
+sowohl die Netzwerk-Nummer als auch die Host-Nummer von
+Klasse-C-IP-Nummern geändert. Dadurch
+erscheinen Pakete, die an das Netzwerk A (das mit
+<TT
+CLASS="LITERAL"
+>sn0</TT
+>, der ersten Schnittstelle, verbunden ist) gerichtet sind, auf
+der Schnittstelle <TT
+CLASS="LITERAL"
+>sn1</TT
+> als Pakete an das Netzwerk
+B.&#13;</P
+><P
+>Um hier nicht mit zu vielen Nummern hantieren zu müssen, geben wir den
+verwendeten IP-Nummern symbolische Namen:&#13;</P
+><P
+></P
+><UL
+><LI
+><P
+><TT
+CLASS="LITERAL"
+>snullnet0</TT
+> ist das Klasse-C-Netzwerk, das
+mit der Schnittstelle <TT
+CLASS="LITERAL"
+>sn0</TT
+> verbunden
+ist. Entsprechend ist <TT
+CLASS="LITERAL"
+>snullnet1</TT
+> das Netzwerk von
+<TT
+CLASS="LITERAL"
+>sn1</TT
+>. Die Adressen dieser Netzwerke sollten sich nur
+im niedrigstwertigen Bit des dritten Oktetts unterscheiden.</P
+></LI
+><LI
+><P
+><TT
+CLASS="LITERAL"
+>local0</TT
+> ist die IP-Adresse von
+<TT
+CLASS="LITERAL"
+>sn0</TT
+>, sie liegt in <TT
+CLASS="LITERAL"
+>snullnet0</TT
+>. Die
+Adresse von <TT
+CLASS="LITERAL"
+>sn1</TT
+> ist
+<TT
+CLASS="LITERAL"
+>local1</TT
+>. <TT
+CLASS="LITERAL"
+>local0</TT
+> und
+<TT
+CLASS="LITERAL"
+>local1</TT
+> müssen sich im rechts stehenden Bit sowohl
+im dritten als auch im vierten Oktett unterscheiden.</P
+></LI
+><LI
+><P
+><TT
+CLASS="LITERAL"
+>remote0</TT
+> ist ein Host in
+<TT
+CLASS="LITERAL"
+>snullnet0</TT
+>, dessen viertes Oktett gleich dem von
+<TT
+CLASS="LITERAL"
+>local1</TT
+> ist. Jedes Paket, das an
+<TT
+CLASS="LITERAL"
+>remote0</TT
+> geschickt wird, kommt an
+<TT
+CLASS="LITERAL"
+>local1</TT
+> an, nachdem seine Klasse-C-Adresse vom
+Schnittstellen-Code modifiziert worden ist. Der Host
+<TT
+CLASS="LITERAL"
+>remote1</TT
+> gehört zu <TT
+CLASS="LITERAL"
+>snullnet1</TT
+>, und
+sein viertes Oktett ist identisch mit dem von <TT
+CLASS="LITERAL"
+>local0</TT
+>.</P
+></LI
+></UL
+><P
+>Die Arbeit der <SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+>-Schnittstellen ist in
+<A
+HREF="net.html#FIGSNULL"
+>Abbildung 14-1</A
+> dargestellt, wobei die Hostnamen, die zu
+jeder Schnittstelle gehören, neben dem Namen der Schnittstellen angegeben
+sind.
+
+   </P
+><DIV
+CLASS="FIGURE"
+><A
+NAME="FIGSNULL"
+></A
+><P
+><B
+>Abbildung 14-1. Wie ein Host seine Schnittstellen sieht</B
+></P
+><P
+><IMG
+SRC="ldr_1401.jpg"></P
+></DIV
+><P
+>Hier folgen einige mögliche Werte für die Netzwerk-Nummern. Wenn Sie diese
+Zeilen in <TT
+CLASS="FILENAME"
+>/etc/networks</TT
+> ergänzen, können
+Sie die Netzwerke auch namentlich angeben. Die Werte wurden aus dem
+Nummernbereich genommen, der für die private Nutzung reserviert ist.&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+
+snullnet0       192.168.0.0
+snullnet1       192.168.1.0</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die folgenden Nummern sind mögliche Host-Nummern, die Sie in
+<TT
+CLASS="FILENAME"
+>/etc/hosts</TT
+> eintragen können:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+
+192.168.0.88   local0
+192.168.0.99   remote0
+192.168.1.99   local1
+192.168.1.88   remote1</PRE
+></TD
+></TR
+></TABLE
+><P
+>Das Wichtige an diesen Nummern ist, daß der Host-Anteil von
+<TT
+CLASS="LITERAL"
+>local0</TT
+> gleich dem Host-Anteil von
+<TT
+CLASS="LITERAL"
+>remote1</TT
+> und der Host-Anteil von
+<TT
+CLASS="LITERAL"
+>local1</TT
+> gleich dem Host-Anteil von
+<TT
+CLASS="LITERAL"
+>remote0</TT
+> ist. Sie können völlig andere
+Nummern verwenden, solange diese Beziehung erhalten bleibt.</P
+><P
+>Seien Sie aber vorsichtig, wenn Ihr Rechner bereits mit einem Netzwerk
+verbunden ist. Die von Ihnen gewählten Nummern könnten echte Internet-
+oder Intranet-Adressen sein, und die Zuweisung an Ihre Schnittstellen
+würde eine Kommunikation mit den eigentlichen Adressen-Inhabern
+verhindern. Und auch wenn die oben gezeigten Nummern keine weiterleitbaren
+Internet-Nummern sind, könnten sie bereits von Ihrem privaten Netzwerk
+verwendet werden, falls dieses hinter einer Firewall liegt.&#13;</P
+><P
+>Welche Nummern Sie auch wählen, Sie können die Schnittstellen durch
+Eingabe der folgenden Befehle einrichten:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+ifconfig sn0 local0
+ifconfig sn1 local1
+case "`uname -r`" in 2.0.*)
+    route add -net snullnet0 dev sn0
+    route add -net snullnet1 dev sn1
+esac</PRE
+></TD
+></TR
+></TABLE
+><P
+>Ab Kernel 2.2 ist es nicht notwendig, <SPAN
+CLASS="APPLICATION"
+>route</SPAN
+>
+aufzurufen, weil dies automatisch geschieht. Wenn der gewählte
+Adreßbereich nicht im Klasse-C-Bereich liegt, müssen Sie
+<TT
+CLASS="LITERAL"
+>netmask 255.255.255.0</TT
+> hinzufügen.</P
+><P
+>An dieser Stelle kann das &#8220;entfernte&#8221; Ende der
+Schnittstelle bereits erreicht werden. Der Bildschirmauszug zeigt, wie
+mein Rechner <TT
+CLASS="LITERAL"
+>remote0</TT
+> und <TT
+CLASS="LITERAL"
+>remote1</TT
+>
+über <TT
+CLASS="LITERAL"
+>snull</TT
+> erreicht:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>&#13;
+morgana% <TT
+CLASS="USERINPUT"
+><B
+>ping -c 2 remote0</B
+></TT
+>
+64 bytes from 192.168.0.99: icmp_seq=0 ttl=64 time=1.6 ms
+64 bytes from 192.168.0.99: icmp_seq=1 ttl=64 time=0.9 ms
+2 packets transmitted, 2 packets received, 0% packet loss
+
+morgana% <TT
+CLASS="USERINPUT"
+><B
+>ping -c 2 remote1</B
+></TT
+>
+64 bytes from 192.168.1.88: icmp_seq=0 ttl=64 time=1.8 ms
+64 bytes from 192.168.1.88: icmp_seq=1 ttl=64 time=0.9 ms
+2 packets transmitted, 2 packets received, 0% packet loss</PRE
+></TD
+></TR
+></TABLE
+><P
+>Beachten Sie, daß Sie keinen anderen Host in den beiden Netzwerken
+erreichen können, weil das Paket von Ihrem Rechner verworfen wird,
+nachdem die Adresse modifiziert und das Paket empfangen wurde. Ein
+Paket für 192.168.0.32 verläßt den Rechner beispielsweise durch
+<TT
+CLASS="LITERAL"
+>sn0</TT
+> und erscheint wieder bei <TT
+CLASS="LITERAL"
+>sn1</TT
+>
+mit der Ziel-Adresse 192.168.1.32, also keiner lokalen Adresse
+des Host-Rechners.
+&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN19265"
+>Die physikalische Übertragung der Pakete</A
+></H2
+><P
+>&#13;
+
+
+Was die Datenübertragung angeht, gehören die
+<SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+>-Schnittstellen zur Klasse der
+Ethernet-Schnittstellen.&#13;</P
+><P
+>&#13;<SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> emuliert Ethernet, weil die
+überwältigende Mehrheit der
+existierenden Netzwerke &#8212; zumindest die Segmente, mit denen eine
+Workstation verbunden ist, auf der Ethernet-Technologie basieren, sei es
+nun 10Base2, 10BaseT oder 100BaseT. Außerdem stellt der Kernel bereits
+eine verallgemeinerte Unterstützung für Ethernet-Geräte bereit, und es
+gibt keinen Grund, diese nicht zu verwenden. Der Vorteil eines
+Ethernet-Gerätes ist so offensichtlich, daß selbst die
+<SPAN
+CLASS="APPLICATION"
+>plip</SPAN
+>-Schnittstelle (die Schnittstelle, die
+den Drucker-Port verwendet), sich selbst als Ethernet-Gerät
+deklariert.&#13;</P
+><P
+>&#13;Es gibt noch einen letzten Vorteil der Verwendung von Ethernet in
+<SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+>: Sie können die Schnittstelle mit
+<SPAN
+CLASS="APPLICATION"
+>tcpdump</SPAN
+> überprüfen, um die vorbeilaufenden Pakete im
+zu beobachten. Das Beobachten von Schnittstellen mit
+<SPAN
+CLASS="APPLICATION"
+>tcpdump</SPAN
+> ist eine hilfreiche Möglichkeit, um zu
+sehen, wie die beiden Schnittstellen arbeiten. (Beachten Sie, daß
+<SPAN
+CLASS="APPLICATION"
+>tcpdump</SPAN
+> auf 2.0-Kerneln nicht richtig
+funktioniert, falls die Schnittstellen von
+<SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> nicht als
+<TT
+CLASS="LITERAL"
+>eth</TT
+><TT
+CLASS="REPLACEABLE"
+><I
+>x</I
+></TT
+> erscheinen. Laden
+Sie den Treiber mit der Option <TT
+CLASS="LITERAL"
+>eth=1</TT
+>, um die
+normalen Ethernet-Namen anstelle der Default
+<TT
+CLASS="LITERAL"
+>snx</TT
+>-Namen zu verwenden.)</P
+><P
+>Wie bereits erwähnt, arbeitet <SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> nur mit
+IP-Paketen. Diese Beschränkung ist eine Folge der Tatsache, daß
+<SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> in den Paketen herumschnüffelt und
+diese sogar modifiziert, damit der Code funktioniert. Der Code
+verändert die Quelle, das Ziel, und die Prüfsumme im IP-Kopf jedes
+Pakets, ohne zu überprüfen, ob das Paket eigentlich wirklich
+IP-Informationen enthält. Diese Datenmodifikation auf die Schnelle
+zerstört Nicht-IP-Pakete. Wenn Sie andere Protokolle über
+<SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> übertragen wollen, müssen Sie den
+Code des Moduls entsprechend anpassen.
+&#13;</P
+></DIV
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x18853.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="netsetup.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Schnellreferenz</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Mit dem Kernel verbinden</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

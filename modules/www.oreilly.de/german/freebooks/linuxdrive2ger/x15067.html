@@ -1,0 +1,2191 @@
+<HTML
+><HEAD
+><TITLE
+>Anfragen bearbeiten: Das Ganze noch einmal genauer</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Das Laden von Block-Treibern"
+HREF="lock.html"><LINK
+REL="PREVIOUS"
+TITLE="Anfragen bearbeiten: Eine einfache Einführung"
+HREF="x14882.html"><LINK
+REL="NEXT"
+TITLE="Wie das Einhängen und Aushängen funktioniert"
+HREF="x15624.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x14882.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 12. Das Laden von Block-Treibern</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x15624.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN15067"
+>Anfragen bearbeiten: Das Ganze noch einmal genauer</A
+></H1
+><P
+>Der oben gezeigte <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+>-Treiber
+funktioniert sehr gut. In einfachen Situationen (wie im Falle von
+<SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+>) kann die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion mit den Makros aus
+<TT
+CLASS="LITERAL"
+>&#60;linux/blk.h&#62;</TT
+> einfach geschrieben werden und
+führt zu einem funktionierenden Treiber. Wie bereits erwähnt wurde, sind
+Block-Treiber aber oft ein Kernel-Bestandteil, dessen Performance
+entscheidende Bedeutung hat. Auf dem einfachen oben gezeigten Code
+basierende Treiber werden in vielen Situationen keine besonders gute
+Performance aufweisen und könnten sogar das System insgesamt
+verlangsamen. In diesem Abschnitt schauen wir uns die Details der
+Funktionsweise der I/O-Anfrage-Warteschlange unter dem Gesichtspunkt
+schnellerer, effizienterer Treiber an.</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN15074"
+>Die I/O-Anfrage-Warteschlange</A
+></H2
+><P
+>&#13;Alle Block-Treiber haben mindestens eine
+I/O-Anfrage-Warteschlange. Diese Warteschlange enthält zu jedem
+Zeitpunkt alle I/O-Operationen, die der Kernel von den Geräten des
+Treibers ausgeführt haben möchte. Die Verwaltung dieser Schlange ist
+kompliziert, und die Performance des Systems hängt davon ab.</P
+><P
+>Die Schlange wurde im Hinblick auf physikalische Festplattenlaufwerke
+entwickelt. Bei diesen ist die benötigte Zeit, um einen Datenblock zu
+übertragen, normalerweise recht klein. Die Zeit, die es kostet, den
+Lesekopf für die Übertragung zu positionieren (<SPAN
+><I
+CLASS="EMPHASIS"
+>seek</I
+></SPAN
+>)
+kann dagegen sehr groß sein. Daher versucht der Linux-Kernel, die
+Anzahl und den Umfang der Kopfpositionierungen des Geräts zu
+minimieren.</P
+><P
+>Um diese Ziele zu erreichen, werden zwei Dinge getan. Zunächst werden
+Anfragen nach auf der Festplatte benachbarten Sektoren
+zusammengefaßt. Die meisten modernen Dateisysteme versuchen, Dateien
+in zusammenhängenden Sektoren unterzubringen; als Folge davon sind
+Anfragen nach zusammenhängenden Teilen der Festplatte häufig. Der
+Kernel verwendet außerdem einen &#8220;Fahrstuhl-Algorithmus&#8221; (elevator
+algorithm). Ein Fahrstuhl in einem Wolkenkratzer fährt entweder nach
+oben oder nach unten; er setzt seine Fahrt in eine dieser Richtungen
+fort, bis alle &#8220;Anfragen&#8221; (Ein- oder Aussteigewünsche) erfüllt worden
+sind. Genauso versucht der Kernel, den Kopf sich so lange wie möglich
+in die gleiche Richtung bewegen zu lassen; dieser Ansatz pflegt die
+Positionierungszeiten zu minimieren, trotzdem aber sicherzustellen,
+daß alle Anfragen mit der Zeit erfüllt werden.
+
+
+
+
+&#13;</P
+><P
+>&#13;Eine Linux-I/O-Anfrage-Warteschlange wird durch eine Struktur des Typs
+<TT
+CLASS="LITERAL"
+>request_queue</TT
+> repräsentiert, die in
+        <TT
+CLASS="LITERAL"
+>&#60;linux/blkdev.h&#62;</TT
+> deklariert
+ist. Die <TT
+CLASS="LITERAL"
+>request_queue</TT
+>-Struktur sieht
+<TT
+CLASS="LITERAL"
+>file_operations</TT
+> und anderen solchen Objekten dahingehend
+ähnlich, als daß sie Zeiger auf eine Reihe von Funktionen enthält, die auf
+der Warteschlange arbeiten &#8212; so ist etwa die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion des Treibers dort
+gespeichert. Es gibt außerdem einen Warteschlangen-Kopf (unter
+Verwendung der Funktionen aus
+<TT
+CLASS="LITERAL"
+>&#60;linux/list.h&#62;</TT
+>, die in
+"<A
+HREF="judaslist.html"
+>the Section called <I
+>Verkettete Listen</I
+> in Kapitel 10</A
+>" in <A
+HREF="judas.html"
+>Kapitel 10</A
+> beschrieben
+werden), der auf die Liste der für das Gerät ausstehenden Anfragen
+verweist.</P
+><P
+>Diese Anfragen sind natürlich vom Typ <TT
+CLASS="LITERAL"
+>struct
+request</TT
+>; wir haben uns schon einige der Felder in dieser
+Struktur angeschaut. In Wirklichkeit ist die <SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Struktur ist aber ein wenig
+komplizierter; um sie zu verstehen, müssen wir einen kleinen Exkurs in
+die Struktur des Buffer-Cache von Linux machen.&#13;</P
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="LOCKBCACHE"
+>Die request-Struktur und der Buffer-Cache</A
+></H3
+><P
+>&#13;
+Das Design der <TT
+CLASS="LITERAL"
+>request</TT
+>-Struktur wird von der
+Speicherverwaltung in Linux bestimmt. Wie die meisten Unix-artigen
+Systeme verwaltet Linux einen <SPAN
+><I
+CLASS="EMPHASIS"
+>Buffer-Cache</I
+></SPAN
+>, einen
+Speicherbereich, der Kopien der Blocks auf der Festplatte enthält. Ein
+Großteil der &#8220;Festplatten&#8221;-Operationen auf höheren Ebenen des Kernels
+wie dem Dateisystem-Code wirken in Wirklichkeit nur auf dem
+Buffer-Cache und erzeugen keine I/O-Operationen. Durch aggressives
+Cachen kann der Kernel viele Lese-Operationen vermeiden; mehrere
+Schreiboperationen können oft zu einem einzigen physikalischen
+Schreiben auf die Festplatte zusammengefaßt werden.</P
+><P
+>&#13;Ein unvermeidbarer Effekt des Buffer-Caches ist aber, daß Blocks, die
+auf der Festplatte benachbart sind, fast sicher
+<SPAN
+><I
+CLASS="EMPHASIS"
+>nicht</I
+></SPAN
+> nebeneinander im Speicher liegen. Der
+Buffer-Cache ist dynamisch, und die Blocks liegen weit verteilt. Um
+alles zu verwalten, pflegt der Kernel den Buffer-Cache über
+<TT
+CLASS="LITERAL"
+>buffer_head</TT
+>-Strukturen. Zu jedem
+Daten-Puffer gehört ein <TT
+CLASS="LITERAL"
+>buffer_head</TT
+>. Diese
+Struktur enthält viele Felder, von denen die meisten für
+Treiberautoren nicht interessant sind. Einige sind aber wichtig,
+darunter die folgenden:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>char *b_data;</TT
+></DT
+><DD
+><P
+>Der eigentliche Daten-Block, der zu diesem Puffer-Kopf gehört.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long b_size;</TT
+></DT
+><DD
+><P
+>Die Größe des Blocks, auf die <TT
+CLASS="LITERAL"
+>b_data</TT
+> zeigt.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>kdev_t b_rdev;</TT
+></DT
+><DD
+><P
+>Das Gerät, das den Block enthält, der von diesem Buffer-Head
+repräsentiert wird.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long b_rsector;</TT
+></DT
+><DD
+><P
+>Die Sektornummer, an der sich dieser Block auf der Festplatte befindet.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct buffer_head *b_reqnext;</TT
+></DT
+><DD
+><P
+>Ein Zeiger auf eine verkettete Liste von Puffer-Kopf-Strukturen in der
+Anfrage-Warteschlange.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void (*b_end_io)(struct buffer_head *bh, int uptodate);</TT
+></DT
+><DD
+><P
+>Ein Zeiger auf eine Funktion, die aufgerufen werden soll, wenn die
+I/O-Operation auf diesem Puffer abgeschlossen
+ist. <TT
+CLASS="LITERAL"
+>bh</TT
+> ist der Puffer-Kopf selbst, und
+<TT
+CLASS="LITERAL"
+>uptodate</TT
+> ist ungleich 0, wenn die I/O-Operation
+erfolgreich war.</P
+></DD
+></DL
+></DIV
+><P
+>&#13;
+
+Jeder Block, der an die <SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion eines
+Treibers übergeben wird, befindet sich entweder im Buffer-Cache oder,
+in seltenen Fällen, an anderer Stelle, sieht aber so aus, als befände
+er sich im Buffer-Cache.<A
+NAME="AEN15160"
+HREF="#FTN.AEN15160"
+>[1]</A
+> Daher hat es jede an den Treiber übergebene
+Anfrage mit einer oder mehreren
+<TT
+CLASS="LITERAL"
+>buffer_head</TT
+>-Strukturen zu tun. Die
+<TT
+CLASS="LITERAL"
+>request</TT
+>-Struktur enthält ein Feld (mit dem Namen
+<TT
+CLASS="LITERAL"
+>bh</TT
+>), das auf eine verkettete Liste dieser
+Strukturen zeigt; um eine Anfrage zu erfüllen, muß die angeforderte
+I/O-Operation auf jedem Puffer der Liste durchgeführt werden. <A
+HREF="x15067.html#FIGBLOCKIORQ"
+>Abbildung 12-2</A
+> zeigt, wie die Anfrage-Warteschlange und die
+          <TT
+CLASS="LITERAL"
+>buffer_head</TT
+>-Strukturen zusammenpassen.</P
+><DIV
+CLASS="FIGURE"
+><A
+NAME="FIGBLOCKIORQ"
+></A
+><P
+><B
+>Abbildung 12-2. Puffer in der I/O-Anfrage-Warteschlange</B
+></P
+><P
+><IMG
+SRC="ldr_1202.jpg"></P
+></DIV
+><P
+>Anfragen bestehen nicht aus zufälligen Listen von Puffern; alle
+Puffer-Köpfe in einer Anfrage gehören vielmehr zu einer Folge auf der
+Festplatte benachbarter Blocks. Eine Anfrage ist damit in gewissem
+Sinne eine einzige Operation, die sich auf eine (möglicherweise lange)
+Liste von Blocks auf der Festplatte bezieht. Diese Gruppierung von
+Blocks wird <SPAN
+><I
+CLASS="EMPHASIS"
+>Clustering</I
+></SPAN
+> genannt; wir schauen uns
+dies noch genauer an, nachdem wir die Besprechung der Anfrage-Liste
+beendet haben.</P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN15172"
+>Manipulation der Anfrage-Warteschlange</A
+></H3
+><P
+>&#13;Die Header-Datei <TT
+CLASS="LITERAL"
+>&#60;linux/blkdev.h&#62;</TT
+> definiert
+eine kleine Anzahl von Funktionen, die die Anfrage-Warteschlangen
+manipulieren. Die meisten dieser Funktionen sind als
+Präprozessor-Makros definiert. Nicht alle Treiber müssen auf dieser
+Ebene mit der Anfrage-Warteschlange arbeiten, aber es kann hilfreich
+sein, sich damit vertraut zu machen, wie alles zusammenhängt. Die
+meisten Funktionen, die mit Anfrage-Warteschlangen arbeiten, führen wir
+ein, wenn wir sie brauchen, aber einige wenige sollen schon hier
+genannt werden.</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>struct request *blkdev_entry_next_request(struct list_head *head);</TT
+></DT
+><DD
+><P
+>&#13;Gibt den nächsten Eintrag in der Anfrage-Liste zurück. Normalerweise
+ist das <TT
+CLASS="LITERAL"
+>head</TT
+>-Argument das
+<TT
+CLASS="LITERAL"
+>queue_head</TT
+>-Element der
+<TT
+CLASS="LITERAL"
+>request_queue</TT
+>-Struktur; in diesem Fall gibt die
+Funktion den ersten Eintrag in der Warteschlange zurück. Die Funktion
+verwendet das Makro <SPAN
+><I
+CLASS="EMPHASIS"
+>list_entry</I
+></SPAN
+>, um in die Liste
+hineinschauen zu können.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct request *blkdev_next_request(struct request
+*req);</TT
+>, <TT
+CLASS="LITERAL"
+>struct request *blkdev_prev_request(struct request *req);</TT
+></DT
+><DD
+><P
+>&#13;
+Diese Funktionen geben zu einer gegebenen Anfrage-Struktur die nächste beziehungsweise
+vorherige Struktur in der Anfrage-Warteschlange zurück.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>blkdev_dequeue_request(struct request *req);</TT
+></DT
+><DD
+><P
+>&#13;Entfernt eine Anfrage aus ihrer Anfrage-Warteschlange.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>blkdev_release_request(struct request *req);</TT
+></DT
+><DD
+><P
+>&#13;
+Gibt eine Anfrage-Struktur an den Kernel zurück, wenn sie vollständig
+abgearbeitet worden ist. Jede Anfrage-Warteschlange verwaltet eine
+eigene Liste von Anfrage-Strukturen (genauer gesagt sogar zwei, eine
+zum Lesen und eine zum Schreiben); diese Funktion stellt die Struktur
+in die passende Liste
+zurück. <SPAN
+><I
+CLASS="EMPHASIS"
+>blkdev_release_request</I
+></SPAN
+> weckt auch alle
+Prozesse, die auf eine freie Anfrage-Struktur warten.</P
+></DD
+></DL
+></DIV
+><P
+>Alle diese Funktionen setzen voraus, daß man die
+<TT
+CLASS="LITERAL"
+>io_request_lock</TT
+>-Sperre hat, die wir als nächstes
+besprechen.</P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN15222"
+>Die I/O-Anfrage-Sperre</A
+></H3
+><P
+>&#13;
+
+Die I/O-Anfrage-Warteschlange ist eine komplexe Datenstruktur, auf die
+an vielen Stellen im Kernel zugegriffen wird. Es ist durchaus möglich,
+daß der Kernel der Warteschlange weitere Anfragen hinzufügen muß,
+während Ihr Treiber gleichzeitig welche entnimmt. Daher unterliegt die
+Warteschlange auch den üblichen Race Conditions und muß entsprechend
+geschützt werden.</P
+><P
+>In Linux 2.2 und 2.4 sind alle Anfrage-Warteschlangen mit einem
+einzigen globalen Spinlock namens <TT
+CLASS="LITERAL"
+>io_request_lock</TT
+>
+geschützt. Jeder Code, der Anfrage-Warteschlangen manipuliert, muß
+sich erst diese Sperre holen <SPAN
+><I
+CLASS="EMPHASIS"
+>und</I
+></SPAN
+> Interrupts
+abschalten. Davon gibt es nur eine kleine Ausnahme: Der allererste
+Eintrag in der Anfrage-Warteschlange gilt per Default als im Besitzt
+des Treibers befindlich. Wenn man sich das
+<TT
+CLASS="LITERAL"
+>io_request_lock</TT
+> vor der Arbeit mit der
+Anfrage-Warteschlange nicht holt, kann die Warteschlange beschädigt
+werden, was kurz danach zu einem Systemabsturz führen wird.</P
+><P
+>&#13;Die einfache <SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion, die wir oben
+gezeigt haben, mußte sich nicht um diese Sperre kümmern, weil der
+Kernel die <SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion immer mit gehaltener
+<TT
+CLASS="LITERAL"
+>io_request_lock</TT
+>-Sperre aufruft. Ein Treiber ist
+also davor geschützt, die Anfrage-Warteschlange zu beschädigen oder die <SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion reentrant aufzurufen. Dies wurde so eingeführt, damit nicht-SMP-fähige Treiber
+auch auf Multiprozessor-Systemen funktionieren.</P
+><P
+>Beachten Sie aber, daß es teuer ist, die
+<TT
+CLASS="LITERAL"
+>io_request_lock</TT
+>-Sperre zu halten. Solange Ihr Treiber diese Sperre hält, können keine anderen Anfragen an
+irgendeinen Block-Treiber im System vorgemerkt werden und keine
+anderen <SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktionen aufgerufen werden. Ein
+Treiber, der diese Sperre zu lange hält, kann das ganze System
+ausbremsen.</P
+><P
+>&#13;Gut geschriebene Block-Treiber geben diese Sperre daher so schnell wie
+möglich frei. Wir werden in Kürze ein Beispiel sehen, wie man dies tun
+kann. Block-Treiber, die die
+<TT
+CLASS="LITERAL"
+>io_request_lock</TT
+>-Sperre freigeben,
+müssen aber unter Berücksichtigung einer Reihe wichtiger Punkte
+geschrieben werden. Zunächst muß die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion diese Sperre vor dem
+Zurückkehren immer erneut erwerben, weil der aufrufende Code erwartet,
+daß die Sperre gehalten wird. Zweitens besteht die Gefahr, daß <SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion unmittelbar nach
+Aufgabe der <TT
+CLASS="LITERAL"
+>io_request_lock</TT
+>-Sperre reentrant aufgerufen wird;
+die Funktion muß dies berücksichtigen.</P
+><P
+>Eine Variante des letztgenannten Falles kann auch auftreten, wenn Ihre
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion zurückkehrt, während noch eine
+I/O-Anfrage aktiv ist. Viele Treiber für echte Hardware fangen eine
+I/O-Operation an und springen dann zurück; die Arbeit wird im
+Interrupt-Handler des Treibers beendet. Wir werden uns
+Interrupt-gesteuerte Block-I/O weiter hinten in diesem Kapitel noch
+detailliert anschauen. Im Moment soll nur erwähnt werden, daß die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion aufgerufen werden kann, während
+diese Operationen noch laufen.</P
+><P
+>Manche Treiber berücksichtigen die Reentranz der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion, indem sie eine interne
+Anfrage-Warteschlange verwalten. Die <SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion
+entfernt einfach neue Anfragen aus der I/O-Anfrage-Warteschlange und
+fügt sie zur internen Warteschlange hinzu. Letztere wird dann durch
+eine Kombination aus Tasklets und Interrupt-Handlern abgearbeitet.</P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN15263"
+>Die Funktionsweise der Funktionen und Makros in blk.h</A
+></H3
+><P
+>&#13;In unser zuvor gezeigten einfachen
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion haben wir uns nicht um
+<TT
+CLASS="LITERAL"
+>buffer_head</TT
+>-Strukturen oder verkettete
+Listen gekümmert. Die Makros und Funktionen in
+<TT
+CLASS="LITERAL"
+>&#60;linux/blk.h&#62;</TT
+> verstecken die Struktur der
+I/O-Anfrage-Warteschlange, um das Schreiben von Block-Treibern zu
+vereinfachen.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+In vielen Fällen braucht man aber ein tieferes Verständnis der
+Funktionsweise der Warteschlange, um leistungsstarke Treiber zu
+bekommen. In diesem Abschnitt schauen wir uns die Schritte zur
+Manipulation der Anfrage-Warteschlange an; die folgenden Abschnitte
+führen dann fortgeschrittene Techniken zum Schreiben von
+Block-<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktionen vor.</P
+><P
+>&#13;
+
+Die Felder in der <TT
+CLASS="LITERAL"
+>request</TT
+>-Struktur, die wir uns
+bisher angeschaut haben &#8212; <TT
+CLASS="LITERAL"
+>sector</TT
+>,
+<TT
+CLASS="LITERAL"
+>current_nr_sectors</TT
+> und
+<TT
+CLASS="LITERAL"
+>buffer</TT
+> &#8212; sind in Wirklichkeit nur Kopien der
+entsprechenden Informationen, die in der ersten
+<TT
+CLASS="LITERAL"
+>buffer_head</TT
+>-Struktur der Liste gespeichert
+sind. Eine <SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion, die diese
+Informationen vom <TT
+CLASS="LITERAL"
+>CURRENT</TT
+>-Zeiger verwendet,
+verarbeitet daher nur den ersten von möglicherweise vielen Puffern in der
+Anfrage. Die Aufgabe, eine Multi-Puffer-Anfrage in mehrere scheinbar
+unabhängige Einzel-Puffer-Anfragen aufzuteilen, wird durch zwei
+wichtige Definitionen in <TT
+CLASS="LITERAL"
+>&#60;linux/blk.h&#62;</TT
+>
+erledigt: das Makro <TT
+CLASS="LITERAL"
+>INIT_REQUEST</TT
+> und die
+Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>end_request</I
+></SPAN
+>.
+
+
+
+
+
+
+
+
+
+
+
+&#13;</P
+><P
+><TT
+CLASS="LITERAL"
+>INIT_REQUEST</TT
+> ist die einfachere der beiden;
+hier werden lediglich ein paar Konsistenzüberprüfungen auf der
+Anfrage-Warteschlange vorgenommen und es wird aus der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion zurückgesprungen, wenn die
+Warteschlange noch leer ist. Dieses Makro stellt einfach nur sicher,
+daß noch Arbeit ansteht.</P
+><P
+>Der Großteil der Warteschlangen-Verarbeitung geschieht in
+<SPAN
+><I
+CLASS="EMPHASIS"
+>end_request</I
+></SPAN
+>. Wir haben bereits gesagt, daß diese
+Funktion immer dann aufgerufen wird, wenn der Treiber eine einzelne
+"Anfrage" (genauer gesagt einen Puffer) verarbeitet hat. Sie hat
+mehrere Aufgaben:</P
+><P
+></P
+><OL
+TYPE="1"
+><LI
+><P
+>&#13;
+Die I/O-Verarbeitung des aktuellen Puffers abschließen; dazu gehört
+das Aufrufen der Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>b_end_io</I
+></SPAN
+>
+mit dem Status der Operation, was alle Prozesse aufweckt, die
+eventuell auf dem Puffer schlafen.</P
+></LI
+><LI
+><P
+>Den Puffer aus der verketteten Liste der Anfrage entfernen. Wenn noch
+weitere Puffer zu verarbeiten sind, werden die Felder
+<TT
+CLASS="LITERAL"
+>sector</TT
+>, <TT
+CLASS="LITERAL"
+>current_nr_sectors</TT
+> und
+<TT
+CLASS="LITERAL"
+>buffer</TT
+> in der Anfrage-Struktur aktualisiert, um den
+Inhalt der nächsten <TT
+CLASS="LITERAL"
+>buffer_head</TT
+>-Struktur in
+der Liste wiederzugeben. In diesem Fall (es sind noch weitere Puffer
+zu übertragen)
+
+
+
+
+
+
+
+
+
+
+
+
+
+ist <SPAN
+><I
+CLASS="EMPHASIS"
+>end_request</I
+></SPAN
+> für diesen Durchgang
+beendet, und die Schritte 3 bis 5 werden nicht ausgeführt.</P
+></LI
+><LI
+><P
+><SPAN
+><I
+CLASS="EMPHASIS"
+>add_blkdev_randomness</I
+></SPAN
+> aufrufen, um den
+Entropie-Pool zu aktualisieren, sofern nicht
+<TT
+CLASS="LITERAL"
+>DEVICE_NO_RANDOM</TT
+> definiert worden ist
+(wie das beim <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+>-Treiber der Fall ist).</P
+></LI
+><LI
+><P
+>&#13;Die beendete Anfrage durch Aufrufen von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>blkdev_dequeue_request</I
+></SPAN
+> aus der
+Anfrage-Warteschlange nehmen. Dieser Schritt verändert die
+Anfrage-Warteschlange und muß daher bei gehaltener
+<TT
+CLASS="LITERAL"
+>io_request_lock</TT
+>-Sperre ausgeführt
+werden.</P
+></LI
+><LI
+><P
+>Die fertig bearbeitete Anfrage an das System zurückgeben; auch hierfür
+muß die Sperre <TT
+CLASS="LITERAL"
+>io_request_lock</TT
+>
+gehalten werden.</P
+></LI
+></OL
+><P
+>&#13;Der Kernel definiert eine Reihe von Hilfsfunktionen, die von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>end_request</I
+></SPAN
+> verwendet werden und den
+Großteil der Arbeit erledigen. Die erste heißt
+<SPAN
+><I
+CLASS="EMPHASIS"
+>end_that_request_first</I
+></SPAN
+> und
+erledigt die ersten beiden der gerade beschriebenen Schritte. Ihr
+Prototyp lautet:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;int end_that_request_first(struct request *req, int status, char *name);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;<TT
+CLASS="LITERAL"
+>status</TT
+> ist der Status der Anfrage, der an
+<SPAN
+><I
+CLASS="EMPHASIS"
+>end_request</I
+></SPAN
+> übergeben wurde; der Parameter
+<TT
+CLASS="LITERAL"
+>name</TT
+> ist der Gerätename, der für die Ausgabe von
+Fehlermeldungen verwendet wird. Der Rückgabewert ist von Null
+verschieden, wenn in der aktuellen Anfrage noch Puffer zu verarbeiten
+sind; in diesem Fall ist die Arbeit beendet. Falls nicht, wird die
+Anfrage mit
+<TT
+CLASS="LITERAL"
+>end_that_request_last</TT
+> aus der
+Warteschlange entfernt und freigegeben:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;void end_that_request_last(struct request *req);</PRE
+></TD
+></TR
+></TABLE
+><P
+>In <SPAN
+><I
+CLASS="EMPHASIS"
+>end_request</I
+></SPAN
+> wird dieser Schritt mit folgendem
+Code erledigt:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;struct request *req = CURRENT;
+blkdev_dequeue_request(req);
+end_that_request_last(req);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Mehr gibt es zu diesem Thema nicht zu sagen.</P
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="LOCKCLUSTER"
+>Cluster-Anfragen</A
+></H2
+><P
+>&#13;
+
+Es ist jetzt an der Zeit, all dieses Hintergrundwissen anzuwenden, um
+bessere Block-Treiber zu schreiben. Wir schauen uns als erstes an, wie
+man mit Cluster-Anfragen umgeht. Clustering ist, wie bereits erwähnt wurde,
+einfach die Praxis, Anfragen, die auf benachbarten Blocks auf der
+Festplatte operieren, zusammenzufassen. Dies hat zwei Vorteile:
+Zunächst einmal wird die Übertragung beschleunigt; es kann aber durch
+Vermeiden von redundanten <TT
+CLASS="LITERAL"
+>request</TT
+>-Strukturen auch
+Speicher im Kernel gespart werden.</P
+><P
+>&#13;Wie Sie bereits gesehen haben müssen sich Block-Treiber gar keine Gedanken um
+das Clustering machen. <TT
+CLASS="LITERAL"
+>&#60;linux/blk.h&#62;</TT
+> teilt alle
+Cluster-Anfragen transparent in ihre Bestandteile auf. In vielen
+Fällen kann ein Treiber aber eine bessere Performance erreichen, indem
+er sich explizit um Cluster kümmert. Es ist oft möglich, die
+I/O-Operationen für mehrere zusammenhängende Blocks gleichzeitig
+einzurichten, um den Durchsatz zu verbessern. Beispielsweise versucht
+der Linux-Floppy-Treiber immer, eine vollständige Spur auf einmal auf
+die Diskette zu schreiben. Die meisten
+High-Performance-Festplatten-Controller können solche
+"Scatter/Gather"-I/O ebenfalls durchführen, was große
+Performance-Verbesserungen mit sich bringt.</P
+><P
+>&#13;Um das Clustering auszunutzen, müssen Block-Treiber die Liste der
+<TT
+CLASS="LITERAL"
+>buffer_head</TT
+>-Strukturen einer Anfrage direkt
+anschauen. Auf diese Liste verweist <TT
+CLASS="LITERAL"
+>CURRENT-&#62;bh</TT
+>;
+die folgenden Puffer stehen dann in den
+<TT
+CLASS="LITERAL"
+>b_reqnext</TT
+>-Zeigern in den einzelnen
+<TT
+CLASS="LITERAL"
+>buffer_head</TT
+>-Strukturen. Ein Treiber, der
+Cluster-I/O verwendet, sollte bei jedem Puffer etwa folgendermaßen
+vorgehen:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+&#13;</P
+><P
+></P
+><OL
+TYPE="1"
+><LI
+><P
+>Die Übertragung des Datenblocks an der Adresse
+<TT
+CLASS="LITERAL"
+>bh-&#62;b_data</TT
+> mit der Größe von
+<TT
+CLASS="LITERAL"
+>bh-&#62;b_size</TT
+> Bytes einrichten. Die Richtung der
+Datenübertragung wird durch <TT
+CLASS="LITERAL"
+>CURRENT-&#62;cmd</TT
+>
+vorgegeben (entweder <TT
+CLASS="LITERAL"
+>READ</TT
+> oder
+<TT
+CLASS="LITERAL"
+>WRITE</TT
+>).</P
+></LI
+><LI
+><P
+>Den nächsten Puffer-Kopf aus der Liste holen:
+<TT
+CLASS="LITERAL"
+>bh-&#62;b_reqnext</TT
+>. Dann den gerade übertragenen
+Puffer aus der Liste entfernen, indem das Feld
+<TT
+CLASS="LITERAL"
+>b_reqnext</TT
+> auf Null gesetzt wird, also den
+Zeiger auf den gerade geholten neuen Puffer.</P
+></LI
+><LI
+><P
+>Die <TT
+CLASS="LITERAL"
+>request</TT
+>-Struktur aktualisieren, um die mit dem
+gerade entfernten Puffer durchgeführte I/O widerzuspiegeln. Sowohl
+<TT
+CLASS="LITERAL"
+>CURRENT-&#62;hard_nr_sectors</TT
+> als auch
+<TT
+CLASS="LITERAL"
+>CURRENT-&#62;nr_sectors</TT
+> sollten um die Anzahl der
+aus dem Puffer übertragenen Sektoren (nicht Blocks) dekrementiert
+werden. Die Sektoren-Nummern <TT
+CLASS="LITERAL"
+>CURRENT-&#62;hard_sector</TT
+>
+und <TT
+CLASS="LITERAL"
+>CURRENT-&#62;sector</TT
+> sollten um den gleichen
+Betrag inkrementiert werden. Durch diese Strukturen bleibt die
+<TT
+CLASS="LITERAL"
+>request</TT
+>-Struktur konsistent.</P
+></LI
+><LI
+><P
+>Zurück an den Anfang springen, um die Übertragung des nächsten
+benachbarten Blocks einzuleiten.</P
+></LI
+></OL
+><P
+>&#13;
+Wenn die I/O-Operation auf einem Puffer vollständig abgearbeitet ist,
+sollte der Treiber den Kernel durch Aufruf der
+I/O-Vervollständigungsroutine des Puffers informieren:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;bh-&#62;b_end_io(bh, status);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;<TT
+CLASS="LITERAL"
+>status</TT
+> ist von Null verschieden, wenn die Operation
+erfolgreich war. Sie müssen natürlich auch die
+<TT
+CLASS="LITERAL"
+>request</TT
+>-Struktur vollständig abgearbeiteter
+Operationen aus der Warteschlange entfernen. Die gerade beschriebenen
+Verarbeitungsschritte können ohne Besitz der Sperre
+<TT
+CLASS="LITERAL"
+>io_request_lock</TT
+> durchgeführt werden,
+aber um die Warteschlange selbst zu verändern, muß man die Sperre
+halten.</P
+><P
+>Ihr Treiber kann beim Beenden der I/O-Operation weiterhin
+<SPAN
+><I
+CLASS="EMPHASIS"
+>end_request</I
+></SPAN
+> verwenden (anstatt die
+Warteschlange direkt zu manipulieren), sofern er den Zeiger
+<TT
+CLASS="LITERAL"
+>CURRENT-&#62;bh</TT
+> korrekt setzt. Dieser Zeiger sollte
+entweder <TT
+CLASS="LITERAL"
+>NULL</TT
+> sein oder auf die letzte übertragene
+<TT
+CLASS="LITERAL"
+>buffer_head</TT
+>-Struktur verweisen. Im letzteren
+Fall sollte die Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>b_end_io</I
+></SPAN
+>
+auf diesem letzten Puffer <SPAN
+><I
+CLASS="EMPHASIS"
+>nicht</I
+></SPAN
+> aufgerufen worden
+sein, weil <SPAN
+><I
+CLASS="EMPHASIS"
+>end_request</I
+></SPAN
+> das selbst macht.</P
+><P
+>Eine vollständige Cluster-Implementation können Sie in
+<TT
+CLASS="FILENAME"
+>drivers/block/floppy.c</TT
+> sehen, eine
+Zusammenfassung der in <SPAN
+><I
+CLASS="EMPHASIS"
+>end_request</I
+></SPAN
+>
+benötigten Operationen in <TT
+CLASS="FILENAME"
+>blk.h</TT
+>. Weder
+<TT
+CLASS="FILENAME"
+>floppy.c</TT
+> noch <TT
+CLASS="FILENAME"
+>blk.h</TT
+> sind
+einfach zu verstehen, aber <TT
+CLASS="FILENAME"
+>blk.h</TT
+> ist der bessere
+Ausgangspunkt.&#13;</P
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN15423"
+>Der aktive Warteschlangenkopf</A
+></H3
+><P
+>&#13;
+
+Ein weiteres Detail hinsichtlich des Verhaltens der
+I/O-Anfrage-Warteschlange ist für Block-Treiber, die mit Clustering
+arbeiten, wichtig. Dies hängt mit dem Kopf der Warteschlange
+zusammen, also der ersten Anfrage in der Warteschlange. Aus historischen
+Kompatibilitätsgründen geht der Kernel (fast) immer davon aus, daß ein
+Block-Treiber den ersten Eintrag in der Anfrage-Warteschlange
+verarbeitet. Um Schäden durch sich widersprechende Aktivitäten zu
+vermeiden, wird der Kernel eine Anfrage, die an den Kopf der Schlange
+geraten ist, nie verändern. Mit dieser Anfrage erfolgt kein weiteres
+Clustering, und der Fahrstuhl-Code wird keine weiteren Anfragen davor
+stellen.</P
+><P
+>&#13;Viele Block-Treiber entfernen Anfragen vollständig aus der
+Warteschlange, bevor sie die Anfragen bearbeiten. Wenn Ihr Treiber
+auch so arbeitet, sollte die Anfrage am Kopf der Warteschlange
+Freiwild für den Kernel sein. In diesem Fall sollte Ihr Treiber den
+Kernel darüber informieren, daß der Kopf der Warteschlange nicht aktiv
+ist, indem er <TT
+CLASS="LITERAL"
+>blk_queue_headactive</TT
+>
+aufruft:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;blk_queue_headactive(request_queue_t *queue, int active);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wenn <TT
+CLASS="LITERAL"
+>active</TT
+> 0 ist, darf der Kernel Änderungen am
+Kopf der Anfrage-Warteschlange vornehmen.</P
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN15440"
+>Block-Treiber mit mehreren Warteschlangen</A
+></H2
+><P
+>&#13;
+
+Wie wir bereits gesehen haben, verwaltet der Kernel default-mäßig eine
+einzige I/O-Anfrage-Warteschlange je Major-Nummer. Dies funktioniert
+gut für Geräte wie <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+>, ist aber in real
+existierenden Situationen nicht immer optimal.</P
+><P
+>Stellen Sie sich einen Treiber vor, der es mit echten Festplatten zu
+tun hat. Jede Festplatte kann unabhängig von den anderen arbeiten, und
+die Performance des Systems ist sicherlich besser, wenn die Festplatten
+parallel laufen. Ein einfacher Treiber mit einer einzigen
+Warteschlange kann das nicht erreichen, er führt immer nur Operationen
+auf jeweils einem Gerät aus.</P
+><P
+>Es wäre nicht besonders schwer für einen Treiber, die
+Anfrage-Warteschlange durchzusehen und Anfragen nach unabhängigen Festplatten
+zu suchen. Aber der 2.4-Kernel macht das Leben noch einfacher, indem
+er es dem Treiber ermöglicht, mehrere unabhängige Warteschlangen für
+jedes Gerät einzurichten. Die meisten High-Performance-Treiber machen
+davon Gebrauch. Das ist auch nicht schwierig, allerdings muß man sich
+schon von den einfachen Definitionen in
+<TT
+CLASS="LITERAL"
+>&#60;linux/blk.h&#62;</TT
+> wegbewegen.</P
+><P
+>Der <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+>-Treiber arbeitet mit mehreren
+Warteschlangen, wenn das Symbol
+<TT
+CLASS="LITERAL"
+>SBULL_MULTIQUEUE</TT
+> beim Kompilieren definiert
+wird. Dies funktioniert ohne die Makros in
+<TT
+CLASS="LITERAL"
+>&#60;linux/blk.h&#62;</TT
+> und führt eine Reihe von
+Features vor, die wir in diesem Abschnitt beschrieben haben.</P
+><P
+>&#13;Um mit mehreren Warteschlangen zu arbeiten, muß ein Block-Treiber
+eigene Anfrage-Warteschlangen
+definieren. <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> macht dies, indem er ein <TT
+CLASS="LITERAL"
+>queue</TT
+>-Felds zur Struktur
+<TT
+CLASS="LITERAL"
+>Sbull_Dev</TT
+> hinzufügt:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+request_queue_t queue;
+int busy;</PRE
+></TD
+></TR
+></TABLE
+><P
+>Das Flag <TT
+CLASS="LITERAL"
+>busy</TT
+> wird dazu verwendet, die Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+> vor Reentranz zu schützen; wir schauen
+uns das noch an.</P
+><P
+>&#13;Anfrage-Warteschlangen müssen natürlich initialisiert
+werden. <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> macht das folgendermaßen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+for (i = 0; i &#60; sbull_devs; i++) {
+    blk_init_queue(&#38;sbull_devices[i].queue, sbull_request);
+    blk_queue_headactive(&#38;sbull_devices[i].queue, 0);
+}
+blk_dev[major].queue = sbull_find_queue;</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+Der Aufruf von <SPAN
+><I
+CLASS="EMPHASIS"
+>blk_init_queue</I
+></SPAN
+> sieht
+aus wie zuvor, allerdings übergeben wir jetzt die gerätespezifischen
+Warteschlangen anstelle der Default-Warteschlange für unsere
+Major-Nummer. Dieser Code gibt auch an, daß die Warteschlangen
+inaktive Köpfe haben.</P
+><P
+>Sie fragen sich vielleicht, wie der Kernel die Anfrage-Warteschlangen
+finden kann, die tief in einer gerätespezifischen, privaten Struktur
+verborgen sind. Das zentrale Element dazu ist die letzte gerade
+gezeigte Linie, die das Feld <TT
+CLASS="LITERAL"
+>queue</TT
+> in der globalen
+Struktur <TT
+CLASS="LITERAL"
+>blk_dev</TT
+> setzt. Dieses Feld zeigt
+auf eine Funktion, deren Aufgabe es ist, die passende
+Anfrage-Warteschlange für eine bestimmte Gerätenummer zu
+finden. Geräte, die die Default-Warteschlange verwenden, haben so eine
+Funktion nicht, aber Geräte mit mehreren Warteschlangen müssen sie
+implementieren. Die entsprechende Funktion in
+<SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> sieht folgendermaßen aus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+request_queue_t *sbull_find_queue(kdev_t device)
+{
+    int devno = DEVICE_NR(device);
+
+    if (devno &#62;= sbull_devs) {
+        static int count = 0;
+        if (count++ &#60; 5) /* Meldung hoechstens fuenfmal ausgeben */
+            printk(KERN_WARNING "sbull: request for unknown device\n");
+        return NULL;
+    }
+    return &#38;sbull_devices[devno].queue;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wie die Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+> muß auch
+<SPAN
+><I
+CLASS="EMPHASIS"
+>sbull_find_queue</I
+></SPAN
+> atomar sein (darf
+also nicht schlafen gehen).</P
+><P
+>&#13;
+Jede Warteschlange hat ihre eigene
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion, obwohl Treiber normalerweise
+die gleiche Funktion für alle Warteschlangen verwenden. Der Kernel
+übergibt die jeweilige Anfrage-Warteschlange als Parameter an die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion, weswegen die Funktion immer
+herausfinden kann, um welches Gerät es gerade geht. Die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion für mehrere Warteschlangen in
+<SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> unterscheidet sich etwas von
+den Funktionen, die wir bisher gesehen haben, weil sie die
+Anfrage-Warteschlange direkt manipuliert. Sie gibt außerdem die Sperre
+<TT
+CLASS="LITERAL"
+>io_request_lock</TT
+> frei, während sie
+Übertragungen durchführt, um dem Kernel die Ausführung anderer
+Block-Operationen zu ermöglichen. Schließlich muß der Code zwei
+weitere Gefahren umschiffen: mehrfache Aufrufe der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion und Konflikte beim Zugriff auf
+das Gerät selbst.</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+void sbull_request(request_queue_t *q)
+{
+    Sbull_Dev *device;
+    struct request *req;
+    int status;
+
+    /* Unser Geraet finden */
+    device = sbull_locate_device (blkdev_entry_next_request(&#38;q-&#62;queue_head));
+    if (device-&#62;busy) /* keine Race Condition - wir halten io_request_lock */
+        return;
+    device-&#62;busy = 1;
+
+    /* Anfragen in der Warteschlange verarbeiten */
+    while(! list_empty(&#38;q-&#62;queue_head)) {
+
+    /* Die naechste Anfrage aus der Liste holen. */
+        req = blkdev_entry_next_request(&#38;q-&#62;queue_head);
+        blkdev_dequeue_request(req);
+        spin_unlock_irq (&#38;io_request_lock);
+        spin_lock(&#38;device-&#62;lock);
+
+    /* Alle Puffer in dieser (moeglicherweise Cluster-) Anfrage verarbeiten. */
+        do {
+            status = sbull_transfer(device, req);
+        } while (end_that_request_first(req, status, DEVICE_NAME));
+        spin_unlock(&#38;device-&#62;lock);
+        spin_lock_irq (&#38;io_request_lock);
+        end_that_request_last(req);
+    }
+    device-&#62;busy = 0;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Anstatt <TT
+CLASS="LITERAL"
+>INIT_REQUEST</TT
+>  zu verwenden, testet
+diese Funktion ihre jeweilige Anfrage-Warteschlange mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>list_empty</I
+></SPAN
+>. Solange noch Anfragen
+vorliegen, entfernt sie diese eine nach der anderen mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>blkdev_dequeue_request</I
+></SPAN
+> aus der
+Warteschlange. Erst dann, wenn das Entfernen abgeschlossen ist, darf
+die Sperre <TT
+CLASS="LITERAL"
+>io_request_lock</TT
+>
+freigegeben werden und die gerätespezifische Sperre erworben
+werden. Die eigentliche Übertragung geschieht mit der Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>sbull_transfer</I
+></SPAN
+>, die wir bereits gesehen
+haben.</P
+><P
+>Jeder Aufruf von <SPAN
+><I
+CLASS="EMPHASIS"
+>sbull_transfer</I
+></SPAN
+> arbeitet
+genau eine <TT
+CLASS="LITERAL"
+>buffer_head</TT
+>-Struktur ab, die zur
+Anfrage gehört. Die Funktion ruft dann
+<SPAN
+><I
+CLASS="EMPHASIS"
+>end_that_request_first</I
+></SPAN
+> auf,
+um den Puffer loszuwerden, und macht mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>end_that_request_last</I
+></SPAN
+> weiter
+(sofern die Anfrage vollständig abgearbeitet wurde), um die Anfrage
+insgesamt aufzuräumen.</P
+><P
+>&#13;Es lohnt sich, noch einen Blick auf die Verwaltung der Nebenläufigkeit
+zu werfen. Das Flag <TT
+CLASS="LITERAL"
+>busy</TT
+> verhindert mehrfache
+Aufrufe von <SPAN
+><I
+CLASS="EMPHASIS"
+>sbull_request</I
+></SPAN
+>. Weil
+<SPAN
+><I
+CLASS="EMPHASIS"
+>sbull_request</I
+></SPAN
+> immer mit gehaltener
+<TT
+CLASS="LITERAL"
+>io_request_lock</TT
+>-Sperre aufgerufen
+wird, kann man das Flag <TT
+CLASS="LITERAL"
+>busy</TT
+> ohne zusätzlichen
+Schutz abfragen und verändern. (Ansonsten hätte man einen
+<TT
+CLASS="LITERAL"
+>atomic_t</TT
+> benutzen können.) Die
+<TT
+CLASS="LITERAL"
+>io_request_lock</TT
+> -Sperre wird
+freigegeben, bevor die gerätespezifische Sperre geholt wird. Man kann
+mehrere Sperren halten, ohne ein Deadlock zu riskieren, aber das ist
+schwieriger. Wenn die Umgebungsbedingungen es erlauben, ist es besser,
+eine Sperre freizugeben, bevor man die nächste holt.</P
+><P
+><SPAN
+><I
+CLASS="EMPHASIS"
+>end_that_request_first</I
+></SPAN
+> wird ohne die Sperre
+<TT
+CLASS="LITERAL"
+>io_request_lock</TT
+> aufgerufen. Weil
+diese Funktion nur auf der angegebenen Anfrage-Struktur arbeitet, ist
+das gefahrlos möglich &#8212; solange sich die Anfrage nicht in der
+Warteschlange befindet. Um
+<SPAN
+><I
+CLASS="EMPHASIS"
+>end_that_request_last</I
+></SPAN
+>
+aufzurufen, muß man aber die Sperre haben, weil die Anfrage an die
+Liste freier Einträge der Anfrage-Warteschlange zurückgegeben
+wird. Die Funktion springt außerdem immer mit gehaltener
+<TT
+CLASS="LITERAL"
+>io_request_lock</TT
+>-Sperre und
+freigegebener Gerätesperre aus der äußeren Schleife (und der Funktion
+selbst) zurück.</P
+><P
+>Treiber mit mehreren Warteschlangen müssen natürlich beim Entfernen
+des Moduls alle Warteschlangen hinter sich aufräumen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+for (i = 0; i &#60; sbull_devs; i++)
+        blk_cleanup_queue(&#38;sbull_devices[i].queue);
+blk_dev[major].queue = NULL;</PRE
+></TD
+></TR
+></TABLE
+><P
+>Man sollte hier noch kurz erwähnen, daß dieser Code effizienter sein
+könnte. Er alloziert in der Initialisierung einen ganzen Satz von
+Anfrage-Warteschlangen, obwohl manche davon möglicherweise nie
+verwendet werden. Eine Anfrage-Warteschlange ist eine große Struktur,
+weil viele (vielleicht Tausende) von
+<TT
+CLASS="LITERAL"
+>request</TT
+>-Strukturen alloziert werden, wenn die
+Warteschlange initialisiert wird. Eine intelligentere Implementation
+würde die Anfrage-Warteschlange bei Bedarf entweder in der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>-Methode oder in der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>queue</I
+></SPAN
+>-Funktion allozieren. Wir haben uns bei
+<SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> für die einfachere Implementation
+entschieden, um den Code nicht zu verkomplizieren.</P
+><P
+>&#13;
+
+Damit haben wir die Funktionsweise von Treibern mit mehreren
+Warteschlangen abgehandelt. Treiber, die es mit richtiger Hardware zu
+tun haben, haben natürlich auch noch andere Probleme, wie etwa das
+Serialisieren des Zugriffs auf den Controller. Aber die grundlegende
+Struktur von Treibern mit mehreren Warteschlangen haben Sie hier
+gesehen.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN15547"
+>Ohne die Anfrage-Warteschlange arbeiten</A
+></H2
+><P
+>&#13;Diese darstellung hat sich bisher zum größten Teil mit der Manipulation
+der I/O-Anfrage-Warteschlange beschäftigt. Die Aufgabe der
+Anfrage-Warteschlange ist die Performance-Verbesserung, indem sie dem
+Treiber asynchrones Arbeiten ermöglicht und &#8212; vor allem &#8212;
+auf der Festplatte zusammenhängende Operationen zusammenfaßt. Bei
+normalen Festplatten sind solche Operationen auf zusammenhängenden
+Blocks gang und gäbe, was diese Optimierung notwendig macht.</P
+><P
+>&#13;
+Nicht alle Block-Geräte ziehen aber einen Vorteil aus der
+Anfrage-Warteschlange. <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> beispielsweise
+verarbeitet Anfragen synchron und hat keine Probleme mit
+Suchzeiten. Für <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> wird die Verarbeitung
+durch die Anfrage-Warteschlange nur langsamer. Auch andere Typen von
+Block-Geräten sind ohne Anfrage-Warteschlange besser
+bedient. Dazu gehören beispielsweise RAID-Geräte, die aus mehreren
+Festplatten bestehen und &#8220;zusammenhängende&#8221; Blocks oft über mehrere
+physikalische Geräte verteilen. Block-Geräte, die vom Logical Volume
+Manager (LVM, ab Kernel 2.4) implementiert werden, haben ebenfalls
+eine komplexere Implementation als die Block-Schnittstelle, die der
+Rest des Kernels zu sehen bekommt.</P
+><P
+>&#13;
+Im 2.4-Kernel werden Block-I/O-Anfragen von der Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>_&#8201;_make_request</I
+></SPAN
+> in die Warteschlange
+eingestellt. Diese Funktion ist auch für den Aufruf der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion des Treibers
+verantwortlich. Block-Treiber, die eine genauere Kontrolle über das
+Einstellen von Anfragen benötigen, können eine eigene &#8220;make
+request&#8221;-Funktion implementieren. Die RAID- und LVM-Treiber machen das
+beispielsweise so; ihre Variante leitet jede I/O-Anfrage (mit
+unterschiedlichen Block-Nummern) an das oder die passenden Geräte
+weiter, aus denen sich das Gesamtgerät zusammensetzt. Ein
+RAM-Disk-Treiber kann dagegen die I/O-Operation direkt ausführen.</P
+><P
+>&#13;Wenn <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> auf 2.4-Systemen mit der Option
+<TT
+CLASS="LITERAL"
+>noqueue=1</TT
+> gestartet wird, stellt der Treiber eine
+eigene &#8220;make request&#8221;-Funktion bereit und arbeitet ohne
+Anfrage-Warteschlange. Als ersten Schritt dazu wird
+<SPAN
+><I
+CLASS="EMPHASIS"
+>_&#8201;_make_request</I
+></SPAN
+> entfernt. Der &#8220;make
+request&#8221;-Funktionszeiger wird in der Anfrage-Warteschlange
+gespeichert und kann mit <SPAN
+><I
+CLASS="EMPHASIS"
+>blk_queue_make_request</I
+></SPAN
+>
+geändert werden:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;void blk_queue_make_request(request_queue_t *queue,
+make_request_fn *func);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Der Typ <TT
+CLASS="LITERAL"
+>make_request_fn</TT
+> ist wiederum folgendermaßen
+definiert:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;typedef int (make_request_fn) (request_queue_t *q, int rw,
+             struct buffer_head *bh);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+Die Funktion &#8220;make request&#8221; muß die Übertragung des angegebenen
+Blocks organisieren und dafür sorgen, daß die Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>b_end_io</I
+></SPAN
+> aufgerufen wird, wenn die
+Übertragung abgeschlossen ist. Der Kernel hält die Sperre
+<TT
+CLASS="LITERAL"
+>io_request_lock</TT
+>
+<SPAN
+><I
+CLASS="EMPHASIS"
+>nicht</I
+></SPAN
+>, wenn die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>make_request_fn</I
+></SPAN
+>-Funktion aufgerufen
+wird; die Funktion muß sich also die Sperre selbst holen, wenn sie
+vorhat, die Anfrage-Warteschlange zu manipulieren. Wenn die Übertragung eingeleitet worden ist, (sie muß aber nicht unbedingt
+abgeschlossen worden sein), sollte die Funktion 0 zurückgeben.</P
+><P
+>Der Ausdruck &#8220;die Übertragung organisieren&#8221; ist sorgfältig gewählt;
+oft überträgt eine treiberspezifische &#8220;make request&#8221;-Funktion die
+Daten gar nicht. Denken Sie etwa an ein RAID-Gerät. Die Funktion muß
+die I/O-Operation auf eines der Untergeräte abbilden und dann den
+Treiber dieses Geräts aufrufen, der dann die Arbeit tut. Diese
+Abbildung erfolgt dadurch, daß das Feld
+<TT
+CLASS="LITERAL"
+>b_rdev</TT
+> in der
+<TT
+CLASS="LITERAL"
+>buffer_head</TT
+>-Struktur auf die Nummer des
+"echten" Geräts gesetzt wird, das die Übertragung vornimmt. Dann wird angezeigt, daß
+der Block noch geschrieben werden muß, indem ein von Null
+verschiedener Wert zurückgegeben wird.</P
+><P
+>Wenn der Kernel einen von Null verschiedenen Rückgabewert der &#8220;make
+request&#8221;-Funktion sieht, schließt er daraus, daß die Aufgabe nicht
+ausgeführt wurde, und probiert es noch einmal. Zunächst aber schlägt er
+die &#8220;make request&#8221;-Funktion des Geräts im
+<TT
+CLASS="LITERAL"
+>b_rdev</TT
+>-Feld nach. Im Falle von RAID-Geräten
+wird also die &#8221;make request&#8221;-Funktion des RAID-Treibers
+<SPAN
+><I
+CLASS="EMPHASIS"
+>nicht</I
+></SPAN
+> noch einmal aufgerufen, sondern der Kernel
+gibt den Block an die passende Funktion des zugrundeliegenden Geräts
+weiter.</P
+><P
+><SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> richtet seine &#8220;make request&#8221;-Funktion
+bei der Initialisierung folgendermaßen ein:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+if (noqueue)
+    blk_queue_make_request(BLK_DEFAULT_QUEUE(major), sbull_make_request);</PRE
+></TD
+></TR
+></TABLE
+><P
+>In diesem Modus wird <SPAN
+><I
+CLASS="EMPHASIS"
+>blk_init_queue</I
+></SPAN
+> nicht
+aufgerufen, weil die Anfrage-Warteschlange nicht verwendet wird.</P
+><P
+>Wenn der Kernel eine Anfrage nach einem
+<SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+>-Gerät erzeugt, ruft er
+die Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>sbull_make_request</I
+></SPAN
+>
+auf, die folgendermaßen definiert ist:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+int sbull_make_request(request_queue_t *queue, int rw,
+                       struct buffer_head *bh)
+{
+    u8 *ptr;
+
+    /* Herausfinden, was wir tun sollen */
+    Sbull_Dev *device = sbull_devices + MINOR(bh-&#62;b_rdev);
+    ptr = device-&#62;data + bh-&#62;b_rsector * sbull_hardsect;
+
+    /* Paranoide Kontrolle; so etwas kann wirklich passieren */
+    if (ptr + bh-&#62;b_size &#62; device-&#62;data + sbull_blksize*sbull_size) {
+        static int count = 0;
+        if (count++ &#60; 5)
+            printk(KERN_WARNING "sbull: request past end of device\n");
+        bh-&#62;b_end_io(bh, 0);
+        return 0;
+    }
+
+    /* Dies koennte ein Puffer im hohen Speicher sein, herunterholen */
+#if CONFIG_HIGHMEM
+    bh = create_bounce(rw, bh);
+#endif
+
+    /* Die Uebertragung durchfuehren */
+    switch(rw) {
+    case READ:
+    case READA:  /* Vorauslesen */
+        memcpy(bh-&#62;b_data, ptr, bh-&#62;b_size); /* von sbull in den Puffer */
+        bh-&#62;b_end_io(bh, 1);
+        break;
+    case WRITE:
+        refile_buffer(bh);
+        memcpy(ptr, bh-&#62;b_data, bh-&#62;b_size); /* vom Puffer nach sbull */
+        mark_buffer_uptodate(bh, 1);
+        bh-&#62;b_end_io(bh, 1);
+        break;
+    default:
+        /* kann nicht passieren */
+        bh-&#62;b_end_io(bh, 0);
+        break;
+    }
+
+    /* 0 heißt fertig */
+    return 0;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Dieser Code sollte größtenteils bekannt aussehen. Er enthält die
+üblichen Berechnungen, um zu bestimmen, wo sich der Block im
+<SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+>-Gerät befindet, und verwendet
+<SPAN
+><I
+CLASS="EMPHASIS"
+>memcpy</I
+></SPAN
+>, um die Operation durchzuführen. Weil die
+Operation unmittelbar abgeschlossen ist, kann
+<SPAN
+><I
+CLASS="EMPHASIS"
+>bh-&#62;b_end_io</I
+></SPAN
+> aufgerufen werden,
+um den Abschluß der Operation anzuzeigen. An den Kernel wird 0
+zurückgegeben.</P
+><P
+>&#13;
+
+
+
+
+Es gibt aber noch ein Detail, um das sich die &#8220;make request&#8221;-Funktion
+kümmern muß. Der Puffer, der übertragen werden muß, könnte sich im hohen Speicher
+befinden, auf den der Kernel nicht direkt zugreifen kann. Hoher
+Speicher wird detailliert in <A
+HREF="mem.html"
+>Kapitel 13</A
+> behandelt. Wir
+wollen das dort Gesagte hier nicht wiederholen; es reicht hier zu
+sagen, daß eine mögliche Problemlösung darin besteht, einen Puffer im
+hohen Speicher durch einen im erreichbaren Speicher zu ersetzen. Die Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>create_bounce</I
+></SPAN
+> erledigt das auf für den
+Treiber transparente Weise. Der Kernel verwendet
+<SPAN
+><I
+CLASS="EMPHASIS"
+>create_bounce</I
+></SPAN
+> normalerweise, bevor er
+Puffer in die Anfrage-Warteschlange des Treibers stellt, aber wenn der
+Treiber eine eigene
+<SPAN
+><I
+CLASS="EMPHASIS"
+>make_request_fn</I
+></SPAN
+>-Funktion
+implementiert, muß er auch diese Aufgabe selbst erledigen.&#13;</P
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN15160"
+HREF="x15067.html#AEN15160"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Der RAM-Disk-Treiber läßt seinen Speicher
+beispielsweise so aussehen, als befände dieser sich im
+Buffer-Cache. Weil sich der &#8220;Festplatten&#8221;-Puffer bereits im System-RAM
+befindet, es es sinnlos, noch eine Kopie im Buffer-Cache zu
+halten. Unser Beispiel-Code ist daher deutlich weniger effizient als
+eine korrekt implementierte RAM-Disk und kümmert sich nicht um
+RAM-Disk-spezifische Performance-Fragen.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x14882.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x15624.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Anfragen bearbeiten: Eine einfache Einführung</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="lock.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Wie das Einhängen und Aushängen funktioniert</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

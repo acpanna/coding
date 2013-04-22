@@ -1,0 +1,1125 @@
+<HTML
+><HEAD
+><TITLE
+>Das Laden von Block-Treibern</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="PREVIOUS"
+TITLE="Schnellreferenz"
+HREF="x14393.html"><LINK
+REL="NEXT"
+TITLE="Die Header-Datei blk.h"
+HREF="lockblkh.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x14393.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="lockblkh.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="LOCK"
+>Kapitel 12. Das Laden von Block-Treibern</A
+></H1
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Inhalt</B
+></DT
+><DT
+><A
+HREF="lock.html#LOCKSETUP"
+>Den Treiber registrieren</A
+></DT
+><DT
+><A
+HREF="lockblkh.html"
+>Die Header-Datei blk.h</A
+></DT
+><DT
+><A
+HREF="x14882.html"
+>Anfragen bearbeiten: Eine einfache Einführung</A
+></DT
+><DT
+><A
+HREF="x15067.html"
+>Anfragen bearbeiten: Das Ganze noch einmal genauer</A
+></DT
+><DT
+><A
+HREF="x15624.html"
+>Wie das Einhängen und Aushängen funktioniert</A
+></DT
+><DT
+><A
+HREF="x15678.html"
+>Die ioctl-Methode</A
+></DT
+><DT
+><A
+HREF="lockremove.html"
+>Herausnehmbare Geräte</A
+></DT
+><DT
+><A
+HREF="lockgenhd.html"
+>Partitionierbare Geräte</A
+></DT
+><DT
+><A
+HREF="lockbh.html"
+>Interrupt-gesteuerte Block-Treiber</A
+></DT
+><DT
+><A
+HREF="x16318.html"
+>Abwärtskompatibilität</A
+></DT
+><DT
+><A
+HREF="x16412.html"
+>Schnellreferenz</A
+></DT
+></DL
+></DIV
+><P
+>&#13;
+
+
+Bisher haben wir nur über Zeichen-Treiber gesprochen. Wie wir aber bereits
+erwähnt haben, sind diese aber nicht die einzige Art von Treibern in einem
+Linux-System. Wir wenden unsere Aufmerksamkeit jetzt Block-Treibern
+zu. Block-Treiber ermöglichen den Zugriff auf blockorientierte
+Geräte, also solche Geräte, die Daten in Blocks
+fester Größe transportieren, auf die nach Belieben zugegriffen werden kann. Das klassische Block-Gerät ist natürlich
+das Festplattenlaufwerk, aber es gibt auch andere.</P
+><P
+>Die Zeichen-Treiber-Schnittstelle ist relativ sauber und einfach zu
+verwenden, aber die Block-Schnittstelle ist leider etwas
+unsortierter. Kernel-Entwickler lieben es, sich darüber zu
+beklagen. Für diese Situation gibt es zwei Gründe. Der eine ist
+historisch bedingt &#8212; die Block-Schnittstelle ist in jeder Linux-Version
+seit der allerersten vorhanden gewesen und es hat sich herausgestellt, daß sie schwer zu verändern ist. Der andere Grund ist die Performance. Ein
+langsamer Zeichen-Treiber ist nicht schön, aber ein langsamer
+Block-Treiber zieht das ganze System hinab. Daher ist das Design der
+Block-Schnittstelle oft mehr von der Geschwindigkeit als von etwas
+anderem beeinflußt worden.</P
+><P
+>Die Block-Treiber-Schnittstelle hat sich mit der Zeit verändert. Wie
+im Rest dieses Buches behandeln wir in diesem Kapitel die
+Schnittstelle aus dem Kernel 2.4 und gehen am Ende auf die Änderungen
+ein. Die Beispiel-Treiber funktionieren aber mit allen Kerneln von 2.0
+bis 2.4.</P
+><P
+>&#13;In diesem Kapitel führen wir für unsere Entdeckungsreise durch die
+Block-Treiber zwei neue Beispiele ein. Das erste,
+<SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> (Simple Block Utility for Loading
+Localities) implementiert ein Block-Gerät im Systemspeicher und ist
+damit im wesentlichen eine RAM-Disk. Später schauen wir uns noch eine
+Variante namens <SPAN
+CLASS="APPLICATION"
+>spull</SPAN
+> an, an der wir
+lernen, wie man mit Partitionstabellen umgeht.</P
+><P
+>Wie immer gehen diese Beispiel-Treiber über viele der Probleme in
+echten Block-Treibern großzügig hinweg; sie sollen die Schnittstelle
+demonstrieren, mit der solche Treiber arbeiten müssen. Echte Treiber
+müssen mit der Hardware umgehen, weswegen das in <A
+HREF="hard.html"
+>Kapitel 8</A
+>&#62; und <A
+HREF="irq.html"
+>Kapitel 9</A
+>&#62; behandelte Material hier
+ebenfalls nützlich ist.</P
+><P
+>Noch eine kurze Anmerkung zur Technologie: Das Wort
+<SPAN
+CLASS="APPLICATION"
+>Block</SPAN
+> bezeichnet in diesem Buch einen vom
+Kernel definierten Datenblock. Die Größe von Blocks kann auf
+verschiedenen Festplatten unterschiedlich sein, ist aber immer eine
+Zweierpotenz. Ein <SPAN
+><I
+CLASS="EMPHASIS"
+>Sektor</I
+></SPAN
+> ist eine Dateneinheit
+fester Größe, die von der zugrundeliegenden Hardware bestimmt
+wird. Sektoren sind fast immer 512 Bytes lang.&#13;</P
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="LOCKSETUP"
+>Den Treiber registrieren</A
+></H1
+><P
+>&#13;
+
+Wie Zeichen-Treiber werden auch Block-Treiber im Kernel durch
+Major-Nummern identifiziert. Die Major-Nummern von Block-Treibern
+sind aber völlig von denen von Zeichen-Treibern getrennt. Ein
+Block-Gerät mit der Major-Nummer 32 kann problemlos mit einem
+Zeichen-Gerät mit derselben Nummer koexistieren, weil die beiden
+Bereiche getrennt sind.</P
+><P
+>Mit den folgenden Funktionen werden
+Block-Treiber registriert und deregistriert:
+
+&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+
+int register_blkdev(unsigned int major, const char *name,
+                    struct block_device_operations *bdops);
+int unregister_blkdev(unsigned int major, const char *name);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die Argumente haben die gleiche Bedeutung wie bei Zeichen-Treibern;
+auch die dynamische Zuweisung von Major-Nummern funktioniert
+genauso. Daher registriert sich <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> fast
+genau so wie <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+result = register_blkdev(sbull_major, "sbull", &#38;sbull_fops);
+if (result &#60; 0) {
+    printk(KERN_WARNING "sbull: kann keine Major-Nummer bekommen %d\n",sbull_major);
+    return result;
+}
+if (sbull_major == 0) sbull_major = result; /* dynamisch */
+major = sbull_major; /* major wird spaeter noch verwendet */</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+
+Hier enden die Ähnlichkeiten aber auch schon. Ein Unterschied ist
+bereits offensichtlich: <SPAN
+><I
+CLASS="EMPHASIS"
+>register_chrdev</I
+></SPAN
+>
+erwartete einen Zeiger auf eine
+<TT
+CLASS="LITERAL"
+>file_operations</TT
+>-Struktur, während
+<SPAN
+><I
+CLASS="EMPHASIS"
+>register_blkdev</I
+></SPAN
+> eine Struktur des Typs
+<TT
+CLASS="LITERAL"
+>block_device_operations</TT
+> verwendet
+&#8212; das ist so seit der Kernel-Version 2.3.38. Die Struktur wird
+in den Block-Treibern manchmal immer noch mit <TT
+CLASS="LITERAL"
+>fops</TT
+>
+bezeichnet; wir werden sie <TT
+CLASS="LITERAL"
+>bdops</TT
+> nennen, um den
+Inhalt der Struktur besser wiederzugeben und der vorgeschlagenen
+Benennung zu folgen. Die Definition dieser Struktur lautet:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;struct block_device_operations {
+    int (*open) (struct inode *inode, struct file *filp);
+    int (*release) (struct inode *inode, struct file *filp);
+    int (*ioctl) (struct inode *inode, struct file *filp,
+                    unsigned command, unsigned long argument);
+    int (*check_media_change) (kdev_t dev);
+    int (*revalidate) (kdev_t dev);
+};
+
+
+
+
+&#13;</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Die hier genannten Methoden <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>,
+<SPAN
+><I
+CLASS="EMPHASIS"
+>release</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+> sind genau
+die gleichen wie bei Zeichen-Geräten. Die anderen beiden sind
+blockgerätespezifisch und werden weiter hinten in diesem Kapitel
+besprochen. Beachten Sie, daß es in dieser Struktur kein
+<TT
+CLASS="LITERAL"
+>owner</TT
+>-Feld gibt; Block-Treiber müssen auch im
+2.4-Kernel ihren Verwendungszähler manuell pflegen.</P
+><P
+>Die <TT
+CLASS="LITERAL"
+>bdops</TT
+>-Struktur von
+<SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> sieht folgendermaßen aus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+struct block_device_operations sbull_bdops = {
+    open:               sbull_open,
+    release:            sbull_release,
+    ioctl:              sbull_ioctl,
+    check_media_change: sbull_check_change,
+    revalidate:         sbull_revalidate,
+};</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Beachten Sie, daß es in dieser Struktur keine Lese- oder
+Schreiboperationen gibt. Alle I/O mit Block-Geräten wird
+normalerweise vom System gebuffert (die einzige Ausnahme sind &#8220;rohe&#8221;
+Geräte, die wir im nächsten Kapitel behandeln); Benutzerprozesse
+führen keine direkten I/O-Operationen auf diesen Geräten durch. Der User
+Mode-Zugriff auf Block-Geräte erfolgt normalerweise implizit durch
+Dateisystem-Operationen, die eindeutig von der I/O-Pufferung
+profitieren. Aber auch &#8220;direkte&#8221; I/O mit Block-Geräten, etwa beim
+Erzeugen von Dateisystemen, geht durch den Buffer-Cache von
+Linux.<A
+NAME="AEN14566"
+HREF="#FTN.AEN14566"
+>[1]</A
+> Als Folge davon stellt der Kernel einen einzigen
+Satz von Lese- und Schreibfunktionen für Block-Geräte bereit, um die
+sich die Treiber nicht kümmern müssen.</P
+><P
+>Natürlich muß ein Block-Treiber auch irgendwo einen Mechanismus
+bereitstellen, mit dem am Ende blockorientierte I/O mit dem Gerät
+durchgeführt wird. Unter Linux heißt die für solche I/O-Operationen
+verwendete Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+> und ist das Gegenstück
+zur Funktion &#8220;strategy&#8221;, die man auf vielen Unix-Systemen findet. Die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Methode kümmert sich sowohl um Lese- als
+auch um Schreiboperationen und kann ziemlich komplex sein. Wir werden
+uns die Details in Kürze ansehen.</P
+><P
+>&#13;
+
+
+
+
+Zur Registration von Block-Geräten müssen wir dem Kernel aber
+mitteilen, wo sich unsere <SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Methode
+befindet. Diese steht aus historischen und Performance-Gründen
+nicht in der Struktur
+<TT
+CLASS="LITERAL"
+>block_device_operations</TT
+>, sondern ist
+statt dessen der Warteschlange der ausstehenden I/O-Operationen des
+Geräts zugeordnet. Default-mäßig gibt es eine solche Warteschlange für
+jede Major-Nummer. Ein Block-Gerät muß diese Warteschlange mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>blk_init_queue</I
+></SPAN
+> initialisieren. Die
+Initialisierung und das Aufräumen der Warteschlange ist folgendermaßen
+definiert:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;#include &#60;linux/blkdev.h&#62;
+blk_init_queue(request_queue_t *queue, request_fn_proc *request);
+blk_cleanup_queue(request_queue_t *queue);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die <SPAN
+><I
+CLASS="EMPHASIS"
+>init</I
+></SPAN
+>-Funktion richtet die Warteschlange ein
+und bindet die <SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion des Treibers (die
+als zweiter Parameter übergeben wird) an die Warteschlange. Wenn das
+Modul abgeräumt wird, muß man
+<SPAN
+><I
+CLASS="EMPHASIS"
+>blk_cleanup_queue</I
+></SPAN
+> aufrufen. Der
+<SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+>-Treiber initialisiert seine
+Warteschlange mit folgendem Code:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+blk_init_queue(BLK_DEFAULT_QUEUE(major), sbull_request);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+
+
+
+Jedes Gerät hat eine Anfrage-Warteschlange, die es default-mäßig
+verwendet; das Makro
+<TT
+CLASS="LITERAL"
+>BLK_DEFAULT_QUEUE(major)</TT
+> wird dazu
+verwendet, die Schlange bei Bedarf anzugeben. Dieses Makro schlägt
+in einem globalen Array von
+<TT
+CLASS="LITERAL"
+>blk_dev_struct</TT
+>-Strukturen namens
+<TT
+CLASS="LITERAL"
+>blk_dev</TT
+> nach, das vom Kernel verwaltet
+und mit der Major-Nummer indiziert wird. Die Struktur sieht wie folgt aus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;struct blk_dev_struct {
+    request_queue_t        request_queue;
+    queue_proc                *queue;
+    void                *data;
+};</PRE
+></TD
+></TR
+></TABLE
+><P
+>Das Feld <TT
+CLASS="LITERAL"
+>request_queue</TT
+> enthält die
+I/O-Anfrage-Warteschlange, die wir gerade initialisiert haben. Wir
+schauen uns das Feld <TT
+CLASS="LITERAL"
+>queue</TT
+> in Kürze an. Das Feld
+<TT
+CLASS="LITERAL"
+>data</TT
+> kann vom Treiber für eigene Daten verwendet
+werden, aber nur wenige Treiber machen davon Gebrauch.</P
+><P
+><A
+HREF="lock.html#FIGBLOCK"
+>Abbildung 12-1</A
+> stellt die Hauptschritte grafisch dar, die
+ein Treibermodul benutzt, um sich beim Kernel an- und abzumelden. Wenn
+Sie diese Abbildung mit <A
+HREF="building.html#FIG2-1"
+>Abbildung 2-1</A
+> vergleichen, sollten
+die Ähnlichkeiten und Unterschiede klar sein.</P
+><DIV
+CLASS="FIGURE"
+><A
+NAME="FIGBLOCK"
+></A
+><P
+><B
+>Abbildung 12-1. Registrieren eines Block-Gerätetreibers</B
+></P
+><P
+><IMG
+SRC="ldr_1201.jpg"></P
+></DIV
+><P
+>&#13;Zusätzlich zu <TT
+CLASS="LITERAL"
+>blk_dev</TT
+> enthalten mehrere
+andere globale Arrays Informationen über Block-Treiber. Diese werden
+mit der Major- und manchmal auch mit der Minor-Nummer indiziert. Sie sind
+in
+<TT
+CLASS="FILENAME"
+>drivers/block/ll_rw_block.c</TT
+>
+deklariert und beschrieben.&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>int blk_size[][];</TT
+></DT
+><DD
+><P
+>&#13;
+Dieses Array wird mit der Major- und der Minor-Nummer indiziert. Es
+beschreibt die Größe jedes Geräts in Kilobytes. Wenn
+<TT
+CLASS="LITERAL"
+>blk_size[major]</TT
+>
+<TT
+CLASS="LITERAL"
+>NULL</TT
+> ist, dann wird die Größe des Gerätes nicht
+überprüft (d. h. der Kernel könnte Datenübertragungen über das Ende des
+Gerätes hinaus anfordern).</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int blksize_size[][];</TT
+></DT
+><DD
+><P
+>&#13;Die von jedem Gerät verwendete Block-Größe in Bytes. Wie das vorige
+Array wird auch dieses mit der Major- und der Minor-Nummer indiziert. Wenn
+<TT
+CLASS="LITERAL"
+>blksize_size[major]</TT
+> ein
+Null-Zeiger ist, wird eine Block-Größe von
+<TT
+CLASS="LITERAL"
+>BLOCK_SIZE</TT
+> (derzeit 1 KByte) angenommen. Die
+Block-Größe des Gerätes muß eine Zweierpotenz sein, weil der Kernel
+Bit-Shift-Operatoren verwendet, um Offsets in Block-Nummern zu
+konvertieren.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int hardsect_size[][];</TT
+></DT
+><DD
+><P
+>&#13;Wie die anderen Strukturen wird auch diese mit der Major- und der
+Minor-Nummer indiziert. Der Default-Wert der Hardware-Sektorengröße
+ist 512 Bytes. In den 2.2- und 2.4-Kerneln werden auch andere
+Sektorgrößen unterstützt, die aber immer eine Zweierpotenz größer oder
+gleich 512 Bytes sein müssen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int read_ahead[];</TT
+>, <TT
+CLASS="LITERAL"
+>int max_readahead[][];</TT
+></DT
+><DD
+><P
+>&#13;
+Diese Arrays definieren die Anzahl der Sektoren, die der Kernel im
+voraus lesen soll, wenn eine Daten sequentiell eingelesen
+wird. <TT
+CLASS="LITERAL"
+>read_ahread</TT
+> gilt für alle Geräte des
+jeweiligen Typs und wird mit der Major-Nummer
+indiziert. <TT
+CLASS="LITERAL"
+>max_readahead</TT
+> gilt für bestimmte
+Geräte und wird sowohl mit der Major- als auch mit der Minor-Nummer
+indiziert.</P
+><P
+>Das Lesen von Daten, bevor ein Prozeß danach fragt, verbessert die
+Performance des Systems und den Durchsatz insgesamt. Ein langsameres
+Gerät könnte einen größeren Read-Ahead-Wert angeben, während schnellere
+Geräte auch einen kleineren Wert verwenden könnten. Je größer der
+Read-Ahead-Wert ist, je mehr Speicher verwendet der Buffer-Cache.</P
+><P
+>Der Hauptunterschied zwischen den beiden Arrays ist folgender:
+<TT
+CLASS="LITERAL"
+>read_ahead</TT
+> wird auf der Ebene der Block-I/O
+benutzt und steuert, wie viele Blocks sequentiell <SPAN
+><I
+CLASS="EMPHASIS"
+>von der
+Festplatte</I
+></SPAN
+> vor der aktuellen Anfrage gelesen werden
+können. <TT
+CLASS="LITERAL"
+>max_readahead</TT
+> arbeitet auf
+Dateisystem-Ebene und bezeichnet Blocks <SPAN
+><I
+CLASS="EMPHASIS"
+>in der
+Datei</I
+></SPAN
+>, die möglicherweise nicht sequentiell auf der
+Festplatte liegt. Die Kernel-Entwicklung geht dahin, das Vorauslesen auf
+der Dateisystem-Ebene und nicht auf  der Block-I/O-Ebene zu implementieren. Im
+2.4-Kernel geschieht das aber noch auf beiden Ebenen, weswegen beide
+Arrays verwendet werden.</P
+><P
+>&#13;Es gibt einen <TT
+CLASS="LITERAL"
+>read_ahead[]</TT
+>-Wert pro Major-Nummer,
+der für alle zugehörigen Minor-Nummern
+gilt. <TT
+CLASS="LITERAL"
+>max_readahead</TT
+> enthält dagegen einen
+Wert für jedes Gerät. Die Werte können über die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Methode des Treibers geändert werden;
+Festplattentreiber verwenden normalerweise einen
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read_ahead</I
+></SPAN
+>-Wert von acht Sektoren, also 4
+KByte. Der Wert <TT
+CLASS="LITERAL"
+>max_readahead</TT
+> wird dagegen
+selten von Treibern verändert; der Default ist
+<TT
+CLASS="LITERAL"
+>MAX_READAHEAD</TT
+>, derzeit 31 Seiten.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int max_sectors[][];</TT
+></DT
+><DD
+><P
+>&#13;Dieses Array beschränkt die maximale Größe einer einzigen Anfrage. Es
+sollte normalerweise auf die größte Datenmenge gesetzt werden, mit der
+Ihre Hardware umgehen kann.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int max_segments[];</TT
+></DT
+><DD
+><P
+>&#13;Dieses Array steuert die Anzahl einzelner Segmente, die in einer
+Cluster-Anfrage vorkommen können. Es wurde aber kurz vor der Freigabe
+des 2.4-Kernels entfernt. (Siehe &#8220;<A
+HREF="x15067.html#LOCKCLUSTER"
+>the Section called <I
+>Cluster-Anfragen</I
+></A
+>&#8221; weiter
+hinten in diesem Kapitel für Informationen über Cluster-Anfragen.)</P
+></DD
+></DL
+></DIV
+><P
+>Das <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+>-Gerät erlaubt es Ihnen, diese
+Werte beim Laden zu setzen, woraufhin sie für alle Minor-Nummern im
+Beispiel-Treiber gelten. Die Variablennamen und deren Default-Werte
+in <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> lauten:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>size=2048</TT
+> (Kilobyte)<TT
+CLASS="LITERAL"
+></TT
+></DT
+><DD
+><P
+>Jede von <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> erzeugte RAM-Disk
+        belegt 2 MByte RAM.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>blksize=1024</TT
+> (Bytes)<TT
+CLASS="LITERAL"
+></TT
+></DT
+><DD
+><P
+>Der vom Modul verwendete Software-&#8220;Block&#8221; ist
+        ein KByte groß, wie der System-Default.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>hardsect=512</TT
+> (Byte)<TT
+CLASS="LITERAL"
+></TT
+></DT
+><DD
+><P
+>Die Sektorengröße von <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> ist
+        der normale Halb-KByte-Wert.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>rahead=2</TT
+> (Sektoren)<TT
+CLASS="LITERAL"
+></TT
+></DT
+><DD
+><P
+>Weil die RAM-Disk ein schnelles Gerät ist, ist der
+        Default-Vorauslesewert klein.</P
+></DD
+></DL
+></DIV
+><P
+>Das <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+>-Gerät erlaubt es Ihnen auch, die
+Anzahl der zu installierenden Geräte
+auszuwählen. <TT
+CLASS="LITERAL"
+>devs</TT
+>, die Anzahl der Geräte hat einen
+Default von 2, was einen Default-Speicherverbrauch von 4 MByte
+bedeutet &#8212; zwei RAM-Disks mit je 2 MByte.&#13;</P
+><P
+>Die Implementation von <SPAN
+><I
+CLASS="EMPHASIS"
+>init_module</I
+></SPAN
+> im
+<SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+>-Gerät sieht folgendermaßen aus (wobei
+die Registration der Major-Nummer und die Fehlerbehandlung hier
+weggelassen ist):&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+read_ahead[major] = sbull_rahead;
+result = -ENOMEM; /* fuer moegliche Fehler */
+
+sbull_sizes = kmalloc(sbull_devs * sizeof(int), GFP_KERNEL);
+if (!sbull_sizes)
+    goto fail_malloc;
+for (i=0; i &#60; sbull_devs; i++) /* alle haben die gleiche Groesse */
+    sbull_sizes[i] = sbull_size;
+blk_size[major]=sbull_sizes;
+
+sbull_blksizes = kmalloc(sbull_devs * sizeof(int), GFP_KERNEL);
+if (!sbull_blksizes)
+    goto fail_malloc;
+for (i=0; i &#60; sbull_devs; i++) /* alle haben die gleiche Blockgroesse */
+    sbull_blksizes[i] = sbull_blksize;
+blksize_size[major]=sbull_blksizes;
+
+sbull_hardsects = kmalloc(sbull_devs * sizeof(int), GFP_KERNEL);
+if (!sbull_hardsects)
+    goto fail_malloc;
+for (i=0; i &#60; sbull_devs; i++) /* alle haben die gleiche Sektorengroesse */
+    sbull_hardsects[i] = sbull_hardsect;
+hardsect_size[major]=sbull_hardsects;</PRE
+></TD
+></TR
+></TABLE
+><P
+>Aus Platzgründen ist hier der Code zur Fehlerbehandlung (das Ziel des
+<TT
+CLASS="LITERAL"
+>fail_malloc-gotos</TT
+>) weggelassen worden; hier
+wird einfach alles, was bereits erfolgreich alloziert wurde, wieder
+freigegeben, das Gerät deregistriert und ein Fehler zurückgemeldet.</P
+><P
+>&#13;Schließlich muß noch jedes vom Treiber bereitgestellte &#8220;Platten&#8221;-Gerät
+registriert werden. <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> ruft dazu die
+notwendige Funktion (<SPAN
+><I
+CLASS="EMPHASIS"
+>register_disk</I
+></SPAN
+>)
+folgendermaßen auf:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+for (i = 0; i &#60; sbull_devs; i++)
+        register_disk(NULL, MKDEV(major, i), 1, &#38;sbull_bdops,
+                        sbull_size &#60;&#60; 1);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Im 2.4.0-Kernel macht <SPAN
+><I
+CLASS="EMPHASIS"
+>register_disk</I
+></SPAN
+>
+nichts, wenn es so aufgerufen wird. Der Hauptzweck von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>register_disk</I
+></SPAN
+> ist das Einrichten der
+Partitionstabelle, was von <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> nicht
+unterstützt wird. Alle Block-Treiber rufen aber diese Funktion auf, ob
+sie nun Partitionen unterstützen oder nicht. Dies deutet darauf hin,
+daß dieser Aufruf in der Zukunft obligatorisch werden wird. Ein
+Block-Treiber ohne Partitionen funktioniert in 2.4.0 auch ohne diesen
+Aufruf, aber es ist sicherer, ihn einzubauen. Wir schauen uns
+<SPAN
+><I
+CLASS="EMPHASIS"
+>register_disk</I
+></SPAN
+> später in diesem Kapitel
+noch detailliert an, wenn wir Partitionen behandeln.</P
+><P
+>Die Funktion zum Aufräumen sieht so aus:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+for (i=0; i&#60;sbull_devs; i++)
+    fsync_dev(MKDEV(sbull_major, i)); /* Geraete herausschreiben */
+unregister_blkdev(major, "sbull");
+/*
+ * Abfrage-Schlange zurechtbasteln
+ */
+blk_cleanup_queue(BLK_DEFAULT_QUEUE(major));
+
+/* Globale Arrays aufraeumen */
+read_ahead[major] = 0;
+kfree(blk_size[major]);
+blk_size[major] = NULL;
+kfree(blksize_size[major]);
+blksize_size[major] = NULL;
+kfree(hardsect_size[major]);
+hardsect_size[major] = NULL;</PRE
+></TD
+></TR
+></TABLE
+><P
+>Der Aufruf von <SPAN
+><I
+CLASS="EMPHASIS"
+>fsync_dev</I
+></SPAN
+> ist notwendig,
+damit alle Referenzen auf das Gerät in den diversen Caches des Kernel
+freigegeben werden. <SPAN
+><I
+CLASS="EMPHASIS"
+>fsync_dev</I
+></SPAN
+> ist übrigens
+die Implementation, die die Arbeit hinter
+<SPAN
+><I
+CLASS="EMPHASIS"
+>block_fsync</I
+></SPAN
+>
+erledigt, der &#8220;fsync&#8221;-Methode von Block-Geräten.
+
+&#13;</P
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN14566"
+HREF="lock.html#AEN14566"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>In der 2.3-Entwicklungsserie wurde rohe I/O
+hinzugefügt, was es Benutzerprozessen ermöglicht, direkt auf
+Block-Geräte zuzugreifen, ohne über den Buffer-Cache zu
+gehen. Block-Treiber wissen aber nichts von roher I/O, weswegen wir
+das bis zum nächsten Kapitel zurückstellen.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x14393.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="lockblkh.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Schnellreferenz</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Die Header-Datei blk.h</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

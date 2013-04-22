@@ -1,0 +1,593 @@
+<HTML
+><HEAD
+><TITLE
+>Der Lauf der Zeit</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="PREVIOUS"
+TITLE="Schnellreferenz"
+HREF="x7658.html"><LINK
+REL="NEXT"
+TITLE="Die aktuelle Zeit ermitteln"
+HREF="x8127.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x7658.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x8127.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="FLOW"
+>Kapitel 6. Der Lauf der Zeit</A
+></H1
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Inhalt</B
+></DT
+><DT
+><A
+HREF="flow.html#AEN8001"
+>Zeit-Intervalle im Kernel</A
+></DT
+><DT
+><A
+HREF="x8127.html"
+>Die aktuelle Zeit ermitteln</A
+></DT
+><DT
+><A
+HREF="x8199.html"
+>Die Ausführung verzögern</A
+></DT
+><DT
+><A
+HREF="flowqueue.html"
+>Task-Schlangen</A
+></DT
+><DT
+><A
+HREF="flowtimers.html"
+>Kernel-Timer</A
+></DT
+><DT
+><A
+HREF="x8892.html"
+>Abwärtskompatibilität</A
+></DT
+><DT
+><A
+HREF="x8972.html"
+>Schnellreferenz</A
+></DT
+></DL
+></DIV
+><P
+>An dieser Stelle angelangt wissen wir, wie man ein vollständiges
+Zeichen-Modul schreibt. Richtige Treiber müssen aber mehr tun, als nur
+die notwendigen Operationen implementieren; sie haben es mit Fragen
+wie Timing, Speicherverwaltung, Hardware-Zugriff usw. zu
+tun. Glücklicherweise stellt der Kernel eine Reihe von
+Funktionalitäten zur Verfügung, die dem Treiber-Autor das Leben
+leichter machen. In den nächsten paar Kapiteln liefern wir die
+Informationen über einige der Kernel-Ressourcen, die zur Verfügung
+stehen, und fangen dabei mit den Timing-Fragen an. Dazu gehören, in
+ansteigender Komplexität:
+&#13;</P
+><P
+></P
+><UL
+><LI
+STYLE="list-style-type: disc"
+><P
+>das Timing im Kernel verstehen</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>die aktuelle Zeit ermitteln</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>Operationen für eine angegebene Zeitspanne verzögern</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>asynchrone Funktionen zur Ausführung nach einer
+angegebenen Zeitspanne vormerken</P
+></LI
+></UL
+>ark=bullet&#62;<DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN8001"
+>Zeit-Intervalle im Kernel</A
+></H1
+><P
+>&#13;
+
+
+Der erste Punkt, den wir behandeln müssen, ist der
+Timer-Interrupt. Das ist der Mechanismus, den der Kernel verwendet, um
+sich Zeit-Intervalle zu merken. Interrupts sind asynchrone Ereignisse,
+die normalerweise von externer Hardware ausgelöst werden; die CPU wird
+in ihrer Aktivität unterbrochen und führt speziellen Code (die
+Interrupt Service Routine, ISR) aus, um den Interrupt zu
+bedienen. Interrupts und Fragen der ISR-Implementation werden in <A
+HREF="irq.html"
+>Kapitel 9</A
+> behandelt.
+&#13;</P
+><P
+>Timer-Interrupts werden von der Timing-Hardware des Systems in
+regelmäßigen Abständen erzeugt; dieses Intervall wird vom Kernel
+entsprechend des Wertes von <TT
+CLASS="LITERAL"
+>HZ</TT
+> eingestellt, einem in
+<TT
+CLASS="LITERAL"
+>&#60;linux/param.h&#62;</TT
+> definierten
+architektur-abhängigen Wert. Die derzeitigen Linux-Versionen
+definieren <TT
+CLASS="LITERAL"
+>HZ</TT
+> auf den meisten Plattformen mit 100,
+auf manchen aber mit 1024, und der IA-64-Simulator verwendet
+20. Unabhängig davon, was Ihre Plattform verwendet, sollten Sie sich
+nie auf einen bestimmten Wert für <TT
+CLASS="LITERAL"
+>HZ</TT
+> verlassen.</P
+><P
+>&#13;
+
+Jedesmal, wenn ein Timer-Interrupt auftritt, wird der Wert
+<TT
+CLASS="LITERAL"
+>jiffies</TT
+> inkrementiert. <TT
+CLASS="LITERAL"
+>jiffies</TT
+>
+wird beim Starten des Systems auf 0 gesetzt und
+gibt also die Anzahl der Clock Ticks an, die erfolgt sind, seit der Computer eingeschaltet
+wurde. Dieser Wert ist in <TT
+CLASS="LITERAL"
+>&#60;linux/sched.h&#62;</TT
+> als
+<TT
+CLASS="LITERAL"
+>unsigned long volatile</TT
+> deklariert und läuft
+möglicherweise nach längerem andauernden Systembetrieb über
+(allerdings auf keiner Plattform nach weniger als sechzehn Monaten
+Systemlaufzeit). Die Entwickler haben viel Zeit darauf verwendet
+sicherzustellen, daß der Kernel korrekt arbeitet, wenn
+<TT
+CLASS="LITERAL"
+>jiffies</TT
+> überläuft. Treiber-Autoren müssen sich
+darüber normalerweise keine Gedanken machen, aber es ist gut zu
+wissen, daß dies passieren kann.
+
+
+&#13;</P
+><P
+>&#13;Es ist möglich, den Wert von <TT
+CLASS="LITERAL"
+>HZ</TT
+> zu verändern, wenn
+man ein System mit einer anderen Interrupt-Frequenz benötigt. Manche
+Leute, die Linux für kritische Echtzeit-Anwendungen verwenden, haben den Wert
+von <TT
+CLASS="LITERAL"
+>HZ</TT
+> vergrößert, um bessere Antwortzeiten zu
+bekommen; das bezahlen sie mit der Extralast durch die zusätzlichen
+Timer-Interrupts. Insgesamt kommt man aber mit den Timer-Interrupts am
+besten aus, wenn man den <TT
+CLASS="LITERAL"
+>HZ</TT
+>-Wert läßt, wie er ist,
+und sich so auf die Kernel-Entwickler verläßt, die sicherlich den
+besten Wert gewählt haben.</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN8046"
+>Prozessorspezifische Register</A
+></H2
+><P
+>&#13;
+Wenn Sie sehr kurze Intervalle messen müssen oder eine extrem hohe
+Präzision benötigen, dann können Sie zu plattformabhängigen Ressourcen
+greifen und damit die Präzision über die Portabilität stellen.</P
+><P
+>&#13;
+Die meisten modernen CPUs enthalten einen Zähler mit hoher Auflösung,
+der in jedem Taktzyklus inkrementiert wird; dieser Zähler kann für
+genaue Messungen von Zeit-Intervallen verwendet werden. In Anbetracht
+der inhärenten Unvorhersagbarkeit des Timings von Anweisungen auf den
+meisten Systemen (aufgrund des Schedulings von Anweisungen, Branch
+Prediction und Cache-Speichern) ist dieser Taktzähler die einzige
+verläßliche Möglichkeit, mit sehr kurzen Zeiten umzugehen. Als Reaktion
+auf die äußerst hohe Geschwindigkeit moderner Prozessoren, die
+drängende Nachfrage nach empirischen Performance-Werten und die
+intrinsische Unvorhersagbarkeit des Timings von Anweisungen in
+CPU-Designs aufgrund von mehreren Ebenen von Cache-Speicher, haben die
+CPU-Hersteller mit dem Zählen von Taktzyklen eine einfache und
+verläßliche Möglichkeit eingeführt, Zeitabstände zu messen. Die
+meisten modernen Prozessoren enthalten also ein Zähler-Register, das
+einmal pro Taktzyklus inkrementiert wird.</P
+><P
+>Die Details unterscheiden sich von Plattform zu Plattform: das
+Register kann vom User-Space aus gelesen werden oder nicht, es kann
+beschrieben werden oder nicht, und es kann 64 Bits oder 32 Bits breit
+sein (im letzteren Fall müssen Sie mit Überläufen rechnen). Aber selbst wenn die Hardware es zuläßt, das Register auf Null zurückzusetzen, wir
+raten davon entschieden ab. Weil Sie die Unterschiede immer mit
+vorzeichenlosen Variablen messen können, können Sie Ihr Ziel
+erreichen, ohne sich selbst durch Ändern des aktuellen Werts zum
+alleinigen Besitzer des Registers zu ernennen.</P
+><P
+>&#13;
+Das bekannteste Zähler-Register ist TSC (Timestamp Counter), das mit
+dem Pentium in den x86-Prozessoren eingeführt wurde und seitdem in
+allen CPU-Designs vorhanden war. Es handelt sich dabei um ein
+64-Bit-Register, das CPU-Taktzyklen zählt und sowohl vom Kernel-Space
+als auch vom User-Space aus ausgelesen werden kann.</P
+><P
+>&#13;
+
+Nach dem Einbinden von <TT
+CLASS="LITERAL"
+>&#60;asm/msr.h&#62;</TT
+> (das steht für
+''machine-specific registers''), können Sie eines dieser Makros
+verwenden:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;rdtsc(low,high);
+rdtscl(low);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Die erste Anweisung liest den 64-Bit-Wert atomar in zwei 32-Bit-Variablen aus;
+die zweite liest die untere Hälfte des Registers in eine
+32-Bit-Variable aus und reicht in den meisten Fällen aus. Auf einem
+500-MHz-System läuft ein 32-Bit-Zähler beispielsweise alle achteinhalb
+Sekunden über; Sie müssen nicht auf das gesamte Register zugreifen,
+wenn das, was Sie messen wollen, sicher weniger Zeit benötigt.</P
+><P
+>Die folgenden Zeilen messen beispielsweise die Ausführung der
+Anweisung selbst:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;unsigned long ini, end;
+rdtscl(ini); rdtscl(end);
+printk("time lapse: %li\n", end - ini);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Einige der anderen Plattformen haben ähnliche Funktionalitäten, und
+der Kernel enthält eine architekturunabhängige Funktion, die Sie
+anstelle von <SPAN
+><I
+CLASS="EMPHASIS"
+>rtdsc</I
+></SPAN
+> verwenden können. Sie heißt
+<SPAN
+><I
+CLASS="EMPHASIS"
+>get_cycles</I
+></SPAN
+> und wurde während der
+2.1-Entwicklung eingeführt. Der Prototyp sieht wie folgt aus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; #include &#60;linux/timex.h&#62;
+ cycles_t get_cycles(void);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Die Funktion ist für alle Plattformen definiert und gibt auf den
+Plattformen, die ein solches Register nicht haben, immer 0 zurück. Der
+Typ <TT
+CLASS="LITERAL"
+>cycles_t</TT
+> ist ein passender
+vorzeichenloser Typ, der in ein CPU-Register paßt. Die Entscheidung, den Wert
+in ein einzelnes Register zu stecken, führt dazu, daß beispielsweise
+auf Pentium-Systemen nur die unteren 32 Bits des Taktzählers von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>get_cycles</I
+></SPAN
+> zurückgegeben werden. Das ist
+aber vernünftig, weil man so die Probleme mit Operationen über mehrere
+Register hinweg vermeidet, gleichwohl aber weiterhin den wichtigsten
+Anwendungsfall des Zählers möglich macht: kurze Zeitabstände zu
+messen.
+&#13;</P
+><P
+>&#13;
+
+Trotz der Verfügbarkeit einer architekturunabhängigen Funktion
+möchten wir doch die Chance ergreifen, Ihnen ein Beispiel von
+Inline-Assembler-Code zu zeigen. Dazu werden wir eine
+<SPAN
+><I
+CLASS="EMPHASIS"
+>rdtscl</I
+></SPAN
+>-Funktion für MIPS-Prozessoren
+implementieren, die genauso wie die x86-Version arbeitet.</P
+><P
+>Der Code basiert auf MIPS, weil die meisten MIPS-Prozessoren einen
+32-Bit-Zähler als Register 9 des internen &#8220;Coprozessors 0&#8221;
+enthalten. Um auf dieses Register zuzugreifen, das nur vom Kernel
+Space aus lesbar ist, können Sie das folgende Makro definieren, das
+einen Wert &#8220;vom Coprozessor 0&#8221; verschiebt:<A
+NAME="AEN8100"
+HREF="#FTN.AEN8100"
+>[1]</A
+></P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; #define rdtscl(dest) \
+    _&#8201;_asm_&#8201;_ _&#8201;_volatile_&#8201;_("mfc0 %0,$9; nop" : "=r" (dest))</PRE
+></TD
+></TR
+></TABLE
+><P
+>Mit diesem Makro kann der MIPS-Prozessor den gleichen Code wie oben
+für den x86 gezeigt ausführen.</P
+><P
+>&#13;Das Interessante am Inline-Assembler im <SPAN
+CLASS="APPLICATION"
+>gcc</SPAN
+>
+ist die Tatsache, daß die Allokation der allgemein verwendbaren
+Register dem Compiler überlassen bleibt. Das gerade gezeigte Makro
+verwendet <TT
+CLASS="LITERAL"
+>%0</TT
+> als Platzhalter für &#8220;Argument
+0&#8221;, welches später als &#8220;ein beliebiges Register&#8221;
+(<TT
+CLASS="LITERAL"
+>r</TT
+>), das für Ausgaben verwendet wird
+(<TT
+CLASS="LITERAL"
+>=</TT
+>), spezifiziert wird. Außerdem gibt das Makro an,
+daß das Ausgabe-Register dem C-Ausdruck <TT
+CLASS="LITERAL"
+>dest</TT
+>
+entsprechen muß. Die Syntax des Inline-Assemblers ist mächtig, aber
+komplex, speziell auf Architekturen, bei denen eingeschränkt ist, was
+die einzelnen Register tun können (das gilt speziell für die x86-Familie). Die
+vollständige Syntax ist in der Dokumentation des
+<SPAN
+CLASS="APPLICATION"
+>gcc</SPAN
+> beschrieben, normalerweise in der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>info</I
+></SPAN
+>-Dokumentation.</P
+><P
+>&#13;
+
+
+
+Der in diesem Abschnitt gezeigte Code-Abschnitt wurde auf einem
+x86-Prozessor der K7-Klasse und einem MIPS VR4181 (mit dem gerade
+gezeigten Makro) ausgeführt. Ersterer meldete eine verstrichene Zeit
+von 11 Taktzyklen, letzterer nur 2. Dieser kleine Wert war erwartet,
+weil RISC-Prozessoren üblicherweise nur eine Anweisung pro Taktzyklus
+ausführen.
+
+
+&#13;</P
+></DIV
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN8100"
+HREF="flow.html#AEN8100"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Die <SPAN
+><I
+CLASS="EMPHASIS"
+>nop</I
+></SPAN
+>-Anweisung am Ende ist
+notwendig, um den Compiler daran zu hindern, in der unmittelbar auf
+<SPAN
+><I
+CLASS="EMPHASIS"
+>mfc0</I
+></SPAN
+> folgenden Anweisung auf das Ziel-Register
+zuzugreifen. Diese Art von Verschränkung ist typisch für
+RISC-Prozessoren, und der Compiler kann immer noch nützliche
+Anweisungen in die Verzögerungs-Slots stecken. In diesem Fall
+verwenden wir <SPAN
+><I
+CLASS="EMPHASIS"
+>nop</I
+></SPAN
+>, weil Inline-Assembler eine
+Blackbox für den Compiler ist, in der keine Optimierung möglich
+ist.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x7658.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x8127.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Schnellreferenz</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Die aktuelle Zeit ermitteln</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

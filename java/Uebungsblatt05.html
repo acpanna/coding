@@ -1,0 +1,163 @@
+<HTML>
+ <HEAD>
+   <TITLE>
+     &Uuml;bungsblatt 05, 07.12.1999
+   </TITLE>
+ </HEAD>
+ <BODY>
+   <H1>
+     &Uuml;bungsblatt 05, 07.12.1999
+   </H1>
+   <H2>
+     Abgabetermin: Mo, 13.12.1999, 23:59 Uhr
+   </H2>
+
+<P>
+<DIV ALIGN="right">
+  <A HREF="mailto:Robert.Baier@uni-bayreuth.de">R. Baier</A> <BR>
+  <A HREF="mailto:hiwi512@btcipmatx1.cip.uni-bayreuth.de">M. Butscher</A> <BR>
+  <A HREF="mailto:hiwi501@btcipmatx1.cip.uni-bayreuth.de">P. Lerner</A>
+  <BR CLEAR="all">
+</DIV>
+</P>
+
+Das &Uuml;bungsblatt besteht aus den Aufgaben <A HREF="#A12">12</A> und
+der Teamaufgabe <A HREF="#A13">13</A>, auf die
+es jeweils maximal 5 Punkte zu erreichen gibt. <BR>
+Das &Uuml;bungsblatt inkl. aller Sourcecodes, Bilder, HTML-Seiten, ... kann auch
+als
+
+<UL>
+  <LI><A HREF="blatt_05.tar.gz"><TT>gzip</TT>'tes <TT>tar</TT>-Archive</A>
+  </LI>
+  <LI>
+      <A HREF="blatt_05.zip"><TT>ZIP</TT>-Archive</A>
+  </LI>
+</UL>
+heruntergeladen werden. <BR>
+<EM>Beachten Sie die <A HREF="http://www.uni-bayreuth.de/departments/math/~rbaier/lectures/java/uebung/allgemein/hinweise.html">allgemeinen Abgabehinweise</A>!!</EM>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A12">&nbsp;</A>
+
+   <H2>
+     Aufgabe 12 (5 Punkte)
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi512@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Michael Butscher)
+   </H3>
+
+<P>
+  In der vorgegebenen <A HREF="Funktion.java">Java-Applikation</A>
+  sollen in Zeichenketten die Reihenfolge ge&auml;ndert werden 
+  (Umsortieren: letztes Zeichen wird erstes, vorletztes zweites, ...,
+  am Ende soll die Zeichenkette r&uuml;ckw&auml;rts abgespeichert sein). Die
+  Zeichenketten sind jeweils in einem <TT>char</TT>-Array, einem
+  <TT>String</TT>-Objekt und in einem <TT>StringBuffer</TT>-Objekt
+  abgespeichert. Zudem existiert noch ein <TT>String</TT>-Array, indem
+  alle drei Variablen als Strings abgespeichert werden sollen. <BR>
+
+  F&uuml;r jede der vier Variablen wird die Funktion
+  <TT>reverse()</TT> aufgerufen, die jedoch noch nicht f&uuml;r die vier
+  Varianten (<TT>char</TT>-Array, <TT>String</TT>-Objekt, 
+  <TT>StringBuffer</TT>-Objekt, <TT>String</TT>-Array) implementiert ist
+  (Funktionsblock und Spezifikation des &Uuml;bergabeparameters fehlen).
+  Das Hauptprogramm soll m&ouml;glichst gleichbleiben und nur minimal 
+  ge&auml;ndert werden, um c) zu beantworten.
+</P>
+
+<P>
+  Beantworten Sie die folgenden Fragen:
+
+  <OL TYPE=a>
+    <LI>
+      <P>
+      Wie kann das <TT>String</TT>-Array mit 3 <TT>String</TT>-Objekten
+      initialisiert werden, die denselben Inhalt wie das
+      <TT>char</TT>-Array, das <TT>String</TT>-Objekt und das 
+      <TT>StringBuffer</TT>-Objekt haben?
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+      Wie m&uuml;ssen die vier Varianten der Funktion <TT>reverse()</TT>
+      implementiert werden, so da&szlig; der <I>&uuml;bergebene</I>
+      Parameter ge&auml;ndert wird? Geht das in jedem der vier F&auml;lle?
+      Begr&uuml;ndung!
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+      Wie kann man sich in den F&auml;llen behelfen, in denen es nicht
+      geht? Programmieren Sie zwei Alternativen!
+      </P>
+    </LI>
+  </OL>
+</P>
+
+<P>
+  <B>Abzugeben</B> sind das Java-Sourcefile und der Java-Bytecode 
+  sowie die Beantwortung der Fragen.
+</P>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A13">&nbsp;</A>
+
+   <H2>
+     Teamaufgabe 13 (5 Punkte) <BR>
+     (Abgabe von bis zu 2 Leuten gemeinsam m&ouml;glich und erw&uuml;nscht)
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi501@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Peter Lerner)
+   </H3>
+
+<P>
+  In der vorgegebenen <A HREF="ZipReader.java">Java-Applikation</A>
+  wird ein Zip-File analysiert. Java stellt daf&uuml;r im Package 
+  <TT>java.util.zip</TT>
+  die Klassen <TT>ZipFile</TT> und <TT>ZipEntry</TT> zur Verf&uuml;gung. 
+</P>
+
+<P>
+  Die vorliegende Java-Applikation erwartet auf der Befehlszeile hinter
+  dem Namen der Klasse beim Aufruf des Java-Interpreters noch den
+  Namen des ZIP-Files. In einem Men&uuml; kann man dann die Gr&ouml;&szlig;e
+  des ZIP-Files abfragen (nur in JDK 1.2.x, manuelle &Auml;nderung in der 
+  Java-Applikation n&ouml;tig, vgl. Kommentar), den Namen des
+  ZIP-Files, die beinhalteten Files mit Namen, Bytegr&ouml;&szlig;e und
+  Erstellungsdatum auflisten und das ZIP-File schlie&szlig;en.
+</P>
+
+<P>
+  Das Programm beinhaltet aber noch keine Ausnahmebehandlung. Studieren Sie
+  das Programm und lesen Sie in der Java-Dokumentation nach, welche 
+  Ausnahmen zwingend abgefangen werden m&uuml;ssen. Entscheiden Sie bei
+  Methoden, bei denen evtl. eine Ausnahme auftreten kann, ob Sie die
+  Ausnahme abfangen oder ignorieren oder durch andere Methoden ohne
+  Ausnahmebehandlung beheben (Begr&uuml;ndung!). Welche anderen
+  Fehler k&ouml;nnen noch auftreten und einen Laufzeitfehler verursachen?
+</P>
+
+<P>
+  Programmieren Sie dann die Ausnahmebehandlungen, die Sie f&uuml;r 
+  erforderlich und sinnvoll halten.
+</P>
+
+<P>
+  Testen Sie Ihr Programm an den beiden ZIP-Files 
+  "<A HREF="test.zip"><TT>test.zip</TT></A>" und
+  "<A HREF="test2.zip"><TT>test2.zip</TT></A>" aus dem Archiv des 
+  &Uuml;bungsblattes.
+</P>
+
+<P>
+  <B>Abzugeben</B> sind der Java-Sourcecode, der Java-Bytecode
+  sowie die Beantwortung der Fragen.
+</P>
+
+ </BODY>
+</HTML>

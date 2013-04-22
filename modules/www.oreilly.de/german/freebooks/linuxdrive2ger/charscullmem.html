@@ -1,0 +1,498 @@
+<HTML
+><HEAD
+><TITLE
+>Die Verwendung von
+Speicher in scull</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Zeichen-Treiber"
+HREF="char.html"><LINK
+REL="PREVIOUS"
+TITLE="open und release"
+HREF="x2969.html"><LINK
+REL="NEXT"
+TITLE="Ein kurze Einführung in Race Conditions"
+HREF="charrace.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x2969.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 3. Zeichen-Treiber</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="charrace.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="CHARSCULLMEM"
+>Die Verwendung von
+Speicher in scull</A
+></H1
+><P
+>&#13;
+Bevor wir die <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>- und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>-Operationen einführen, sollten wir besser
+noch einen Blick darauf werfen, wie und warum
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> Speicher alloziert. Das
+&#8220;Wie&#8221; müssen wir wissen, um den Code gründlich zu
+verstehen, und das &#8220;Warum&#8221; demonstriert, welche
+Entscheidungen ein Treiber-Programmierer treffen muß, obwohl
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> sicherlich nicht typisch für ein
+Gerät ist.&#13;</P
+><P
+>In diesem Abschnitt behandeln wir nur, wie Speicher in
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> alloziert wird, und gehen nicht auf
+die anderen Bereiche der Hardware-Verwaltung ein, die Sie kennen
+müssen, um richtige Treiber zu schreiben. Diese Kenntnisse erwerben
+Sie in <A
+HREF="hard.html"
+>Kapitel 8</A
+> und <A
+HREF="irq.html"
+>Kapitel 9</A
+>. Daher können
+Sie diesen Abschnitt überspringen, wenn Sie nicht daran interessiert
+sind, wie der speicherorientierte
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Treiber arbeitet.&#13;</P
+><P
+>Die Region im Speicher, die von <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>
+verwendet wird und die wir hier auch ein <I
+CLASS="FIRSTTERM"
+>Gerät</I
+> nennen,
+hat eine variable Länge. Je mehr Sie schreiben, um so größer wird
+sie. Der Speicherbereich kann wieder verkürzt werden, indem das Gerät
+mit einer kürzeren Datei überschrieben wird.&#13;</P
+><P
+>Die Implementation, die wir für <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>
+gewählt haben, ist nicht so besonders intelligent. Aber der Quelltext
+für eine intelligentere Implementation wäre schwieriger zu lesen, und
+in diesem Kapitel geht es darum, sich mit <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>
+und <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+> zu beschäftigen, und nicht mit
+der Speicherverwaltung. Darum verwendet der Code nur
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>kfree</I
+></SPAN
+>, ohne
+darauf zurückzugreifen, ganze Seiten zu allozieren, auch wenn das
+effizienter wäre.&#13;</P
+><P
+>Andererseits wollten wir aber auch die Größe des
+<I
+CLASS="FIRSTTERM"
+>Geräte</I
+>-Bereiches nicht beschränken, sowohl aus
+prinzipiellen als auch aus praktischen Gründen. Prinzipiell betrachtet, sind willkürliche Beschränkungen bezüglich der Größe der
+verwalteten Daten immer schlecht, und praktisch gesehen kann
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> dazu verwendet werden, um nach und
+nach den gesamten Systemspeicher zu verbrauchen, um zu testen, wie
+sich Ihre Programme bei geringem Speicher verhalten. Mit solchen Tests
+können Sie auch die Interna des Systems besser verstehen. Sie können
+den Befehl <SPAN
+><I
+CLASS="EMPHASIS"
+>cp /dev/zero
+/dev/scull0</I
+></SPAN
+> verwenden, um das gesamte RAM von
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> verbrauchen zu lassen, oder mit dem
+Hilfsprogramm <SPAN
+CLASS="APPLICATION"
+>dd</SPAN
+> selbst entscheiden,
+wie viele Dateien in das <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Gerät kopiert
+werden sollen.&#13;</P
+><P
+>In <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> ist jedes Gerät eine verkette
+Liste von Zeigern, die alle auf ein
+<TT
+CLASS="LITERAL"
+>Scull_Dev</TT
+> zeigen. Jede dieser Strukturen
+kann defaultmäßig über ein Array von Zwischenzeigern auf maximal vier
+Millionen
+Bytes verweisen. Die Quellen verwenden ein Array von 1000 Zeigern auf
+Bereiche von jeweils 4000 Bytes. Wir nennen jeden Speicherbereich ein
+<I
+CLASS="FIRSTTERM"
+>Quantum</I
+> und das Array (oder seine Länge) eine
+<I
+CLASS="FIRSTTERM"
+>Quantum-Menge</I
+>. Ein
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Gerät und seine Speicherbereiche sind
+in <A
+HREF="charscullmem.html#FIG3-QUANTA"
+>Abbildung 3-1</A
+> zu sehen.
+
+    </P
+><DIV
+CLASS="FIGURE"
+><A
+NAME="FIG3-QUANTA"
+></A
+><P
+><B
+>Abbildung 3-1. Das Layout eines scull-Geräts</B
+></P
+><P
+><IMG
+SRC="ldr_0301.jpg"></P
+><P
+>Die Zahlen sind so gewählt, daß das Schreiben eines einzelnen Bytes in
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> acht- oder zwölftausend Bytes im Speicher
+verbraucht: viertausend für das Quantum und vier- oder achttausend für
+die Quantum-Menge (je nachdem, ob ein Zeiger auf der Zielplattform 32
+oder 64 Bits groß ist). Auf der anderen Seite ist der Verwaltungsaufwand beim
+Durchlaufen der verketteten Liste durchaus nicht so schlecht, wenn
+große Datenmengen geschrieben werden, weil es nur ein Listenelement
+für vier Megabyte Daten gibt und die maximale Größe des Gerätes auf
+einige wenige Megabytes beschränkt ist, da es nicht größer als der
+Computerspeicher werden kann.&#13;</P
+><P
+>Die Wahl passender Werte für das Quantum und die Quantum-Menge ist
+eine Frage der Policy und nicht des Mechanismus; die optimalen Werte
+hängen davon ab, wie das Gerät verwendet wird. Der
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Treiber sollte also keine bestimmten
+Werte für das Quantum und die Quantum-Menge erzwingen. In
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> kann der Benutzer die Werte auf
+verschiedene Art und Weise verändern: durch das Ändern der Makros
+<TT
+CLASS="LITERAL"
+>SCULL_QUANTUM</TT
+> und <TT
+CLASS="LITERAL"
+>SCULL_QSET</TT
+> in
+<TT
+CLASS="FILENAME"
+>scull.h</TT
+> beim Kompilieren, durch das Setzen der
+Integer-Werte <TT
+CLASS="LITERAL"
+>scull_quantum</TT
+> und
+<TT
+CLASS="LITERAL"
+>scull_qset</TT
+> beim Laden des Moduls oder durch das Ändern
+der aktuellen und der Default-Werte mittels
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Aufrufen zur Laufzeit.</P
+><P
+>Die Verwendung eines Makros und eines Integer-Wertes, um eine
+Konfiguration sowohl zur Kompilierungs- als auch zur Ladezeit zu
+ermöglichen, erinnert daran, wie wir die Major-Nummer ausgewählt
+haben. Wir verwenden diese Technik immer, wenn ein Wert im Treiber
+willkürlich oder Policy-abhängig ist.
+&#13;</P
+><P
+>Die einzige verbleibende Frage ist, welche Default-Werte gewählt
+werden sollten. In
+diesem speziellen Fall besteht das Problem darin, die beste Balance
+zwischen der Speicherverschwendung halbgefüllter Quanta und
+Quantum-Mengen und dem Verwaltungsaufwand beim Allozieren,
+Deallozieren und Verwalten der Zeiger-Verkettung zu finden, der
+auftritt, wenn die Quanta und die Quantum-Mengen klein sind.&#13;</P
+><P
+>Darüber hinaus muß auch noch das interne Design von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> berücksichtigt werden. Wir werden hier
+aber nicht auf die Details eingehen. Die Innereien von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> werden
+im Abschnitt <A
+HREF="get.html#GETKMAL"
+>the Section called <I
+>Die ganze Wahrheit über kmalloc</I
+> in Kapitel 7</A
+> in <A
+HREF="get.html"
+>Kapitel 7</A
+>
+seziert.&#13;</P
+><P
+>Die Default-Werte wurden in der Annahme gewählt, daß die meisten
+Programmierer mehr als vier Megabyte RAM haben und daß wahrscheinlich
+sehr große Datenmengen auf <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>
+geschrieben werden. Die Besitzer großer Computer werden zum Testen
+mehrere zehn Megabyte auf das Gerät schreiben, auch wenn normalerweise
+nur ein paar Kilobyte transportiert werden werden.&#13;</P
+><P
+>Die Datenstruktur, die die Geräteinformation enthält, sieht
+folgendermaßen aus:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+typedef struct Scull_Dev {
+   void **data;
+    struct Scull_Dev *next;   /* naechstes Listenelement */
+    int quantum;              /* die aktuelle Quantum-Groesse */
+    int qset;                 /* die aktuelle Array-Groesse */
+    unsigned long size;
+    devfs_handle_t handle;    /* nur bei devfs verwendet */
+    unsigned int access_key;  /* wird von sculluid und scullpriv verwendet */
+    struct semaphore sem;     /* Semaphor zum gegenseitigen Ausschluss */
+} Scull_Dev;</PRE
+></TD
+></TR
+></TABLE
+><P
+>Der folgende Code zeigt, wie <TT
+CLASS="LITERAL"
+>Scull_Dev</TT
+> in
+der Praxis verwendet wird, um Daten zu speichern. Die Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>scull_trim</I
+></SPAN
+> ist dafür zuständig,
+den gesamten Datenbereich freizugeben, und wird von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>scull_open</I
+></SPAN
+> aufgerufen, wenn die Datei zum
+Schreiben geöffnet wird. Sie traversiert einfach die Liste und gibt
+alle vorgefundenen Quanta und Quantum-Mengen frei.</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+int scull_trim(Scull_Dev *dev)
+{
+ Scull_Dev *next, *dptr;
+ int qset = dev-&#62;qset; /* "dev" ist nicht null */
+ int i;
+
+ for (dptr = dev; dptr; dptr = next) { /* alle Listenelemente */
+  if (dptr-&#62;data) {
+   for (i = 0; i &#60; qset; i++)
+    if (dptr-&#62;data[i])
+     kfree(dptr-&#62;data[i]);
+   kfree(dptr-&#62;data);
+   dptr-&#62;data=NULL;
+  }
+  next=dptr-&#62;next;
+  if (dptr != dev) kfree(dptr); /* alle außer dem ersten */
+ }
+ dev-&#62;size = 0;
+ dev-&#62;quantum = scull_quantum;
+ dev-&#62;qset = scull_qset;
+ dev-&#62;next = NULL;
+ return 0;
+}</PRE
+></TD
+></TR
+></TABLE
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x2969.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="charrace.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>open und release</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="char.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Ein kurze Einführung in Race Conditions</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

@@ -1,0 +1,478 @@
+<HTML
+><HEAD
+><TITLE
+>Abwärtskompatibilität</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Das Laden von Block-Treibern"
+HREF="lock.html"><LINK
+REL="PREVIOUS"
+TITLE="Interrupt-gesteuerte Block-Treiber"
+HREF="lockbh.html"><LINK
+REL="NEXT"
+TITLE="Schnellreferenz"
+HREF="x16412.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="lockbh.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 12. Das Laden von Block-Treibern</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x16412.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN16318"
+>Abwärtskompatibilität</A
+></H1
+><P
+>&#13;
+In der Schicht der Block-Geräte hat sich viel getan, das meiste davon
+zwischen den stabilen Versionen 2.2 und 2.4. Hier folgt eine kurze
+Zusammenfassung der Unterschiede. Wie immer können Sie sich die
+Treiber in dem Beispiel-Code, der unter 2.0, 2.2 und 2.4
+funktioniert, anschauen, um zu sehen, wie die Portabilitätsprobleme
+angegangen wurden.</P
+><P
+>&#13;
+
+Die Struktur <TT
+CLASS="LITERAL"
+>block_device_operations</TT
+> gab es in
+Linux 2.2 noch nicht. Statt dessen verwendeten Block-Treiber eine
+<TT
+CLASS="LITERAL"
+>file_operations</TT
+>-Struktur genau wie
+Zeichen-Treiber. Die Methoden
+<SPAN
+><I
+CLASS="EMPHASIS"
+>check_media_change</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>revalidate</I
+></SPAN
+> waren ein Teil dieser Struktur. Der
+Kernel stellte außerdem einen Satz generischer Funktionen &#8212;
+<SPAN
+><I
+CLASS="EMPHASIS"
+>block_read</I
+></SPAN
+>,
+<SPAN
+><I
+CLASS="EMPHASIS"
+>block_write</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>block_fsync</I
+></SPAN
+> &#8212;  zur Verfügung, den die meisten
+Treiber in ihren <TT
+CLASS="LITERAL"
+>file_operations</TT
+>-Strukturen
+verwendeten. Eine typische 2.2- oder 2.0-Initialisierung von
+<TT
+CLASS="LITERAL"
+>file_operations</TT
+> sah so aus:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+struct file_operations sbull_bdops = {
+    read:       block_read,
+    write:      block_write,
+    ioctl:      sbull_ioctl,
+    open:       sbull_open,
+    release:    sbull_release,
+    fsync:      block_fsync,
+    check_media_change: sbull_check_change,
+    revalidate: sbull_revalidate
+};</PRE
+></TD
+></TR
+></TABLE
+><P
+>Beachten Sie, daß Block-Treiber bezüglich den Prototypen aus
+<TT
+CLASS="LITERAL"
+>file_operations</TT
+> den  gleichen Änderungen von Version 2.0 zu 2.2 unterliegen wie Zeichen-Treiber.</P
+><P
+>&#13;
+In 2.2 und davor wurde die <SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion im
+globalen Array <TT
+CLASS="LITERAL"
+>blk_dev</TT
+> gespeichert. Zur
+Initialisierung war folgende Zeile erforderlich:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;blk_dev[major].request_fn = sbull_request;</PRE
+></TD
+></TR
+></TABLE
+><P
+>Weil diese Methode nur eine Warteschlange per Major-Nummer erlaubt,
+unterstützen Kernel vor 2.4 keine mehrfachen Warteschlangen. Da es nur
+eine Warteschlange gab, brauchte die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion die Warteschlange nicht als
+Argument, deswegen war es auch nicht vorhanden. Der Prototyp sah
+folgendermaßen aus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;void (*request) (void);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Alle Warteschlangen hatten außerdem aktive Köpfe,
+<TT
+CLASS="LITERAL"
+>blk_queue_headactive</TT
+> gab es deswegen nicht.</P
+><P
+>&#13;Es gibt in 2.2 und davor keine Funktion
+<TT
+CLASS="LITERAL"
+>blk_ioctl</TT
+>. Allerdings gab es ein Makro
+namens <TT
+CLASS="LITERAL"
+>RO_IOCTLS</TT
+>, das in einer
+<TT
+CLASS="LITERAL"
+>switch</TT
+>-Anweisung eingesetzt werden konnte, um
+<TT
+CLASS="LITERAL"
+>BLKROSET</TT
+> und <TT
+CLASS="LITERAL"
+>BLKROGET</TT
+> zu
+implementieren. <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> in den Beispiel-Quellen
+enthält eine Implementation von <SPAN
+><I
+CLASS="EMPHASIS"
+>blk_ioctl</I
+></SPAN
+>,
+die <TT
+CLASS="LITERAL"
+>RO_IOCTLS</TT
+> verwendet und auch einige
+andere Standard-<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Befehle implementiert:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+#ifdef RO_IOCTLS
+static inline int blk_ioctl(kdev_t dev, unsigned int cmd,
+                            unsigned long arg)
+{
+    int err;
+
+    switch (cmd) {
+      case BLKRAGET: /* den Vorauslesewert zurueckgeben */
+        if (!arg)  return -EINVAL;
+        err = ! access_ok(VERIFY_WRITE, arg, sizeof(long));
+        if (err) return -EFAULT;
+        PUT_USER(read_ahead[MAJOR(dev)],(long *) arg);
+        return 0;
+
+      case BLKRASET: /* den Vorauslesewert setzen */
+        if (!capable(CAP_SYS_ADMIN)) return -EACCES;
+        if (arg &#62; 0xff) return -EINVAL; /* limit it */
+        read_ahead[MAJOR(dev)] = arg;
+        return 0;
+
+      case BLKFLSBUF: /* herausschreiben */
+        if (! capable(CAP_SYS_ADMIN)) return -EACCES; /* nur root */
+        fsync_dev(dev);
+        invalidate_buffers(dev);
+        return 0;
+
+        RO_IOCTLS(dev, arg);
+    }
+    return -ENOTTY;
+}
+#endif  /* RO_IOCTLS */</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die Befehle <TT
+CLASS="LITERAL"
+>BLKFRAGET</TT
+>, <TT
+CLASS="LITERAL"
+>BLKFRASET</TT
+>,
+<TT
+CLASS="LITERAL"
+>BLKSECTGET</TT
+>, <TT
+CLASS="LITERAL"
+>BLKSECTSET</TT
+>,
+<TT
+CLASS="LITERAL"
+>BLKELVGET</TT
+> und <TT
+CLASS="LITERAL"
+>BLKELVSET</TT
+> kamen
+mit Linux 2.2 hinzu, <TT
+CLASS="LITERAL"
+>BLKPG</TT
+> mit Linux 2.4.</P
+><P
+>&#13;Linux 2.0 kannte das Array <TT
+CLASS="LITERAL"
+>max_readahead</TT
+> nicht. Das
+Array <TT
+CLASS="LITERAL"
+>max_segments</TT
+> gab es dagegen schon, und es
+wurde auch in Linux 2.0 und 2.2 verwendet; Gerätetreiber mußten es
+aber normalerweise nicht füllen.</P
+><P
+>&#13;
+Schließlich gibt es <SPAN
+><I
+CLASS="EMPHASIS"
+>register_disk</I
+></SPAN
+> erst seit Linux
+2.4. Statt dessen gab es eine Funktion namens
+<SPAN
+><I
+CLASS="EMPHASIS"
+>resetup_one_dev</I
+></SPAN
+>, die eine ähnliche Aufgabe
+erfüllte:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;resetup_one_dev(struct gendisk *gd, int drive);</PRE
+></TD
+></TR
+></TABLE
+><P
+><SPAN
+><I
+CLASS="EMPHASIS"
+>register_disk</I
+></SPAN
+> wird in
+<TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> mit folgendem Code implementiert:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+static inline void register_disk(struct gendisk *gdev, kdev_t dev,
+                unsigned minors, struct file_operations *ops, long size)
+{
+    if (! gdev)
+        return;
+    resetup_one_dev(gdev, MINOR(dev) &#62;&#62; gdev-&#62;minor_shift);
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Linux 2.0 unterschied sich natürlich auch insofern, als daß es keine feine
+SMP-Fähigkeit gab. Daher gab es auch kein
+<TT
+CLASS="LITERAL"
+>io_request_lock</TT
+> und sehr viel weniger
+Probleme mit dem nebenläufigen Zugriff auf die
+I/O-Anfrage-Warteschlange.</P
+><P
+>&#62;
+&#62;
+Noch ein letzte wissenswerte Information: Obwohl niemand wirklich
+weiß, was in der 2.5-Entwicklungsserie passieren wird, ist es doch
+ziemlich sicher, daß die Block-Geräte noch einmal massiv überarbeitet
+werden. Viele Leute sind mit dem Design dieser Schicht unzufrieden,
+und es gibt einen hohen Druck, sie neu zu implementieren.&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="lockbh.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x16412.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Interrupt-gesteuerte Block-Treiber</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="lock.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Schnellreferenz</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

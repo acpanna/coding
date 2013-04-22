@@ -1,0 +1,737 @@
+<HTML>
+ <HEAD>
+   <TITLE>
+     &Uuml;bungsblatt 03, 23.11.1999
+   </TITLE>
+ </HEAD>
+ <BODY>
+   <H1>
+     &Uuml;bungsblatt 03, 23.11.1999
+   </H1>
+   <H2>
+     Abgabetermin: Mo, 29.11.1999, 23:59 Uhr
+   </H2>
+
+<P>
+<DIV ALIGN="right">
+  <A HREF="mailto:Robert.Baier@uni-bayreuth.de">R. Baier</A> <BR>
+  <A HREF="mailto:hiwi512@btcipmatx1.cip.uni-bayreuth.de">M. Butscher</A> <BR>
+  <A HREF="mailto:hiwi501@btcipmatx1.cip.uni-bayreuth.de">P. Lerner</A>
+  <BR CLEAR="all">
+</DIV>
+</P>
+
+Das &Uuml;bungsblatt besteht aus den Aufgaben <A HREF="#A07">07</A> und
+<A HREF="#A08">08</A> sowie der Teamaufgabe <A HREF="#A09">09</A>, auf die
+es jeweils maximal 4 Punkte zu erreichen gibt. <BR>
+Das &Uuml;bungsblatt inkl. aller Sourcecodes, Bilder, HTML-Seiten, ... kann auch
+als
+
+<UL>
+  <LI><A HREF="blatt_03.tar.gz"><TT>gzip</TT>'tes <TT>tar</TT>-Archive</A>
+  </LI>
+  <LI>
+      <A HREF="blatt_03.zip"><TT>ZIP</TT>-Archive</A>
+  </LI>
+</UL>
+heruntergeladen werden. <BR>
+<EM>Beachten Sie die <A HREF="http://www.uni-bayreuth.de/departments/math/~rbaier/lectures/java/uebung/allgemein/hinweise.html">allgemeinen Abgabehinweise</A>!!</EM>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A07">&nbsp;</A>
+
+   <H2>
+     Aufgabe 07
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi512@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Michael Butscher)
+   </H3>
+
+<P>
+Im <A HREF="PrintJava.java">Sourcecode des Java-Applets</A> sind beim Umgang mit
+Arrays leider Fehler unterlaufen.
+Finden Sie alle Fehler und <B>kommentieren</B> Sie die Fehler und Ihre Verbesserungen.
+Geben Sie auch an, welche Stellen im Sourcecode nicht &uuml;berzeugend sind und 
+wie man Sie verbessern k&ouml;nnte.
+</P>
+
+<P>
+So sollte das fehlerlose Applet aussehen (Browser mu&szlig; JDK 1.1 verstehen!):
+
+<P>
+<APPLET CODE="PrintJava.class" WIDTH=400 HEIGHT=200>
+  Entweder ist der WWW-Browser nicht javaf&auml;hig oder die Ausf&uuml;hrung
+  von Java-Programmen ist bei den Optionen untersagt worden.
+</APPLET>
+</P>
+
+</P>
+<P>
+<B>Abzugeben</B> sind das Java-Sourcefile, der Java-Bytecode 
+sowie das zugeh&ouml;rige HTML-File und die Kommentare zu den Fehlern/Verbesserungen.
+</P>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A08">&nbsp;</A>
+
+   <H2>
+     Aufgabe 08
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi501@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Peter Lerner)
+   </H3>
+
+Vervollst&auml;ndigen Sie das folgende <A HREF="RandApplet.java">Sourcefile f&uuml;r
+die Appletklasse <TT>RandApplet</TT></A>. Was das Applet leistet, sehen Sie 
+hier (Browser mu&szlig; JDK 1.1 verstehen!):
+
+<P>
+<APPLET CODE="RandApplet.class" WIDTH=400 HEIGHT=200>
+  <PARAM NAME="anzahl" VALUE="3">
+  <PARAM NAME="rot1"   VALUE="0">
+  <PARAM NAME="gruen1" VALUE="0">
+  <PARAM NAME="blau1"  VALUE="40">
+  <PARAM NAME="rot2"   VALUE="30">
+  <PARAM NAME="gruen2" VALUE="60">
+  <PARAM NAME="blau2"  VALUE="40">
+  <PARAM NAME="rot3"   VALUE="120">
+  <PARAM NAME="gruen3" VALUE="180">
+  <PARAM NAME="blau3"  VALUE="40">
+
+  Entweder ist der WWW-Browser nicht javaf&auml;hig oder die Ausf&uuml;hrung
+  von Java-Programmen ist bei den Optionen untersagt worden.
+</APPLET>
+</P>
+
+<P>
+  Das Applet zeichnet am oberen, unteren, linken und rechten Rand
+  eine vorgegebene Anzahl von Rechtecken mit verschiedenen Farben. Jede
+  Farbe wird im RGB-Farbmodell (Rot-Anteil, Gr&uuml;n-Anteil und
+  Blau-Anteil als Zahlen zwischen 0 und 255) angegeben.
+  Das Applet liest diese Parameter gem&auml;&szlig; der folgenden
+  Tabelle
+
+  <P>
+  <TABLE ALIGN="center" BORDER="1" CELLPADDING="5">
+    <TR>
+      <TH>
+        Parametername
+      </TH>
+      <TH>
+        Parameterwert
+      </TH>
+    </TR>
+
+    <TR>
+      <TD>
+        <TT>anzahl</TT>
+      </TD>
+      <TD>
+        Anzahl der verschiedenen Farben
+      </TD>
+    </TR>
+
+    <TR>
+      <TD>
+        <TT>rot1</TT>
+      </TD>
+      <TD>
+        Rot-Anteil der 1. Farbe
+      </TD>
+    </TR>
+
+    <TR>
+      <TD>
+        <TT>gruen1</TT>
+      </TD>
+      <TD>
+        Gr&uuml;n-Anteil der 1. Farbe
+      </TD>
+    </TR>
+
+    <TR>
+      <TD>
+        <TT>blau1</TT>
+      </TD>
+      <TD>
+        Blau-Anteil der 1. Farbe
+      </TD>
+    </TR>
+
+    <TR>
+      <TD>
+        <TT>rot2</TT>
+      </TD>
+      <TD>
+        Rot-Anteil der 2. Farbe
+      </TD>
+    </TR>
+
+    <TR>
+      <TD>
+        <TT>gruen2</TT>
+      </TD>
+      <TD>
+        Gr&uuml;n-Anteil der 2. Farbe
+      </TD>
+    </TR>
+
+    <TR>
+      <TD>
+        <TT>blau2</TT>
+      </TD>
+      <TD>
+        Blau-Anteil der 2. Farbe
+      </TD>
+    </TR>
+
+    <TR>
+      <TD>
+        ...
+      </TD>
+      <TD>
+        ... weitere Farb-Anteile ...
+      </TD>
+    </TR>
+  </TABLE>
+  </P>
+  
+  aus dem HTML-File ein.
+</P>
+
+<P>
+  <UL>
+    <LI>
+      Die Farbanteile sollen im Java-Applet in <TT>int</TT>-Arrays gespeichert werden. 
+    </LI>
+    <LI>
+      Die Stellen im Sourcefile, an denen Sie etwas einf&uuml;gen m&uuml;ssen, sind
+      als Kommentare markiert. Beachten Sie, da&szlig; Sie die <TT>int</TT>-Arrays 
+      an den markierten Stellen in der Klassendefinition als Datenelemente
+      definieren, damit die Variablen in allen
+      Methoden des Applets zur Verf&uuml;gung stehen.
+    </LI>
+    <LI>
+      Die Methoden zum Einlesen der <TT>int</TT>-Werte aus dem HTML-File und zur 
+      Zeichnung der Rechtecke sind bereits vorhanden. 
+    </LI>
+    <LI>
+      Die Pausenfunktion und die automatische Aktualisierung
+      wird durch einen Thread realisiert (die Methode <TT>run()</TT> ruft die
+      Aktualisierungsmethode <TT>update_rand()</TT> auf). Die Aktualisierungsmethode
+      mu&szlig; so erg&auml;nzt werden, da&szlig; die farbigen Rechtecke "wandern".
+      Da diese Methode durch <TT>repaint()</TT> ein Neuzeichnen, also einen neuen 
+      Aufruf von <TT>paint()</TT> erzwingt, mu&szlig; man in <TT>paint()</TT> die 
+      Rechtecke mit den Farbinformationen aus den 3 Arrays zeichnen und in
+      <TT>update_rand()</TT> daf&uuml;r sorgen, da&szlig; die 3 Arrays abge&auml;ndert
+      werden.
+    </LI>
+    <LI>
+      Geben Sie sich nicht zuviel M&uuml;he mit dem Zeichnen der Rechtecke. Die
+      Breite bzw. H&ouml;he sollte bei allen 4 Randteilen in etwa gleich sein.
+      Sollten kleine wei&szlig;e Spalten auftauchen oder der rote Rahmen
+      teilweise verschwinden, ignorieren Sie diese Effekte.
+    </LI>
+  </UL>
+</P>
+
+<P>
+<B>Abzugeben</B> sind das Java-File, der Java-Bytecode und das zugeh&ouml;rige HTML-File.
+</P>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A09">&nbsp;</A>
+
+   <H2>
+     Teamaufgabe 09 (Abgabe von bis zu 2 Leuten gemeinsam m&ouml;glich
+     und erw&uuml;nscht)
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi512@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Michael Butscher)
+   </H3>
+
+<P>
+<A HREF="http://www.mathworks.com/">Matlab</A>, ein interaktives Programmpaket
+zur L&ouml;sung numerischer Probleme kann d&uuml;nnbesetzte Matrizen
+(d.h. Matrizen mit sehr vielen Null-Eintr&auml;gen) effizient abspeichern.
+Aus einer vollbesetzten <TT>m x n</TT>-Matrix <TT>A_voll</TT> (zweidimensionales 
+<TT>double</TT>-Array) entsteht dabei
+eine d&uuml;nnbesetztes Matrixobjekt, das aus folgenden
+Teilen besteht:
+</P>
+
+<UL>
+  <LI>
+    einem Vektor <TT>elements</TT> (eindimensionales <TT>double</TT>-Array), 
+    der alle <TT>p</TT> Matrixelemente von <TT>A_voll</TT> ungleich 0 beinhaltet
+  </LI>
+  <LI>
+    zwei Vektoren <TT>i</TT> und <TT>j</TT> mit gleicher L&auml;nge <TT>p</TT>
+    (zwei eindimensionale <TT>int</TT>-Arrays)
+    wie der Vektor <TT>elements</TT>, die die Zeilen- bzw. Spaltenangaben
+    der Matrixelemente ungleich 0 beinhalten
+  </LI>
+</UL>
+
+Es gilt dabei: 
+
+<P>
+<CENTER>
+  <TT>A_voll[i[k]][j[k]] = elements[k]</TT> ungleich Null
+  f&uuml;r <TT>k=0,...,p-1</TT>
+</CENTER>
+</P>
+
+<P>
+<B>Beispiel:</B> <BR>
+
+<P>
+  <TABLE ALIGN="center" CELLPADDING=5>
+    <TR>
+      <TD>
+        <TT>A_voll</TT>
+      </TD>
+      <TD>
+        = 
+      </TD>
+      <TD>
+        <TABLE ALIGN="left" BORDER=1 >
+          <TR>
+            <TD ALIGN="center">
+              4
+            </TD>
+            <TD ALIGN="center">
+              -2
+            </TD>
+            <TD ALIGN="center">
+              0
+            </TD>
+            <TD ALIGN="center">
+              0
+            </TD>
+            <TD ALIGN="center">
+              0
+            </TD>
+          </TR>
+          <TR>
+            <TD ALIGN="center">
+              -1
+            </TD>
+            <TD ALIGN="center">
+              4
+            </TD>
+            <TD ALIGN="center">
+              -2
+            </TD>
+            <TD ALIGN="center">
+              0
+            </TD>
+            <TD ALIGN="center">
+              0
+            </TD>
+          </TR>
+          <TR>
+            <TD ALIGN="center">
+              0
+            </TD>
+            <TD ALIGN="center">
+              -1
+            </TD>
+            <TD ALIGN="center">
+              4
+            </TD>
+            <TD ALIGN="center">
+              -2
+            </TD>
+            <TD ALIGN="center">
+              0
+            </TD>
+          </TR>
+          <TR>
+            <TD ALIGN="center">
+              0
+            </TD>
+            <TD ALIGN="center">
+              0
+            </TD>
+            <TD ALIGN="center">
+              -1
+            </TD>
+            <TD ALIGN="center">
+              4
+            </TD>
+            <TD ALIGN="center">
+              -2
+            </TD>
+          </TR>
+          <TR>
+            <TD ALIGN="center">
+              0
+            </TD>
+            <TD ALIGN="center">
+              0
+            </TD>
+            <TD ALIGN="center">
+              0
+            </TD>
+            <TD ALIGN="center">
+              -1
+            </TD>
+            <TD ALIGN="center">
+              4
+            </TD>
+          </TR>
+        </TABLE>
+      </TD>
+    </TR>
+
+    <TR>
+      <TD>
+        <TT>p</TT>
+      </TD>
+      <TD>
+        = 
+      </TD>
+      <TD>
+        13
+      </TD>
+    </TR>
+
+    <TR>
+      <TD>
+        <TT>elements</TT>
+      </TD>
+      <TD>
+        = 
+      </TD>
+      <TD>
+        <TABLE ALIGN="left" BORDER=1 >
+          <TR>
+            <TD ALIGN="center">
+              4
+            </TD>
+            <TD ALIGN="center">
+              4
+            </TD>
+            <TD ALIGN="center">
+              4
+            </TD>
+            <TD ALIGN="center">
+              4
+            </TD>
+            <TD ALIGN="center">
+              4
+            </TD>
+            <TD ALIGN="center">
+              -2
+            </TD>
+            <TD ALIGN="center">
+              -2
+            </TD>
+            <TD ALIGN="center">
+              -2
+            </TD>
+            <TD ALIGN="center">
+              -2
+            </TD>
+            <TD ALIGN="center">
+              -1
+            </TD>
+            <TD ALIGN="center">
+              -1
+            </TD>
+            <TD ALIGN="center">
+              -1
+            </TD>
+            <TD ALIGN="center">
+              -1
+            </TD>
+          </TR>
+        </TABLE>
+      </TD>
+    </TR>
+
+    <TR>
+      <TD>
+        <TT>i</TT>
+      </TD>
+      <TD>
+        = 
+      </TD>
+      <TD>
+        <TABLE ALIGN="left" BORDER=1 >
+          <TR>
+            <TD ALIGN="center">
+              0
+            </TD>
+            <TD ALIGN="center">
+              1
+            </TD>
+            <TD ALIGN="center">
+              2
+            </TD>
+            <TD ALIGN="center">
+              3
+            </TD>
+            <TD ALIGN="center">
+              4
+            </TD>
+            <TD ALIGN="center">
+              0
+            </TD>
+            <TD ALIGN="center">
+              1
+            </TD>
+            <TD ALIGN="center">
+              2
+            </TD>
+            <TD ALIGN="center">
+              3
+            </TD>
+            <TD ALIGN="center">
+              1
+            </TD>
+            <TD ALIGN="center">
+              2
+            </TD>
+            <TD ALIGN="center">
+              3
+            </TD>
+            <TD ALIGN="center">
+              4
+            </TD>
+          </TR>
+        </TABLE>
+      </TD>
+    </TR>
+
+    <TR>
+      <TD>
+        <TT>j</TT>
+      </TD>
+      <TD>
+        = 
+      </TD>
+      <TD>
+        <TABLE ALIGN="left" BORDER=1 >
+          <TR>
+            <TD ALIGN="center">
+              0
+            </TD>
+            <TD ALIGN="center">
+              1
+            </TD>
+            <TD ALIGN="center">
+              2
+            </TD>
+            <TD ALIGN="center">
+              3
+            </TD>
+            <TD ALIGN="center">
+              4
+            </TD>
+            <TD ALIGN="center">
+              1
+            </TD>
+            <TD ALIGN="center">
+              2
+            </TD>
+            <TD ALIGN="center">
+              3
+            </TD>
+            <TD ALIGN="center">
+              4
+            </TD>
+            <TD ALIGN="center">
+              0
+            </TD>
+            <TD ALIGN="center">
+              1
+            </TD>
+            <TD ALIGN="center">
+              2
+            </TD>
+            <TD ALIGN="center">
+              3
+            </TD>
+          </TR>
+        </TABLE>
+      </TD>
+    </TR>
+  </TABLE>
+</P>
+
+<FONT SIZE="-1">Verallgemeinert man dieses Beispiel f&uuml;r beliebige 
+Matrixdimensionen
+<TT>n x n</TT> und speichert die Matrixelemente als <TT>double</TT>-Werte, die
+Indizes aber als
+<TT>short</TT>-Werte, so hat man bei der d&uuml;nnbesetzten Matrix folgenden
+Speichervorteil:</FONT>
+
+<P>
+  <TABLE ALIGN="center" BORDER=1 CELLPADDING=5>
+    <TR>
+      <TH ALIGN="right" VALIGN="bottom">
+        <FONT SIZE="-1"><TT>n</TT></FONT>
+      </TH>
+      <TH>
+        <FONT SIZE="-1">Speicherbedarf f&uuml;r <BR>
+        vollbesetzte Matrix</FONT>
+      </TH>
+      <TH>
+        <FONT SIZE="-1">Speicherbedarf f&uuml;r <BR>
+        d&uuml;nnbesetzte Matrix</FONT>
+      </TH>
+      <TH>
+        <FONT SIZE="-1">Speichervorteil f&uuml;r <BR>
+        d&uuml;nnbesetzte Matrix</FONT>
+      </TH>
+    </TR>  
+
+    <TR>
+      <TD ALIGN="right">
+        <FONT SIZE="-1">4</FONT>
+      </TD>
+      <TD ALIGN="right">
+        <FONT SIZE="-1">128 B</FONT>
+      </TD>
+      <TD ALIGN="right">
+        <FONT SIZE="-1">120 B</FONT>
+      </TD>
+      <TD ALIGN="right">
+        <FONT SIZE="-1">8 B</FONT>
+      </TD>
+    </TR>
+
+    <TR>
+      <TD ALIGN="right">
+        <FONT SIZE="-1">5</FONT>
+      </TD>
+      <TD ALIGN="right">
+        <FONT SIZE="-1">200 B</FONT>
+      </TD>
+      <TD ALIGN="right">
+        <FONT SIZE="-1">156 B</FONT>
+      </TD>
+      <TD ALIGN="right">
+        <FONT SIZE="-1">44 B</FONT>
+      </TD>
+    </TR>
+
+    <TR>
+      <TD ALIGN="right">
+        <FONT SIZE="-1">6</FONT>
+      </TD>
+      <TD ALIGN="right">
+        <FONT SIZE="-1">288 B</FONT>
+      </TD>
+      <TD ALIGN="right">
+        <FONT SIZE="-1">192 B</FONT>
+      </TD>
+      <TD ALIGN="right">
+        <FONT SIZE="-1">96 B</FONT>
+      </TD>
+    </TR>
+
+    <TR>
+      <TD ALIGN="right">
+        <FONT SIZE="-1">100</FONT>
+      </TD>
+      <TD ALIGN="right">
+        <FONT SIZE="-1">80.000 B</FONT>
+      </TD>
+      <TD ALIGN="right">
+        <FONT SIZE="-1">3.576 B</FONT>
+      </TD>
+      <TD ALIGN="right">
+        <FONT SIZE="-1">76.424 B</FONT>
+      </TD>
+    </TR>
+
+    <TR>
+      <TD ALIGN="right">
+        <FONT SIZE="-1">1.000</FONT>
+      </TD>
+      <TD ALIGN="right">
+        <FONT SIZE="-1">8.000.000 B</FONT>
+      </TD>
+      <TD ALIGN="right">
+        <FONT SIZE="-1">35.976 B</FONT>
+      </TD>
+      <TD ALIGN="right">
+        <FONT SIZE="-1">7.964.024 B</FONT>
+      </TD>
+    </TR>
+
+    <TR>
+      <TD ALIGN="right">
+        <FONT SIZE="-1">2.000</FONT>
+      </TD>
+      <TD ALIGN="right">
+        <FONT SIZE="-1">32.000.000 B</FONT>
+      </TD>
+      <TD ALIGN="right">
+        <FONT SIZE="-1">71.976 B</FONT>
+      </TD>
+      <TD ALIGN="right">
+        <FONT SIZE="-1">31.928.024 B</FONT>
+      </TD>
+    </TR>
+  </TABLE>
+</P>
+
+<P>
+Schreiben Sie ein Programm mit Methoden, das die vollbesetzte Matrix aus
+dem Beispiel als d&uuml;nnbesetztes Matrixobjekt abspeichert und umgekehrt 
+(die Kenntnis der Dimension der vollbesetzten Matrix mu&szlig; bei der 
+umgekehrten Richtung nat&uuml;rlich vorausgesetzt werden).
+</P>
+
+<P>
+Beachten Sie dabei, da&szlig; eine Java-Methode kein Array
+dauerhaft anlegen kann, d.h. ein <TT>new</TT>-Aufruf innerhalb der
+Methode zur Erzeugung eines Arrays wird in der aufrufenden
+Methode nicht beachtet, d.h. der Arrayname als Referenz kann durch einen
+Methodenaufruf <B>nicht</B> ge&auml;ndert werden.
+Damit m&uuml;ssen bei einem Aufruf der Form
+
+<P>
+<CENTER>
+   <TT>sparse(A_voll, i, j, elements);</TT>
+</CENTER>
+</P>
+
+die Arrays <TT>i</TT>, <TT>j</TT> und <TT>elements</TT> bereits <B>vor dem
+Aufruf</B> die
+richtige L&auml;nge besitzen, d.h. bereits vorher mit einem <TT>new</TT>-Aufruf
+passend erzeugt worden sein. 
+</P>
+
+<P>
+Schreiben Sie deshalb eine Funktion
+
+<P>
+<CENTER>
+   <TT>int numberOfNonZeros(A_voll)</TT>,
+</CENTER>
+</P>
+
+die die Anzahl der Matrixelemente ungleich 0 einer vollbesetzten Matrix
+ermittelt. <BR>
+Die <B>Inhalte</B> der Arrays k&ouml;nnen allerdings
+in der <TT>sparse()</TT>-Methode "dauerhaft" ver&auml;ndert werden.
+</P>
+
+<P>
+Schreiben Sie zudem eine Methode <TT>add()</TT>, die zwei d&uuml;nnbesetzte
+Matrizen addiert.
+<P>
+<B>Abzugeben</B> sind der Java-Sourcecode, der Java-Bytecode
+sowie die Beantwortung der Fragen.
+</P>
+
+ </BODY>
+</HTML>

@@ -1,0 +1,1239 @@
+<HTML
+><HEAD
+><TITLE
+>Partitionierbare Geräte</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Das Laden von Block-Treibern"
+HREF="lock.html"><LINK
+REL="PREVIOUS"
+TITLE="Herausnehmbare Geräte"
+HREF="lockremove.html"><LINK
+REL="NEXT"
+TITLE="Interrupt-gesteuerte Block-Treiber"
+HREF="lockbh.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="lockremove.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 12. Das Laden von Block-Treibern</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="lockbh.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="LOCKGENHD"
+>Partitionierbare Geräte</A
+></H1
+><P
+>&#13;
+
+
+Die meisten Block-Geräte werden nicht in einem großen Stück
+verwendet. Statt dessen erwarten Systemadministratoren, das Gerät
+<SPAN
+><I
+CLASS="EMPHASIS"
+>partitionieren</I
+></SPAN
+> zu können, also in mehrere
+unabhängige Pseudo-Geräte aufteilen zu können.
+Wenn Sie versuchen, auf <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> Partitionen
+mit <SPAN
+CLASS="APPLICATION"
+>fdisk</SPAN
+>
+zu erzeugen, werden Sie merken, daß nicht alles in Ordnung ist. Das
+Programm <SPAN
+CLASS="APPLICATION"
+>fdisk</SPAN
+> greift auf die Partitionen
+<TT
+CLASS="FILENAME"
+>/dev/sbull01</TT
+>,
+<TT
+CLASS="FILENAME"
+>/dev/sbull02</TT
+> usw. zu, aber diese Namen
+existieren im Dateisystem überhaupt nicht. Oder genauer: Es gibt
+keinen Mechanismus, um diese Namen an Partitionen auf dem
+<SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+>-Gerät zu binden. Ein bißchen mehr
+Arbeit ist notwendig, bevor ein Block-Gerät partitioniert werden
+kann.</P
+><P
+>&#13;Um die Unterstützung für Partitionen vorzuführen, führen wir ein neues
+Gerät namens <SPAN
+CLASS="APPLICATION"
+>spull</SPAN
+> für &#8220;Simple
+Partitionable Utility&#8221; ein. Dieses Gerät ist deutlich einfacher als
+<SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+>, es hat keine Verwaltung der
+Anfrage-Warteschlange und ist weniger flexibel (so kann man etwa die
+Hardware-Sektorgröße nicht verändern). Sie finden das Gerät im
+Verzeichnis <SPAN
+CLASS="APPLICATION"
+>spull</SPAN
+>; es ist vollständig
+unabhängig von <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+>, auch wenn die beiden
+einigen gemeinsamen Code haben.</P
+><P
+>&#13;
+Um die Partitionierung eines Geräts unterstützen zu können, müssen wir jedem
+physikalischen Gerät mehrere Minor-Nummern zuweisen. Eine Nummer ist
+für den Zugriff auf das gesamte Gerät (wie beispielsweise
+<TT
+CLASS="FILENAME"
+>/dev/hda</TT
+>), die anderen für den Zugriff auf
+die einzelnen Partitionen (wie <TT
+CLASS="FILENAME"
+>/dev/hda1</TT
+>)
+zuständig. Weil <SPAN
+CLASS="APPLICATION"
+>fdisk</SPAN
+> Partitionsnamen erzeugt,
+indem es dem Gerätenamen für die gesamte Festplatte ein numerisches
+Suffix anfügt, folgen wir im
+<SPAN
+CLASS="APPLICATION"
+>spull</SPAN
+>-Treiber der gleichen Namenskonvention.</P
+><P
+>Die von <SPAN
+CLASS="APPLICATION"
+>spull</SPAN
+> implementierten Geräteknoten heißen
+<TT
+CLASS="LITERAL"
+>pd</TT
+> für &#8220;partitionable disk&#8221;. Die vier
+Geräte (auch &#8220;Einheiten&#8221; genannt) sind daher
+<TT
+CLASS="FILENAME"
+>/dev/pda</TT
+> bis
+<TT
+CLASS="FILENAME"
+>/dev/pdd</TT
+>, wobei jedes Gerät bis zu 15
+Partitionen unterstützt. Die Minor-Nummern haben die folgende
+Bedeutung: Die niedrigstwertigen vier Bits repräsentieren die
+Partitionsnummer (wobei 0 für das gesamte Gerät steht), und die
+höchstwertigen vier Bits stehen für die Einheitennummer. Diese
+Konvention wird in der Quelldatei durch die folgenden Makros
+implementiert:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+#define MAJOR_NR spull_major /* Definitionen in blk.h erzwingen */
+int spull_major; /* muß vor blk.h deklariert werden */
+
+#define SPULL_SHIFT 4                         /* max. 16 Partitionen  */
+#define SPULL_MAXNRDEV 4                      /* max. 4 Geraeteeinheiten */
+#define DEVICE_NR(device) (MINOR(device)&#62;&#62;SPULL_SHIFT)
+#define DEVICE_NAME "pd"                      /* Name fuer Meldungen */</PRE
+></TD
+></TR
+></TABLE
+><P
+>Der <SPAN
+CLASS="APPLICATION"
+>spull</SPAN
+>-Treiber verdrahtet auch die
+Hardware-Sektorengröße fest, um den Code zu vereinfachen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;#define SPULL_HARDSECT 512  /* 512-Byte-Hardware-Sektoren */
+&#13;</PRE
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN15969"
+>Die generische Festplatte</A
+></H2
+><P
+>&#13;
+
+Jedes partitionierbare Gerät muß wissen, wie es partitioniert
+ist. Diese Information steht in der Partitionstabelle. Ein Teil
+des Initialisierungsprozesses besteht daher auch darin, die
+Partitionstabelle zu decodieren und die internen Datenstrukturen
+entsprechend zu aktualisieren.&#13;</P
+><P
+>Diese Decodierung ist nicht einfach, aber der Kernel stellt
+glücklicherweise eine Unterstützung für &#8220;generische
+Festplatten&#8221; bereit, die von allen Block-Treibern verwendet
+werden kann. Damit wird die Code-Menge, die im Treiber zur
+Verwaltung der Partitionen benötigt wird, deutlich reduziert. Es ist ein weiterer
+Vorteil, daß der Treiber-Programmierer nicht verstehen muß, wie die
+Partitionierung vorgenommen wird, und der Kernel neue
+Partitionierungsmuster unterstützen kann, ohne daß die Treiber
+geändert werden müssen.&#13;</P
+><P
+>&#13;
+
+Ein Block-Treiber, der Partitionen unterstützen will, muß
+<TT
+CLASS="LITERAL"
+>&#60;linux/genhd.h&#62;</TT
+> einbinden und eine
+Struktur des Typs <TT
+CLASS="LITERAL"
+>struct gendisk</TT
+> deklarieren. Diese
+Struktur beschreibt das Layout der vom Treiber bereitgestellten
+Festplatte(n); der Kernel verwaltet eine globale Liste dieser
+Strukturen, die abgefragt werden kann, um zu sehen, welche Festplatten
+und Partitionen im System verfügbar sind.</P
+><P
+>Bevor wir weitermachen, schauen wir uns zunächst die Felder in
+<TT
+CLASS="LITERAL"
+>struct gendisk</TT
+> an. Sie müssen sie verstehen, um die
+generische Festplatten-Unterstützung ausnutzen zu können.&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>int major</TT
+></DT
+><DD
+><P
+>Die Major-Nummer identifiziert den Gerätetreiber, auf den
+        sich diese Struktur bezieht.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>const char *major_name</TT
+></DT
+><DD
+><P
+>&#13;
+
+Der Basisname für Geräte, die zu dieser Major-Nummer gehören. Alle
+Gerätenamen werden gebildet, indem diesem Namen ein Buchstabe für jede
+Einheit und eine Nummer für jede Partition hinzugefügt
+wird. Beispielsweise ist &#8220;hd&#8221; der Basisname, aus dem dann
+<TT
+CLASS="FILENAME"
+>/dev/hda1</TT
+> und
+<TT
+CLASS="FILENAME"
+>/dev/hdb3</TT
+> gebildet werden. In modernen
+Kerneln kann die Gesamtlänge des Namens bis zu 32 Zeichen betragen; im
+2.0-Kernel war das eingeschränkter. Treiber, die abwärtskompatibel zu
+2.0 sein wollen, sollten das <TT
+CLASS="LITERAL"
+>major_name</TT
+>-Feld
+auf fünf Zeichen begrenzen. Der Name für
+<SPAN
+CLASS="APPLICATION"
+>spull</SPAN
+> ist <TT
+CLASS="LITERAL"
+>pd</TT
+> für
+&#8220;partitionable disk&#8221;.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int minor_shift</TT
+></DT
+><DD
+><P
+>&#13;Die Anzahl der Bit-Shift-Operationen, die benötigt werden, um die
+Laufwerksnummer aus der Minor-Nummer des Gerätes
+herauszubekommen. Der Wert in diesem Feld sollte mit der Definition
+des Makros <TT
+CLASS="LITERAL"
+>DEVICE_NR(device)</TT
+> (siehe
+&#8220;<A
+HREF="lockblkh.html"
+>the Section called <I
+>Die Header-Datei blk.h</I
+></A
+>&#8221; weiter vorn in diesem Kapitel)
+konsistent sein. In <SPAN
+CLASS="APPLICATION"
+>spull</SPAN
+> expandiert dieses
+Makro zu <TT
+CLASS="LITERAL"
+>device&#62;&#62;4</TT
+>.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int max_p</TT
+></DT
+><DD
+><P
+>Die maximale Anzahl an Partitionen. In unserem Beispiel ist
+        <TT
+CLASS="LITERAL"
+>max_p</TT
+> 16 oder allgemeiner <TT
+CLASS="LITERAL"
+>1
+        &#60;&#60; minor_shift</TT
+>.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct hd_struct *part</TT
+></DT
+><DD
+><P
+>Die decodierte Partitionstabelle des Gerätes. Der Treiber
+        benutzt dieses Element, um festzustellen, welcher Bereich der
+        Festplattensektoren über welche Minor-Nummer erreichbar ist. Er
+        ist für die Allokation und Freigabe dieses Arrays zuständig. Die
+        meisten Treiber implementieren das Array als statisches Array von
+        <TT
+CLASS="LITERAL"
+>max_nr &#60;&#60; minor_shift</TT
+>-
+        Strukturen. Der Treiber sollte das Array mit Nullen
+        initialisieren, bevor der Kernel die Partitionstabelle decodiert.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int *sizes</TT
+></DT
+><DD
+><P
+>Dieses Feld zeigt auf ein Array von Integer-Werten. Es
+        enthält die gleiche Information wie das globale Array
+        <TT
+CLASS="LITERAL"
+>blk_size</TT
+>; normalerweise sind das
+sogar die gleichen Arrays. Es ist die Aufgabe des
+        Treibers, den Datenbereich zu allozieren und wieder
+        freizugeben. Beachten Sie, daß während der Partitionsüberprüfung
+        des Gerätes dieser Zeiger nach <TT
+CLASS="LITERAL"
+>blk_size</TT
+>
+        kopiert wird, so daß ein Treiber, der partitionierbare Geräte
+        unterstützt, das Array <TT
+CLASS="LITERAL"
+>blk_size</TT
+> nicht allozieren muß.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int nr_real</TT
+></DT
+><DD
+><P
+>Die Anzahl der realen Geräte (Einheiten), die
+        existieren.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void *real_devices</TT
+></DT
+><DD
+><P
+>Dieser Zeiger wird von jedem Treiber intern genutzt, der
+        zusätzliche private Informationen halten muß.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void struct gendisk *next</TT
+></DT
+><DD
+><P
+>Ein Verweis auf die Liste der generischen Festplatten.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct block_device_operations *fops;</TT
+></DT
+><DD
+><P
+>Ein Zeiger auf die Block-Operationen-Struktur dieses Geräts.</P
+></DD
+></DL
+></DIV
+><P
+>Viele der Felder in der <TT
+CLASS="LITERAL"
+>gendisk</TT
+>-Struktur werden bei
+der Initialisierung gefüllt, so daß es relativ einfach ist, sie zur Kompilierzeit einzurichten:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+struct gendisk spull_gendisk = {
+    major:              0,            /* Spaeter zugewiesene Major-Nummer */
+    major_name:         "pd",         /* Name des Major-Geraets */
+    minor_shift:        SPULL_SHIFT,  /* Versatz zur Geraetenummer */
+    max_p:              1 &#60;&#60; SPULL_SHIFT, /* Anzahl der Partitionen */
+    fops:               &#38;spull_bdops, /* Block-Geraete-Operationen */
+/* alles andere ist dynamisch */
+};</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN16073"
+>Partitionserkennung</A
+></H2
+><P
+>&#13;
+Wenn ein Modul sich selbst initialisiert, muß es alles passend zur
+Partitionserkennung einrichten. <SPAN
+CLASS="APPLICATION"
+>spull</SPAN
+>
+fängt damit an, das Array <TT
+CLASS="LITERAL"
+>spull_sizes</TT
+> für
+die <TT
+CLASS="LITERAL"
+>gendisk</TT
+>-Struktur einzurichten (das auch als
+<TT
+CLASS="LITERAL"
+>blk_size[MAJOR_NR]</TT
+> und im
+Feld <TT
+CLASS="LITERAL"
+>sizes</TT
+> der <TT
+CLASS="LITERAL"
+>gendisk</TT
+>-Struktur
+abgespeichert wird) sowie das Array
+<TT
+CLASS="LITERAL"
+>spull_partitions</TT
+>, das die eigentlichen
+Partitionsinformationen enthält (und im Feld <TT
+CLASS="LITERAL"
+>part</TT
+>
+der <TT
+CLASS="LITERAL"
+>gendisk</TT
+>-Struktur gespeichert wird). Beide
+Arrays werden zu diesem Zeitpunkt mit Nullen initialisiert. Der Code
+sieht folgendermaßen aus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+spull_sizes = kmalloc( (spull_devs &#60;&#60; SPULL_SHIFT) * sizeof(int),
+                      GFP_KERNEL);
+if (!spull_sizes)
+    goto fail_malloc;
+
+/* Mit Partitionen der Groeße 0 anfangen und den Einheiten korrekte Groeßen geben */
+memset(spull_sizes, 0, (spull_devs &#60;&#60; SPULL_SHIFT) * sizeof(int));
+for (i=0; i&#60; spull_devs; i++)
+    spull_sizes[i&#60;&#60;SPULL_SHIFT] = spull_size;
+blk_size[MAJOR_NR] = spull_gendisk.sizes = spull_sizes;
+
+/* Das Partitions-Array allozieren. */
+spull_partitions = kmalloc( (spull_devs &#60;&#60; SPULL_SHIFT) *
+                           sizeof(struct hd_struct), GFP_KERNEL);
+if (!spull_partitions)
+    goto fail_malloc;
+
+memset(spull_partitions, 0, (spull_devs &#60;&#60; SPULL_SHIFT) *
+       sizeof(struct hd_struct));
+/* Eintraege für die gesamte Festplatte ausfuellen */
+for (i=0; i &#60; spull_devs; i++)
+    spull_partitions[i &#60;&#60; SPULL_SHIFT].nr_sects =
+        spull_size*(blksize/SPULL_HARDSECT);
+spull_gendisk.part = spull_partitions;
+spull_gendisk.nr_real = spull_devs;</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Der Treiber sollte auch seine <TT
+CLASS="LITERAL"
+>gendisk</TT
+>-Struktur in
+die globale Liste eintragen. Es gibt dafür keine vom Kernel
+bereitgestellte Funktion; das muß von Hand gemacht werden:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+spull_gendisk.next = gendisk_head;
+gendisk_head = &#38;spull_gendisk;</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;In der Praxis implementiert das System mit dieser Liste nur
+<TT
+CLASS="FILENAME"
+>/proc/partitions</TT
+>.</P
+><P
+>&#13;Die Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>register_disk</I
+></SPAN
+>, die wir
+bereits kurz gesehen haben, hat auch die Aufgabe, die
+Partitionstabelle der Festplatte einzulesen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;register_disk(struct gendisk *gd, int drive, unsigned minors,
+              struct block_device_operations *ops, long size);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Hier ist <TT
+CLASS="LITERAL"
+>gd</TT
+> die vorher aufgebaute
+<TT
+CLASS="LITERAL"
+>gendisk</TT
+>-Struktur, <TT
+CLASS="LITERAL"
+>drive</TT
+> die
+Gerätenummer, <TT
+CLASS="LITERAL"
+>minors</TT
+> die Anzahl der unterstützten
+Partitionen, <TT
+CLASS="LITERAL"
+>ops</TT
+> die
+<TT
+CLASS="LITERAL"
+>block_device_operations</TT
+>-Struktur des
+Treibers und <TT
+CLASS="LITERAL"
+>size</TT
+> die Größe des Geräts in
+Sektoren.</P
+><P
+>&#13;
+Bei Festplatten muß die Partitionstabelle nur während der
+Initialisierung des Moduls und beim Aufruf von
+<TT
+CLASS="LITERAL"
+>BLKRRPART</TT
+> aufgerufen werden. Treiber für
+herausnehmbare Laufwerke müssen dies auch in der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>revalidate</I
+></SPAN
+>-Methode machen. Es ist aber in jedem
+Fall wichtig, sich daran zu erinnern, daß
+<SPAN
+><I
+CLASS="EMPHASIS"
+>register_disk</I
+></SPAN
+> die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion Ihres Treibers aufruft, um die
+Partitionstabelle einzulesen; der Treiber muß also an dieser Stelle
+schon hinreichend initialisiert sein, um Anfragen bearbeiten zu
+können. Sie sollten auch keine Sperren halten, die mit den in der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Funktion erworbenen Sperren in Konflikt
+stehen könnten. <SPAN
+><I
+CLASS="EMPHASIS"
+>register_disk</I
+></SPAN
+> muß für jede
+im System vorhandene Festplatte aufgerufen werden.</P
+><P
+><SPAN
+CLASS="APPLICATION"
+>spull</SPAN
+> richtet die Partitionen in der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>revalidate</I
+></SPAN
+>-Methode ein:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+int spull_revalidate(kdev_t i_rdev)
+{
+  /* erste Partition, Anzahl der Partitionen */
+  int part1 = (DEVICE_NR(i_rdev) &#60;&#60; SPULL_SHIFT) + 1;
+  int npart = (1 &#60;&#60; SPULL_SHIFT) -1;
+
+  /* zuerst alte Partitionsinformationen loeschen */
+  memset(spull_gendisk.sizes+part1, 0, npart*sizeof(int));
+  memset(spull_gendisk.part +part1, 0, npart*sizeof(struct hd_struct));
+  spull_gendisk.part[DEVICE_NR(i_rdev) &#60;&#60; SPULL_SHIFT].nr_sects =
+          spull_size &#60;&#60; 1;
+
+  /* dann die neuen Informationen einfuellen */
+  printk(KERN_INFO "Spull partition check: (%d) ", DEVICE_NR(i_rdev));
+  register_disk(&#38;spull_gendisk, i_rdev, SPULL_MAXNRDEV, &#38;spull_bdops,
+                  spull_size &#60;&#60; 1);
+  return 0;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+Interessanterweise gibt <SPAN
+><I
+CLASS="EMPHASIS"
+>register_disk</I
+></SPAN
+>
+Partitionsinformationen durch wiederholten Aufruf von</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;printk(" %s", disk_name(hd, minor, buf));</PRE
+></TD
+></TR
+></TABLE
+><P
+>aus. Deswegen gibt <SPAN
+CLASS="APPLICATION"
+>spull</SPAN
+> einen führenden
+String aus: So bekommt die Information im Systemprotokoll einen
+Kontext.</P
+><P
+>&#13;Wenn ein partitionierbares Modul entladen wird, sollte der Treiber
+alle Partitionen herausschreiben, indem für jedes Major/Minor-Paar
+<SPAN
+><I
+CLASS="EMPHASIS"
+>fsync_dev</I
+></SPAN
+> aufgerufen wird. Natürlich
+sollte auch aller relevanter Speicher freigegeben werden. Die
+Aufräumfunktion in <SPAN
+CLASS="APPLICATION"
+>spull</SPAN
+> sieht
+folgendermaßen aus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+for (i = 0; i &#60; (spull_devs &#60;&#60; SPULL_SHIFT); i++)
+    fsync_dev(MKDEV(spull_major, i)); /* Geraete herausschreiben */
+blk_cleanup_queue(BLK_DEFAULT_QUEUE(major));
+read_ahead[major] = 0;
+kfree(blk_size[major]); /* ist auch gendisk-&#62;sizes */
+blk_size[major] = NULL;
+kfree(spull_gendisk.part);
+kfree(blksize_size[major]);
+blksize_size[major] = NULL;</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Es ist auch notwendig, die <TT
+CLASS="LITERAL"
+>gendisk</TT
+>-Struktur aus der
+globalen Liste zu entfernen. Es gibt keine Funktion dafür, weswegen
+das von Hand gemacht wird:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+for (gdp = &#38;gendisk_head; *gdp; gdp = &#38;((*gdp)-&#62;next))
+    if (*gdp == &#38;spull_gendisk) {
+        *gdp = (*gdp)-&#62;next;
+        break;
+    }</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+Beachten Sie, daß es kein Gegenstück
+<SPAN
+><I
+CLASS="EMPHASIS"
+>unregister_disk</I
+></SPAN
+> zu
+<SPAN
+><I
+CLASS="EMPHASIS"
+>register_disk</I
+></SPAN
+> gibt. Alles, was
+<SPAN
+><I
+CLASS="EMPHASIS"
+>register_disk</I
+></SPAN
+> macht, wird in den Arrays
+des Treibers gespeichert, so daß kein zusätzliches Aufräumen notwendig
+ist.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN16164"
+>Partitionserkennung mit initrd</A
+></H2
+><P
+>&#13;
+
+Wenn Sie Ihr Root-Dateisystem von einem Gerät aus einhängen wollen, dessen
+Treiber nur in modularisierter Form vorliegt, dann müssen Sie das
+<SPAN
+><I
+CLASS="EMPHASIS"
+>initrd</I
+></SPAN
+>-System verwenden, das in modernen
+Linux-Kerneln zur Verfügung steht. Wir werden hier nicht beschreiben,
+wie man <SPAN
+><I
+CLASS="EMPHASIS"
+>initrd</I
+></SPAN
+> benutzt; dieser Abschnitt ist
+für Leser gedacht, die <SPAN
+><I
+CLASS="EMPHASIS"
+>initrd</I
+></SPAN
+> kennen und sich
+fragen, wie es Block-Treiber beeinflußt. Weitere Informationen zu
+<SPAN
+><I
+CLASS="EMPHASIS"
+>initrd</I
+></SPAN
+> findfen Sie in der Datei
+<TT
+CLASS="FILENAME"
+>Documentation/initrd.txt</TT
+> in den Kernel-Quellen.&#13;</P
+><P
+>Wenn Sie einen Kernel mit <SPAN
+><I
+CLASS="EMPHASIS"
+>initrd</I
+></SPAN
+> booten, richtet
+dieser eine temporäre Laufzeitumgebung ein, bevor er das eigentliche
+Root-Dateisystem einhängt. Module werden normalerweise aus einer
+RAM-Disk geladen, die als temporäres Root-Dateisystem benutzt wird.&#13;</P
+><P
+>Weil der <SPAN
+><I
+CLASS="EMPHASIS"
+>initrd</I
+></SPAN
+>-Prozeß gestartet wird, nachdem
+die gesamte Boot-Initialisierung durchgeführt worden ist (aber bevor
+das eigentliche Root-Dateisystem eingehängt worden ist), gibt es
+keinen Unterschied zwischen dem Laden eines normalen Moduls und eines
+solchen, das in der <SPAN
+><I
+CLASS="EMPHASIS"
+>initrd</I
+></SPAN
+>-RAM-Disk liegt. Wenn
+ein Treiber als Modul geladen und verwendet werden kann, dann können
+alle Linux-Distributionen, auf denen <SPAN
+><I
+CLASS="EMPHASIS"
+>initrd</I
+></SPAN
+> zur
+Verfügung steht, den Treiber auf ihren Installationsdisketten
+bereitstellen, ohne daß Sie an den Kernel-Quellen herummanipulieren
+müssen.&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN16186"
+>Die Geräte-Methoden von spull</A
+></H2
+><P
+>&#13;
+Wir haben bereits gesehen, wie man partitionierbare Geräte
+initialisiert, aber noch nicht, wie man auf die Daten in den
+Partitionen zugreift. Dazu brauchen wir die Partitionsinformationen,
+die von <SPAN
+><I
+CLASS="EMPHASIS"
+>register_disk</I
+></SPAN
+> im Array
+<TT
+CLASS="LITERAL"
+>gendisk-&#62;part</TT
+> abgelegt werden. Dieses Array
+besteht aus <TT
+CLASS="LITERAL"
+>hd_struct</TT
+>-Strukturen und wird
+per Minor-Nummer indiziert. <TT
+CLASS="LITERAL"
+>hd_struct</TT
+>
+enthält zwei Felder, die für uns interessant sind:
+<TT
+CLASS="LITERAL"
+>start_sect</TT
+> gibt an, wo eine bestimmte
+Partition auf der Festplatte anfängt, und
+<TT
+CLASS="LITERAL"
+>nr_sects</TT
+> nennt die Größe dieser Partition.</P
+><P
+>Wir zeigen Ihnen hier, wie <SPAN
+CLASS="APPLICATION"
+>spull</SPAN
+> diese
+Informationen verwendet. Der folgende Code enthält nur diejenigen
+Teile von <SPAN
+CLASS="APPLICATION"
+>spull</SPAN
+>, die sich von
+<SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> unterscheiden, weil der größte Teil
+des Codes identisch ist.</P
+><P
+>&#13;
+
+Zunächst einmal müssen <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>close</I
+></SPAN
+> Verwendungszähler für jedes Gerät
+führen. Da sich der Verwendungszähler auf das physikalische Gerät
+bezieht, kann die folgende Zuweisung für die Variable
+<TT
+CLASS="LITERAL"
+>dev</TT
+> verwendet werden:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+Spull_Dev *dev = spull_devices + DEVICE_NR(inode-&#62;i_rdev);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Das hier verwendete Makro <TT
+CLASS="LITERAL"
+>DEVICE_NR</TT
+> ist
+dasjenige, das deklariert werden muß, bevor
+<TT
+CLASS="LITERAL"
+>&#60;linux/blk.h&#62;</TT
+> eingebunden wird; es wird
+zur physikalischen Gerätenummer expandiert, ohne zu berücksichtigen,
+welche Partition verwendet wird.&#13;</P
+><P
+>&#13;Während fast jede Gerätemethode auf dem physikalischen Gerät als Ganzes
+arbeitet, sollte <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+> die partitionsspezifischen
+Informationen liefern. Beispielsweise möchte
+<SPAN
+CLASS="APPLICATION"
+>mkfs</SPAN
+> die Größe der jeweiligen Partition,
+auf der es das Dateisystem anlegen will, und
+nicht die Größe des gesamten Gerätes wissen. Der <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>
+<TT
+CLASS="LITERAL"
+>BLKGETSIZE</TT
+> ist von der Änderung von einer
+Minor-Nummer pro Gerät zu mehreren Minor-Nummern pro Gerät, wie hier
+gezeigt wird, betroffen. Wie Sie vermutlich schon erwartet haben, wird
+<TT
+CLASS="LITERAL"
+>spull_gendisk-&#62;part</TT
+> als Quelle für die
+Partitionsgröße verwendet.
+&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+ case BLKGETSIZE:
+   /* Geraetegroeße in Sektoren zurueckgeben */
+   err = ! access_ok (VERIFY_WRITE, arg, sizeof(long));
+   if (err) return -EFAULT;
+   size = spull_gendisk.part[MINOR(inode-&#62;i_rdev)].nr_sects;
+   if (copy_to_user((long *) arg, &#38;size, sizeof (long)))
+   return -EFAULT;
+   return 0;</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Der andere <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Befehl, der bei
+partitionierbaren Geräten anders ist, ist
+<TT
+CLASS="LITERAL"
+>BLKRRPART</TT
+>. Das erneute Einlesen der
+Partitionstabelle ist bei partitionierbaren Geräten sinnvoll und
+entspricht dem Revalidieren einer Diskette nach einem
+Diskettenwechsel:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+case BLKRRPART: /* Partitionstabelle neu einlesen */
+  return spull_revalidate(inode-&#62;i_rdev);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Der größte Unterschied zwischen <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> und
+<SPAN
+CLASS="APPLICATION"
+>spull</SPAN
+> besteht aber in der
+Anfrage-Funktion. <SPAN
+CLASS="APPLICATION"
+>spull</SPAN
+> muß in der
+Anfrage-Funktion die Partitionsinformation benutzen, um die Daten
+für die verschiedenen Minor-Nummern korrekt zu übertragen. Das
+Auffinden der Übertragung geschieht einfach durch Addieren des
+Startsektors zu dem in der Anfrage angegebenen Sektor; die
+Partitionsgrößeninformation wird dann dazu verwendet sicherzustellen,
+daß die Anfrage in die Partition paßt. Wenn das erledigt ist, gibt es
+keine Implementationsunterschiede zu <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+>
+mehr.</P
+><P
+>Hier sehen Sie die relevanten Zeilen aus
+<SPAN
+><I
+CLASS="EMPHASIS"
+>spull_request</I
+></SPAN
+>:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+ptr = device-&#62;data +
+      (spull_partitions[minor].start_sect + req-&#62;sector)*SPULL_HARDSECT;
+size = req-&#62;current_nr_sectors*SPULL_HARDSECT;
+/*
+ * Sicherstellen, daß die Uebertragung in das Geraet paßt.
+ */
+if (req-&#62;sector + req-&#62;current_nr_sectors &#62;
+                spull_partitions[minor].nr_sects) {
+    static int count = 0;
+    if (count++ &#60; 5)
+      printk(KERN_WARNING "spull: request past end of partition\n");
+    return 0;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die Anzahl der Sektoren wird mit der Hardware-Sektorengröße (die, wie
+Sie sich erinnern werden, in
+<SPAN
+CLASS="APPLICATION"
+>spull</SPAN
+> hart codiert ist) multipliziert, um
+an die Größe der Partition in Bytes zu kommen.
+
+
+&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="lockremove.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="lockbh.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Herausnehmbare Geräte</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="lock.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Interrupt-gesteuerte Block-Treiber</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

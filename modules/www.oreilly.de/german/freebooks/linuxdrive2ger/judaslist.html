@@ -1,0 +1,519 @@
+<HTML
+><HEAD
+><TITLE
+>Verkettete Listen</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Überlegte Verwendung von Datentypen"
+HREF="judas.html"><LINK
+REL="PREVIOUS"
+TITLE="Andere Portabilitätsfragen"
+HREF="x13402.html"><LINK
+REL="NEXT"
+TITLE="Schnellreferenz"
+HREF="x13652.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x13402.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 10. Überlegte Verwendung von Datentypen</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x13652.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="JUDASLIST"
+>Verkettete Listen</A
+></H1
+><P
+>&#13;
+
+Betriebssystem-Kernel benötigen wie viele andere Programme oft Listen
+von Datenstrukturen. Im Linux-Kernel hat es manchmal mehrere
+Implementationen verketteter Listen gegeben. Um die Menge doppelten
+Codes zu reduzieren, haben sich die Kernel-Entwickler auf eine
+Standardimplementation ringförmiger, doppelt verketteter Listen
+geeignet; alle, die Listen verarbeiten müssen, sollten diese
+Funktionalität verwenden, die mit dem Kernel 2.1.45 eingeführt wurde.</P
+><P
+>&#13;
+
+Um diesen Listenmechanismus zu verwenden, muß Ihr Treiber die Datei
+<TT
+CLASS="LITERAL"
+>&#60;linux/list.h&#62;</TT
+> einbinden. Diese Datei
+definiert eine einfache Datenstruktur des Typs
+<TT
+CLASS="LITERAL"
+>list_head</TT
+>:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;struct list_head {
+    struct list_head *next, *prev;
+};</PRE
+></TD
+></TR
+></TABLE
+><P
+>In richtigem Code verwendete verkettete Listen bestehen fast immer
+aus irgendeiner Struktur, die jeweils einen Eintrag in der Liste
+beschreibt. Um die Listen-Funktionalität in Linux in Ihrem Code zu
+verwenden, müssen Sie nur einen <TT
+CLASS="LITERAL"
+>list_head</TT
+> in
+den Strukturen einbauen, aus denen die Liste besteht. Wenn Ihr Treiber
+etwa eine Liste zu erledigender Dinge verwaltet, dann könnte die
+Deklaration folgendermaßen aussehen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;struct todo_struct {
+    struct list_head list;
+    int priority; /* treiberspezifisch */
+    /* ... andere treiberspezifische Felder */
+};</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Der Kopf der Liste muß eine alleinstehende
+<TT
+CLASS="LITERAL"
+>list_head</TT
+>-Struktur sein. Listen-Köpfe müssen
+vor der Verwendung mit dem Makro
+<TT
+CLASS="LITERAL"
+>INIT_LIST_HEAD</TT
+> initialisiert
+werden. Der Kopf einer &#8220;Todo-Liste&#8221; könnte wie folgt deklariert und
+initialisiert werden:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;struct list_head todo_list;
+
+INIT_LIST_HEAD(&#38;todo_list);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Alternativ dazu können Listen auch zur Kompilierzeit initialisiert
+werden:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;LIST_HEAD(todo_list);</PRE
+></TD
+></TR
+></TABLE
+><P
+>In <TT
+CLASS="LITERAL"
+>&#60;linux/list.h&#62;</TT
+> sind mehrere Funktionen
+definiert, die auf Listen arbeiten:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>list_add(struct list_head *new, struct list_head *head);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion fügt den Eintrag <TT
+CLASS="LITERAL"
+>new</TT
+> unmittelbar
+nach dem Listenkopf ein &#8212; normalerweise am Anfang der
+Liste. Auf diese Weise können Stacks aufgebaut werden. Beachten Sie
+aber, daß <TT
+CLASS="LITERAL"
+>head</TT
+> nicht der nominelle Kopf der Liste
+sein muß. Wenn Sie eine <TT
+CLASS="LITERAL"
+>list_head</TT
+>-Struktur
+übergeben, die sich zufällig irgendwo mitten in der Liste befindet,
+dann gelangt der neue Eintrag unmittelbar dahinter. Weil Linux-Listen
+zirkulär sind, unterscheidet sich der Kopf der Liste nicht weiter von
+anderen Einträgen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>list_add_tail(struct list_head *new, struct list_head *head);</TT
+></DT
+><DD
+><P
+>&#13;Fügt einen neuen Eintrag unmittelbar vor dem angegebenen Listenkopf
+ein &#8212; also am Ende der
+Liste. <SPAN
+><I
+CLASS="EMPHASIS"
+>list_add_tail</I
+></SPAN
+> kann also zum
+Aufbau von FIFOs verwendet werden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>list_del(struct list_head *entry);</TT
+></DT
+><DD
+><P
+>&#13;Der angegebene Eintrag wird aus der Liste entfernt.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>list_empty(struct list_head *head);</TT
+></DT
+><DD
+><P
+>&#13;Gibt einen von Null verschiedenen Wert zurück, wenn die Liste nicht
+leer ist.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>list_splice(struct list_head *list, struct list_head *head);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion verknüpft zwei Listen durch Einfügen von
+<TT
+CLASS="LITERAL"
+>list</TT
+> unmittelbar hinter <TT
+CLASS="LITERAL"
+>head</TT
+>.</P
+></DD
+></DL
+></DIV
+><P
+>&#13;Die <TT
+CLASS="LITERAL"
+>list_head</TT
+>-Strukturen sind für die
+Implementierung einer Liste von gleichartigen Strukturen geeignet,
+aber das aufrufende Programm ist oft mehr an den größeren Strukturen
+interessiert, die die Liste insgesamt ausmachen. Es gibt ein Makro
+namens <TT
+CLASS="LITERAL"
+>list_entry</TT
+>, das einen Zeiger auf eine
+<TT
+CLASS="LITERAL"
+>list_head</TT
+>-Struktur auf einen Zeiger auf die
+enthaltene Struktur abbildet. Dieses Makro wird folgendermaßen
+aufgerufen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;list_entry(struct list_head *ptr, type_of_struct, field_name);</PRE
+></TD
+></TR
+></TABLE
+><P
+>wobei <TT
+CLASS="LITERAL"
+>ptr</TT
+> ein Zeiger auf die verwendete
+<TT
+CLASS="LITERAL"
+>struct list_head</TT
+>
+ist. <TT
+CLASS="LITERAL"
+>type_of_struct</TT
+> ist der Typ der
+Struktur, die den <TT
+CLASS="LITERAL"
+>ptr</TT
+> enthält, und
+<TT
+CLASS="LITERAL"
+>field_name</TT
+> ist der Name des Listenfeldes in
+der Struktur. In unserer
+<TT
+CLASS="LITERAL"
+>todo_struct</TT
+>-Struktur würde das Listenfeld
+einfach <TT
+CLASS="LITERAL"
+>list</TT
+> heißen. Wir würden also einen
+Listeneintrag mit folgender Zeile in seine enthaltene Struktur
+konvertieren:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;struct todo_struct *todo_ptr =
+    list_entry(listptr, struct todo_struct, list);</PRE
+></TD
+></TR
+></TABLE
+><P
+>An das Makro <SPAN
+><I
+CLASS="EMPHASIS"
+>list_entry</I
+></SPAN
+> muß man sich erst
+gewöhnen, aber so schwierig zu verwenden ist es gar nicht.</P
+><P
+>&#13;Die Traversierung verketteter Listen ist einfach: Man muß einfach nur
+den Zeigern <TT
+CLASS="LITERAL"
+>prev</TT
+> und <TT
+CLASS="LITERAL"
+>next</TT
+>
+folgen. Nehmen wir als Beispiel an, daß wir die Liste der
+<TT
+CLASS="LITERAL"
+>todo_struct</TT
+>-Elemente in der Reihenfolge
+absteigender Wichtigkeit sortieren wollen. Eine Funktion zum Einfügen
+eines neuen Eintrags würde dann etwa so aussehen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;void todo_add_entry(struct todo_struct *new)
+{
+    struct list_head *ptr;
+    struct todo_struct *entry;
+
+    for (ptr = todo_list.next; ptr != &#38;todo_list; ptr = ptr-&#62;next) {
+        entry = list_entry(ptr, struct todo_struct, list);
+        if (entry-&#62;priority &#60; new-&#62;priority) {
+            list_add_tail(&#38;new-&#62;list, ptr);
+            return;
+        }
+    }
+    list_add_tail(&#38;new-&#62;list, &#38;todo_struct)
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die Datei <TT
+CLASS="LITERAL"
+>&#60;linux/list.h&#62;</TT
+> definiert auch ein
+Makro namens
+<SPAN
+><I
+CLASS="EMPHASIS"
+>list_for_each</I
+></SPAN
+>, das zu der <TT
+CLASS="LITERAL"
+>for</TT
+>-Schleife expandiert, die in diesem Code verwendet
+wurde. Sie können sich
+wahrscheinlich schon denken, daß Sie vorsichtig mit dem Verändern der
+Liste während der Traversierung sein müssen.</P
+><P
+><A
+HREF="judaslist.html#FIGLIST"
+>Abbildung 10-1</A
+> zeigt, wie die einfache <TT
+CLASS="LITERAL"
+>struct
+list_head</TT
+> zur Verwaltung der Liste von Datenstrukturen
+verwendet wird.</P
+><DIV
+CLASS="FIGURE"
+><A
+NAME="FIGLIST"
+></A
+><P
+><B
+>Abbildung 10-1. Die Datenstruktur list_head</B
+></P
+><P
+><IMG
+SRC="ldr_1001.jpg"></P
+></DIV
+><P
+>&#13;
+
+
+
+
+
+Weil nicht alle Features, die <TT
+CLASS="FILENAME"
+>list.h</TT
+> in Linux
+2.4 bereitstellt, auch in älteren Kerneln zur Verfügung stehen, füllt
+<TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> die Lücke, indem es Makros
+und Funktionen zur Verwendung in älteren Kerneln deklariert.
+
+&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x13402.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x13652.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Andere Portabilitätsfragen</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="judas.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Schnellreferenz</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Exec=kexample
+Name=Hello, World!
+Name[de]=Hallo, Welt!
+Comment=A simple Hello World example
+Comment[de]=Ein einfaches Hallo-Welt-Beispiel

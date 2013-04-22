@@ -1,0 +1,568 @@
+<HTML
+><HEAD
+><TITLE
+>Schnellreferenz</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Netzwerk-Treiber"
+HREF="net.html"><LINK
+REL="PREVIOUS"
+TITLE="Abwärtskompatibilität"
+HREF="x20925.html"><LINK
+REL="NEXT"
+TITLE="Ein Überblick über die Peripherie-Busse"
+HREF="pci.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x20925.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 14. Netzwerk-Treiber</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="pci.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN21078"
+>Schnellreferenz</A
+></H1
+><P
+>Dieser Abschnitt enthält eine Referenz der Konzepte, die in diesem
+Kapitel eingeführt wurden. Er erläutert darüber hinaus die Bedeutung
+jeder Header-Datei, die ein Treiber einbinden muß. Die Liste der
+Felder in <TT
+CLASS="LITERAL"
+>net_device</TT
+> und
+<TT
+CLASS="LITERAL"
+>sk_buff</TT
+> wird dagegen nicht wiederholt.&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/netdevice.h&#62;</TT
+></DT
+><DD
+><P
+>Diese Header-Datei enthält die Definitionen von
+        <TT
+CLASS="LITERAL"
+>struct net_device</TT
+> und <TT
+CLASS="LITERAL"
+>struct
+net_device_stats</TT
+> und bindet einige zusätzliche
+        Header-Dateien ein, die von Netzwerk-Treibern benötigt werden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int register_netdev(struct net_device *dev);</TT
+>, <TT
+CLASS="LITERAL"
+>void unregister_netdev(struct net_device *dev);</TT
+></DT
+><DD
+><P
+>&#13;
+Registrieren und deregistrieren eines Netzwerk-Geräts.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>SET_MODULE_OWNER(struct net_device *dev);</TT
+></DT
+><DD
+><P
+>&#13;Dieses Makro speichert einen Zeiger auf das aktuelle Modul in der
+Geräte-Struktur (oder übrigens auch in jeder anderen Struktur mit einem
+<TT
+CLASS="LITERAL"
+>owner</TT
+>-Feld). Damit kann das Netzwerk-Subsystem den
+Verwendungszähler des Moduls pflegen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>netif_start_queue(struct net_device *dev);</TT
+>, <TT
+CLASS="LITERAL"
+>netif_stop_queue(struct net_device *dev);</TT
+>, <TT
+CLASS="LITERAL"
+>netif_wake_queue(struct net_device *dev);</TT
+></DT
+><DD
+><P
+>&#13;
+
+Diese Funktionen steuern die Übergabe von zu übertragenden Paketen an
+den Treiber. Es werden keine Pakete übertragen, solange nicht
+<SPAN
+><I
+CLASS="EMPHASIS"
+>netif_start_queue</I
+></SPAN
+> aufgerufen worden
+ist. <SPAN
+><I
+CLASS="EMPHASIS"
+>netif_stop_queue</I
+></SPAN
+> hält die
+Übertragung an und <SPAN
+><I
+CLASS="EMPHASIS"
+>netif_wake_queue</I
+></SPAN
+>
+startet die Warteschlange wieder und stubst die Netzwerk-Schicht an,
+damit diese wieder Pakete überträgt.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void netif_rx(struct sk_buff *skb);</TT
+></DT
+><DD
+><P
+>Diese Funktion kann zur Interrupt-Zeit aufgerufen werden, um
+        dem Kernel mitzuteilen, daß ein Paket empfangen und in einem
+        Socket-Buffer gekapselt wurde.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/if.h&#62;</TT
+></DT
+><DD
+><P
+>Wird von <TT
+CLASS="FILENAME"
+>netdevice.h</TT
+> eingebunden und
+        deklariert die Schnittstellen-Flags (die
+        <TT
+CLASS="LITERAL"
+>IFF_</TT
+>-Makros) sowie <TT
+CLASS="LITERAL"
+>struct
+        ifmap</TT
+>, das eine bedeutende Rolle in der
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Implementation von
+        Netzwerk_Treibern spielt.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void netif_carrier_off(struct net_device *dev);</TT
+>, <TT
+CLASS="LITERAL"
+>void netif_carrier_on(struct net_device *dev);</TT
+>, <TT
+CLASS="LITERAL"
+>int netif_carrier_ok(struct net_device *dev);</TT
+></DT
+><DD
+><P
+>&#13;
+
+Die ersten beiden Funktionen können dazu verwendet werden, dem Kernel
+mitzuteilen, ob eine bestimmte Schnittstelle gerade ein Carrier-Signal
+hat. <SPAN
+><I
+CLASS="EMPHASIS"
+>netif_carrier_ok</I
+></SPAN
+> fragt den
+Carrier-Zustand ab, wie er in der Gerätestruktur steht.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/if_ether.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>ETH_ALEN</TT
+>, <TT
+CLASS="LITERAL"
+>ETH_P_IP</TT
+>, <TT
+CLASS="LITERAL"
+>struct ethhdr;</TT
+></DT
+><DD
+><P
+>Wird von <TT
+CLASS="FILENAME"
+>netdevice.h</TT
+> eingebunden und
+        definiert alle <TT
+CLASS="LITERAL"
+>ETH_</TT
+>-Makros, mit denen
+        Oktett-Längen (wie die Adreßlänge) und Netzwerk-Protokolle (wie
+        IP) repräsentiert werden. Außerdem wird in dieser Datei die
+        Struktur <TT
+CLASS="LITERAL"
+>ethhdr</TT
+>
+        definiert.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/skbuff.h&#62;</TT
+></DT
+><DD
+><P
+>Enthält die Definition von <TT
+CLASS="LITERAL"
+>struct
+        sk_buff</TT
+> und verwandten Strukturen sowie mehrere
+        Inline-Funktionen, die auf diesen Puffern operieren. Diese
+        Header-Datei wird auch von <TT
+CLASS="FILENAME"
+>netdevice.h</TT
+>
+        eingebunden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct sk_buff *alloc_skb(unsigned int len, int priority);</TT
+>, <TT
+CLASS="LITERAL"
+>struct sk_buff *dev_alloc_skb(unsigned int len);</TT
+>, <TT
+CLASS="LITERAL"
+>void kfree_skb(struct sk_buff *skb);</TT
+>, <TT
+CLASS="LITERAL"
+>void dev_kfree_skb(struct sk_buff *skb);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+Diese Funktionen kümmern sich um das Allozieren und Freigeben von
+Socket-Buffern. Treiber sollten normalerweise die für diesen Zweck
+vorgesehenen <TT
+CLASS="LITERAL"
+>dev_</TT
+>-Varianten verwenden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned char *skb_put(struct sk_buff *skb, int len);</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned char *_&#8201;_skb_put(struct sk_buff *skb, int len);</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned char *skb_push(struct sk_buff *skb, int len);</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned char *_&#8201;_skb_push(struct sk_buff *skb, int len);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+Diese Funktionen fügen einem <TT
+CLASS="LITERAL"
+>skb</TT
+> Daten hinzu;
+<SPAN
+><I
+CLASS="EMPHASIS"
+>skb_put</I
+></SPAN
+> stellt die Daten an das Ende des
+<TT
+CLASS="LITERAL"
+>skb</TT
+>, <SPAN
+><I
+CLASS="EMPHASIS"
+>skb_push</I
+></SPAN
+> dagegen
+an den Anfang. Die normalen Versionen überprüfen, ob hinreichend Platz
+zur Verfügung steht, die Versionen mit den führenden Unterstrichen tun das
+nicht.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int skb_headroom(struct sk_buff *skb);</TT
+>, <TT
+CLASS="LITERAL"
+>int skb_tailroom(struct sk_buff *skb);</TT
+>, <TT
+CLASS="LITERAL"
+>void skb_reserve(struct sk_buff *skb, int len);</TT
+></DT
+><DD
+><P
+>&#13;
+
+Diese Funktionen verwalten Platz in einem
+<TT
+CLASS="LITERAL"
+>skb</TT
+>. <SPAN
+><I
+CLASS="EMPHASIS"
+>skb_headroom</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>skb_tailroom</I
+></SPAN
+> geben zurück, wieviel Platz
+am Anfang beziehungsweise am Ende eines <TT
+CLASS="LITERAL"
+>skb</TT
+> zur
+Verfügung steht. <SPAN
+><I
+CLASS="EMPHASIS"
+>skb_reserve</I
+></SPAN
+> kann
+verwendet werden, um Platz am Anfang eines <TT
+CLASS="LITERAL"
+>skb</TT
+> zu
+reservieren, der leer sein muß.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned char *skb_pull(struct sk_buff *skb, int len);</TT
+></DT
+><DD
+><P
+>&#13;<SPAN
+><I
+CLASS="EMPHASIS"
+>skb_pull</I
+></SPAN
+> &#8220;entfernt&#8221; Daten aus einem
+<TT
+CLASS="LITERAL"
+>skb</TT
+> durch Anpassen der internen Zeiger.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/etherdevice.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>void ether_setup(struct net_device *dev);</TT
+></DT
+><DD
+><P
+>Diese Funktion setzt die Zeiger der meisten Gerätemethoden
+        auf die allgemein verwendbaren Implementationen für
+        Ethernet-Treiber. Außerdem wird hier
+        <TT
+CLASS="LITERAL"
+>dev-&#62;flags</TT
+> gesetzt und der nächste
+        verfügbare <TT
+CLASS="LITERAL"
+>eth</TT
+><TT
+CLASS="REPLACEABLE"
+><I
+>x</I
+></TT
+>-Name
+        an <TT
+CLASS="LITERAL"
+>dev-&#62;name</TT
+> zugewiesen, wenn das erste
+        Zeichen im Namen ein Leer- oder Nullzeichen ist.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned short eth_type_trans(struct sk_buff *skb, struct net_device *dev);</TT
+></DT
+><DD
+><P
+>Wenn eine Ethernet-Schnittstelle ein Paket empfängt, dann
+        kann diese Funktion aufgerufen werden, um
+        <TT
+CLASS="LITERAL"
+>skb-&#62;pkt_type</TT
+> zu setzen. Der
+        Rückgabewert ist eine Protokoll-Nummer, die normalerweise
+        in <TT
+CLASS="LITERAL"
+>skb-&#62;protocol</TT
+> abgelegt wird.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/sockios.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>SIOCDEVPRIVATE</TT
+></DT
+><DD
+><P
+>Der erste der 16 <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Befehle, die von
+        jedem Treiber zur privaten Verwendung implementiert werden
+        können. Alle Netzwerk-<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Befehle sind in
+        <TT
+CLASS="FILENAME"
+>sockios.h</TT
+> definiert.</P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x20925.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="pci.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Abwärtskompatibilität</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="net.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Ein Überblick über die Peripherie-Busse</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

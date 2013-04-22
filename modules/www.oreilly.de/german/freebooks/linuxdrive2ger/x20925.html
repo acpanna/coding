@@ -1,0 +1,622 @@
+<HTML
+><HEAD
+><TITLE
+>Abwärtskompatibilität</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Netzwerk-Treiber"
+HREF="net.html"><LINK
+REL="PREVIOUS"
+TITLE="Multicasting"
+HREF="netmulti.html"><LINK
+REL="NEXT"
+TITLE="Schnellreferenz"
+HREF="x21078.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="netmulti.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 14. Netzwerk-Treiber</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x21078.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN20925"
+>Abwärtskompatibilität</A
+></H1
+><P
+>&#13;
+
+In der Version 2.3.43 des Kernels wurde das Netzwerk-Subsystem
+umfassend renoviert. Die neue &#8220;softnet&#8221;-Implementation war
+hinsichtlich Performance und sauberem Design eine große
+Verbesserung. Natürlich brachte dieser Umbau auch Änderungen an der
+Schnittstelle für Netzwerk-Treiber mit sich, aber weniger, als man
+vielleicht erwarten könnte.
+
+&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN20936"
+>Unterschiede in Linux 2.2</A
+></H2
+><P
+>Zunächst einmal wurde in Linux 2.3.14 die Netzwerk-Geräte-Struktur,
+die früher immer <TT
+CLASS="LITERAL"
+>struct device</TT
+> hieß, in
+<TT
+CLASS="LITERAL"
+>struct net_device</TT
+> umbenannt. Der neue Name
+paßt natürlich besser, weil die Struktur nie Geräte im allgemeinen
+beschreiben sollte.</P
+><P
+>&#13;
+
+Vor Version 2.3.43 gab es die Funktionen
+<SPAN
+><I
+CLASS="EMPHASIS"
+>netif_start_queue</I
+></SPAN
+>,
+<SPAN
+><I
+CLASS="EMPHASIS"
+>netif_stop_queue</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>netif_wake_queue</I
+></SPAN
+> nicht. Die Übertragung von
+Paketen wurde statt dessen durch drei Felder in der Struktur
+<TT
+CLASS="LITERAL"
+>device</TT
+> gesteuert. <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+>
+implementiert die drei Funktionen unter Verwendung der drei Felder,
+wenn für 2.2 oder 2.0 kompiliert wird.</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned char start;</TT
+></DT
+><DD
+><P
+>Diese Variable zeigte an, daß die Schnittstelle betriebsbereit ist;
+sie wurde normalerweise in der <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>-Methode des
+Treibers auf 1 gesetzt. In der aktuellen Implementation wird statt
+dessen <TT
+CLASS="LITERAL"
+>netif_start_queue</TT
+> aufgerufen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long interrupt;</TT
+></DT
+><DD
+><P
+><TT
+CLASS="LITERAL"
+>interrupt</TT
+> wurde verwendet, um anzuzeigen, daß das
+Gerät einen Interrupt bediente, und wurde daher zu Beginn eines
+Interrupt-Handlers auf 1 und vor dem Rücksprung auf 0 gesetzt. Dies
+war nie ein hinreichender Ersatz für korrektes Sperren und wurde daher
+durch interne Spinlocks ersetzt.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long tbusy;</TT
+></DT
+><DD
+><P
+>Wenn diese Variable einen von Null verschiedenen Wert hatte, wurde
+damit angezeigt, daß das Gerät keine weiteren ausgehenden Pakete
+entgegennehmen konnte. Wo ein 2.4-Treiber
+<SPAN
+><I
+CLASS="EMPHASIS"
+>netif_stop_queue</I
+></SPAN
+> aufruft, setzten
+ältere Treiber <TT
+CLASS="LITERAL"
+>tbusy</TT
+> auf 1. Zum Neustarten der
+Warteschlange wurde <TT
+CLASS="LITERAL"
+>tbusy</TT
+> zurück auf 0 gesetzt und
+<TT
+CLASS="LITERAL"
+>mark_bh(NET_BH)</TT
+> aufgerufen.</P
+></DD
+></DL
+></DIV
+><P
+>&#13;Normalerweise war das Setzen von <TT
+CLASS="LITERAL"
+>tbusy</TT
+> ausreichend,
+um sicherzustellen, daß die Methode
+<SPAN
+><I
+CLASS="EMPHASIS"
+>hard_start_xmit</I
+></SPAN
+> des Treibers nicht
+aufgerufen wurde. Wenn das Netzwerk-System aber der Meinung war, daß
+eine Transmitter-Blockade eingetreten sein mußte, dann rief es diese
+Methode trotzdem auf. Es gab vor softnet keine
+<SPAN
+><I
+CLASS="EMPHASIS"
+>tx_timeout</I
+></SPAN
+>-Methode. Daher mußten ältere
+Treiber explizit überprüfen, ob
+<SPAN
+><I
+CLASS="EMPHASIS"
+>hard_start_xmit</I
+></SPAN
+> aufgerufen worden
+war, während <TT
+CLASS="LITERAL"
+>tbusy</TT
+> gesetzt war, und sich
+entsprechend verhalten.</P
+><P
+>Der Typ des Feldes <TT
+CLASS="LITERAL"
+>name</TT
+> in <TT
+CLASS="LITERAL"
+>struct
+device</TT
+> war auch anders. In Version 2.2 war dies einfach:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;char *name;</PRE
+></TD
+></TR
+></TABLE
+><P
+>Der Speicherplatz für den Namen der Schnittstelle mußte also separat
+alloziert werden, und <TT
+CLASS="LITERAL"
+>name</TT
+> mußte auf diesen Speicherplatz
+verweisen. Der Gerätename stand normalerweise in einer statischen
+Variable im Treiber. Die <TT
+CLASS="LITERAL"
+>%d</TT
+>-Notation für
+dynamisch zugewiesene Schnittstellennamen gab es in 2.2 auch
+nicht. Statt dessen allozierte der Kernel den nächsten
+<TT
+CLASS="LITERAL"
+>eth</TT
+>-Namen, wenn der Name mit einem Null-Byte oder
+einem Leerzeichen begann. Der 2.4-Kernel implementiert dieses
+Verhalten noch; es sollte aber nicht mehr genutzt werden. Ab 2.5
+wird voraussichtlich nur noch das <TT
+CLASS="LITERAL"
+>%d</TT
+>-Format
+unterstützt.</P
+><P
+>&#13;Das Feld <TT
+CLASS="LITERAL"
+>owner</TT
+> (und das
+Makro <TT
+CLASS="LITERAL"
+>SET_MODULE_OWNER</TT
+>) wurden im
+Kernel 2.4.0-test11, kurz vor dem offiziellen stabilen Release
+hinzugefügt. Davor mußten Netzwerktreiber-Module ihre
+Verwendungszähler selbst pflegen. <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+>
+definiert ein leeres <TT
+CLASS="LITERAL"
+>SET_MODULE_OWNER</TT
+>
+für Kernel, die dieses Makro nicht haben; portabler Code sollte seinen
+Verwendungszähler weiterhin manuell pflegen (und das Netzwerk-System
+dieses auch tun lassen).</P
+><P
+>&#13;
+Die Verbindungszustandsfunktionen (<SPAN
+><I
+CLASS="EMPHASIS"
+>netif_carrier_on</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>netif_carrier_off</I
+></SPAN
+>) gab es in 2.2 noch nicht. Der
+Kernel kam damals einfach ohne diese Informationen aus.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN21014"
+>Weitere Unterschiede in Linux 2.0</A
+></H2
+><P
+>Auch in der 2.1-Entwicklungsserie gab es eine Reihe von Änderungen an
+der Schnittstelle für Netzwerk-Treiber. Die meisten waren kleine
+Änderungen an Funktionsprototypen und nicht umfassende Änderungen des
+Netzwerk-Codes insgesamt.</P
+><P
+>&#13;
+Die Schnittstellen-Statistiken standen in einer Struktur namens
+<TT
+CLASS="LITERAL"
+>struct enet_statistics</TT
+>, die in
+<TT
+CLASS="LITERAL"
+>&#60;linux/if_ether.h&#62;</TT
+> definiert
+war. Selbst Nicht-Ethernet-Treiber verwendeten diese Struktur. Die
+Feldnamen waren die gleichen wie in der heutigen <TT
+CLASS="LITERAL"
+>struct
+net_device_stats</TT
+>, die Felder
+<TT
+CLASS="LITERAL"
+>rx_bytes</TT
+> und
+<TT
+CLASS="LITERAL"
+>tx_bytes</TT
+> gab es aber noch nicht.</P
+><P
+>&#13;Der 2.0-Kernel behandelte Transmitter-Blockaden genauso wie der
+2.2-Kernel. Es gab aber noch eine zusätzliche Funktion:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;void dev_tint(struct device *dev);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Diese Funktion wurde vom Treiber aufgerufen, nachdem eine Blockade
+beseitigt worden war, und startete die Übertragung von Paketen neu.</P
+><P
+>&#13;Eine Reihe von Funktionen hatten andere
+Prototypen. <SPAN
+><I
+CLASS="EMPHASIS"
+>dev_kfree_skb</I
+></SPAN
+> hatte ein
+zweites, ein Integer-Argument, das entweder
+<TT
+CLASS="LITERAL"
+>FREE_READ</TT
+> für eingehende Pakete (also vom
+Treiber allozierte <TT
+CLASS="LITERAL"
+>skb</TT
+>s) oder
+<TT
+CLASS="LITERAL"
+>FREE_WRITE</TT
+> für ausgehende Pakete (also vom
+Netzwerk-Code allozierte <TT
+CLASS="LITERAL"
+>skb</TT
+>s) war. Fast alle
+Aufrufe von <SPAN
+><I
+CLASS="EMPHASIS"
+>dev_kfree_skb</I
+></SPAN
+> im
+Netzwerk-Treiber-Code verwendeten
+<TT
+CLASS="LITERAL"
+>FREE_WRITE</TT
+>. Die nicht überprüfenden
+Versionen der <TT
+CLASS="LITERAL"
+>skb</TT
+>-Funktionen (wie
+<SPAN
+><I
+CLASS="EMPHASIS"
+>__skb_push</I
+></SPAN
+>) gab es noch
+nicht; <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> im Beispiel-Code emuliert diese
+Funktionen unter 2.0.</P
+><P
+>&#13;Die Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>rebuild_header</I
+></SPAN
+> hatte andere
+Argumente:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;int (*rebuild_header) (void *eth, struct device *dev,
+unsigned long raddr, struct sk_buff *skb);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+Der Linux-Kernel verwendete auch
+<SPAN
+><I
+CLASS="EMPHASIS"
+>rebuild_header</I
+></SPAN
+> deutlich mehr; diese
+Funktion leistete einen Großteil der Arbeit, die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>hard_header</I
+></SPAN
+> heute erledigt. Wenn
+<SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> unter Linux 2.0 kompiliert wird, dann
+baut es die Hardware-Header folgendermaßen auf:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+int snull_rebuild_header(void *buff, struct net_device *dev, unsigned long dst,
+                    struct sk_buff *skb)
+{
+    struct ethhdr *eth = (struct ethhdr *)buff;
+
+    memcpy(eth-&#62;h_source, dev-&#62;dev_addr, dev-&#62;addr_len);
+    memcpy(eth-&#62;h_dest, dev-&#62;dev_addr, dev-&#62;addr_len);
+    eth-&#62;h_dest[ETH_ALEN-1]   &#8257;= 0x01;   /* dest sind wir xor 1 */
+    return 0;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die Gerätemethoden zum Cachen von Headern sahen in diesem Kernel auch
+deutlich anders aus. Wenn Ihr Treiber diese Funktionen direkt
+implementieren muß (das trifft nur auf wenige zu) und auch unter Linux
+2.0 funktionieren soll, dann können Sie sich die Definitionen in
+<TT
+CLASS="LITERAL"
+>&#60;linux/netdevice.h&#62;</TT
+> anschauen, um zu sehen,
+wie man das damals machte.
+
+
+
+
+
+
+
+
+&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN21066"
+>Suchen und HAVE_DEVLIST</A
+></H2
+><P
+>&#13;
+Wenn Sie sich den Quellcode so ziemlich jedes Netzwerk-Treibers im Kernel
+anschauen, dann finden Sie ein Code-Muster, das etwa so aussieht:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;#ifdef HAVE_DEVLIST
+/*
+ * Support for an alternate probe manager,
+ * which will eliminate the boilerplate below.
+ */
+struct netdev_entry netcard_drv =
+{cardname, netcard_probe1, NETCARD_IO_EXTENT, netcard_portlist};
+#else
+/* Regular probe routine defined here */</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#62;
+&#62;
+Diesen Code gibt es interessanterweise seit der 1.1-Entwicklungsserie,
+aber wir warten immer noch auf den alternativen Such-Manager. Man kann
+wahrscheinlich getrost davon ausgehen, daß man sich auf diese
+großartige Änderung nicht besonders vorbereiten muß, insbesondere weil
+die Ideen, wie das implementiert werden sollte, sich sicherlich
+inzwischen geändert haben.&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="netmulti.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x21078.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Multicasting</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="net.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Schnellreferenz</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

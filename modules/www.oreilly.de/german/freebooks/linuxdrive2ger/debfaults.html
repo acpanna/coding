@@ -1,0 +1,1513 @@
+<HTML
+><HEAD
+><TITLE
+>Debuggen von Systemfehlern</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Debugging-Techniken"
+HREF="debug.html"><LINK
+REL="PREVIOUS"
+TITLE="Debugging durch Beobachten"
+HREF="x4834.html"><LINK
+REL="NEXT"
+TITLE="Debugger und verwandte Werkzeuge"
+HREF="x5337.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x4834.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 4. Debugging-Techniken</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x5337.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="DEBFAULTS"
+>Debuggen von Systemfehlern</A
+></H1
+><P
+>&#13;
+
+Selbst wenn Sie alle Beobachtungs- und Debugging-Techniken verwendet
+haben, bleiben manchmal noch Fehler im Treiber, die zu einem
+Systemfehler führen, wenn der Treiber ausgeführt wird. Wenn so etwas
+passiert, ist es wichtig, so viele Informationen wie möglich zu sammeln,
+um das Problem zu lösen.&#13;</P
+><P
+>Beachten Sie, daß &#8220;Fehler&#8221; hier nicht gleich &#8220;Panik&#8221;
+bedeutet. Der Linux-Code ist robust genug, um die meisten Fehler sanft
+abfedern zu können: Ein Fehler führt meistens nur zur Beendigung des
+aktuellen Prozesses, aber das System läuft weiter. Das System
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kann</I
+></SPAN
+> jedoch in Panik geraten, wenn ein Fehler
+außerhalb eines Prozeßkontextes auftritt oder ein lebenswichtiger Teil
+des Systems betroffen ist. Aber wenn das Problem nur ein Treiberfehler
+ist, dann wird normalerweise lediglich der Prozeß
+abgeschossen, der den Treiber unseligerweise benutzt hat. Der
+einzige nicht wiedergutzumachende Schaden, der auftritt, wenn ein
+Prozeß zerstört wird, ist der mögliche Verlust des vom Prozeß
+allozierten Speichers. Beispielsweise könnten via
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> allozierte dynamische Listen verloren
+sein. Da aber der Kernel für jedes offene Gerät
+<SPAN
+><I
+CLASS="EMPHASIS"
+>close</I
+></SPAN
+> aufruft, kann der Treiber alles freigeben,
+was in <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> alloziert wurde.&#13;</P
+><P
+>Wir haben bereits erwähnt, daß eine informative Meldung auf der Konsole ausgegeben wird, falls sich Kernel-Code nicht richtig verhält. Im nächsten
+Abschnitt wird erklärt, wie man diese Meldungen entschlüsselt und
+benutzt. Obwohl diese Meldungen für den Anfänger ziemlich obskur
+aussehen, sind diese Prozessor-Dumps voller interessanter Informationen
+und oft schon ausreichend, um einen Programmfehler zu finden, ohne daß
+noch zusätzlich getestet werden muß.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN4935"
+>Oops-Meldungen</A
+></H2
+><P
+>&#13;
+
+
+Die meisten Fehler treten auf, wenn ein <TT
+CLASS="LITERAL"
+>NULL</TT
+>-Zeiger
+dereferenziert oder ein anderer inkorrekter Zeiger-Wert verwendet
+wird. Das führt normalerweise zu einer Oops-Meldung.&#13;</P
+><P
+>Jede Adresse, die der Prozessor verwendet, ist eine
+<I
+CLASS="FIRSTTERM"
+>virtuelle</I
+> Adresse, die über eine komplexe Struktur aus
+sogenannten Seitentabellen (<SPAN
+><I
+CLASS="EMPHASIS"
+>page tables</I
+></SPAN
+>, siehe
+in Kapitel 13) auf
+physikalische Adressen abgebildet wird. Wenn ein ungültiger Zeiger
+dereferenziert wird, kann der Seitenaustausch-Algorithmus den Zeiger nicht
+auf eine physikalische Adresse abbilden, und der Prozessor meldet dem
+Betriebssystem einen <I
+CLASS="FIRSTTERM"
+>Seitenfehler</I
+> (<SPAN
+><I
+CLASS="EMPHASIS"
+>page
+fault</I
+></SPAN
+>). Wenn die Adresse nicht gültig ist, dann kann
+der Kernel die fehlende Seite nicht laden. Passiert dies, während der Prozessor im Supervisor-Modus ist, erzeugt der Kernel eine Oops-Meldung.</P
+><P
+>Interessanterweise war die erste nach der Version 2.0 eingeführte
+Verbesserung die automatische Fehlerbehandlung ungültiger Adressen
+beim Transportieren von Daten in und aus dem User-Space. Linus
+entschloß sich dazu, die Hardware fehlerhafte Speicherreferenzen
+abfangen zu lassen, so daß der Normalfall (die Adressen sind korrekt)
+effizienter abgehandelt wird.</P
+><P
+>Eine Oops-Meldung zeigt den Prozessor-Status zum Zeitpunkt des Fehlers
+an. Dazu gehören der Inhalt der CPU-Register, die Lage der
+Seitendeskriptoren-Tabellen und andere, auf den ersten Blick
+unverständliche Informationen. Die Meldung wird durch
+<SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+>-Anweisungen in der
+Fehlerbehandlungsroutine
+(<TT
+CLASS="FILENAME"
+>arch/*/kernel/traps.c</TT
+>) ausgegeben
+und, wie weiter vorn in Abschnitt &#8220;Printk&#8221;
+beschrieben, weitergeleitet.&#13;</P
+><P
+>Lassen Sie uns eine solche Meldung ansehen. Hier sehen Sie, was
+geschieht, wenn ein <TT
+CLASS="LITERAL"
+>NULL</TT
+>-Zeiger auf einem PC refenziert wird,
+der die Version 2.4 des Kernels verwendet. Die wichtigste Information
+ist hier der Anweisungszeiger (<TT
+CLASS="LITERAL"
+>EIP</TT
+>), also die Adresse
+der fehlerhaften Anweisung.&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>&#13;
+Unable to handle kernel NULL pointer dereference at virtual address \
+     00000000
+ printing eip:
+c48370c3
+*pde = 00000000
+Oops: 0002
+CPU:    0
+EIP:    0010:[&#60;c48370c3&#62;]
+EFLAGS: 00010286
+eax: ffffffea   ebx: c2281a20   ecx: c48370c0   edx: c2281a40
+esi: 4000c000   edi: 4000c000   ebp: c38adf8c   esp: c38adf8c
+ds: 0018   es: 0018   ss: 0018
+Process ls (pid: 23171, stackpage=c38ad000)
+Stack: 0000010e c01356e6 c2281a20 4000c000 0000010e c2281a40 c38ac000 \
+            0000010e
+       4000c000 bffffc1c 00000000 00000000 c38adfc4 c010b860 00000001 \
+            4000c000
+       0000010e 0000010e 4000c000 bffffc1c 00000004 0000002b 0000002b \
+            00000004
+Call Trace: [&#60;c01356e6&#62;] [&#60;c010b860&#62;]
+Code: c7 05 00 00 00 00 00 00 00 00 31 c0 89 ec 5d c3 8d b6 00 00</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die obige Meldung wurde das durch Schreiben auf ein Gerät provoziert, das dem
+<SPAN
+CLASS="APPLICATION"
+>faulty</SPAN
+>-Modul gehört, einem Modul, in das
+wir absichtlich Fehler eingebaut haben. Die Implementation der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>-Methode von <TT
+CLASS="FILENAME"
+>faulty.c</TT
+>
+ist trivial:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+ssize_t faulty_write (struct file *filp, const char *buf, size_t count,
+                loff_t *pos)
+{
+    /* Durch Dereferenzieren eines NULL-Zeigers ganz einfach einen Fehler hervorrufen */
+    *(int *)0 = 0;
+    return 0;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wie Sie sehen, dereferenzieren wir hier einen
+<TT
+CLASS="LITERAL"
+>NULL</TT
+>-Zeiger. Weil 0 nie ein zulässiger Zeigerwert
+ist, tritt ein Fehler auf, den der Kernel in die oben gezeigte
+Oops-Meldung umwandelt. Der aufrufende Prozeß wird dann beendet.</P
+><P
+>Das Modul <SPAN
+CLASS="APPLICATION"
+>faulty</SPAN
+> enthält noch
+weitere interessante Fehlerfälle in seiner
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>-Implementation:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+char faulty_buf[1024];
+
+ssize_t faulty_read (struct file *filp, char *buf, size_t count,
+                     loff_t *pos)
+{
+    int ret, ret2;
+    char stack_buf[4];
+
+    printk(KERN_DEBUG "read: buf %p, count %li\n", buf, (long)count);
+    /* Die naechste Zeile fuehrt bei 2.0 zu einem Oops, ab 2.2 nicht mehr */
+    ret = copy_to_user(buf, faulty_buf, count);
+    if (!ret) return count; /* we survived */
+
+    printk(KERN_DEBUG "didn't fail: retry\n");
+    /* Ein Puffer-Ueberlauf sollte auch bei 2.2 und 2.4 wirken  */
+    sprintf(stack_buf, "1234567\n");
+    if (count &#62; 8) count = 8; /* copy 8 bytes to the user */
+    ret2 = copy_to_user(buf, stack_buf, count);
+    if (!ret2) return count;
+    return ret2;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Diese Funktion liest zuerst aus einem globalen Puffer,
+ohne die Größe der Daten zu überprüfen, und erzeugt dann durch
+Schreiben in einen lokalen Puffer einen <I
+CLASS="FIRSTTERM"
+>Buffer
+Overrun</I
+>. Die erste Situation führt nur in der Version 2.0
+des Kernels zu einem Oops, weil spätere Versionen sich automatisch um
+die Kopierfunktionen zum oder vom User-Space kümmern. Der
+Puffer-Überlauf führt in allen Kernel-Versionen zu einem Oops; weil
+aber die <TT
+CLASS="LITERAL"
+>return</TT
+>-Anweisung den Anweisungszeiger ins
+Niemandsland bringt, ist diese Art von Fehlern sehr viel schwieriger
+aufzuspüren, und Sie können etwa folgendes bekommen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>EIP:    0010:[&#60;00000000&#62;]
+[...]
+Call Trace: [&#60;c010b860&#62;]
+Code:  Bad EIP value.</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wenn Benutzer mit Oops-Meldungen konfrontiert werden,
+besteht das Hauptproblem darin, daß die hexadezimalen Werte nur wenig
+eigentliche Bedeutung enthalten; damit sie für den Programmierer eine
+Bedeutung bekommen, müssen sie in Symbole aufgelöst werden. Dafür gibt
+es Hilfsprogramme: <SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+> und
+<SPAN
+CLASS="APPLICATION"
+>ksymoops</SPAN
+>. Ersteres erledigt die Decodierung
+der Symbole ganz automatisch, wenn es gerade läuft, letzteres muß vom
+Benutzer explizit aufgerufen werden. In der folgenden Darstellung
+verwenden wir die Daten aus unserem ersten Oops-Beispiel, in dem
+wir einen <TT
+CLASS="LITERAL"
+>NULL</TT
+>-Zeiger dereferenziert haben.</P
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN4981"
+>klogd benutzen</A
+></H3
+><P
+>&#13;
+
+
+
+
+Der <SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+>-Daemon kann Oops-Meldungen
+decodieren, bevor sie überhaupt in den Protokolldateien
+auftauchen. <SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+> kann alle Informationen
+liefern, die Entwickler brauchen, um ein Problem einzukreisen, auch
+wenn die Entwickler dafür manchmal ein bißchen nachhelfen müssen.</P
+><P
+>Ein Auszug der Oops-Meldung für <SPAN
+CLASS="APPLICATION"
+>faulty</SPAN
+>
+sieht im Systemprotokoll folgendermaßen aus (beachten Sie die
+decodierten Symbole in der <TT
+CLASS="LITERAL"
+>EIP</TT
+>-Zeile und im Stack
+Trace):</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>Unable to handle kernel NULL pointer dereference at virtual address \
+     00000000
+ printing eip:
+c48370c3
+*pde = 00000000
+Oops: 0002
+CPU:    0
+EIP:    0010:[faulty:faulty_write+3/576]
+EFLAGS: 00010286
+eax: ffffffea   ebx: c2c55ae0   ecx: c48370c0   edx: c2c55b00
+esi: 0804d038   edi: 0804d038   ebp: c2337f8c   esp: c2337f8c
+ds: 0018   es: 0018   ss: 0018
+Process cat (pid: 23413, stackpage=c2337000)
+Stack: 00000001 c01356e6 c2c55ae0 0804d038 00000001 c2c55b00 c2336000 \
+            00000001
+       0804d038 bffffbd4 00000000 00000000 bffffbd4 c010b860 00000001 \
+            0804d038
+       00000001 00000001 0804d038 bffffbd4 00000004 0000002b 0000002b \
+            00000004
+Call Trace: [sys_write+214/256] [system_call+52/56]
+Code: c7 05 00 00 00 00 00 00 00 00 31 c0 89 ec 5d c3 8d b6 00 00</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;<SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+> liefert den größten Teil der
+notwendigen Information, um das Problem einzukreisen. In diesem Fall
+sehen wir, daß sich der Anweisungszeiger (<TT
+CLASS="LITERAL"
+>EIP</TT
+>) in
+der Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>faulty_write</I
+></SPAN
+> befand, wissen also, wo
+wir mit der Suche anfangen müssen. Der String
+<TT
+CLASS="LITERAL"
+>3/576</TT
+> teilt uns mit, daß sich der Prozessor an Byte
+3 einer Funktion befand, die 576 Bytes lang zu sein scheint. Beachten
+Sie, daß die Werte dezimal, nicht hexadezimal sind.</P
+><P
+>Man muß allerdings als Entwickler etwas vorsichtig sein, um nützliche
+Informationen über Fehler zu bekommen, die in ladbaren Modulen
+auftreten. <SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+> lädt alle verfügbaren
+Symbolinformationen beim Start und verwendet danach diese
+Symbole. Wenn Sie ein Modul laden, nachdem
+<SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+> initialisiert worden ist (was
+normalerweise beim Systemstart geschieht), dann stehen
+<SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+> keine Informationen über die Symbole
+Ihres Moduls zur Verfügung. Um <SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+> zu
+zwingen, sich diese Informationen zu holen, müssen Sie dem
+<SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+>-Prozeß nach dem Laden (oder Neuladen)
+Ihres Moduls ein <TT
+CLASS="LITERAL"
+>SIGUSR1</TT
+>-Signal schicken, bevor Sie etwas unternehmen, was zu einem Oops führen könnte.</P
+><P
+>&#13;Es ist auch möglich, <SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+> mit der Option
+<SPAN
+><I
+CLASS="EMPHASIS"
+>&#8211;p</I
+></SPAN
+> ("paranoid") zu starten, die zum
+Neuladen der Symbolinformationen führt, wann immer
+<SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+> auf eine Oops-Meldung stößt. Die
+Manual-Page von <SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+> rät aber davon ab,
+weil <SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+> den Kernel nach Informationen
+fragen muß, nachdem das Problem aufgetreten ist. Eine so erlangte
+Information kann schlicht und einfach falsch sein.</P
+><P
+>&#13;
+
+Damit <SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+> korrekt funktionieren kann, muß
+eine aktuelle Version der Symboltabellendatei
+<TT
+CLASS="FILENAME"
+>System.map</TT
+> vorliegen. Normalerweise steht diese
+Datei in <TT
+CLASS="FILENAME"
+>/boot</TT
+>; wenn Sie einen Kernel aus einem
+vom Standard abweichenden Verzeichnis gebaut und installiert haben,
+müssen Sie eventuell <TT
+CLASS="FILENAME"
+>System.map</TT
+> nach
+<TT
+CLASS="FILENAME"
+>/boot</TT
+> kopieren oder
+<SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+> mitteilen, woanders zu
+suchen. <SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+> verweigert das Decodieren der
+Symbole, wenn die Symboltabelle nicht zum aktuellen Kernel paßt. Wenn
+ein Symbol im Systemprotokoll decodiert worden ist, dann können Sie
+ziemlich sicher sein, daß es korrekt ist.</P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN5050"
+>ksymoops verwenden</A
+></H3
+><P
+>&#13;
+
+Manchmal reicht <SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+> nicht aus, um ein Problem einzukreisen. Gewöhnlich brauchen Sie sowohl die
+hexadezimale Adresse als auch das dazugehörige Symbol, und oft brauchen
+Sie auch die Offsets als hexadezimale Zahlen sowie mehr Informationen
+als das reine Decodieren der Adreßinformation. Es ist auch nicht
+ungewöhnlich, daß der <SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+>-Prozeß während
+des Fehlers abgeschossen wird.
+
+
+In solchen Situationen braucht man ein kraftvolleres
+Oops-Analysewerkzeug. <SPAN
+CLASS="APPLICATION"
+>ksymoops</SPAN
+> ist so ein
+Werkzeug.</P
+><P
+>Vor der 2.3-Entwicklungsserie wurde
+<SPAN
+CLASS="APPLICATION"
+>ksymoops</SPAN
+> mit den Kernel-Quellen im
+Verzeichnis <SPAN
+><I
+CLASS="EMPHASIS"
+>scripts</I
+></SPAN
+> verteilt. Heutzutage
+befindet es sich auf einem eigenen FTP-Server und wird unabhängig vom
+Kernel gepflegt. Selbst wenn Sie mit einem älteren Kernel arbeiten,
+sollten Sie sich am besten von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ftp://ftp.ocs.com.au/pub/ksymoops</I
+></SPAN
+> die neueste
+Version dieses Werkzeugs holen.</P
+><P
+>Um sein Potential voll ausschöpfen zu können, braucht
+<SPAN
+CLASS="APPLICATION"
+>ksymoops</SPAN
+> neben der Fehlermeldung eine Reihe
+zusätzlicher Informationen; mit Kommandozeilenoptionen können Sie
+mitteilen, wo sich diese befinden. Das Programm braucht:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+>Eine System.map-Datei</DT
+><DD
+><P
+>&#13;Diese Tabelle muß zu dem Kernel passen, der lief, als der Oops
+auftrat. Der Default ist
+<TT
+CLASS="FILENAME"
+>/usr/src/linux/System.map</TT
+>.</P
+></DD
+><DT
+>Eine Liste von Modulen</DT
+><DD
+><P
+>&#13;
+<SPAN
+CLASS="APPLICATION"
+>ksymoops</SPAN
+> muß wissen, welche Module gerade
+geladen waren, als der Oops auftrat, um die symbolischen Informationen
+daraus extrahieren zu können. Wenn Sie diese Liste nicht angeben, holt
+<SPAN
+CLASS="APPLICATION"
+>ksymoops</SPAN
+> sie sich aus
+<TT
+CLASS="FILENAME"
+>/proc/modules</TT
+>.</P
+></DD
+><DT
+>Eine Liste der zum Zeitpunkt des Oops definierten Kernel-Symbole</DT
+><DD
+><P
+>&#13;
+Defaultmäßig wird diese Liste aus <TT
+CLASS="FILENAME"
+>/proc/ksyms</TT
+> geholt.</P
+></DD
+><DT
+>Eine Kopie des gerade laufenden Kernel-Images</DT
+><DD
+><P
+>Beachten Sie, daß <SPAN
+CLASS="APPLICATION"
+>ksymoops</SPAN
+> ein normales
+Kernel-Image benötigt, nicht eine der komprimierten Versionen
+<SPAN
+><I
+CLASS="EMPHASIS"
+>vmlinz</I
+></SPAN
+>, <SPAN
+><I
+CLASS="EMPHASIS"
+>zImage</I
+></SPAN
+> oder
+<SPAN
+><I
+CLASS="EMPHASIS"
+>bzImage</I
+></SPAN
+>, die die meisten Systeme zum Booten
+verwenden. Defaultmäßig wird kein Kernel-Image verwendet, weil die
+meisten Leute keines haben. Wenn Sie das passende Image parat haben,
+dann sollten Sie dem Programm mit der Option <SPAN
+><I
+CLASS="EMPHASIS"
+>-v</I
+></SPAN
+>
+mitteilen, wo sich dieses befindet.</P
+></DD
+><DT
+>Die Lage der Objektdateien aller geladenen Kernel-Module</DT
+><DD
+><P
+><SPAN
+CLASS="APPLICATION"
+>ksymoops</SPAN
+> sucht in den
+Standardverzeichnissen für Module, aber während der Entwicklung
+müssen Sie fast immer sagen, wo Ihre Module gerade liegen; dies
+geschieht mit der Option <SPAN
+><I
+CLASS="EMPHASIS"
+>-o</I
+></SPAN
+>.</P
+></DD
+></DL
+></DIV
+><P
+>Obwohl <SPAN
+CLASS="APPLICATION"
+>ksymoops</SPAN
+> die Dateien aus
+<TT
+CLASS="FILENAME"
+>/proc</TT
+>
+verwendet, um einige Informationen zu suchen, die es benötigt, können diese Ergebnisse unzuverlässig sein. Wahrscheinlich ist
+das System seit dem Oops neugestartet worden, und die Informationen
+aus <TT
+CLASS="FILENAME"
+>/proc</TT
+> stimmen möglicherweise nicht mit denen
+überein, die gültig waren, als der Fehler auftrat. Wenn es möglich ist, ist es
+besser, <TT
+CLASS="FILENAME"
+>/proc/modules</TT
+> und
+<TT
+CLASS="FILENAME"
+>/proc/ksyms</TT
+> zu sichern, bevor der Oops auftritt.</P
+><P
+>Wir empfehlen allen Treiberentwicklern, die Manual-Page von
+<SPAN
+CLASS="APPLICATION"
+>ksymoops</SPAN
+> zu lesen; dies ist ein sehr
+informatives Dokument.
+
+
+&#13;</P
+><P
+>Das letzte Argument auf der Kommandozeile von
+<SPAN
+CLASS="APPLICATION"
+>ksymoops</SPAN
+> ist die Lage der Oops-Meldung;
+wenn diese nicht angegeben wird, liest das Programm in bester
+Unix-Tradition von <TT
+CLASS="LITERAL"
+>stdin</TT
+>. Die Meldung kann mit
+Glück aus dem Systemprotokoll geholt werden; bei einem ganz üblen
+Crash müssen Sie sie möglicherweise vom Bildschirm abschreiben und
+später wieder eintippen (sofern Sie keine serielle Konsole verwenden,
+die bei der Kernel-Entwicklung sehr praktisch ist).</P
+><P
+>&#13;
+
+Beachten Sie, daß sich <SPAN
+CLASS="APPLICATION"
+>ksymoops</SPAN
+> von einer
+Oops-Meldung, die bereits von <SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+>
+verarbeitet worden ist, irritieren läßt. Wenn Sie
+<SPAN
+><I
+CLASS="EMPHASIS"
+>klogd</I
+></SPAN
+> verwenden und Ihr System auch nach dem Oops
+noch läuft, dann können Sie oft mit dem Befehl
+<SPAN
+CLASS="APPLICATION"
+>dmesg</SPAN
+> eine saubere Oops-Meldung bekommen.&#13;</P
+><P
+>Wenn Sie nicht die gesamten hier genannten Informationen explizit angeben,
+wird <SPAN
+CLASS="APPLICATION"
+>ksymoops</SPAN
+> Warnungen ausgeben. Dies
+geschieht auch, wenn Module geladen werden, die keine Symbole
+definieren, und bei ähnlichen Problemen. Es ist selten, daß man
+<SPAN
+CLASS="APPLICATION"
+>ksymoops</SPAN
+> ohne Warnung ausführen kann.</P
+><P
+>&#13;Die Ausgabe von <SPAN
+CLASS="APPLICATION"
+>ksymoops</SPAN
+> sieht oft etwa so aus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;&#62;&#62;EIP; c48370c3 &#60;[faulty]faulty_write+3/20&#62;   &#60;=====
+Trace; c01356e6 &#60;sys_write+d6/100&#62;
+Trace; c010b860 &#60;system_call+34/38&#62;
+Code;  c48370c3 &#60;[faulty]faulty_write+3/20&#62;
+00000000 &#60;_EIP&#62;:
+Code;  c48370c3 &#60;[faulty]faulty_write+3/20&#62;   &#60;=====
+   0:   c7 05 00 00 00    movl   $0x0,0x0   &#60;=====
+Code;  c48370c8 &#60;[faulty]faulty_write+8/20&#62;
+   5:   00 00 00 00 00
+Code;  c48370cd &#60;[faulty]faulty_write+d/20&#62;
+   a:   31 c0             xorl   %eax,%eax
+Code;  c48370cf &#60;[faulty]faulty_write+f/20&#62;
+   c:   89 ec             movl   %ebp,%esp
+Code;  c48370d1 &#60;[faulty]faulty_write+11/20&#62;
+   e:   5d                popl   %ebp
+Code;  c48370d2 &#60;[faulty]faulty_write+12/20&#62;
+   f:   c3                ret
+Code;  c48370d3 &#60;[faulty]faulty_write+13/20&#62;
+  10:   8d b6 00 00 00    leal   0x0(%esi),%esi
+Code;  c48370d8 &#60;[faulty]faulty_write+18/20&#62;
+  15:   00</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wie Sie sehen, liefert <SPAN
+CLASS="APPLICATION"
+>ksymoops</SPAN
+>
+Informationen über <TT
+CLASS="LITERAL"
+>EIP</TT
+> und den Kernel-Stack fast
+genauso wie <SPAN
+CLASS="APPLICATION"
+>klogd</SPAN
+>, allerdings genauer und in
+hexadezimaler Schreibweise. Beachten Sie, daß die Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>faulty_write</I
+></SPAN
+> korrekterweise mit einer Länge von
+0x20 Bytes gemeldet wird. Dies ist möglich, weil
+<SPAN
+CLASS="APPLICATION"
+>ksymoops</SPAN
+> die Objektdatei Ihres Moduls liest
+und alle notwendigen Informationen extrahiert.</P
+><P
+>&#13;
+In diesem Fall bekommen Sie darüber hinaus auch noch einen
+Assembler-Dump des Codes, bei dem der Fehler auftrat. Diese
+Information kann oft verwendet werden, um herauszufinden, was
+eigentlich passiert ist; hier handelt es sich offensichtlich um eine
+Anweisung, die eine 0 an die Adresse 0 schreibt.</P
+><P
+>&#13;
+
+Es ist ein interessantes Feature von
+<SPAN
+CLASS="APPLICATION"
+>ksymoops</SPAN
+>, daß dieses Programm auf fast alle
+Plattformen portiert worden ist, auf denen Linux läuft, und die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>bfd</I
+></SPAN
+>-Bibliothek (Binary Format Description)
+verwendet, um mehrere Computer-Architekturen gleichzeitig zu
+unterstützen. Um aus der PC-Welt herauszukommen, schauen wir uns jetzt
+die gleiche Oops-Meldung auf der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>SPARC64</I
+></SPAN
+>-Plattform an (mehrere Zeilen sind aus
+Layout-Gründen umbrochen worden):
+
+
+
+
+
+
+
+
+
+
+
+
+&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>Unable to handle kernel NULL pointer dereference
+tsk-&#62;mm-&#62;context = 0000000000000734
+tsk-&#62;mm-&#62;pgd = fffff80003499000
+              \|/ ____ \|/
+              "@'/ .. \`@"
+              /_| \_&#8201;_/ |_\
+                 \_&#8201;_U_/
+ls(16740): Oops
+TSTATE: 0000004400009601 TPC: 0000000001000128 TNPC: 0000000000457fbc \
+Y: 00800000
+g0: 000000007002ea88 g1: 0000000000000004 g2: 0000000070029fb0 \
+g3: 0000000000000018
+g4: fffff80000000000 g5: 0000000000000001 g6: fffff8000119c000 \
+g7: 0000000000000001
+o0: 0000000000000000 o1: 000000007001a000 o2: 0000000000000178 \
+o3: fffff8001224f168
+o4: 0000000001000120 o5: 0000000000000000 sp: fffff8000119f621 \
+ret_pc: 0000000000457fb4
+l0: fffff800122376c0 l1: ffffffffffffffea l2: 000000000002c400 \
+l3: 000000000002c400
+l4: 0000000000000000 l5: 0000000000000000 l6: 0000000000019c00 \
+l7: 0000000070028cbc
+i0: fffff8001224f140 i1: 000000007001a000 i2: 0000000000000178 \
+i3: 000000000002c400
+i4: 000000000002c400 i5: 000000000002c000 i6: fffff8000119f6e1 \
+i7: 0000000000410114
+Caller[0000000000410114]
+Caller[000000007007cba4]
+Instruction DUMP: 01000000 90102000 81c3e008 &#60;c0202000&#62; \
+30680005 01000000 01000000 01000000 01000000</PRE
+></TD
+></TR
+></TABLE
+><P
+>Beachten Sie, daß der Anweisungsauszug nicht bei der Anweisung
+anfängt, die den Fehler verursachte, sondern drei Anweisungen
+davor. Dies liegt daran, daß RISC-Plattformen mehrere Anweisungen
+parallel ausführen und Ausnahmen eventuell verzögern müssen; deswegen
+muß man in der Lage sein, die letzten paar Anweisungen zu sehen.</P
+><P
+>Hier sehen Sie die Ausgabe von <SPAN
+CLASS="APPLICATION"
+>ksymoops</SPAN
+>, wenn
+man die Eingabedatei ab der <TT
+CLASS="LITERAL"
+>TSTATE</TT
+>-Zeile übergibt:
+
+&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;&#62;&#62;TPC; 0000000001000128 &#60;[faulty].text.start+88/a0&#62;   &#60;=====
+&#62;&#62;O7;  0000000000457fb4 &#60;sys_write+114/160&#62;
+&#62;&#62;I7;  0000000000410114 &#60;linux_sparc_syscall+34/40&#62;
+Trace; 0000000000410114 &#60;linux_sparc_syscall+34/40&#62;
+Trace; 000000007007cba4 &#60;END_OF_CODE+6f07c40d/????&#62;
+Code;  000000000100011c &#60;[faulty].text.start+7c/a0&#62;
+0000000000000000 &#60;_TPC&#62;:
+Code;  000000000100011c &#60;[faulty].text.start+7c/a0&#62;
+   0:   01 00 00 00       nop
+Code;  0000000001000120 &#60;[faulty].text.start+80/a0&#62;
+   4:   90 10 20 00       clr  %o0     ! 0 &#60;_TPC&#62;
+Code;  0000000001000124 &#60;[faulty].text.start+84/a0&#62;
+   8:   81 c3 e0 08       retl
+Code;  0000000001000128 &#60;[faulty].text.start+88/a0&#62;   &#60;=====
+   c:   c0 20 20 00       clr  [ %g0 ]   &#60;=====
+Code;  000000000100012c &#60;[faulty].text.start+8c/a0&#62;
+  10:   30 68 00 05       b,a   %xcc, 24 &#60;_TPC+0x24&#62; \
+                        0000000001000140 &#60;[faulty]faulty_write+0/20&#62;
+Code;  0000000001000130 &#60;[faulty].text.start+90/a0&#62;
+  14:   01 00 00 00       nop
+Code;  0000000001000134 &#60;[faulty].text.start+94/a0&#62;
+  18:   01 00 00 00       nop
+Code;  0000000001000138 &#60;[faulty].text.start+98/a0&#62;
+  1c:   01 00 00 00       nop
+Code;  000000000100013c &#60;[faulty].text.start+9c/a0&#62;
+  20:   01 00 00 00       nop</PRE
+></TD
+></TR
+></TABLE
+><P
+>Um diesen disassemblierten Code auszugeben, mußten wir
+<SPAN
+CLASS="APPLICATION"
+>ksymoops</SPAN
+> zunächst das Ziel-Dateiformat und
+die Ziel-Architektur angeben (weil die native Architektur des
+<SPAN
+><I
+CLASS="EMPHASIS"
+>SPARC64</I
+></SPAN
+>-User-Space 32 Bit breit ist). In diesem
+Fall brauchten wir dafür die Optionen <SPAN
+><I
+CLASS="EMPHASIS"
+>-t elf64-sparc -a
+sparc:v9</I
+></SPAN
+>.
+
+
+
+&#13;</P
+><P
+>Vielleicht beschweren Sie sich jetzt, daß dieser Aufruf-Trace keine
+interessanten Informationen enthält; die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>SPARC</I
+></SPAN
+>-Prozessoren speichern aber nicht den
+gesamten Aufruf-Trace auf dem Stack; die Register
+<TT
+CLASS="LITERAL"
+>O7</TT
+> und <TT
+CLASS="LITERAL"
+>I7</TT
+> enthalten die
+Anweisungszeiger der letzten beiden aufrufenden Funktionen, weswegen
+diese hier in der Nähe des Aufruf-Traces gezeigt werden. In diesem
+Falle befand sich die fehlerhafte Anweisung in einer Funktion, die von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>sys_write</I
+></SPAN
+> aufgerufen wurde.</P
+><P
+>&#13;
+Beachten Sie, daß unabhängig von der Plattform und der Architektur das
+verwendete Format im disassemblierten Code immer das gleiche wie das
+von <SPAN
+CLASS="APPLICATION"
+>objdump</SPAN
+> verwendete
+ist. <SPAN
+CLASS="APPLICATION"
+>objdump</SPAN
+> ist ein hilfreiches Werkzeug;
+wenn Sie sich die gesamte fehlerhafte Funktion anschauen wollen,
+können Sie den Befehl <SPAN
+><I
+CLASS="EMPHASIS"
+>objdump &#8211;d faulty.o</I
+></SPAN
+>
+verwenden (auch hier brauchen Sie für <SPAN
+><I
+CLASS="EMPHASIS"
+>SPARC64</I
+></SPAN
+>
+spezielle Optionen: <SPAN
+><I
+CLASS="EMPHASIS"
+>&#8212;target elf64-sparc&#8212;architecture
+sparc:v9</I
+></SPAN
+>).
+
+
+Weitere Informationen zu <SPAN
+CLASS="APPLICATION"
+>objdump</SPAN
+> und den
+Kommandozeilenoptionen dieses Programms finden Sie in dessen Man-Page.</P
+><P
+>&#13;
+
+
+
+
+
+
+
+Man braucht ein wenig Übung sowie gewisse Kenntnisse über den verwendeten
+Prozessor und die Konventionen des verwendeten Assemblers, um
+Oops-Meldungen decodieren zu können, aber es lohnt sich. Die Zeit, diese
+Technik zu erlernen, macht sich schnell bezahlt. Selbst, wenn Sie sich
+vorher schon mit PC-Assembler auf Nicht-Unix-Betriebssystemen
+beschäftigt haben, müssen Sie einiges neu lernen, weil sich die
+Unix-Syntax von der Intel-Syntax unterscheidet. (Eine gute
+Beschreibung der Unterschiede finden Sie in der Info-Datei von
+<SPAN
+CLASS="APPLICATION"
+>as</SPAN
+> im Kapitel &#8220;I386-specific&#8221;.)
+
+&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="DEBHANG"
+>Das System bleibt stehen</A
+></H2
+><P
+>&#13;
+
+
+
+Obwohl die meisten Fehler im Kernel-Code als Oops-Meldungen enden,
+können sie manchmal auch zu einem völligen Stillstand des Systems
+führen. Wenn das System stehenbleibt, wird auch keine Meldung
+ausgegeben. Wenn der Code beispielsweise in eine Endlosschleife gerät,
+hört der Kernel mit der Zuweisung des Prozessors an die Prozesse auf,
+und das System antwortet auf keinerlei Eingaben mehr, auch nicht auf
+die magische Kombination <SPAN
+CLASS="bold"
+><B
+CLASS="EMPHASIS"
+>Strg-Alt-Entf</B
+></SPAN
+>. Sie haben zwei Möglichkeiten,
+mit stehengebliebenen Systemen umzugehen: Entweder Sie verhindern
+das Stehenbleiben von vornherein, oder Sie können den Fehler hinterher finden.&#13;</P
+><P
+>&#13;
+
+Sie können Endlosschleifen verhindern, indem Sie
+<SPAN
+><I
+CLASS="EMPHASIS"
+>schedule</I
+></SPAN
+>-Aufrufe an strategischen Punkten
+einfügen. Wie Sie sich denken können, ruft
+<SPAN
+><I
+CLASS="EMPHASIS"
+>schedule</I
+></SPAN
+> den Scheduler auf und ermöglicht
+es so anderen Prozessen, ebenfalls CPU-Zeit abzubekommen. Wenn ein
+Prozeß aufgrund eines Fehlers in Ihrem Treiber im Kernel-Space in
+einer Endlosschleife läuft, dann können Sie diesen Prozeß wegen der <SPAN
+><I
+CLASS="EMPHASIS"
+>schedule</I
+></SPAN
+>-Aufrufe noch mit
+<SPAN
+CLASS="APPLICATION"
+>kill</SPAN
+> beenden &#8212; natürlich, nachdem Sie
+herausgefunden haben, was passiert ist.
+
+&#13;</P
+><P
+>&#13;
+Sie dürfen natürlich nicht vergessen, daß jeder
+<SPAN
+><I
+CLASS="EMPHASIS"
+>schedule</I
+></SPAN
+>-Aufruf eine potentielle zusätzliche Quelle von
+reentranten Aufrufen Ihres Treibers ist, weil andere Prozesse
+ausgeführt werden können. Diese Reentranz sollte normalerweise kein
+Problem sein, wenn Sie die passenden Sperren in Ihrem Treiber
+verwenden. Stellen Sie aber sicher, daß Ihr Treiber nie
+<SPAN
+><I
+CLASS="EMPHASIS"
+>schedule</I
+></SPAN
+> aufruft, wenn er über ein Spinlock
+verfügt.</P
+><P
+>&#13;Wenn Ihr Treiber wirklich das System zum Stillstand gebracht hat und Sie nicht
+wissen, wo Sie die <SPAN
+><I
+CLASS="EMPHASIS"
+>schedule</I
+></SPAN
+>-Aufrufe einfügen
+sollen, dann ist es am besten, einige Ausgaben auf die Konsole
+einzufügen (indem Sie den <TT
+CLASS="LITERAL"
+>console_loglevel</TT
+>-Wert
+verändern).</P
+><P
+>&#13;
+
+Manchmal scheint das System zu hängen, obwohl dies gar nicht der Fall ist. Das kann beispielsweise passieren, wenn die Tastatur auf irgendeine
+merkwürdige Art und Weise gesperrt bleibt. Dieses vermeintliche
+Hängenbleiben können Sie aufspüren, indem Sie die Ausgabe eines Programms beobachten,
+das Sie nur zu diesem Zweck betrachten. Eine Uhr oder eine
+Systemlastanzeige sind eine gute Statusanzeige; solange diese
+aktualisiert, arbeitet auch der Scheduler noch. Wenn Sie keinen
+grafischen Bildschirm verwenden, können Sie den Scheduler durch ein
+Programm kontrollieren, das die Tastatur-LEDs blinken, den Motor
+des Diskettenlaufwerks periodisch anlaufen oder den Lautsprecher
+knacken läßt &#8212; normale Beeps sind ziemlich lästig und sollten
+vermieden werden; benutzen Sie statt dessen den
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Befehl <TT
+CLASS="LITERAL"
+>KDMKTONE</TT
+>. Ein
+Beispielprogramm, das die Tastatur-LED wie einen Herzschlag aufblinken
+läßt, ist in <TT
+CLASS="FILENAME"
+>misc-progs/heartbeat.c</TT
+> in den Quellen
+auf dem FTP-Server von O'Reilly zu finden.</P
+><P
+>&#13;Wenn Ihre Tastatur keine Eingaben entgegennimmt, melden Sie sich am
+besten über Ihr Netzwerk beim System an und beenden alle kritischen
+Prozesse oder setzen die Tastatur (mit <SPAN
+><I
+CLASS="EMPHASIS"
+>kbd_mode
+&#8211;a</I
+></SPAN
+>) zurück. Festzustellen, daß es sich lediglich um
+eine aufgehängte Tastatur handelt, ist aber wenig nützlich, wenn Sie
+kein Netzwerk zur Verfügung haben. In diesem Fall könnten Sie ein
+alternatives Eingabegerät einrichten, um wenigstens das System sauber
+neu zu starten. Ein Herunterfahren und Neustarten ist eine geringere
+Belastung für Ihren Computer als der sogenannte große rote Knopf und
+erspart Ihnen das zeitraubende <SPAN
+CLASS="APPLICATION"
+>fsck</SPAN
+>-Überprüfen
+Ihrer Festplatten.</P
+><P
+>&#13;
+
+
+Ein solches alternatives Eingabegerät kann beispielsweise die Maus
+sein. Version 1.10 und neuere Versionen des
+<SPAN
+CLASS="APPLICATION"
+>gpm</SPAN
+>-Maus-Servers enthalten eine
+Kommandozeilenoption, die eine ähnliche Funktionalität einschaltet,
+aber nur im Textmodus funktioniert. Wenn Sie keine Netzwerkverbindung
+haben und im Grafikmodus arbeiten, empfehlen wir Ihnen, eine eigene
+Lösung zu verwenden; etwa einen Schalter, der mit dem DCD-Pin der
+seriellen Schnittstelle verbunden ist und ein Skript, das diesen
+Status abfragt.</P
+><P
+>&#13;
+Ein unersetzliches Werkzeug in diesen Situationen ist die &#8220;magische
+SysRq-Taste&#8221;, die in 2.2 und neueren Kerneln auf mehr Architekturen
+als früher zur Verfügung steht. Die magische SysRq-Taste wird durch
+eine Kombination der Tasten ALT und SysRq auf der PC-Tastatur oder
+durch die Tasten ALT und Stop auf SPARC-Tastaturen ausgelöst. Eine
+dritte Taste, die gemeinsam mit diesen beiden gedrückt wird, führt
+eine aus einer Reihe nützlicher Aktionen aus, die in der folgenden
+Liste angegeben sind:
+
+
+
+&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>r</TT
+></DT
+><DD
+><P
+>Schaltet den rohen Tastaturmodus in Situationen aus, in denen Sie
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kbd_mode</I
+></SPAN
+> nicht verwenden können.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>k</TT
+></DT
+><DD
+><P
+>&#13;
+Ruft die &#8220;Secure Attention&#8221;-(SAK)-Funktion auf. SAK beendet alle
+Prozesse, die in der aktuellen Konsole laufen, und hinterläßt Ihnen so
+ein sauberes Terminal.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>s</TT
+></DT
+><DD
+><P
+>Führt eine Notsynchronisation aller Festplatten durch.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>u</TT
+></DT
+><DD
+><P
+>Versucht, alle Festplatten nur lesbar neu zu mounten. Diese Operation,
+die normalerweise direkt nach einem <SPAN
+><I
+CLASS="EMPHASIS"
+>s</I
+></SPAN
+> verwendet
+wird, kann eine Menge Zeit zum Überprüfen der Dateisysteme sparen,
+wenn das System in ernsthaften Schwierigkeiten ist.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>b</TT
+></DT
+><DD
+><P
+>Startet das System unmittelbar neu. Achten Sie darauf, vorher die Festplatten zu synchronisieren und neu zu mounten.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>p</TT
+></DT
+><DD
+><P
+>Gibt die aktuellen Registerinformationen aus.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>t</TT
+></DT
+><DD
+><P
+>Gibt die aktuelle Task-Liste aus.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>m</TT
+></DT
+><DD
+><P
+>Gibt Speicherinformationen aus.</P
+></DD
+></DL
+></DIV
+><P
+>Es gibt noch weitere magische SysRq-Funktionen; die vollständige Liste
+finden Sie in der Datei <SPAN
+><I
+CLASS="EMPHASIS"
+>sysrq.txt</I
+></SPAN
+> im Verzeichnis
+<SPAN
+><I
+CLASS="EMPHASIS"
+>Documentation</I
+></SPAN
+> in den Kernel-Quellen. Beachten
+Sie, daß SysRq explizit in der Kernel-Konfiguration eingeschaltet sein
+muß und daß dies in den meisten Distributionen aus offensichtlichen
+Sicherheitsgründen nicht der Fall ist. Auf einem System, auf dem
+Treiber entwickelt werden, lohnt es sich aber, sich die Mühe zu
+machen, einen neuen Kernel zu kompilieren, um SysRq zu
+ermöglichen. SysRq muß dann zur Laufzeit mit einem Befehl wie dem
+folgenden eingeschaltet werden:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>echo 1 &#62; /proc/sys/kernel/sysrq</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+
+Eine weitere Vorsichtsmaßnahme beim Reproduzieren von
+Systemaufhängern ist das nur lesbare Mounten (oder Entmounten) aller
+Festplatten. Wenn die Festplatten nur zum Lesen oder gar nicht
+gemountet sind, besteht nicht die Gefahr, daß die Dateisysteme
+beschädigt werden oder in einen inkonsistenten Zustand geraten. Eine
+andere Möglichkeit ist es, einen Computer zu verwenden, der alle seine
+Dateisysteme über NFS, das Network File System, mountet. Dazu muß
+"NFS-Root" im Kernel eingeschaltet sein und es müssen spezielle Parameter beim
+Booten übergeben werden. In diesem Fall können Sie selbst ohne SysRq
+jede Beschädigung von Dateisystemen vermeiden, weil die Kohärenz des
+Dateisystems von dem NFS-Server sichergestellt wird, den Ihr Gerätetreiber
+nicht mit in den Abgrund reißt.
+&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x4834.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x5337.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Debugging durch Beobachten</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="debug.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Debugger und verwandte Werkzeuge</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

@@ -1,0 +1,279 @@
+<HTML
+><HEAD
+><TITLE
+>Vorwort</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="PREVIOUS"
+HREF="book1.html"><LINK
+REL="NEXT"
+TITLE="Jons Einführung"
+HREF="x16.html"></HEAD
+><BODY
+CLASS="PREFACE"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="book1.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x16.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="PREFACE"
+><H1
+><A
+NAME="AEN2"
+>Vorwort</A
+></H1
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Inhalt</B
+></DT
+><DT
+><A
+HREF="f2.html#AEN7"
+>Alessandros Einführung</A
+></DT
+><DT
+><A
+HREF="x16.html"
+>Jons Einführung</A
+></DT
+><DT
+><A
+HREF="x23.html"
+>Die Zielgruppe dieses Buches</A
+></DT
+><DT
+><A
+HREF="x34.html"
+>Organisation des Buches</A
+></DT
+><DT
+><A
+HREF="x39.html"
+>Hintergrundinformationen</A
+></DT
+><DT
+><A
+HREF="x45.html"
+>Weitere Informationsquellen</A
+></DT
+><DT
+><A
+HREF="x120.html"
+>Online-Versionen und Lizenz</A
+></DT
+><DT
+><A
+HREF="x148.html"
+>Konventionen in diesem Buch</A
+></DT
+><DT
+><A
+HREF="x180.html"
+>Danksagungen</A
+></DT
+></DL
+></DIV
+><P
+>Oberflächlich betrachtet ist dieses Buch ein Buch über das
+Schreiben von Gerätetreibern für Linux-Systeme. Das ist natürlich ein
+durchaus lohnenswertes Ziel; es steht nicht zu erwarten, daß der Zustrom
+neuer Hardware in nächster Zeit abnimmt, und irgend jemand muß ja
+dafür sorgen, daß alle diese Spielzeuge auch unter Linux
+funktionieren. Aber in diesem Buch geht es auch darum, wie der
+Linux-Kernel arbeitet und wie Sie sich das für Ihre Bedürfnisse und
+Interessen zunutze machen können. Linux ist ein offenes System, und
+wir hoffen, daß es mit diesem Buch für eine Vielzahl von Entwicklern
+noch offener und zugänglicher wird.</P
+><P
+>Es hat sich seit der ersten Auflage dieses Buches viel im
+Linux-Bereich geändert. Linux läuft jetzt auf viel mehr Prozessoren
+und unterstützt viel mehr verschiedene Hardware. Viele der internen
+Programmierschnittstellen haben sich signifikant verändert. Daher
+wurde diese zweite Auflage notwendig. Dieses Buch behandelt die
+Version 2.4 des Kernels mit allen darin enthaltenen neuen Features,
+schaut aber immer auch im Interesse derjenigen, die das benötigen, auf
+die älteren Versionen zurück.</P
+><P
+>Wir hoffen, es bereitet Ihnen genauso viel Vergnügen, dieses
+Buch zu lesen, wie es uns Spaß gemacht hat, dieses Buch zu
+schreiben.</P
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN7"
+>Alessandros Einführung</A
+></H1
+><P
+>Als Elektrotechniker und &#8220;Selbermacher&#8221; habe ich immer
+gern meinen Computer benutzt, um externe Hardware zu steuern. Seit den
+Zeiten des Apple ][e meines Vaters habe ich nach einer
+anderen Plattform gesucht, mit der ich meine selbstgebastelten Schaltkreise
+verbinden und auf der ich eigene Treiber für diese schreiben
+könnte. Unglücklicherweise waren die PCs der achtziger Jahre noch
+nicht leistungsstark genug, weder auf der Software- noch auf der
+Hardware-Ebene: Das innere Design des PCs war deutlich schlechter als
+das des Apple ][e und die verfügbare Dokumentation war lange
+Zeit wenig zufriedenstellend. Aber dann erschien Linux, und ich
+entschied mich, ihm eine Chance zu geben: ich kaufte eine teure
+386er-Hauptplatine und keinerlei kommerzielle Software.&#13;</P
+><P
+>Zu dieser Zeit benutzte ich Unix-Systeme an der Universität. Dieses
+schlaue Betriebssystem begeisterte mich sehr, insbesondere wenn man
+die noch schlaueren Hilfsprogramme hinzunimmt, die das GNU-Projekt für
+die Benutzer entwickelt. Den Linux-Kernel auf meinem eigenen PC laufen
+zu lassen
+ist immer eine interessante Erfahrung gewesen, und ich konnte nun sogar
+meine eigenen Gerätetreiber schreiben und wieder mit dem Lötkolben
+spielen. Ich erzähle den Leuten immer noch, daß ich &#8220;ein Hacker
+werden möchte, wenn ich groß bin&#8221;. Linux ist die perfekte
+Plattform für solche Träume. Da weiß ich nicht einmal, ob ich jemals
+groß werde.&#13;</P
+><P
+>In dem Maße, in dem sich Linux weiterentwickelt und reift, interessieren sich auch immer mehr Leute dafür, Treiber für ihre selbstgestrickten Schaltungen oder auch für kommerzielle Geräte zu entwickeln. Oder wie Linus Torvalds es einmal formulierte:  &#8220;Es brechen Zeiten an, in denen Männer wieder Männer sind und ihre eigenen Gerätetreiber schreiben.&#8221;</P
+><P
+>1996 programmierte ich an meinen eigenen
+Spielzeug-Gerätetreibern, mit denen ich mit geliehener, gespendeter
+oder sogar selbstgebauter Hardware herumexperimentieren konnte. Ich
+hatte bereits einige Seiten zum <SPAN
+><I
+CLASS="EMPHASIS"
+>Kernel Hacker's
+Guide</I
+></SPAN
+> von Michael Johnson beigetragen und begann,
+Kernel-bezogene Artikel für das <SPAN
+><I
+CLASS="EMPHASIS"
+>Linux Journal</I
+></SPAN
+> zu
+schreiben, das Magazin, das Michael gegründet hatte und
+leitete. Michael brachte mich mit Andy Oram von O'Reilly zusammen,
+der sein Interesse an einem ganzen Buch über Gerätetreiber bekundete,
+und ich nahm diese Aufgabe an, die mich eine ganze Zeitlang
+auf Trab hielt.</P
+><P
+>1999 wurde deutlich, daß ich nicht allein die Energie
+aufbringen konnte, das Buch zu aktualisieren; meine Familie war
+gewachsen, und ich hatte genug Programmieraufgaben, um mich allein mit
+dem Schreiben von GPL-Software zu beschäftigen. Außerdem war der
+Kernel größer und die API reifer und umfassender geworden. An dieser
+Stelle bot Jonathan seine Hilfe an: Er hatte genau die richtigen
+Fähigkeiten und den Enthusiasmus, um mit der Aktualisierung anzufangen
+und mich bei Kurs und im Zeitplan zu halten &#8212; der dann doch ins
+Rutschen geriet. Er ist ein unschätzbarer Kumpel bei dieser Arbeit
+gewesen, die er mit seinen Kenntnissen und seiner Einsatzbereitschaft
+deutlich mehr vorangebracht hat, als ich das allein hätte tun
+können. Ich habe wirklich gern mit ihm zusammengearbeitet, sowohl auf
+fachlicher als auch auf persönlicher Ebene.</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x16.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Jons Einführung</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

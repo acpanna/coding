@@ -1,0 +1,86 @@
+Beantwortung der Fragen :
+????????????????????????
+
+zu 1)  Es wird von jeden vorhandenen Sourcefile (bei erfolgreicher Compilierung) Bytecode erstellt
+
+
+zu 2)  Ableitungshierarchie :
+
+                        Herscher
+                      /                 \
+     HerscherSohn    HerrscherTochter      
+
+Alle anderen Klassen sind eigenst‰ndig (d.h. nicht von einer anderen Klasse abgeleitet).
+
+
+          Packagehierarchie :
+
+                          Reich 
+                  /           |             \
+Herrscher  HerscherSohn Minister
+
+Alle anderen Klassen sind keinem Package zugeordnet.
+
+
+zu 3)  Fehlermeldungs - Begruendung :
+
+.\Reich\HerrscherSohn.java:21: Undefined variable: schatzOrt
+    System.out.println("  Schatzort: " + schatzOrt);
+
+geht nicht, da schatzOrt private ist, d.h. nur Objekte der Klasse Herrscher haben Zugriff darauf (Objekte anderer bzw. abgeleiteter Klassen haben keinen Zugriff)
+
+
+.\HerrscherTochter.java:18: Undefined variable or class name: koenig
+    System.out.println("  Helfer: " + koenig.helfer);
+
+geht nicht, da koenig ein Objekt ist, welches ohne Zugriffs - Spezifizierer in einer statischen Methode (main) der Klasse ZugriffTest definiert wird, d.h. koenig ist lediglich fuer die 
+Objekte der Klassen, die sich im selben Paket wie ZugriffTest befinden und in der main() - Methode erzeugt wurden, sichtbar (HerscherTochter befindet sich im Paket Reich, 
+                                                                                                                                                                                                                               ist also nicht im selben Paket ==> kein Zugriff)  
+
+.\HerrscherTochter.java:21: Undefined variable: schatzOrt
+    System.out.println("  Schatzort: " + schatzOrt);
+
+geht nicht, da schatzOrt private ist, d.h. nur Objekte der Klasse Herrscher haben Zugriff darauf (Objekte anderer bzw. abgeleiteter Klassen haben keinen Zugriff)
+
+
+.\Reich\Minister.java:19: Variable schatzOrt in class Reich.Herrscher not accessible from class Reich.Minister.
+    System.out.println("  Schatzort: " + koenig.schatzOrt);
+
+geht nicht, da schatzOrt private ist, d.h. nur Objekte der Klasse Herrscher haben Zugriff darauf (Objekte anderer bzw. abgeleiteter Klassen haben keinen Zugriff)
+
+                                            
+.\Beherrschter.java:16: Variable helfer in class Reich.Herrscher not accessible from class Beherrschter.
+    System.out.println("  Helfer: " + koenig.helfer);
+
+geht nicht, da auf den String helfer nur Klassen aus dem Package Reich zugreifen koennen (Grund: helfer wurde ohne Zugriffs - Spezifizierer definiert ==> Zugriff nur fuer Klassen 
+                                                                                                                                                                                                                                                                                     aus dem selben Paket)
+
+.\Beherrschter.java:17: Variable hinweise in class Reich.Herrscher not accessible from class Beherrschter.
+    System.out.println("  Hinweise: " + koenig.hinweise);
+
+geht nicht, da hinweise protected ist, d.h. nur Objekte der Klasse Herrscher, davon abgeleitete Klassen und Klassen im selben Paket haben Zugriff (Beherrschter ist aber nicht 
+											        von Herrscher abgeleitet und befindet sich auch nicht im selben Paket)
+
+.\Beherrschter.java:18: Variable suchStrategie in class Reich.Herrscher not accessible from class Beherrschter.
+    System.out.println("  Suchstrategie: " + koenig.suchStrategie);
+
+geht nicht, da suchStrategie private protected ist, d.h. nur Objekte der Klasse Herrscher und davon abgeleitete Klassen haben Zugriff 
+                                          							(Beherrschter ist aber nicht von Herrscher abgeleitet)
+
+.\Beherrschter.java:19: Variable schatzOrt in class Reich.Herrscher not accessible from class Beherrschter.
+    System.out.println("  Schatzort: " + koenig.schatzOrt);
+
+geht nicht, da schatzOrt private ist, d.h. nur Objekte der Klasse Herrscher haben Zugriff darauf (Objekte anderer bzw. abgeleiteter Klassen haben keinen Zugriff)
+ 
+
+zu 4)  a) geht nicht, da Herrscher.java nicht im selben Verzeichnis liegt ==> Reich.Herrscher not found
+          b) geht nicht, da Minister.java nicht im Verzeichnis Zugriff liegt
+          c) geht, weil nun mittels der Angabe javac Reich\Minister.java das zu compilierende Sourcefile gefunden wird,
+              und alle anderen benoetigten Klassen (ohne Pfadangabe) gefunden werden koennen
+
+
+zu 5)  a) geht nicht, da Herrscher.class nicht gefunden wird (wird ja auch zur Ausfuehrung benoetigt)
+          b) geht nicht, da Minister.class nicht gefunden wird
+          c) geht nicht, da in der Befehlszeile zum Aufruf des Interpreters keine Pfad - Angabe stehen darf
+          d) geht, weil Minister im package Reich liegt, welches sich im momentanen Verzeichnis befindet; auﬂerdem kann nun auch wieder Herscher.class gefunden werden 
+

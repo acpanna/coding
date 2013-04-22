@@ -1,0 +1,224 @@
+\documentclass[a4paper]{article}
+\usepackage{ngerman}
+\usepackage{amssymb}
+\author{Cornelius Schwarz}
+\title{Die Jordansche Normalform}
+\date{22. Januar 2004}
+\begin{document}
+\maketitle
+\begin{section}{Aufgabenstellung von Normalformen}
+Um zu entscheiden, ob zwei Matrixen zueinander "ahnlich sind, also den selben Endomorphismus $f$ repr"asentieren, transformiert man sie ein eine geeignete Normalform und vergleicht diese. Die Transitivit"at der "Ahnlichkeitsrelation bedeutet ja gerade: $A \sim N, N \sim B \Leftrightarrow A \sim B$.\\
+Diese Aufgabe erf"ullen alle Normalformen. Folgendes Beispiel soll motivieren, warum es von Vorteil sein kann, eine Normalform von besonders einfacher Gestalt zu haben.
+\begin{subsection}{Beispiel}
+Es soll die Potenz von $A^k$ berechnet werden, dabei sei $A \in \mathbb{K}^{n \times n}, k \in \mathbb{N}$. An Stelle $A^k$ direkt zu berechnen, was mit einem nativen Algorithmus $k$ Matrixmultiplikationen mit $O(n^3)$ Operationen bedeuten w"urde, kann man auch $A$ in eine Normalform $N$ transformieren und dann $N^k$ berechnen. Es sei $A=P^{-1}nP$, dann gilt:
+$$A^k=(P^{-1}NP)^k = P^{-1} N P P^{-1} N P \ldots P^{-1} N P = P^{-1} N^k P$$
+Die Anzahl der Operationen, um $P$ zu berechnen h"angt nur von der Dimension der Matrix ab, ist also unabh"angig von $k$. Wenn $k >> n$ ist und $N$ einfache Gestalt, z.B. Diagonalmatrix, hat, lohnt sich die Transformation.
+\end{subsection}
+\end{section}
+\begin{section}{Elementarteiler, die rationale Normalform}
+Um einen Endomorphismus in einer Normalform anzugeben, brauchen wir Merkmale, die nicht von der gew"ahlten Basis abh"angen.
+Ein Beispiel daf"ur ist das charakteristische Polynom. Allerdings bestimmt dieses den Endomorphismus nicht eindeutig. Die folgenden beiden Matrix haben das gleiche charakteristische Polynom $(X-1)^5$, sind aber nicht zueinander "ahnlich:
+$$\left (\begin{array}{ccccc}
+1 & 0 & 0 & 0 & 0\\
+0 & 1 & 0 & 0 & 0\\
+0 & 0 & 1 & 0 & 0\\
+0 & 0 & 0 & 1 & 0\\
+0 & 0 & 0 & 0 & 1
+\end{array}\right )
+\qquad \left ( \begin{array}{ccccc}
+1 & 0 & 0 & 0 & 0\\
+1 & 1 & 0 & 0 & 0\\
+0 & 1 & 1 & 0 & 0\\
+0 & 0 & 0 & 1 & 0\\
+0 & 0 & 0 & 0 & 1\\
+\end{array} \right )
+$$
+Ein Vergleich der beiden Matrixen liefert, da"s die erste Matrix als Minimalpolynom $(X-1)$ und die zweite $(X-1)^3$ hat.\\
+Allerdings reicht die Vorraussetzung ''Gleiches Minimalpolynom'' auch nicht aus:
+$$\left ( \begin{array}{cccccc}
+1 & 0 & 0 & 0 & 0\\
+1 & 1 & 0 & 0 & 0\\
+0 & 1 & 1 & 0 & 0\\
+0 & 0 & 0 & 1 & 0\\
+0 & 0 & 0 & 1 & 1
+\end{array} \right )$$
+Wir erweitern also noch einmal und kommen zu dem Beriff des
+\begin{subsection}{Satz + Definition: Elementarteiler}
+Sei $M$ ein endlich erzeugter $R$-Modul "uber einem euklidischen Ring $R$ mit $Ann(M)\not=(0)$, dann gibt es $m_1,\ldots,m_s \in  M$ mit $$M=\bigoplus_{j=1}^s Rm_i$$ und die Erzeugenden $k_j$ der Ordnungsideale $Ord(m_j)\not=(0)$ gen"ugen den Teilbarkeitsbedingungen $k_{j+1}|k_j, j=1,\ldots,s-1$. Diese $k_i$ sind bis auf Assoziiertheit eindeutig bestimmt und hei"sen die \emph{Elementarteiler} von $M$ und bestimmen $M$ bis auf $R$-Isomorphie.
+\label{elteiler}(vgl. Satz 3.9.4 \cite{vorlesung})\\\\
+\end{subsection}
+Das sieht auf den ersten Blick ziemlich abstrakt aus. Wir betrachten allerdings nur den Fall $R=\mathbb{K}[X]:$ Hier ist $M = V_f$. $Ann(M)$ wird erzeugt von dem Minimalpolynom $m_1$. Zu dem Minimalpolynom gibt es eine Vektor $v$ der dieses als Ordnunspolynom hat(vgl. \cite{min}). Wir betrachten nun den Unterraum $\mathbb{K}[X] v$. Eine $\mathbb{K}$ Basis dieses Unterraums $U_1$ von $V$ bekommt man, indem man mittels Gau"salgorithmus sukzessiv $v,f(v), f^2(v), \ldots$ zur Basis dazunimmt, bis diese linear abh"angig werden(vgl. \cite{gauss}).\\
+Dann betrachten wir $V/U_1$. $Ann(V/U_1)$ in $\mathbb{K}[X]$ wird ebenfalls von einem eindeutigen normierten Polynom $m_2$ erzeugt zu dem es wieder einen Vektor $v_2$ gibt, der dieses als Ordnungspolynom hat. Eine $\mathbb{K}$ Basis von $U_2$ erh"alt man analog zu oben. Es gilt: $Ann(V) \subset Ann(V/U_1)$, da mit $p*v=0$ auch $p*v+U=(p*v)+U=0+U=0$ ist $\Leftrightarrow m_2 | m_1$. Wir betrachten nun $(V/U_1)/U_2$, also $V/<U_1 + U_2>$ und iterieren das Verfahren bis $V/<U_1 + \ldots + U_{s+1}>=\{0\}$ ist. Aufgrund des Eindeutigkeitssatzes \ref{elteiler} haben wir damit die Elementarteiler berechnet.
+\end{section}
+\begin{section}{Prim"arkomponente, die jordansche Normalform}
+\begin{subsection}{Satz + Definition: Prim"arkomponente}
+Sei $R$ ein euklidischer Ring, $M$ ein Torsionsmodul, also $Ord(m) \not= 0\ \forall  \ m\in M$,$P$ ein maximales Ideal, da $R$ HIR, $\exists p \in \ R \ prim: P=(p)$.
+Sei $\Phi$ die Menge der maximalen Ideale von $R$
+$$M_P := \{ m | m \in M, \exists i \in \mathbb{N}: Ord(m) = (p^i)\}$$
+Es gilt:
+\begin{enumerate}
+\item $$M_P \textnormal{ ist Untermodul f"ur alle } P.$$
+\item $$M = \bigoplus_{P \in \Phi} M_P$$
+\item $$Ann(M) \subset P \Longleftrightarrow M_P \not= \{0\}$$ \label{teilt}
+\end{enumerate}
+Die $M_P$ hei"sen \emph{Prim"arkomponeten} von $M$. (vgl. Satz 3.10.10 \cite{vorlesung})\\\\
+\end{subsection}
+Wiederum betrachten wir den Fall $\mathbb{K}[X]$. Desweiteren setzten wir vorraus, da"s das Minimalpolynom in Linearfaktoren zerf"allt. Dies kann man immer erreichen, ggf. nach "Ubergang zum Zerf"allungsk"orper. Die Prim"arkomponenten sehen also folgenderma"sen aus: $\{ v \in V, \exists i \in \mathbb{N}: Ord(v) = (X-\lambda)^i \Leftrightarrow (A-\lambda)^i v = 0 \}$. Falls $M_P \not= \{0\}$, so gilt doch $Ord(v) | Ann(V)$, also $X-\lambda$ ein Teiler des Minimalpolynoms. Wir brauchen also nur $(A-\lambda)^r = 0 $ zu fordern, wobei $r$ die Potenz des Primfaktors $X-\lambda$ im Minimalpolynom ist. Aufgrund von \ref{teilt} k"onnen wir uns auf $p=X-\lambda$ mit $\lambda$ Nullstelle des Minimalpolynoms also Eigenwert beschr"anken ($p | m$). Trivialerweise ist $A$ auf $M_P$ invariant. Wir schr"anken die Matrix also auf Prim"arkomponente ein. Das Minimalpolynom auf $M_P$ lautet dann, $(X-\lambda)^r$, wobei $r$ der Index in dem Minimalpolynom auf $V$ ist. Nach \ref{elteiler} erhalten wir eine Zerlegung in ein direkte Summe $\mathbb{K}[X]$ zyklische Unterr"aume. Mit $M_{P_\lambda}$ gleich der Prim"arkomponente zum Eigenwert $\lambda$ gilt also:
+\begin{equation} M_{P_\lambda} = \bigoplus_{i=1}^s \mathbb{K}[X] m_i \label{sum} \end{equation}
+Die Elementarteiler als Teiler des Minimalpolynoms haben die Gestalt $(X-\lambda)^{\delta_i}$ mit $r=\delta_1 \leq .. \leq \delta_s$. Jetzt betrachten wir den Untermodul $U_{\delta_i}:=\mathbb{K}[X] (X-\lambda)^{\delta_i}$ mit zugeh"origem Vektor $v$. Eine $\mathbb{K}$ Basis bilden die Vektoren $v, (A-\lambda) v, \ldots, (A-\lambda)^{\delta_i-1} v$. $A$ hat bez"uglich dieser Basis Jordanblockgestalt auf $U_{\delta_i}$:
+$$\left ( \begin{array}{cccc}
+\lambda &         &        & \\
+1       & \lambda &        & \\
+        & \ddots  & \ddots & \\
+        &         & 1      & \lambda
+\end{array} \right )$$
+\begin{subsection}{Beispiel}
+\label{bsp-1}
+Sei  $$A := \left ( \begin{array}{ccc}
+0 & 0 & 1 \\
+1 & 0 & 2 \\
+0 & 1 & 3 
+\end{array} \right )$$
+Diese Matrix ist in Rationaler Normalform. Das Minimalpolynom l"asst sich also direkt ablesen: $x^3 + 3 x^2 + 2 x +1 = (x + 4)^3$. Wir betrachten die einzige Prim"arkomponente $P_1$ zum Eigenwert 1.
+$$(A-1)=\left ( \begin{array}{ccc}
+4 & 0 & 1\\
+1 & 4 & 2\\
+0 & 1 & 2
+\end{array} \right )
+\quad (A-1*E)^2=\left ( \begin{array}{ccc}
+1 & 1 & 1\\
+3 & 3 & 3\\
+1 & 1 & 1
+\end{array} \right )
+\quad (A-1*E)^3=\left ( \begin{array}{ccc}
+0 & 0 & 0\\
+0 & 0 & 0\\
+0 & 0 & 0
+\end{array}\right )
+$$
+Eine Basis der Prim"arkomponente liefern uns also die Einheitsvektoren. Der Vektor $e_1 = (1,0,0)^T$ hat als Ordnungspolynom $(X+4)^3$. Es gibt also keine weiteren Elementarteiler. Die Jordanbasis bekommen wir also mit $e_1, (A-1) * e_1 = (4, 1, 0)^T, (A-1)^2 * e_1 = (1, 3, 1)^T$. Die Jordanform sieht bez"uglich dieser Basis dann
+$$\left (\begin{array}{ccc}
+1 & 0 & 0\\
+1 & 1 & 0\\
+0 & 1 & 1\\
+\end{array} \right )$$
+aus.
+\end{subsection}
+\end{section}
+\begin{section}{Algorithmus JNF Variante 1: Vorlesung bzw. L"uneburg}
+\begin{subsection}{Der Algorithmus}
+Sei $\mathbb{K}$ K"orper, $\mathbb{V} \mathbb{K}-$Vektorraum mit $n := \dim(\mathbb{V})$ und sei $\varphi \in End_\mathbb{k}(\mathbb{V})$ und $A$ seine darstellende Matrix bez"uglich der kanonischen Einheitsvektoren in Quelle und Ziel. \\
+\begin{description}
+\item [Initialisierung] Berechne die Eigenwerte von $A$.
+\item [Iterationschritt] F"ur jeden Eigenwert $\lambda_i$
+ \begin{enumerate}
+  \item Berechne eine Basis der Prim"arkomponete $(V_\varphi)_{(X-\lambda_i)}$
+  \item Schr"anke $\varphi$ ein auf $V_i$ und berechne die Elementarteiler $(m_{i,0},\ldots,m_{i,s_i})$ und zugeh"orige Vektoren $v_{i,j}$ mit $Ord(v_{i,j})=(m_{i,j})$
+ \end{enumerate}
+\end{description}
+$m_{i,j}=(X-\lambda_i)^{\delta_{i,j}}$, wobei $\delta_{i,0}=r_i \geq \delta_{i,1} \geq \ldots \geq \delta_{i,s_i}$. Die Jordanmatrix hat also zum Eigenwert $\lambda_i$ genau $s_i$ Jordanbl"ocke, die jeweils die Gr"ose $\delta_{i,j}$ haben. Eine Jordanbasis ergibt sich aus dem Hintereinaderreihen von $(v_{i,j}, (A-\lambda_i)*v_{i,j}, \ldots, (A-\lambda_i)^{\delta_{i,j-1}}*v)$.
+\end{subsection}
+\end{section}
+\begin{section}{Algorithmus JNF Variante 2: Repetitorium der Linearen Algebra}
+\begin{subsubsection}{Lemma}
+Sei $f \in End(V,V)$, dann gilt:
+$$Kern(f^i) \subseteq Kern(f^{i+1}), i \in \mathbb{N}$$
+Beweis: trivial \label{existens}
+\end{subsubsection}
+\begin{subsubsection}{Definition: Stufenbasis}
+$S$ hei"st Stufenbasis zur Prim"arkomponente $P_i$, falls gilt:
+\begin{enumerate}
+\item $S=S_1 \cup \ldots S_k, S_i \cap S_j = \emptyset, i \not= j$
+\item $S_1 \cup \ldots \cup S_j $ ist Basis von $Kern((A-\lambda_i)^j)$, $j=1,\ldots,k$
+\end{enumerate}
+\end{subsubsection}
+Zur Veranschaulichung:
+$$
+\begin{array}{|cccc||c|}
+\hline
+v_8 & v_9 &     &     & S_3\\\hline
+v_5 & v_6 & v_7 &     & S_2\\\hline
+v_1 & v_2 & v_3 & v_4 & S_1\\\hline
+\end{array}
+$$
+$S_1$ ist Basis von $Kern(A-\lambda_i)$, $S_2 \cup S_!$ ist Basis von $Kern(A-\lambda_i)^2$. $S_2$ enth"alt also die Basisvektoren, die f"ur eine Basis von $Kern(A-\lambda_i)^2$ noch ''fehlen''.
+\begin{subsection}{Der Algorithmus}
+\begin{description}
+\item[Eingabe] Eine Matrix "uber einen $\mathbb{K}-Vektorraum \mathbb{V}$, sowie deren Eingenwerte.
+\item[Iteration] Durchlaufe die Eigenwerte von $A$ mit $\lambda$
+\begin{enumerate}
+\item Berechne eine Stufenbasis der Prim"arkomponente $V_\varphi)_{(X-\lambda)}$
+\item Berechne aus der Stufenbasis eine Jordanbasis
+\end{enumerate}
+\end{description}
+\textbf{Zur Stufenbasis}\\
+Die Existens folgt \ref{existens}. Die Berechnung folgt mittels Gauss. Man nutzt an dieser Stelle aus, da"s bei der Berechnung von $Kern(X-\lambda_i)^j$ die Nullzeilen von der Berechnung von $Kern(X-\lambda_i)^{j-1}$ erhalten bleiben. Man mu"s bei der Berechnung also nur die neuen Nullzeilen als freie Parameter betrachten.\\
+\textbf{Zur Jordanbasis}\\
+Hier nutzt man die Tatsache, da"s $Ord(v) = (X-\lambda_i)^j \Rightarrow Ord((X-\lambda_i) v)= (X-\lambda_i)^{j-1}$ gilt. Denn wenn gilt: $(A-\lambda_i)^j v=0 \Leftrightarrow (A-\lambda_i)^{j-1}((A-\lambda_i)v)=0$. Also hat $(A-\lambda_i)v$ als Ordnungspolynom $(X-\lambda_i)^{j-1}$ liegt also im $Kern(A-\lambda_i)^{j-1}$ also ''eine Stufe tiefer''. Ausserdem nutzen wir aus, dass f"ur lineare unabh"nagige $v_i$ mit $Ord(v_i)=(X-\lambda_i)^j, j > 1$ gilt: $(X-\lambda_i)v_i$ sind linear unabh"angig, denn
+$$ \sum_{i=1}^k \kappa_i (A-\lambda_i) v_i = 0 \Rightarrow (A-\lambda_i) \sum_{i=1}^k \kappa_i v_i = 0 $$
+Also liegt die Linearkombination der $v_i$ im $Kern(A-\lambda_i)$. Da die $v_i$ als linear unabh"angig vorrausgesetzt waren, gilt dies nur, falls $j=1$ ist. \\
+Folgender Algorithmus liefert damit eine Jordanbasis:
+\begin{description}
+\item[Initialisierung] $T_k:=R_k:=S_k$
+\item[Schritt j] 
+\begin{itemize}
+\item Basis von $Kern(A-\lambda_i)^{k-j}: S_1 \cup \ldots S_{k-j} \cup T_{k-j+1}$ 
+\item ersetzte $S_{k-j}$ durch $X:=\{(A-\lambda_i) * v | v \in T_{k-j+1}\}$
+\item erweitere diese Menge durch $R_{k-j}$ zu einer Basis von $Kern(A-\lambda_i)^{k-j}$
+\item setze $T_{k-j}:=X \cup R_{k-j}$ 
+\end{itemize}
+\end{description}
+Zur Veranschaulichung: \\
+Betrachten wir noch einmal obige Skizze, dann starten wir mit $v_8, v_9$ in der Stufe $S_3$. Beim "Ubergang zu Stufe $S_2$ berechnen wir als erstes $(A-\lambda_i) v_8, (A-\lambda_i) v_9$ und nehmen dann noch einen zu diesen Vektoren  linear unabh"angigen Vektor  aus der Menge $\{v_5, v_6, v_7\}$ hinzu. Sei dies o.E. $v_7$, dann ist $v_1, \ldots, v_4, (A-\lambda_i) v_8, (A-\lambda_i) v_9,v_7$ eine Basis von $(A-\lambda_i)^2$. Wir iterieren und betrachten $(A-\lambda_i)^2 v_8, (A-\lambda_i)^1 v_9, (A-\lambda_i) v_7$ und erweitern wieder zu einer Basis, z.B. durch $v_4$.
+$$\begin{array}{|cccc||c|}\hline
+v_8                 & v_9                 &                   &     & S_3 \\\hline
+(A-\lambda_i) v_8   & (A-\lambda_i) v_9   & v_7               &     & S_2 \\\hline
+(A-\lambda_i)^2 v_8 & (A-\lambda_i)^2 v_9 & (A-\lambda_i) v_7 & v_4 & S_1 \\\hline 
+\end{array}
+$$
+Kontruktion der Jordanbasis:\\
+Zu $r \in R_j$ existiert ein $j \times j \ Jordanblock$ mit der Basis: $r,\ldots, (A-\lambda)^j*r$. Durch Hintereinanderschreiben dieser Basen erh"alt man die Jordanbasis von $A$. \\
+Im Beispiel ist die Jordanbasis:
+$$v_8, (A-\lambda_i)v_8, (A-\lambda_i)^2v_8, v_9, (A-\lambda_i)v_9, (A-\lambda_i)^2v_9, v_7, (A-\lambda_i) v_7, v_4$$
+Wir bekommen demnach $2$ $3\times3$ Jordanbl"ocke, $1$ $2\times2$ Jordanblock und $1$ $1\times1$ Jordanblock. 
+\end{subsection}
+\begin{subsection}{Beispiel}
+Betrachten wir wieder die Matrix:
+$$A:=\left ( \begin{array}{ccc}
+0 & 0 & 1 \\
+1 & 0 & 2 \\
+0 & 1 & 3
+\end{array}\right )$$
+$$(A-1 * E):= \left ( \begin{array}{ccc}
+4 & 0 & 1\\
+1 & 4 & 2 \\
+0 & 1 & 2
+\end{array} \right ) \ \begin{array}{c}\mbox{\tiny Zeilenstufenform} \\ \Longrightarrow \end{array}
+\left ( \begin{array}{ccc}
+4 & 0 & 1 \\
+0 & 1 & 2 \\
+0 & 0 & 0
+\end{array} \right )$$
+Eine Basis von $Kern(A-1*E)$ liefert demnach der Vektor $v_1:=(1,3,1)^T, S_1:=\{v_1\}$
+$$(A-1*E)^2 \left ( \begin{array}{ccc}
+1 & 1 & 1 \\
+3 & 3 & 3 \\
+1 & 1 & 1
+\end{array} \right ) \ \begin{array}{c}\mbox{\tiny Zeilenstufenform} \\ \Longrightarrow \end{array}
+\left ( \begin{array}{ccc}
+1 & 1 & 1 \\
+0 & 0 & 0 \\
+0 & 0 & 0
+\end{array} \right )$$
+Als neue Nullzeile bekommen wir die zweite Zeile. Demnach bekommen wir den Vektor $v_2:=(4,1,0)^T, S_2=\{v_2\}$\\
+Die dritte Potenz von $(A-1*E)$ war die Nullmatrix und liefert uns mit der ersten Zeile als zus"atzliche Nullzeile den ersten Einheitsvektor. $v_3 = (1,0,0)^T, S_3=\{v_3\}$. Wir bekommen hier mit $v_3, (A-1*E) v_3, (A-1*E)^1 v_3$ die selbe Basis wie zuvor (\ref{bsp-1}).
+\end{subsection}
+\end{section}
+\begin{thebibliography}{99}
+\bibitem[lina02]{vorlesung} Prof. Dr. A. Kerber. Lineare Algebra, WS 2002/2003
+\bibitem[rep]{rep} Dr. Michael Holz, Dr. Detlef Wille, Repetitorium der Linearen Algebra  Teil 2, Binomi Verlag
+\bibitem[hl]{lb} H. L"uneburg, Vorlesung "uber Lineare Algebra, BI Wissenschaftsverlag, 1993
+\bibitem[hb]{min} H. Buchholzer, Vortrag "uber Minimalpolom am 08.01.2004
+\bibitem[bvkp]{gauss} Binca Valentin, Katja P"ollman, Vortrag "uber Gau"s Algorithmus nach L"uneburg
+\end{thebibliography}
+\end{document}

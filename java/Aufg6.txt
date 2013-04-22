@@ -1,0 +1,18 @@
+Wie reagiert das Java - Programm im Vergelich zum C - Programm ?
+
+1. javac compiliert nicht, wenn eine Variable uninitialisiert ist (vgl. char b), gcc schon.
+2. Java kennt keine unsigned - Datentypen, somit kommt es zu keinem Unterschied bei der Ausgabe 
+   von s bzw. i, beide Werte sind bei Java negativ, in C hingegen ist einer positiv, der andere 
+   negativ (weil C kennt unsigned Datentypen).
+3. Java kann den Dezimal - ASCII - Code eines Zeichens (char) nicht direkt ausgeben, erst nachdem
+   das Zeichen zu einem (int) - wert gecastet wurde, ist dies möglich.
+
+Ansonsten verhalten sich beide Programme gleich.
+
+
+Gibt es Unterschiede zw. ganzzahliger und Fließkomma - Division durch 0 ?
+
+Die gibt es, bei der Fließkommadivision wird mit "unendlich" gerechnet (kein Abbruch), hingegen kommt 
+es bei der ganzzahligen Division durch 0 zu einem Programmabbruch (dies ist sowohl im C -, als auch im 
+Java - Programm der Fall).
+

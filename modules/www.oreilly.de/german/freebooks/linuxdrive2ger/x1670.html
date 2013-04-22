@@ -1,0 +1,402 @@
+<HTML
+><HEAD
+><TITLE
+>Im User-Space arbeiten</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Module erstellen und starten"
+HREF="building.html"><LINK
+REL="PREVIOUS"
+TITLE="Automatische und manuelle
+Konfiguration"
+HREF="buiconf.html"><LINK
+REL="NEXT"
+TITLE="Abwärtskompatibilität"
+HREF="x1736.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="buiconf.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 2. Module erstellen und starten</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x1736.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN1670"
+>Im User-Space arbeiten</A
+></H1
+><P
+>&#13;
+
+Ein Unix-Programmierer, der sich zum erstenmal mit dem Kernel
+beschäftigt, ist jetzt vielleicht etwas nervös, wenn er ein Modul
+schreiben soll. Das Schreiben eines Benutzerprogramms, das die
+Geräte-Ports direkt ausliest und beschreibt, ist viel einfacher.&#13;</P
+><P
+>Tatsächlich gibt es einige Argumente für die Programmierung im User
+Space, und mitunter ist das Schreiben von sogenannten User
+Space-Gerätetreibern eine sinnvolle Alternative zum
+Kernel-Hacken.&#13;</P
+><P
+>Die Vorteile von User-Space-Treibern können folgendermaßen
+zusammengefaßt werden:&#13;</P
+><P
+></P
+><UL
+><LI
+STYLE="list-style-type: dash"
+><P
+>Die vollständige C-Bibliothek kann dazugelinkt
+werden. Der Treiber kann viele exotische Aufgaben selbst übernehmen,
+ohne auf externe Programme zurückzugreifen (die Hilfsprogramme,
+die Benutzungs-Policies implementieren, die üblicherweise zusammen
+mit dem Treiber vertrieben werden).</P
+></LI
+><LI
+STYLE="list-style-type: dash"
+><P
+>Ein konventioneller Debugger kann verwendet werden,
+ohne den mühseligen Umweg zu gehen, einen laufenden Kernel zu
+debuggen.</P
+></LI
+><LI
+STYLE="list-style-type: dash"
+><P
+>Wenn ein User-Space-Gerätetreiber hängt, können Sie
+ihn einfach beenden. Probleme mit dem Treiber führen wahrscheinlich
+nicht dazu, daß das gesamte System hängt; es sei denn, die Hardware
+verhält sich <SPAN
+><I
+CLASS="EMPHASIS"
+>wirklich</I
+></SPAN
+> unangenehm.</P
+></LI
+><LI
+STYLE="list-style-type: dash"
+><P
+>Im Gegensatz zum Kernel-Speicher kann
+Benutzer-Speicher ausgelagert werden. Ein selten benutztes Gerät mit
+einem riesigen Treiber belegt so keinen Speicher, den andere Programme
+benutzen könnten; es sei denn, das Gerät ist gerade in
+Benutzung.</P
+></LI
+><LI
+STYLE="list-style-type: dash"
+><P
+>Ein sauber programmiertes Treiber-Programm kann
+trotzdem noch gleichzeitigen Zugriff auf ein Gerät erlauben.</P
+></LI
+></UL
+>ark=dash&#62;<P
+>Ein Beispiel eines User-Space-Treibers ist der X-Server: Er weiß
+genau, was die Hardware kann und was nicht, und bietet diese grafischen
+Ressourcen allen X-Clients an. Beachten Sie aber, daß es eine
+langsame, aber stetige Bewegung hin zu Framebuffer-basierten
+Grafikumgebungen gibt, in denen der X-Server nur als Server, der auf einem
+echten Kernel-Space-Gerätetreiber für die Grafikmanipulation basiert, arbeitet.&#13;</P
+><P
+>Üblicherweise implementiert ein User-Space-Treiber einen
+Server-Prozeß, der vom Kernel die Aufgabe übernimmt,
+das einzige Stück Code zu sein, das die Hardware
+kontrolliert. Client-Applikationen können sich dann mit diesem
+Server verbinden, um mit dem Gerät zu kommunizieren; ein intelligenter
+Treiber-Prozeß kann also auch nebenläufigen Zugriff auf das Gerät
+ermöglichen. Genau so funktioniert auch der X-Server.&#13;</P
+><P
+>Ein anderes Beispiel für einen User-Space-Treiber ist der Maus-Server
+<SPAN
+CLASS="APPLICATION"
+>gpm</SPAN
+>: Er weist die Maus verschiedenen Clients zu und
+vermittelt zwischen diesen, so daß diverse maussensitive
+Applikationen auf verschiedenen virtuellen Konsolen laufen können.&#13;</P
+><P
+>Manchmal gewährt ein User-Space-Treiber aber auch nur einem einzigen
+Programm Zugriff auf das Gerät. So funktioniert beispielsweise
+<TT
+CLASS="LITERAL"
+>libsvga</TT
+>. Diese Bibliothek, die die grafische
+Ausgabe auf einem Terminal ermöglicht, wird zur Applikation
+hinzugelinkt und bietet der Applikation so den Zugriff auf den
+Bildschirm, ohne daß diese sich noch an eine zentrale Autorität (d.h.
+einen Server) wenden muß. Dieser Ansatz führt normalerweise
+zu besserer Performance, weil der Kommunikations-Overhead entfällt,
+verlangt aber, daß die Anwendung als privilegierter Benutzer läuft
+(dieses Problem wird unter anderem durch die Verwendung eines
+Framebuffer-Gerätetreibers im Kernel-Space gelöst).&#13;</P
+><P
+>Der User-Space-Ansatz hat aber auch eine Reihe von Nachteilen. Die
+wichtigsten sind:&#13;</P
+><P
+></P
+><UL
+><LI
+STYLE="list-style-type: dash"
+><P
+>Im User-Space stehen keine Interrupts zur Verfügung. Daran führt kein
+Weg vorbei; es sei denn, Sie lernen (auf x86-Systemen), wie man den
+Systemaufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>vm86</I
+></SPAN
+> verwendet, und akzeptieren eine
+Performance-Einbuße.<A
+NAME="AEN1708"
+HREF="#FTN.AEN1708"
+>[1]</A
+></P
+></LI
+><LI
+STYLE="list-style-type: dash"
+><P
+>Direkter Zugriff auf den Speicher ist nur mittels
+<SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+> auf <TT
+CLASS="FILENAME"
+>/dev/mem</TT
+>
+möglich, was wiederum nur ein privilegierter Benutzer kann.</P
+></LI
+><LI
+STYLE="list-style-type: dash"
+><P
+>Zugriff auf I/O-Ports ist nur nach Aufruf von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioperm</I
+></SPAN
+> oder <SPAN
+><I
+CLASS="EMPHASIS"
+>iopl</I
+></SPAN
+>
+möglich. Nicht alle Plattformen unterstützen diese Systemaufrufe, und
+Zugriffe auf <TT
+CLASS="FILENAME"
+>/dev/port</TT
+> können zu langsam sein, um
+effektiv zu sein. Beides steht nur privilegierten Benutzern zur
+Verfügung.</P
+></LI
+><LI
+STYLE="list-style-type: dash"
+><P
+>Die Antwortzeiten sind langsamer, weil ein Kontextwechsel notwendig
+ist, um Informationen zwischen dem Client und der Hardware zu
+transportieren.</P
+></LI
+><LI
+STYLE="list-style-type: dash"
+><P
+>Es kommt noch schlimmer: Wenn der Treiber auf die Festplatte
+ausgelagert worden ist, werden die Antwortzeiten inakzeptabel
+hoch. Der Systemaufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>mlock</I
+></SPAN
+> kann hier helfen,
+aber oftmals werden Sie mehrere Speicherseiten im Speicher festhalten
+müssen, weil ein User-Space-Programm von einer Menge Bibliothekscode
+abhängt. Auch <SPAN
+><I
+CLASS="EMPHASIS"
+>mlock</I
+></SPAN
+> steht nur privilegierten
+Benutzern zur Verfügung.</P
+></LI
+><LI
+STYLE="list-style-type: dash"
+><P
+>Auf die wichtigsten Geräte kann nicht im User-Space zugegriffen
+werden. Dazu gehören unter anderem Netzwerk-Interfaces und
+Block-Geräte.</P
+></LI
+></UL
+>ark=dash&#62;<P
+>Wie Sie sehen, können User-Space-Treiber nicht viel machen. Trotzdem
+gibt es aber interessante Anwendungen, beispielsweise Unterstützung
+für SCSI-Scanner (im <SPAN
+CLASS="APPLICATION"
+>SANE</SPAN
+>-Paket
+implementiert) und CD-Brenner (implementiert durch
+<SPAN
+CLASS="APPLICATION"
+>cdrecord</SPAN
+> und andere Programme). In beiden
+Fällen verwenden die User-Space-Gerätetreiber den
+&#8220;generischen SCSI-Kernel-Treiber&#8221;, der die
+SCSI-Funktionalität niedriger Ebene den User-Space-Programmen zur
+Verfügung stellt, so daß diese auf ihre Hardware zugreifen können.&#13;</P
+><P
+>Um einen User-Space-Treiber zu schreiben, genügen mittlere
+Hardware-Kenntnisse, und man muß die Subtilitäten der
+Kernel-Programmierung nicht verstehen. Wir werden in diesem Buch nicht weiter auf Treiber im User-Space eingehen, sondern uns auf
+Kernel-Code konzentrieren.&#13;</P
+><P
+>Wenn Sie es dagegen mit ungewöhnlicher Hardware zu tun haben, dann
+kann es sinnvoll sein, die Software erst einmal im User-Space zu
+schreiben. Auf diese Art und Weise können Sie Ihre Hardware
+kennenlernen, ohne zu riskieren, daß das ganze System hängenbleibt. Wenn Sie das einmal geschafft haben, dann sollte es nicht mehr
+weiter schwierig sein, die Software in ein Kernel-Modul zu kapseln.
+
+
+&#13;</P
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN1708"
+HREF="x1670.html#AEN1708"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Dieser Systemaufruf wird in diesem Buch nicht
+besprochen, da es uns hier vor allem um Kernel-Treiber geht;
+außerdem ist <SPAN
+><I
+CLASS="EMPHASIS"
+>vm86</I
+></SPAN
+> zu plattformspezifisch, um
+wirklich interessant zu sein.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="buiconf.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x1736.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Automatische und manuelle
+Konfiguration</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="building.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Abwärtskompatibilität</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

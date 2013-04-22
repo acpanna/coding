@@ -1,0 +1,210 @@
+<HTML>
+ <HEAD>
+   <TITLE>
+     &Uuml;bungsblatt 07, 21.12.1999
+   </TITLE>
+ </HEAD>
+ <BODY>
+   <H1>
+     &Uuml;bungsblatt 07, 21.12.1999
+   </H1>
+   <H2>
+     Abgabetermin: Mo, 10.01.2000, 23:59 Uhr
+   </H2>
+
+<P>
+<DIV ALIGN="right">
+  <A HREF="mailto:Robert.Baier@uni-bayreuth.de">R. Baier</A> <BR>
+  <A HREF="mailto:hiwi512@btcipmatx1.cip.uni-bayreuth.de">M. Butscher</A> <BR>
+  <A HREF="mailto:hiwi501@btcipmatx1.cip.uni-bayreuth.de">P. Lerner</A>
+  <BR CLEAR="all">
+</DIV>
+</P>
+
+Das &Uuml;bungsblatt besteht aus der Aufgabe <A HREF="#A17">17</A>,
+der freiwilligen Aufgabe
+<A HREF="#A18">18</A> und der verl&auml;ngerten Teamaufgabe 
+<A HREF="#A16">16</A> von Blatt 06, auf die
+es 4 bzw. 6 Punkte (Aufgabe 16) zu erreichen gibt. <BR>
+Das &Uuml;bungsblatt inkl. aller Sourcecodes, Bilder, HTML-Seiten, ... kann auch
+als
+
+<UL>
+  <LI><A HREF="blatt_07.tar.gz"><TT>gzip</TT>'tes <TT>tar</TT>-Archive</A>
+  </LI>
+  <LI>
+      <A HREF="blatt_07.zip"><TT>ZIP</TT>-Archive</A>
+  </LI>
+</UL>
+heruntergeladen werden. <BR>
+<EM>Beachten Sie die <A HREF="http://www.uni-bayreuth.de/departments/math/~rbaier/lectures/java/uebung/allgemein/hinweise.html">allgemeinen Abgabehinweise</A>!!</EM>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A17">&nbsp;</A>
+
+   <H2>
+     Aufgabe 17
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi501@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Peter Lerner)
+   </H3>
+
+
+<P>
+  Betrachten Sie den folgenden unvollst&auml;ndigen 
+  <A HREF="Rechtecke.java">Sourcecode eines Applets</A>, das 10 zuf&auml;llige 
+  Rechtecke in einer zuf&auml;lligen Farbe zeichnet. Diese k&ouml;nnen dann
+  durch Mouseclick (linke Mousetaste) selektiert werden (das selektierte Rechteck wird 
+  dann in rot gezeichnet)
+  bzw. durch Bewegung bei gehaltener linker Mousetaste verschoben werden.
+</P>
+
+<P>
+  Das Applet verwendet die noch zu schreibende Klasse <TT>Rechteck</TT>. Da
+  gutes objektorientiertes Programmieren von Implementierungsdetails befreit,
+  sollen f&uuml;r die Klasse <TT>Rechteck</TT> zwei verschiedene Implementierung
+  getestet werden. Das Applet
+  selbst (d.h. die Klasse <TT>Rechtecke</TT>) soll jedoch f&uuml;r beide 
+  Implementierungen unver&auml;ndert bleiben. <BR>
+  In der 1. Implementierung sind die Objekte der Klasse <TT>Rechteck</TT> 
+  durch eine Ecke mit x- und y-Koordinate sowie durch
+  Breite und H&ouml;he definiert. In der 2. Implementierung sollen die
+  Objekte der Klasse <TT>Rechteck</TT> dagegen durch zwei Ecken jeweils durch 
+  Abspeichern der x- und y-Koordinate festgelegt sein.
+</P>
+
+<P>
+  Bei beiden Implementierungen k&ouml;nnen Sie sich an der Klasse 
+  <TT>java.awt.Rectangle</TT> orientieren, Sie sollen aber keine Methoden 
+  oder Objekte dieser Klasse verwenden. Beide Implementierungen sollten 
+  folgendes in ihrer Klassendefinition enthalten:
+  
+  <UL>
+    <LI>
+      <P>
+        Neben dem Konstruktor, der im Applet verwendet wird, soll
+        mindestens noch ein Defaultkonstruktor sowie ein Konstruktor f&uuml;r
+        die Angabe zweier Ecken enthalten sein.
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        Sie sollten get- und set-Methoden f&uuml;r die x- bzw. y-Koordinate
+        beider Ecken sowie f&uuml;r Breite, H&ouml;he und Farbe enthalten (auch
+        wenn die jeweilige Implementierung gar keine 2. Ecke bzw. Breite und 
+        H&ouml;he als Datenelemente besitzt).
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        Die Methode <TT>zeichneRechteck()</TT> mu&szlig; noch durch Hinzuf&uuml;gen
+        der verwendeten Datenelemente lauff&auml;hig gemacht werden.
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        Die Methode <TT>contains()</TT> mu&szlig; noch so definiert werden,
+        da&szlig; der Wert <TT>true</TT> zur&uuml;ckgeliefert wird, wenn
+        der Punkt (hier ein Objekt der Klasse <TT>java.awt.Point</TT>) innerhalb 
+        des Rechtecks liegt.
+      </P>
+    </LI>  
+  </UL>
+</P>
+
+<P>
+  <B>Abzugeben</B> sind zwei Java-Sourcefiles f&uuml;r die beiden 
+  Implementierungen, die jeweils den Appletcode (d.h. die Klasse 
+  <TT>Rechtecke</TT> beinhalten) sowie der zugeh&ouml;rige Java-Bytecode 
+  und das HTML-File.
+</P>
+
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A18">&nbsp;</A>
+
+   <H2>
+     freiwillige Aufgabe 18 <BR>
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi512@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Michael Butscher)
+   </H3>
+
+<P>
+  Definieren Sie rechtzeitig zu Weihnachten eine Klasse <TT>Wunschzettel</TT>, 
+  die auf jeden Fall die beiden Datenelemente
+  
+  <PRE>
+    String [] wuensche;
+    float [] preise;
+  </PRE>
+  
+  enthalten soll. Das String-Array soll dabei die W&uuml;nsche auf dem Wunschzettel
+  beinhalten und das <TT>float</TT>-Array die zugeh&ouml;rigen Preise in DM. <BR>
+  Definieren Sie die Konstruktoren
+  
+  <PRE>
+    public Wunschzettel()
+    public Wunschzettel(String [] w)
+    public Wunschzettel(String [] w, float [] p)
+    public Wunschzettel(String einzigerWunsch)
+    public Wunschzettel(String einzigerWunsch, float zugeh_preis)
+  </PRE>
+  
+  Da das Erstellen und Besetzen der Komponenten aufgrund der Arrays etwas
+  l&auml;nger ausf&auml;llt, sollen sie den allgemeinsten 
+  Konstruktor realisieren und alle anderen Konstruktoren auf diesen 
+  zur&uuml;ckf&uuml;hren (geeigneter Aufruf des allgemeinsten Konstruktors in den
+  anderen Konstruktoren). <BR>
+  
+  Sie sollten auf jeden Fall abfangen, wenn die Nullreferenz
+  als Argument des Konstruktors auftritt sowie einige Preise negativ sind.
+  Setzen Sie geeignete Standardwerte ein, wenn nicht alles 
+  durch die Argumente der Konstruktoren festgelegt wurde.
+</P>
+
+<P>
+  Schreiben Sie neben der Methode <TT>toString()</TT> zur Ausgabe des Wunschzettels 
+  und sinnvollen get- und set-Methoden
+  ein kurzes Testprogramm.
+</P>
+
+<P>
+  <B>Abzugeben</B> ist das Java-Sourcefile f&uuml;r die Klasse <TT>Wunschzettel</TT>
+  und das Testprogramm sowie der zugeh&ouml;rige Java-Bytecode.
+</P>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A16">&nbsp;</A>
+
+   <H2>
+     verl&auml;ngerte Teamaufgabe 16 von Blatt 06 <BR>
+     (Abgabe von bis zu 2 Leuten gemeinsam m&ouml;glich und erw&uuml;nscht)
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi512@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Michael Butscher)
+   </H3>
+
+<P>
+  Vergleichen Sie die Angabe auf dem 
+  <A HREF="../blatt_06/ueb_06_99.html#A16">&Uuml;bungsblatt 06</A>.
+</P>
+
+<P>
+  <B>Abzugeben</B> sind der Java-Sourcecode, der Java-Bytecode
+  sowie eine detailliertere Erkl&auml;rung, wann und warum/warum nicht ein Konstruktor
+  von <TT>Komplex</TT> aufgerufen wurde sowie wann und warum die Objekte in der 
+  von der Programmausgabe berichteten Reihenfolge wieder freigegeben werden.
+</P>
+<HR SIZE=5 WIDTH="100%">
+
+Ansonsten w&uuml;nsche ich allen frohe Weihnachten und einen guten
+Rutsch ins Neue Jahr (ohne allzu gravierende Jahr 2000-Probleme).
+ </BODY>
+</HTML>

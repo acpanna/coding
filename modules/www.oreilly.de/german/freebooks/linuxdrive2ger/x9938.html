@@ -1,0 +1,429 @@
+<HTML
+><HEAD
+><TITLE
+>Schnellreferenz</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Speicher ergattern"
+HREF="get.html"><LINK
+REL="PREVIOUS"
+TITLE="Abwärtskompatibilität"
+HREF="getdep.html"><LINK
+REL="NEXT"
+TITLE="Hardware-Verwaltung"
+HREF="hard.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="getdep.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 7. Speicher ergattern</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="hard.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN9938"
+>Schnellreferenz</A
+></H1
+><P
+>Die folgenden Funktionen und Symbole gehören zum Bereich der
+Allokation von Speicher:&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/malloc.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>void *kmalloc(size_t size, int flags);</TT
+>, <TT
+CLASS="LITERAL"
+>void kfree(void *obj);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+Die am häufigsten verwendeten Funktionen zum Allozieren von Speicher.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/mm.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>GFP_KERNEL</TT
+>, <TT
+CLASS="LITERAL"
+>GFP_ATOMIC</TT
+>, <TT
+CLASS="LITERAL"
+>_&#8201;_GFP_DMA</TT
+>, <TT
+CLASS="LITERAL"
+>_&#8201;_GFP_HIGHMEM</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+
+
+<TT
+CLASS="LITERAL"
+>_&#8201;_GFP_DMA</TT
+> und
+<TT
+CLASS="LITERAL"
+>_&#8201;_GFP_HIGHMEM</TT
+> sind
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+>-Flags, die entweder mit
+<TT
+CLASS="LITERAL"
+>GFP_KERNEL</TT
+> oder mit <TT
+CLASS="LITERAL"
+>GFP_ATOMIC</TT
+>
+ODER-verknüpft werden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/malloc.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>kmem_cache_t *kmem_cache_create(char *name, size_t size,
+size_t offset, unsigned long flags,
+constructor(), destructor());</TT
+>, <TT
+CLASS="LITERAL"
+>int kmem_cache_destroy(kmem_cache_t *cache);</TT
+></DT
+><DD
+><P
+>&#13;
+
+Dienen zum Erzeugen bzw. Zerstören eines Slab-Caches. Der Cache kann zur
+Allokation mehrerer Objekte der gleichen Größe verwendet werden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>SLAB_NO_REAP</TT
+>, <TT
+CLASS="LITERAL"
+>SLAB_HWCACHE_ALIGN</TT
+>, <TT
+CLASS="LITERAL"
+>SLAB_CACHE_DMA</TT
+></DT
+><DD
+><P
+>&#13;
+
+Flags, die beim Erzeugen eines Caches angegeben werden können.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>SLAB_CTOR_ATOMIC</TT
+>, <TT
+CLASS="LITERAL"
+>SLAB_CTOR_CONSTRUCTOR</TT
+></DT
+><DD
+><P
+>&#13;
+Flags, die der Allokator an die Konstruktor- und Destruktor-Funktionen
+übergeben kann.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void *kmem_cache_alloc(kmem_cache_t *cache, int flags);</TT
+>, <TT
+CLASS="LITERAL"
+>void kmem_cache_free(kmem_cache_t *cache, const void *obj);</TT
+></DT
+><DD
+><P
+>&#13;
+Dienen zum Allozieren und Freigeben eines einzelnen Objekts im Cache.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long get_zeroed_page(int flags);</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned long _&#8201;_get_free_page(int flags);</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned long _&#8201;_get_free_pages(int flags, unsigned long order);</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned long _&#8201;_get_dma_pages(int flags, unsigned long order);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+Die seitenorientierten Allokationsfunktionen.
+<SPAN
+><I
+CLASS="EMPHASIS"
+>get_zeroed_page</I
+></SPAN
+> gibt eine mit Nullen gefüllte
+Seite zurück. Alle anderen Versionen initialisieren den Inhalt der
+zurückgegebenen Seite(n) nicht.
+<SPAN
+><I
+CLASS="EMPHASIS"
+>_&#8201;_get_dma_pages</I
+></SPAN
+> ist ab Linux 2.2 nur ein
+Kompatibilitätsmakro (Sie können statt dessen
+<TT
+CLASS="LITERAL"
+>__GFP_DMA</TT
+> verwenden).</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void free_page(unsigned long addr);</TT
+>, <TT
+CLASS="LITERAL"
+>void free_pages(unsigned long addr, unsigned long order);</TT
+></DT
+><DD
+><P
+>&#13;
+Diese Funktionen geben seitenorientierte Allokationen frei.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/vmalloc.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>void * vmalloc(unsigned long size);</TT
+>, <TT
+CLASS="LITERAL"
+>void vfree(void * addr);</TT
+>, <TT
+CLASS="LITERAL"
+>#include &#60;asm/io.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>void * ioremap(unsigned long offset, unsigned long size);</TT
+>, <TT
+CLASS="LITERAL"
+>void iounmap(void *addr);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+
+
+Diese Funktionen allozieren zusammenhängenden <SPAN
+><I
+CLASS="EMPHASIS"
+>virtuellen</I
+></SPAN
+>
+Adreßraum oder geben ihn wieder frei. <SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+>
+greift auf physikalischen Speicher über virtuelle Adressen zu, während
+<SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+> freie Seiten alloziert. Mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+> abgebildete Bereiche werden mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>iounmap</I
+></SPAN
+> freigegeben, während mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+> geholte Seiten mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>vfree</I
+></SPAN
+> freigegeben werden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/bootmem.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>void *alloc_bootmem(unsigned long size);</TT
+>, <TT
+CLASS="LITERAL"
+>void *alloc_bootmem_low(unsigned long size);</TT
+>, <TT
+CLASS="LITERAL"
+>void *alloc_bootmem_pages(unsigned long size);</TT
+>, <TT
+CLASS="LITERAL"
+>void *alloc_bootmem_low_pages(unsigned long size);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+
+
+Erst ab Version 2.4 des Kernels. Speicher kann mit diesen Funktionen
+bereits beim Booten alloziert werden. Dies kann nur von Treibern
+verwendet werden, die direkt in das Kernel-Image gelinkt sind.</P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="getdep.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="hard.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Abwärtskompatibilität</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="get.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Hardware-Verwaltung</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

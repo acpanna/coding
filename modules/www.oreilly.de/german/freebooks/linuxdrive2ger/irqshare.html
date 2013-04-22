@@ -1,0 +1,538 @@
+<HTML
+><HEAD
+><TITLE
+>Gemeinsames Nutzen von Interrupts</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Interrupt-Handler"
+HREF="irq.html"><LINK
+REL="PREVIOUS"
+TITLE="Tasklets und untere Hälften"
+HREF="irqbottom.html"><LINK
+REL="NEXT"
+TITLE="Interrupt-gesteuerte I/O"
+HREF="irqbuffers.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="irqbottom.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 9. Interrupt-Handler</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="irqbuffers.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="IRQSHARE"
+>Gemeinsames Nutzen von Interrupts</A
+></H1
+><P
+>&#13;
+Der Begriff eines IRQ-Konflikts ist fast schon synonym mit der
+PC-Architektur. Im allgemeinen konnten IRQ-Leitungen auf PCs nicht
+mehr als ein Gerät bedienen, und es gab nie genug davon. Als Folge
+davon haben frustrierte Benutzer viel Zeit mit geöffneten
+Computergehäusen zugebracht und versucht herauszufinden, wie sie all
+ihre Hardware zur Zusammenarbeit bewegen konnten.</P
+><P
+>Es liegt aber nicht am Design der Hardware selbst, daß
+Interrupt-Leitungen nicht gemeinsam genutzt werden können. Das Problem
+liegt auf seiten der Software. Seit es den PCI-Bus gibt, müssen
+sich die Autoren von Systemsoftware etwas mehr anstrengen, da alle
+PCI-Interrupts explizit gemeinsam genutzt werden können. Linux
+unterstützt also gemeinsam genutzte Interrupts &#8212; und das auf
+allen Bus-Systemen, auf denen das sinnvoll ist, nicht nur auf dem
+PCI-Bus. Entsprechend geschriebene Treiber für ISA-Geräte können also
+eine IRQ-Leitung gemeinsam nutzen.
+&#13;</P
+><P
+>&#13;
+
+
+Die Frage der gemeinsamen Nutzung von Interrupts auf dem ISA-Bus
+wirft auch den Unterschied zwischen
+Level-getriggerten und Edge-getriggerten Interrupt-Leitungen auf. Obwohl
+die erste Möglichkeit, Interrupts zu melden, in Hinblick auf eine
+gemeinsame Nutzung sicher ist, kann sie zum Blockieren der Software
+führen, wenn sie nicht richtig gehandhabt wird. Edge-getriggerte
+Interrupts sind dagegen nicht sicher gemeinsam zu nutzen. ISA ist
+Edge-getriggert, weil diese Signalisierung auf Hardware-Ebene leichter
+zu implementieren ist, und deswegen in den achtziger Jahren des
+vorigen Jahrhunderts das Mittel der Wahl war. Diese Frage hat nichts
+mit den elektrischen Signalpegeln zu tun. Um die gemeinsame Nutzung zu
+unterstützen, muß die Leitung von mehreren Quellen aktiv geschaltet
+werden können, unabhängig davon, ob sie Level-getriggert oder
+Edge-getriggert ist.</P
+><P
+>Mit einer Level-getriggerten Interrupt-Leitung markiert das
+Peripherie-Gerät das IRQ-Signal, bis die Software den wartenden
+Interrupt löscht (normalerweise durch Schreiben in ein
+Geräte-Register). Wenn
+mehrere Geräte die Leitung aktiv schalten, meldet die CPU daher einen Interrupt, sobald der IRQ
+eingeschaltet ist, bis alle Treiber ihre Geräte bedient haben. Dieses Verhalten ist
+hinsichtlich der gemeinsamen Nutzung sicher, kann aber zu Blockaden führen,
+wenn ein Treiber es versäumt, seine Interrupt-Quelle freizugeben.</P
+><P
+>Wenn Edge-getriggerte Interrupts verwendet werden, können Interrupts
+dagegen verlorengehen: Falls ein Gerät die Leitung zu lange aktiv
+schaltet, wird keine Flanke erzeugt, wenn ein anderes Gerät die
+Leitung ebenfalls aktiv schaltet, und der Prozessor ignoriert die
+zweite Anfrage. Ein Handler für gemeinsam genutzte Interrupts sieht
+den Interrupt einfach nicht, und wenn dessen Hardware die IRQ-Leitung
+nicht wieder herunterschaltet, wird für keines der Geräte ein
+Interrupt mehr gemeldet.</P
+><P
+>Aus diesem Grunde kann die gemeinsame Nutzung von Interrupts auf
+ISA-Bussen manchmal nicht funktionieren, selbst wenn sie grundsätzlich
+funktionieren kann; manche Geräte halten die IRQ-Leitung genau einen
+Taktzyklus aktiv, aber andere sind nicht so wohlerzogen und können
+Treiber-Autoren, die versuchen, IRQs gemeinsam zu nutzen, große
+Kopfschmerzen bereiten. Wir werden hier darauf nicht näher
+eingehen; im Rest dieses Abschnitts gehen wir davon aus, daß entweder
+der Host-Bus die gemeinsame Nutzung von sich aus unterstützt oder daß
+Sie wissen, was Sie tun.</P
+><P
+>Um einen Treiber entwickeln zu können, der eine gemeinsam genutzte
+Interrupt-Leitung verwaltet, müssen einige Details beachtet
+werden. Wie unten noch besprochen wird, sind einige der in diesem Kapitel
+genannten Features nicht für Geräte mit gemeinsamer Nutzung von
+Interrupts verfügbar. Wann immer es möglich ist, ist es aber besser,
+das gemeinsame Nutzen zu unterstützen, weil das für den Endanwender weniger
+Probleme mit sich bringt. In einigen Fällen (z.B. auf dem PCI-Bus) ist
+die gemeinsame Nutzung zwingend vorgeschrieben.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN12095"
+>Einen gemeinsam genutzten Handler installieren</A
+></H2
+><P
+>&#13;Gemeinsam genutzte Interrupts werden genau wie normale Interrupts von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request_irq</I
+></SPAN
+> installiert, allerdings gibt
+es zwei Unterschiede:&#13;</P
+><P
+></P
+><UL
+><LI
+STYLE="list-style-type: dash"
+><P
+>&#13;Das Bit <TT
+CLASS="LITERAL"
+>SA_SHIRQ</TT
+> muß im
+<TT
+CLASS="LITERAL"
+>flags</TT
+>-Argument gesetzt sein, wenn der Interrupt angefordert wird.</P
+></LI
+><LI
+STYLE="list-style-type: dash"
+><P
+>&#13;Das Argument <TT
+CLASS="LITERAL"
+>dev_id</TT
+> muß eindeutig sein. Ein
+beliebiger Zeiger in den Adreßraum des Moduls ist in Ordnung, aber
+<TT
+CLASS="LITERAL"
+>NULL</TT
+> ist definitiv nicht erlaubt.</P
+></LI
+></UL
+><P
+>Der Kernel verwaltet eine Liste von gemeinsam genutzten Handlern zu
+einem Interrupt (wie eine Treiber-Signatur). Zwischen diesen wird mit
+<TT
+CLASS="LITERAL"
+>dev_id</TT
+> unterschieden. Wenn zwei Treiber <TT
+CLASS="LITERAL"
+>NULL</TT
+> als ihre
+Signatur auf ein- und demselben Interrupt registrieren würden, dann
+würde spätestens beim Entladen einiges durcheinanderkommen und der
+Kernel beim Eintreffen eines Interrupts eine Oops-Meldung ausgeben. Aus diesem Grund
+beschweren sich moderne Kernel lautstark, wenn <TT
+CLASS="LITERAL"
+>NULL</TT
+>
+als <TT
+CLASS="LITERAL"
+>dev_id</TT
+> bei gemeinsam genutzten
+Interrupts übergeben wird.&#13;</P
+><P
+>Wenn ein gemeinsam genutzter Interrupt angefordert wird, ist
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request_irq</I
+></SPAN
+> erfolgreich, wenn emtweder die
+Interrupt-Leitung frei ist, oder wenn die bereits für diese Leitung
+registrierten Handler diese ebenfalls für eine gemeinsame Nutzung angefordert
+haben. In 2.0-Kerneln war es außerdem notwendig, daß die Handler
+eines gemeinsam genutzten Interrupts entweder alle langsam oder alle
+schnell waren; die beiden Modi konnten nicht gemischt werden.&#13;</P
+><P
+>Wenn zwei oder mehr Treiber eine Interrupt-Leitung teilen und die
+Hardware den Prozessor  auf dieser Leitung unterbricht, dann ruft der
+Kernel jeden für diesen Interrupt registrierten Handler auf und
+übergibt dabei jeweils dessen <TT
+CLASS="LITERAL"
+>dev_id</TT
+>. Daher
+muß ein gemeinsam genutzter Handler in der Lage sein, seine eigenen
+Interrupts zu erkennen, und sollte sich schnell beenden, wenn es nicht
+das eigene Gerät war, das den Interrupt auslöste.&#13;</P
+><P
+>&#13;
+
+
+Wenn Sie nach einem Gerät suchen müssen, bevor Sie die IRQ-Leitung
+anfordern, kann der Kernel Ihnen nicht helfen. Es gibt keine Funktion
+zum Ausprobieren für gemeinsam genutzte Handler. Der normale
+Probiermechanismus funktioniert, wenn die verwendete Leitung frei ist;
+wenn sie nun schon von einem anderen Handler genutzt wird, der aber zu teilen bereit
+ist, schlägt das Ausprobieren fehl, auch wenn der
+Treiber perfekt arbeiten würde.&#13;</P
+><P
+>Die einzige Möglichkeit, gemeinsam genutzte Leitungen zu erkennen, ist
+also die Handarbeit. Der Treiber sollte jede mögliche IRQ-Leitung als
+gemeinsam genutzter Handler anfordern und feststellen, ob Interrupts
+gemeldet werden. Der Unterschied zwischen diesem Verfahren und
+&#8220;<A
+HREF="irqinstall.html#IRQPROBESELF"
+>the Section called <I
+>Ausprobieren im Eigenbau</I
+></A
+>&#8221; besteht darin, daß der
+probierende Handler beim Gerät überprüfen muß, ob der Interrupt wirklich
+aufgetreten ist, denn dieser könnte ja auch als Antwort auf ein
+anderes Gerät, das auf einer gemeinsam genutzten Leitung liegt,
+aufgerufen worden sein.&#13;</P
+><P
+>Das Freigeben eines Handlers geschieht wie gewohnt mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>release_irq</I
+></SPAN
+>. Das Argument
+<TT
+CLASS="LITERAL"
+>dev_id</TT
+> wird hier verwendet, um den richtigen
+Handler zu bestimmen, der aus der Liste der gemeinsam genutzten
+Handler für diesen Interrupt entfernt werden soll. Das ist auch der
+Grund, warum der Zeiger <TT
+CLASS="LITERAL"
+>dev_id</TT
+> eindeutig
+sein muß.&#13;</P
+><P
+>Ein Treiber, der einen gemeinsam genutzten Handler verwendet, muß
+noch auf eine weitere Sache achten: Er kann nicht einfach
+<SPAN
+><I
+CLASS="EMPHASIS"
+>enable_irq</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>disable_irq</I
+></SPAN
+> benutzen. Wenn er das doch
+tut, dann könnte alles mögliche bei den anderen Geräten auf dieser
+Leitung schiefgehen. Der Programmierer muß sich immer der Tatsache bewußt sein,
+daß sein Treiber nicht der einzige ist, der mit diesem IRQ arbeitet, und
+daß er sich &#8220;sozialer&#8221; als sonst verhalten muß.&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN12149"
+>Aufrufen des Handlers</A
+></H2
+><P
+>Wie schon erwähnt wurde, werden alle registrierten Handler aufgerufen,
+wenn der Kernel einen Interrupt empfängt. Ein gemeinsam genutzter
+Handler muß in der Lage sein, zwischen Interrupts, die er bedienen
+muß, und solchen, die von anderen Geräten erzeugt worden sind, zu
+unterscheiden.&#13;</P
+><P
+>Wenn <SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> mit der Option
+<TT
+CLASS="LITERAL"
+>shared=1</TT
+> geladen wird, dann wird der folgende
+Handler anstelle des normalen installiert:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+void short_sh_interrupt(int irq, void *dev_id, struct pt_regs *regs)
+{
+    int value, written;
+    struct timeval tv;
+
+    /* Wenn das nicht short war, sofort zurueckspringen */
+    value = inb(short_base);
+    if (!(value &#38; 0x80)) return;
+
+    /* Interrupt-Bit zuruecksetzen */
+    outb(value &#38; 0x7F, short_base);
+
+    /* Der Rest ist unveraendert. */
+
+    do_gettimeofday(&#38;tv);
+    written = sprintf((char *)short_head,"%08u.%06u\n",
+                      (int)(tv.tv_sec % 100000000), (int)(tv.tv_usec));
+    short_incr_bp(&#38;short_head, written);
+    wake_up_interruptible(&#38;short_queue); /* alle lesenden Prozesse aufwecken */
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Hier ist sicherlich eine Erklärung nötig. Weil der Parallel-Port kein
+Bit hat, das &#8220;ausstehende Interrupts&#8221; meldet, verwendet
+der Handler das ACK-Bit für diesen Zweck. Wenn das Bit gesetzt ist,
+ist der gemeldete Interrupt für <SPAN
+CLASS="APPLICATION"
+>short</SPAN
+>, und
+der Handler löscht das Bit.&#13;</P
+><P
+>Der Handler setzt das Bit zurück, indem er das höchstwertige Bit des
+Daten-Ports der parallelen Schnittstelle auf 0
+setzt. <SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> weiß, daß die Pins 9 und 10
+miteinander verbunden sind. Wenn eines der anderen Geräte, die den IRQ
+mit <SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> teilen, einen Interrupt erzeugt,
+sieht <SPAN
+CLASS="APPLICATION"
+>short</SPAN
+>, daß seine eigene Leitung
+inaktiv ist, und macht nichts.
+&#13;</P
+><P
+>Ein vollständiger Treiber teilt seine Arbeit wahrscheinlich auch
+zwischen oberen und unteren Hälften auf, aber es ist leicht, das
+hinzuzufügen, und hat auch nichts mit dem Code zu tun, der das Sharing
+implementiert. Ein richtiger Treiber würde wahrscheinlich auch das
+<TT
+CLASS="LITERAL"
+>dev_id</TT
+>-Argument verwenden, um zu bestimmen,
+welches von möglicherweise vielen Geräten den Interrupt ausgelöst
+hat.</P
+><P
+>Wenn Sie einen Drucker (anstelle der Drahtbrücke) verwenden, um die
+Interrupt-Verwaltung mit <SPAN
+CLASS="APPLICATION"
+>short</SPAN
+> zu testen,
+funktioniert dieser gemeinsam genutzte Handler nicht wie hier
+beschrieben, weil das Drucker-Protokoll keine gemeinsame Nutzung
+erlaubt und der Treiber nicht wissen kann, ob der Interrupt von einem
+Drucker kam oder nicht.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN12166"
+>Die /proc-Schnittstelle</A
+></H2
+><P
+>&#13;
+Das Installieren gemeinsam genutzter Handler im System hat keinen
+Einfluß auf <TT
+CLASS="FILENAME"
+>/proc/stat</TT
+> (das ohnehin
+nichts von Handlern
+weiß). In <TT
+CLASS="FILENAME"
+>/proc/interrupts</TT
+> verändert sich
+hingegen etwas.&#13;</P
+><P
+>Alle Handler, die für die gleiche Interrupt-Nummer installiert worden
+sind, erscheinen in derselben Zeile von
+<TT
+CLASS="FILENAME"
+>/proc/interrupts</TT
+>. Die folgende
+Ausgabe zeigt, wie gemeinsam genutzte Interrupt-Handler angezeigt werden:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+           CPU0       CPU1
+  0:   22114216   22002860    IO-APIC-edge  timer
+  1:     135401     136582    IO-APIC-edge  keyboard
+  2:          0          0          XT-PIC  cascade
+  5:    5162076    5160039   IO-APIC-level  eth0
+  9:          0          0   IO-APIC-level  acpi, es1370
+ 10:     310450     312222   IO-APIC-level  aic7xxx
+ 12:     460372     471747    IO-APIC-edge  PS/2 Mouse
+ 13:          1          0          XT-PIC  fpu
+ 15:    1367555    1322398    IO-APIC-edge  ide1
+NMI:   44117004   44117004
+LOC:   44116987   44116986
+ERR:          0</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die gemeinsam genutzte Interrupt-Leitung hier ist IRQ 9. Die aktiven
+Handler werden in einer Zeile durch Kommata getrennt angezeigt. Hier
+nutzt das Subsystem zum Power Management ("acpi") den IRQ gemeinsam
+mit der Soundkarte ("es1370"). Der Kernel kann Interrupts von diesen
+beiden Quellen nicht unterscheiden und ruft bei jedem Interrupt beide
+Interrupt-Handler in den Treibern auf.
+
+&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="irqbottom.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="irqbuffers.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Tasklets und untere Hälften</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="irq.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Interrupt-gesteuerte I/O</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

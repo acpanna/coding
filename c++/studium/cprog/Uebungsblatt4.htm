@@ -1,0 +1,511 @@
+<HTML>
+ <HEAD>
+   <TITLE>
+     &Uuml;bungsblatt 04, 01.06.1999
+   </TITLE>
+ </HEAD>
+ <BODY>
+
+  <H1>
+     &Uuml;bungsblatt 04, 01.06.1999
+   </H1>
+   <H2>
+     Abgabetermin: Di, 08.06.1999, 10<SUP>00</SUP> Uhr
+   </H2>
+
+<DIV ALIGN="right">
+  <A HREF="mailto:Robert.Baier@uni-bayreuth.de">R. Baier</A> <BR>
+  <A HREF="mailto:Anton.Betten@uni-bayreuth.de">A. Betten</A> <BR>
+  <A HREF="mailto:hiwi511@btcipmatx1.cip.uni-bayreuth.de">M. Kohl</A> <BR>
+  <A HREF="mailto:hiwi502@btcipmatx1.cip.uni-bayreuth.de">B. Seifert</A>
+  <BR CLEAR="all">
+</DIV>
+<P>
+
+Das &Uuml;bungsblatt besteht aus den Aufgaben <A HREF="#A_10">10</A>,
+<A HREF="#A_11">11</A> und <A HREF="#A_12">12</A>.
+Das &Uuml;bungsblatt inkl. aller Sourcecodes, Bilder, HTML-Seiten, ... kann auch
+als
+<UL>
+  <LI><A HREF="blatt_04.tar.gz"><TT>gzip</TT>'tes <TT>tar</TT>-Archive</A>
+  </LI>
+  <LI>
+      <A HREF="blatt_04.zip"><TT>ZIP</TT>-Archive</A>
+  </LI>
+</UL>
+heruntergeladen werden. <BR>
+
+<EM>Beachten Sie die <A HREF="../allgemein/hinweise.html">allgemeinen Abgabehinweise</A>!!</EM>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A_10">&nbsp;</A>
+
+   <H2>
+     Aufgabe 10
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi502@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Bernd Seifert)
+   </H3>
+
+Rudi Ratlos mu&szlig; diesmal ein Programm f&uuml;r die Bank Verleihnix &amp;
+Wucher erstellen. Er bekommt vom Sachbearbeiter Z. Insniedrig anstatt der
+Kundendaten Beispieldaten mit drei Datens&auml;tzen. Diese m&uuml;ssen
+eingelesen werden, abgespeichert werden in passende Variablen (zur 
+Vereinfachung: immer wieder in dieselben Variablen) und jedesmal angezeigt 
+werden. Hr. Insniedrig hat ihm 
+eingesch&auml;rft, sowenig Platz wie m&ouml;glich/sinnvoll f&uuml;r die
+Variablen zu verwenden, da momentan der Datenbestand &uuml;ber 100.000 Kunden 
+umfa&szlig;t und die Rechner nicht so &uuml;ppig mit Speicher ausgestattet sind.
+
+<P>
+W&auml;hlen Sie geeignete Datentypen f&uuml;r die Variablen, indem Sie die
+Beispieldaten der Datei "<A HREF="aufg_10.ein"><TT>aufg_10.ein</TT></A>"
+analysieren und denkbare andere Werte ber&uuml;cksichtigen.
+Verwenden Sie dabei die geeigneten C-Formatierungszeichen zum Einlesen und
+Ausgeben der Daten (oder C++-Befehle zur Ein- und Ausgabe). 
+Rudis Chef hat bereits ein C-Rahmenprogramm im File
+"<A HREF="aufg_10.c"><TT>aufg_10.c</TT></A>" bzw. ein C++-Rahmenprogramm im File
+"<A HREF="aufg_10.cpp"><TT>aufg_10.cpp</TT></A>" hinterlassen
+und sich um 14<SUP>00</SUP> Uhr mit den Worten 
+
+<BLOCKQUOTE>
+    "Hier habe ich noch eine kleine Aufgabe f&uuml;r Sie. Bin leider nicht
+    fertig geworden; ich mu&szlig; jetzt mal zur Bank,
+    aber Sie schaffen das sicher bis n&auml;chste Woche."
+</BLOCKQUOTE>
+ 
+verabschiedet.
+
+<P>
+<B>Hinweis:</B> <BR>
+Die beiden Rahmenprogramme lassen sich nicht &uuml;bersetzen und m&uuml;ssen
+noch ausgebessert werden. Sie enthalten jedoch schon vollst&auml;ndig
+lauff&auml;hige Anweisungen zum &Ouml;ffnen und Schlie&szlig;en der
+Datei "<TT>aufg_10.ein</TT>" sowie Andeutungen, wie die Daten einzulesen
+sind.
+
+<P>
+Abzugeben ist das C-/C++-Programm sowie eine Erkl&auml;rung, warum welche
+Datentypen im Programm gew&auml;hlt wurden.
+
+<P>
+
+<HR SIZE=5 WIDTH="100%">
+
+<A NAME="A_11">&nbsp;</A>
+
+   <H2>
+     Aufgabe 11
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi502@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Bernd Seifert)
+   </H3>
+
+<OL TYPE=a>
+  <LI>
+    Schreiben Sie eine Funktion "<TT>print_rueckwaerts()</TT>", die in der
+    Funktion einen an sie &uuml;bergebenen String r&uuml;ckw&auml;rts auf der
+    Standardausgabe ausgeben kann. <BR>
+    Wie sollte der Funktionskopf aussehen? Orientieren Sie sich dabei
+    an in ANSI C standardisierte Stringfunktionen. 
+
+    <P>
+    Schreiben Sie eine Funktion "<TT>inKleinSchreibweise()</TT>", die alle
+    Gro&szlig;buchstaben eines an die Funktion &uuml;bergebenen Strings
+    in Kleinbuchstaben umwandelt und in diesem String so abspeichert. <BR>
+    Was macht die ANSI C-Funktion "<TT>tolower()</TT>"? <BR>
+    Wie sollte der Funktionskopf aussehen, damit der &uuml;bergebene String 
+    auch ge&auml;ndert werden kann?
+    <P>
+  </LI>
+
+  <LI>
+    &Uuml;bergeben Sie einen String an eine von Ihnen zu erstellende Funktion
+    und ersetzen Sie alle Umlaute durch zwei ASCII-Zeichen.
+
+    <P>
+    <TABLE ALIGN="center" BORDER=1 CELLPADDING=5>
+      <TR>
+        <TH>
+          Umlaut
+        </TH>
+        <TH>
+          Ersatz durch 2 ASCII-Zeichen
+        </TH>
+      </TR>
+
+      <TR>
+        <TD ALIGN="center">
+          &auml;
+        </TD>
+        <TD ALIGN="center">
+          ae
+        </TD>
+      </TR>
+
+      <TR>
+        <TD ALIGN="center">
+          &ouml;
+        </TD>
+        <TD ALIGN="center">
+          oe
+        </TD>
+      </TR>
+
+      <TR>
+        <TD ALIGN="center">
+          &uuml;
+        </TD>
+        <TD ALIGN="center">
+          ue
+        </TD>
+      </TR>
+
+      <TR>
+        <TD ALIGN="center">
+          &szlig;
+        </TD>
+        <TD ALIGN="center">
+          ss
+        </TD>
+      </TR>
+
+      <TR>
+        <TD ALIGN="center">
+          &Auml;
+        </TD>
+        <TD ALIGN="center">
+          Ae
+        </TD>
+      </TR>
+
+      <TR>
+        <TD ALIGN="center">
+          &Ouml;
+        </TD>
+        <TD ALIGN="center">
+          Oe
+        </TD>
+      </TR>
+
+      <TR>
+        <TD ALIGN="center">
+          &Uuml;
+        </TD>
+        <TD ALIGN="center">
+          Ue
+        </TD>
+      </TR>
+    </TABLE>
+
+    <P>
+    Der so ge&auml;nderte String sollte zur&uuml;ckgegeben 
+    werden. Die Funktion sollte den Namen "<TT>ersetze_umlaute()</TT>" tragen. 
+    Damit die Funktion keinen neuen String dynamisch oder statisch mit
+    inflexibler L&auml;nge anlegen mu&szlig;, soll wie bei der ANSI C-Funktion
+    "<TT>strcpy()</TT>" der Funktionskopf wie folgt aussehen:
+
+    <BLOCKQUOTE>
+       char * ersetze_umlaute(char * ohne_umlaute, const char * mit_umlauten);
+    </BLOCKQUOTE>
+
+    Beim Aufruf mu&szlig; daher als erstes Argument ein bereits angelegter
+    String mit passender L&auml;nge &uuml;bergeben werden (der nach Beendigung
+    der Funktion den &uuml;bergebenen String ohne Umlaute enthalten soll) 
+    und erst als zweites Argument den String mit Umlauten. 
+    Zur&uuml;ckgegeben werden soll
+    wie bei "<TT>strcpy()</TT>" das erste Argument. <BR>
+
+    Wie lang mu&szlig; der String "<TT>ohne_umlaute</TT>" sein?
+    <P>
+  </LI>
+</OL>
+
+<P>
+Geben Sie das C-/C++-Programm mit den Funktionen und einem kurzen Testprogramm
+sowie die Beantwortung der Fragen ab.
+
+<P>
+<HR SIZE=5 WIDTH="100%">
+
+<A NAME="A_12">&nbsp;</A>
+
+   <H2>
+     Aufgabe 12
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi511@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Matthias Kohl)
+   </H3>
+
+Anfragen an WWW-Suchmaschinen beinhalten zumeist ein Ausf&uuml;llen eines
+HTML-Formulars, dessen Daten an ein CGI-Skript &uuml;bermittelt werden.
+Eine &Uuml;bermittlung der Daten an das CGI-Skript des fremdem WWW-Servers
+erfolgt oftmals durch Senden der Daten als URL-Anhang.
+
+<OL TYPE=a>
+  <LI>
+    Erm&ouml;glichen Sie im C-/C++-Programm die Eingabe eines Suchbegriffs
+    (als C-String) und eine Auswahl, ob im deutschsprachigen Raum oder 
+    weltweit (in allen Sprachen) gesucht werden soll. 
+
+    <P>
+    Erzeugen Sie daraus eine URL f&uuml;r eine Suchabfrage mit
+    Fireball 
+    (URL: <A HREF="http://www.fireball.de/"><TT>http://www.fireball.de/</TT></A>).
+    Eine Express-Suche mit einer Detail-Anzeige besitzt die (einzeilige) URL:
+
+    <BLOCKQUOTE>
+      <TT>http://www.fireball.de/query-fireball.fcg?action=query&amp;pg=express&amp;q=</TT>
+          <I>Suchbegriff</I><TT>&amp;what=</TT><I>Suchbereich</I>
+          <TT>&amp;fmt=d
+      </TT>
+    </BLOCKQUOTE>
+
+    Erzeugen Sie einen String dieser Form, der anstelle von <I>Suchbegriff</I>
+    den eingegebenen Suchbegriff und anstelle von <I>Suchbereich</I>
+    den passenden Wert
+
+    <P>
+
+    <TABLE ALIGN="center" BORDER=1 CELLPADDING=5>
+      <TR>
+        <TH>
+          Suchbereich
+        </TH>
+        <TH>
+          zu &uuml;bergebender Wert in der URL
+        </TH>
+      </TR>
+
+      <TR>
+        <TD>
+          Suche in allen Sprachen (AltaVista)
+        </TD>
+        <TD>
+          <TT>web</TT>
+        </TD>
+      </TR>
+
+      <TR>
+        <TD>
+          Suche in deutschsprachigen WWW-Servern
+        </TD>
+        <TD>
+          <TT>german_web</TT>
+        </TD>
+      </TR>
+    </TABLE>
+
+    <BR>
+    beinhaltet.
+    <P>
+  </LI>
+
+  <LI>
+    Analysieren Sie URLs von Suchmaschinen und zerlegen Sie diese
+    in die Einzelbestandteile
+
+    <BLOCKQUOTE>
+       <I>Protokollname</I> <TT>://</TT>
+       <I>Servername</I> <TT>/</TT>
+       <I>WWW-Dokumentenadresse</I> <TT>?</TT>
+       <I>1. Parametername</I> <TT>=</TT> <I>1. Parameterwert</I> <BR>
+       <TT>&amp;</TT> <I>2. Parametername</I> <TT>=</TT> <I>2. Parameterwert</I>
+       ...
+       <TT>&amp;</TT> <I>n. Parametername</I> <TT>=</TT> <I>n. Parameterwert</I>
+    </BLOCKQUOTE>
+    
+    Beispiel: Die URL
+
+    <BLOCKQUOTE>
+      <TT>http://www.fireball.de/query-fireball.fcg?action=query&amp;pg=express&amp;q=printf&amp;what=german_web&amp;fmt=d
+      </TT>
+    </BLOCKQUOTE>
+
+    ergibt aufgeschl&uuml;sselt: 
+
+    <P>
+
+    <TABLE ALIGN="center" BORDER=1 CELLPADDING=5>
+      <TR>
+        <TH>
+          Bedeutung
+        </TH>
+        <TH>
+          Wert
+        </TH>
+      </TR>
+
+      <TR>
+        <TD>
+          Protokollname
+        </TD>
+        <TD>
+          <TT>http</TT> (Hypertext Transport Protocol)
+        </TD>
+      </TR>
+
+      <TR>
+        <TD>
+          Servername
+        </TD>
+        <TD>
+          <TT>www.fireball.de</TT>
+        </TD>
+      </TR>
+
+      <TR>
+        <TD>
+          WWW-Dokumentenadresse
+        </TD>
+        <TD>
+          <TT>query-fireball.fcg</TT>
+        </TD>
+      </TR>
+
+      <TR>
+        <TD>
+          1. Parametername (Aktion = Suchabfrage)
+        </TD>
+        <TD>
+          <TT>action</TT>
+        </TD>
+      </TR>
+
+      <TR>
+        <TD>
+          1. Parameterwert (Aktion = Suchabfrage)
+        </TD>
+        <TD>
+          <TT>query</TT>
+        </TD>
+      </TR>
+
+      <TR>
+        <TD>
+          2. Parametername (Suchart)
+        </TD>
+        <TD>
+          <TT>pg</TT>
+        </TD>
+      </TR>
+
+      <TR>
+        <TD>
+          2. Parameterwert (Suchart)
+        </TD>
+        <TD>
+          <TT>express</TT>
+        </TD>
+      </TR>
+
+      <TR>
+        <TD>
+          3. Parametername (Suchbegriff)
+        </TD>
+        <TD>
+          <TT>q</TT>
+        </TD>
+      </TR>
+
+      <TR>
+        <TD>
+          3. Parameterwert (Suchbegriff)
+        </TD>
+        <TD>
+          <TT>printf</TT>
+        </TD>
+      </TR>
+
+      <TR>
+        <TD>
+          4. Parametername (Suchbereich)
+        </TD>
+        <TD>
+          <TT>what</TT>
+        </TD>
+      </TR>
+
+      <TR>
+        <TD>
+          4. Parameterwert (Suchbereich)
+        </TD>
+        <TD>
+          <TT>german_web</TT>
+        </TD>
+      </TR>
+
+      <TR>
+        <TD>
+          5. Parametername (Anzeigeformat = Detail)
+        </TD>
+        <TD>
+          <TT>fmt</TT>
+        </TD>
+      </TR>
+
+      <TR>
+        <TD>
+          5. Parameterwert (Anzeigeformat = Detail)
+        </TD>
+        <TD>
+          <TT>d</TT>
+        </TD>
+      </TR>
+    </TABLE>
+
+    <P>
+    Testen Sie Ihr Programm mit den folgenden URLs:
+
+    <BLOCKQUOTE>
+      <TT>
+        http://www.fireball.de/query-fireball.fcg?action=query&amp;pg=express&amp;q=printf&amp;what=german_web&amp;fmt=d
+      </TT> <BR>
+
+      <TT>
+        http://www.altavista.com/cgi-bin/query?pg=q&kl=XX&q=printf
+      </TT> <BR>
+
+      <TT>
+        http://www.fireball.de/query-fireball.fcg?action=query&pg=express&q=scanf&what=web&fmt=.
+      </TT> <BR>
+
+      <TT>
+        http://www.fireball.de/query-fireball.fcg?action=query&pg=express&q=printf&what=da&fmt=d
+      </TT> <BR>
+
+      <TT>
+        http://www.hotbot.com/?MT=Zeiger&SM=MC&DV=0&LG=any&DC=10&DE=2&_v=2&OPs=MDRTP
+      </TT> <BR>
+
+      <TT>
+        http://www.lycos.de/cgi-bin/pursuit?matchmode=and&mtemp=main.sites&etemp=error&query=C-Zeiger&cat=de_spkr
+      </TT> <BR>
+
+      <TT>
+        http://search.yahoo.de/search/de?p=C-B%FCcher
+      </TT> <BR>
+    </BLOCKQUOTE>
+
+    <B>Hinweis:</B> Benutzen Sie die in der Vorlesung vorgestellten
+    String-Funktion(en), insbesondere diejenige(n) zum Auffinden von 
+    W&ouml;rtern oder Buchstaben und verarbeiten Sie dann die so bestimmten
+    Teilstrings weiter.
+
+    <P>
+    Ignorieren Sie die bei der Formularversendung automatisch generierte
+    Umwandlung von Zeichen, die keine Ziffern oder Buchstaben sind, in ihre
+    Hexadezimalverschl&uuml;sselung (vgl. letztes Beispiel einer Abfrage in
+    Yahoo mit "<TT>%FC</TT>" statt dem Zeichen "<TT>&uuml;</TT>").
+  </LI>
+</OL>
+
+<P>
+Abzugeben ist der komplette Source-Code und die ausgegebenen Resultate als 
+Textdatei.
+
+ </BODY>
+</HTML>

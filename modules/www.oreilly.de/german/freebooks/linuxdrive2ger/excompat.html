@@ -1,0 +1,928 @@
+<HTML
+><HEAD
+><TITLE
+>Abwärtskompatibilität</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Fortgeschrittene Operationen in Zeichen-Treibern"
+HREF="extra.html"><LINK
+REL="PREVIOUS"
+TITLE="Zugriffskontrolle auf Gerätedateien"
+HREF="exaccess.html"><LINK
+REL="NEXT"
+TITLE="Schnellreferenz"
+HREF="x7658.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="exaccess.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 5. Fortgeschrittene Operationen in Zeichen-Treibern</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x7658.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="EXCOMPAT"
+>Abwärtskompatibilität</A
+></H1
+><P
+>Viele der in diesem Kapitel behandelten Teile der Gerätetreiber-API
+haben sich von Kernel-Release zu Kernel-Release geändert. Für
+diejenigen von Ihnen, die ihren Treiber auch unter Linux 2.0 oder 2.2
+benötigen, folgt hier eine kurze Zusammenfassung der Unterschiede.</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN7434"
+>Warteschlangen in Linux 2.2 und 2.0</A
+></H2
+><P
+>&#13;
+
+Ein relativ kleiner Anteil des in diesem Kapitel behandelten Materials
+hat sich während der 2.3-Entwicklung geändert. Die einzige maßgebliche
+Änderung erfolgte im Bereich der Warteschlangen. Im 2.2-Kernel gab es
+eine andere, einfachere Implementation von Warteschlangen, aber es
+fehlten einige wichtige Features wie exklusive Sleeps. Die neue
+Implementation wurde mit der Kernel-Version 2.3.1 eingeführt. </P
+><P
+>Die Wartenschlangen-Implementation in Linux 2.2 verwendete Variablen
+des Typs <TT
+CLASS="LITERAL"
+>struct wait_queue *</TT
+> anstelle von
+<TT
+CLASS="LITERAL"
+>wait_queue_head_t</TT
+>. Dieser Zeiger mußte vor der
+ersten Verwendung mit <TT
+CLASS="LITERAL"
+>NULL</TT
+> initialisiert
+werden. Eine typische Deklaration und Initialisierung einer
+Warteschlange sah so aus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; struct wait_queue *my_queue = NULL;</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Die diversen Funktionen zum Schlafenlegen und Aufwecken sahen genauso
+aus, mit Ausnahme des Variablentyps für die Warteschlange
+selbst. Daher ist es mit ein wenig Code wie dem folgenden(der aus der
+Header-Datei <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> stammt, die wir zum
+Kompilieren unseres Beispiel-Codes verwenden) einfach, Code zu
+schreiben, der mit allen 2.<SPAN
+><I
+CLASS="EMPHASIS"
+>x</I
+></SPAN
+>-Versionen des
+Kernels funktioniert.</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+# define DECLARE_WAIT_QUEUE_HEAD(head) struct wait_queue *head = NULL
+  typedef struct wait_queue *wait_queue_head_t;
+# define init_waitqueue_head(head) (*(head)) = NULL</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die synchronen Versionen von <SPAN
+><I
+CLASS="EMPHASIS"
+>wake_up</I
+></SPAN
+> wurden in
+2.3.29 hinzugefügt; in <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> gibt es Makros
+gleichen Namens, so daß Sie dieses Feature in Ihrem Code verwenden und
+trotzdem portabel bleiben können. Die Ersatz-Makros expandieren zu
+einem normalen <SPAN
+><I
+CLASS="EMPHASIS"
+>wake_up</I
+></SPAN
+>, weil die
+zugrundeliegenden Mechanismen in früheren Kerneln nicht vorhanden
+sind. Die Timeout-Versionen von <SPAN
+><I
+CLASS="EMPHASIS"
+>sleep_on</I
+></SPAN
+> wurden
+im Kernel 2.1.127 hinzugefügt. Der Rest der
+Warteschlangen-Schnittstelle ist relativ unverändert geblieben. Die
+Header-Datei <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> definiert die Makros, die benötigt werden, um Ihre Module mit Linux 2.2 und Linux 2.0 kompilieren zu
+können, ohne den Code mit zu vielen <TT
+CLASS="LITERAL"
+>#ifdef</TT
+>s
+zuzumüllen.</P
+><P
+>Das Makro <SPAN
+><I
+CLASS="EMPHASIS"
+>wait_event</I
+></SPAN
+> gab es im Kernel 2.0 noch
+nicht. Für diejenigen, die es benötigen, haben wir eine Implementation
+in <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> mitgeliefert.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN7468"
+>Asynchrone Benachrichtigung</A
+></H2
+><P
+>&#13;
+Einige kleine Änderungen an der asynchronen Benachrichtigung sind in
+den Versionen 2.2 und 2.4 vorgenommen worden.</P
+><P
+>In Linux 2.3.21 bekam <SPAN
+><I
+CLASS="EMPHASIS"
+>kill_fasync</I
+></SPAN
+> ein drittes
+Argument. Vor dieser Version wurde <SPAN
+><I
+CLASS="EMPHASIS"
+>kill_fasync</I
+></SPAN
+>
+als</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; kill_fasync(struct fasync_struct *queue, int signal);</PRE
+></TD
+></TR
+></TABLE
+><P
+>aufgerufen. Glücklicherweise kümmert sich
+<TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> darum.</P
+><P
+>&#13;In der Version 2.2 wurde der Typ des ersten Arguments der Methode
+<SPAN
+><I
+CLASS="EMPHASIS"
+>fasync</I
+></SPAN
+> geändert. Im Kernel 2.0 wurde ein Zeiger
+auf die <TT
+CLASS="LITERAL"
+>inode</TT
+>-Struktur des Geräts anstelle des
+Integer-Dateideskriptors übergeben:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; int (*fasync) (struct inode *inode, struct file *filp, int on);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Um diese Inkompatibilität zu umgehen, verwenden wir den gleichen
+Ansatz wie bei <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>: Wir benutzen eine Wrapper-Funktion, wenn
+das Modul mit 2.0-Header-Dateien kompiliert wird.</P
+><P
+>Das Argument <TT
+CLASS="LITERAL"
+>inode</TT
+> der Methode
+<SPAN
+><I
+CLASS="EMPHASIS"
+>fasync</I
+></SPAN
+> wurde auch übergeben, wenn die Methode von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>release</I
+></SPAN
+> aus aufgerufen wurde, anstelle von
+<TT
+CLASS="LITERAL"
+>-1</TT
+>, wie es in neueren Kerneln der Fall ist.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN7498"
+>Die Methode fsync</A
+></H2
+><P
+>&#13;
+Das dritte Argument der <SPAN
+><I
+CLASS="EMPHASIS"
+>fsync</I
+></SPAN
+>-Methode in
+<TT
+CLASS="LITERAL"
+>file_operations</TT
+> (der Integer-Wert
+<TT
+CLASS="LITERAL"
+>datasync</TT
+>) wurde in der 2.3-Serie hinzugefügt, was
+bedeutet, daß portabler Code grundsätzlich eine Wrapper-Funktion für
+ältere Kernel enthalten muß. Es gibt aber eine Falle, wenn man
+portable <SPAN
+><I
+CLASS="EMPHASIS"
+>fsync</I
+></SPAN
+>-Methoden schreiben will:
+Mindestens ein Distributor, den wir hier lieber nicht erwähnen wollen,
+hat die 2.4-API von <SPAN
+><I
+CLASS="EMPHASIS"
+>fsync</I
+></SPAN
+> in seinen 2.2-Kernel
+gepatcht. Die Kernel-Entwickler vermeiden normalerweise
+(<SPAN
+><I
+CLASS="EMPHASIS"
+>normalerweise...</I
+></SPAN
+>) API-Änderungen in einer
+stabilen Serie, aber sie haben nur wenig Kontrolle darüber, was die
+Distributoren machen.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN7513"
+>Zugriff auf den User-Space in Linux 2.0</A
+></H2
+><P
+>&#13;
+
+
+
+Der Speicherzugriff wurde in den 2.0-Kerneln noch anders geregelt. Das
+virtuelle Speichersystem von Linux war zu dieser Zeit noch weniger
+weit entwickelt. Das neue System war die zentrale Änderung, die die
+Entwicklung von Version 2.1 einleitete, und brachte deutliche
+Performance-Verbesserungen mit sich - leider aber auch einen weiteren Satz von
+Inkompatibilitäten für Treiber-Entwickler.</P
+><P
+>In Linux 2.0 wurden folgende Funktionen für den Speicherzugriff
+verwendet:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>verify_area(int mode, const void *ptr, unsigned long size);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion arbeitete ähnlich wie <SPAN
+><I
+CLASS="EMPHASIS"
+>access_ok</I
+></SPAN
+>,
+führte aber eine genauere Überprüfung durch und war langsamer. Im
+Erfolgsfall gab sie 0, ansonsten <TT
+CLASS="LITERAL"
+>-EFAULT</TT
+>
+zurück. Neuere Kernel-Header definieren diese Funktion noch, aber sie
+ist nur noch ein Wrapper um <SPAN
+><I
+CLASS="EMPHASIS"
+>access_ok</I
+></SPAN
+>. Wenn Sie
+die Version 2.0 des Kernels verwenden, dann ist der Aufruf von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>verify_area</I
+></SPAN
+> nie optional, und kein sicherer Zugriff auf den
+User-Space ist ohne eine vorherige explizite Überprüfung möglich.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>put_user(datum, ptr)</TT
+></DT
+><DD
+><P
+>&#13;Das Makro <SPAN
+><I
+CLASS="EMPHASIS"
+>put_user</I
+></SPAN
+> sieht seinem heutigen
+Äquivalent sehr ähnlich. Es unterscheidet sich aber von ihm dadurch, daß nichts
+überprüft wurde und es keinen Rückgabewert gab.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>get_user(ptr)</TT
+></DT
+><DD
+><P
+>&#13;Dieses Makro holte den Wert an der angegebenen Adresse und gab ihn als
+Rückgabewert zurück. Auch hier wurde keine Überprüfung ausgeführt.</P
+></DD
+></DL
+></DIV
+><P
+><SPAN
+><I
+CLASS="EMPHASIS"
+>verify_area</I
+></SPAN
+> mußte explizit aufgerufen werden,
+weil keine Zugriffsfunktion auf den User-Space eine Überprüfung
+durchführte. Die große Neuerung in Linux 2.1, die gleichzeitig eine
+inkompatible Änderung an den Funktionen <SPAN
+><I
+CLASS="EMPHASIS"
+>get_user</I
+></SPAN
+>
+und <SPAN
+><I
+CLASS="EMPHASIS"
+>put_user</I
+></SPAN
+> erzwang, bestand darin, daß die
+Überprüfung der User-Space-Adressen der Hardware überlassen wurde,
+weil der Kernel jetzt in der Lage war, Prozessor-Ausnahmen, die
+während des Kopierens von Daten in den User-Space ausgelöst wurden,
+abzufangen und zu bearbeiten.</P
+><P
+>Als Beispiel dafür, wie die älteren Aufrufe verwendet werden, werfen
+Sie bitte einen weiteren Blick auf
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>. Eine
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Version, die die 2.0-API verwendet,
+würde <SPAN
+><I
+CLASS="EMPHASIS"
+>verify_area</I
+></SPAN
+> folgendermaßen aufrufen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+ int err = 0, tmp;
+
+ /*
+  * die Bitfelder für Typ und Nummer extrahieren und keine falschen Befehle
+  * decodieren: ENOTTY vor verify_area() zurueckgeben
+  */
+ if (_IOC_TYPE(cmd) != SCULL_IOC_MAGIC) return -ENOTTY;
+ if (_IOC_NR(cmd) &#62; SCULL_IOC_MAXNR) return -ENOTTY;
+
+ /*
+  * die Richtung ist eine Bitmaske; VERIFY_WRITE faengt
+  * R/W-Uebertragungen ab. Type ist User-orientiert, waehrend
+  * verify_area Kernel-orientiert ist, so daß die Konzepte von "read"
+  * und "write" umgedreht werden.
+  */
+ if (_IOC_DIR(cmd) &#38; _IOC_READ)
+   err = verify_area(VERIFY_WRITE, (void *)arg, _IOC_SIZE(cmd));
+ else if (_IOC_DIR(cmd) &#38; _IOC_WRITE)
+   err = verify_area(VERIFY_READ, (void *)arg, _IOC_SIZE(cmd));
+ if (err) return err;</PRE
+></TD
+></TR
+></TABLE
+><P
+><SPAN
+><I
+CLASS="EMPHASIS"
+>get_user</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>put_user</I
+></SPAN
+> können
+dann folgendermaßen verwendet werden:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+ case SCULL_IOCXQUANTUM: /* eXchange: arg als Zeiger verwenden */
+  tmp = scull_quantum;
+  scull_quantum = get_user((int *)arg);
+  put_user(tmp, (int *)arg);
+  break;
+
+ default: /* redundant, cmd wurde bereits mit MAXNR verglichen */
+  return -ENOTTY;
+ }
+  return 0;</PRE
+></TD
+></TR
+></TABLE
+><P
+>Nur ein kleiner Bestandteil des
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-switch-Codes wurde hier gezeigt, weil er
+sich etwas von dem für Version 2.2 und neuer unterscheidet.</P
+><P
+>Das Leben des kompatibilitätsbewußten Treiber-Entwicklers wäre
+relativ einfach, wenn <SPAN
+><I
+CLASS="EMPHASIS"
+>put_user</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>get_user</I
+></SPAN
+> nicht in allen Linux-Versionen als
+Makros implementiert worden wären und sich deren Schnittstellen nicht
+geändert hätten. Deswegen ist ein schneller Fix mittels Makros nicht
+möglich.</P
+><P
+>&#62;
+&#62;
+&#62;
+&#62;
+&#62;
+&#62;
+Eine mögliche Lösung besteht darin, einen neuen Satz
+versionsunabhängiger Makros zu
+definieren. <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> verwendet dabei Makros in
+Großbuchstaben: <TT
+CLASS="LITERAL"
+>GET_USER</TT
+>,
+<TT
+CLASS="LITERAL"
+>_&#8201;_GET_USER</TT
+> und so weiter. Die Argumente
+sind die gleichen wie bei den Kernel-Makros von Linux 2.4, aber der
+Aufrufer muß sicherstellen, daß zunächst
+<SPAN
+><I
+CLASS="EMPHASIS"
+>verify_area</I
+></SPAN
+> aufgerufen worden ist (weil das in
+2.0 notwendig ist).</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN7591"
+>Capabilities in 2.0</A
+></H2
+><P
+>&#13;
+Im 2.0-Kernel gab es überhaupt keine Capabilities-Abstraktion. Alle
+Überprüfungen von Zugriffsrechten testeten einfach, ob der aktuelle
+Prozeß als Superuser ausgeführt wurde; falls das der Fall ist, war die
+Operation zulässig. Zu diesem Zweck wurde die Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>suser()</I
+></SPAN
+> verwendet; sie erwartet keine Argumente
+und gibt einen von Null verschiedenen Wert zurück, wenn der Prozeß
+Superuser-Rechte hat.</P
+><P
+><SPAN
+><I
+CLASS="EMPHASIS"
+>suser</I
+></SPAN
+> existiert auch noch in neueren Kerneln,
+sollte aber nicht mehr verwendet werden. Es ist besser, eine Version
+von <SPAN
+><I
+CLASS="EMPHASIS"
+>capable</I
+></SPAN
+> in 2.0 zu definieren, wie das in
+<TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> gemacht wird:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+# define capable(anything) suser()</PRE
+></TD
+></TR
+></TABLE
+><P
+>Auf diese Weise kann man Code schreiben, der portabel ist, aber auch
+auf modernen, Capability-orientierten Systemen funktioniert.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN7606"
+>Die select-Methode in Linux 2.0</A
+></H2
+><P
+>&#13;
+Der 2.0-Kernel unterstützte den Systemaufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+>
+nicht; es wurde nur der BSD-artige <SPAN
+><I
+CLASS="EMPHASIS"
+>select</I
+></SPAN
+>-Aufruf
+unterstützt. Die zugehörige Gerätetreiber-Methode wurde daher
+<SPAN
+><I
+CLASS="EMPHASIS"
+>select</I
+></SPAN
+> genannt und funktionierte etwas anders,
+auch wenn die durchgeführten Aktionen fast identisch sind.</P
+><P
+>Die <SPAN
+><I
+CLASS="EMPHASIS"
+>select</I
+></SPAN
+>-Methode erwartet einen Zeiger auf eine
+<TT
+CLASS="LITERAL"
+>select_table</TT
+> und muß diesen Zeiger nur dann an
+<SPAN
+><I
+CLASS="EMPHASIS"
+>select_wait</I
+></SPAN
+> weitergeben, wenn der aufrufende
+Prozeß auf die angeforderte Bedingung (<TT
+CLASS="LITERAL"
+>SEL_IN</TT
+>,
+<TT
+CLASS="LITERAL"
+>SEL_OUT</TT
+> oder <TT
+CLASS="LITERAL"
+>SEL_EX</TT
+>) warten
+soll.</P
+><P
+>Der <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Treiber deckt diese
+Inkompatibilität durch die Deklaration einer speziellen
+<SPAN
+><I
+CLASS="EMPHASIS"
+>select</I
+></SPAN
+>-Methode ab, die verwendet wird, wenn für
+einen 2.0-Kernel kompiliert wird:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+#ifdef _&#8201;_USE_OLD_SELECT_&#8201;_
+int scull_p_poll(struct inode *inode, struct file *filp,
+         int mode, select_table *table)
+{
+  Scull_Pipe *dev = filp-&#62;private_data;
+
+  if (mode == SEL_IN) {
+    if (dev-&#62;rp != dev-&#62;wp) return 1; /* lesbar */
+    PDEBUG("Warte auf Lesen\n");
+    select_wait(&#38;dev-&#62;inq, table); /* auf Daten warten */
+    return 0;
+  }
+  if (mode == SEL_OUT) {
+    /*
+     * Der Puffer ist ein Ring-Puffer; er ist voll, wenn "wp" direkt
+     * hinter "rp" steht. "left" ist 0, wenn der Puffer leer ist, und
+     * "1", wenn er vollstaendig gefuellt ist.
+     */
+    int left = (dev-&#62;rp + dev-&#62;buffersize - dev-&#62;wp) % dev-&#62;buffersize;
+    if (left != 1) return 1; /* schreibbar */
+    PDEBUG("Warte auf Schreiben\n");
+    select_wait(&#38;dev-&#62;outq, table); /* warten auf freien Platz */
+    return 0;
+  }
+  return 0; /* kann nie von einer Ausnahme unterbrochen werden */
+}
+#else /* statt dessen Poll verwenden, wurde bereits gezeigt */</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Das hier verwendetete Präprozessorsymbol
+<TT
+CLASS="LITERAL"
+>_&#8201;_USE_OLD_SELECT_&#8201;_</TT
+> wird von
+<TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> entsprechend der Kernel-Version
+definiert.&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN7634"
+>Positionieren in Linux 2.0</A
+></H2
+><P
+>&#13;
+
+
+Vor Linux 2.1 hieß die Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>llseek</I
+></SPAN
+>
+<SPAN
+><I
+CLASS="EMPHASIS"
+>lseek</I
+></SPAN
+> und erwartete auch andere Parameter. Aus
+diesem Grund konnte man unter Linux 2.0 nicht über die 2 GByte-Grenze
+hinaus in einer Datei oder einem Gerät positionieren, auch wenn der
+Systemaufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>llseek</I
+></SPAN
+> damals schon unterstützt
+wurde.&#13;</P
+><P
+>Der Prototyp der Datei-Operation im 2.0-Kernel sah folgendermaßen aus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; int (*lseek) (struct inode *inode, struct file *filp , off_t off,
+ int whence);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Diejenigen, die mit 2.0 und 2.2 kompatible Gerätetreiber schreiben
+wollen, definieren meist gesonderte Implementationen der seek-Methode
+für die beiden Schnittstellen.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN7655"
+>2.0 und SMP</A
+></H2
+><P
+>Weil Linux 2.0 SMP-Systeme nur minimal unterstützte, konnten Race
+Conditions der in diesem Kapitel erwähnten Art normalerweise nicht
+vorkommen. Der 2.0-Kernel hatte durchaus eine Spinlock-Implementation,
+aber weil nur jeweils ein Prozessor Kernel-Code ausführen konnte, war
+es seltener notwendig zu sperren.
+&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="exaccess.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x7658.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Zugriffskontrolle auf Gerätedateien</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="extra.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Schnellreferenz</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

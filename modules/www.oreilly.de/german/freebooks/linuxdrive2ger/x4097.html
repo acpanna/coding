@@ -1,0 +1,371 @@
+<HTML
+><HEAD
+><TITLE
+>Schnellreferenz</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Zeichen-Treiber"
+HREF="char.html"><LINK
+REL="PREVIOUS"
+TITLE="Abwärtskompatibilität"
+HREF="x3895.html"><LINK
+REL="NEXT"
+TITLE="Debugging-Techniken"
+HREF="debug.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x3895.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 3. Zeichen-Treiber</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="debug.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN4097"
+>Schnellreferenz</A
+></H1
+><P
+>In diesem Kapitel wurden die folgenden Symbole und
+Header-Dateien eingeführt. Die Liste der Felder in <TT
+CLASS="LITERAL"
+>struct
+file_operations</TT
+> und <TT
+CLASS="LITERAL"
+>struct file</TT
+>
+wird hier nicht wiederholt.&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/fs.h&#62;</TT
+></DT
+><DD
+><P
+>&#13;
+
+Die <SPAN
+><I
+CLASS="EMPHASIS"
+>Dateisystem</I
+></SPAN
+>-Header-Datei wird zum Schreiben von
+Gerätetreibern benötigt. Alle wichtigen Funktionen sind hier
+definiert.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int register_chrdev(unsigned int major, const char *name, struct file_operations *fops);</TT
+></DT
+><DD
+><P
+>Registriert einen Zeichen-Gerätetreiber. Wenn die
+        Major-Nummer nicht Null ist, wird diese unverändert übernommen,
+        wenn die Nummer Null ist, wird eine dynamische Nummer
+        zugewiesen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int unregister_chrdev(unsigned int major, const char *name);</TT
+></DT
+><DD
+><P
+>Deregistriert einen Treiber beim Entladen. Sowohl
+<TT
+CLASS="LITERAL"
+>major</TT
+> als auch <TT
+CLASS="LITERAL"
+>name</TT
+> müssen die
+gleichen Werte wie beim Registrieren enthalten.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>kdev_t inode-&#62;i_rdev;</TT
+></DT
+><DD
+><P
+>Die Geräte-<SPAN
+CLASS="APPLICATION"
+>Nummer</SPAN
+> des aktuellen Geräts
+steht über das <TT
+CLASS="LITERAL"
+>inode</TT
+>-Argument zur Verfügung.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int MAJOR(kdev_t dev);</TT
+>, <TT
+CLASS="LITERAL"
+>int MINOR(kdev_t dev);</TT
+></DT
+><DD
+><P
+>Diese Makros extrahieren die Major- und Minor-Nummern aus
+        einem Geräte-Wert.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>kdev_t MKDEV(int major, int minor);</TT
+></DT
+><DD
+><P
+>Dieses Makro erzeugt einen
+        <TT
+CLASS="LITERAL"
+>kdev_t</TT
+>-Wert aus den Major- und Minor-Nummern.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>SET_MODULE_OWNER(struct file_operations *fops)</TT
+></DT
+><DD
+><P
+>&#13;Dieses Makro setzt das <TT
+CLASS="LITERAL"
+>owner</TT
+>-Feld in der
+angegebenen <TT
+CLASS="LITERAL"
+>file_operations</TT
+>-Struktur.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;asm/semaphore.h&#62;</TT
+></DT
+><DD
+><P
+>&#13;
+Definiert Funktionen und Typen rund um Semaphore.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void sema_init (struct semaphore *sem, int val);</TT
+></DT
+><DD
+><P
+>&#13;Initialisiert einen Semaphor mit einem bekannten Wert. Mutexe werden
+normalerweise mit dem Wert 1 initialisiert.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int down_interruptible (struct semaphore *sem);</TT
+>, <TT
+CLASS="LITERAL"
+>void up (struct semaphore *sem);</TT
+></DT
+><DD
+><P
+>&#13;
+Holt einen (wenn notwendig schlafenden) Semaphor bzw. gibt ihn wieder
+frei.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;asm/segment.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>#include &#60;asm/uaccess.h&#62;</TT
+></DT
+><DD
+><P
+>&#13;
+<TT
+CLASS="FILENAME"
+>segment.h</TT
+> definiert Funktionen, die zum Kopieren von Daten
+zwischen User-Space und Kernel-Space in allen Kerneln bis
+einschließlich 2.0 verwendet werden. In Version 2.1 wurde der Name der
+Header-Datei in <TT
+CLASS="FILENAME"
+>uaccess.h</TT
+> geändert.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long _&#8201;_copy_from_user (void *to, const void *from, unsigned long count);</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned long _&#8201;_copy_to_user (void *to, const void *from, unsigned long count);</TT
+></DT
+><DD
+><P
+>&#13;
+Kopiert Daten zwischen User-Space und Kernel-Space.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void memcpy_fromfs(void *to, const void *from, unsigned long count);</TT
+>, <TT
+CLASS="LITERAL"
+>void memcpy_tofs(void *to, const void *from, unsigned long count);</TT
+></DT
+><DD
+><P
+>Diese Funktionen wurden in der Kernel-Version 2.0 dazu benutzt, ein
+Array von Bytes zwischen dem User-Space und dem Kernel-Space hin- und
+herzukopieren.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/devfs_fs_kernel.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>devfs_handle_t devfs_mk_dir (devfs_handle_t dir, const char *name, void *info);</TT
+>, <TT
+CLASS="LITERAL"
+>devfs_handle_t devfs_register (devfs_handle_t dir, const char *name, unsigned int flags,</TT
+>, <TT
+CLASS="LITERAL"
+> unsigned int major, unsigned int minor, umode_t mode, void *ops, void *info);</TT
+>, <TT
+CLASS="LITERAL"
+>void devfs_unregister (devfs_handle_t de);</TT
+></DT
+><DD
+><P
+>Die grundlegenden Funktionen zum Registrieren von Geräten im
+Geräte-Dateisystem (<SPAN
+><I
+CLASS="EMPHASIS"
+>devfs</I
+></SPAN
+>).</P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x3895.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="debug.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Abwärtskompatibilität</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="char.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Debugging-Techniken</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

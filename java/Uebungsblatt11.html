@@ -1,0 +1,228 @@
+<HTML>
+ <HEAD>
+   <TITLE>
+     &Uuml;bungsblatt 11, 01.02.2000
+   </TITLE>
+ </HEAD>
+ <BODY>
+   <H1>
+     &Uuml;bungsblatt 11, 01.02.2000
+   </H1>
+   <H2>
+     Abgabetermin: Mo, 07.02.2000, 23:59 Uhr
+   </H2>
+
+<P>
+<DIV ALIGN="right">
+  <A HREF="mailto:Robert.Baier@uni-bayreuth.de">R. Baier</A> <BR>
+  <A HREF="mailto:hiwi512@btcipmatx1.cip.uni-bayreuth.de">M. Butscher</A> <BR>
+  <A HREF="mailto:hiwi501@btcipmatx1.cip.uni-bayreuth.de">P. Lerner</A>
+  <BR CLEAR="all">
+</DIV>
+</P>
+
+Das &Uuml;bungsblatt besteht aus der Aufgabe <A HREF="#A27">27</A>
+und der Teamaufgabe <A HREF="#A28">28</A> mit jeweils 4 Punkten. <BR>
+Das &Uuml;bungsblatt inkl. aller Sourcecodes, Bilder, HTML-Seiten, ... kann auch
+als
+
+<UL>
+  <LI><A HREF="blatt_11.tar.gz"><TT>gzip</TT>'tes <TT>tar</TT>-Archive</A>
+  </LI>
+  <LI>
+      <A HREF="blatt_11.zip"><TT>ZIP</TT>-Archive</A>
+  </LI>
+</UL>
+heruntergeladen werden. <BR>
+<EM>Beachten Sie die <A HREF="http://www.uni-bayreuth.de/departments/math/~rbaier/lectures/java/uebung/allgemein/hinweise.html">allgemeinen Abgabehinweise</A>!!</EM>
+
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A27">&nbsp;</A>
+
+   <H2>
+     Aufgabe 27 <BR>
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi501@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Peter Lerner)
+   </H3>
+
+<P>
+  Schreiben Sie eine Applikation, die ein File einlesen und das eventuell
+  abge&auml;nderte File wieder abspeichern kann. Vom Layout her soll es
+  in etwa wie das folgende Bild
+
+  <BLOCKQUOTE>
+    <IMG SRC="FileEditor.gif" WIDTH=506 HEIGHT=410>
+  </BLOCKQUOTE>
+
+  aussehen.
+</P>
+
+<P>
+  Oben soll der Filename erscheinen (der mit dem Aufruf des Java-Interpreters
+  "<TT>java FileEditor Test.txt</TT>" mit &uuml;bergeben wurde),
+  unten der momentane Status der Operation (File &ouml;ffnen, Einlesen
+  beendet, ...). Links und rechts soll sich jeweils ein Button befinden, 
+  der die Aktion "Laden" bzw. "Speichern" ausl&ouml;sen soll. In der Mitte
+  soll der File-Inhalt angezeigt werden (und sich ver&auml;ndern lassen).
+  Nennen Sie die GUI-Komponente f&uuml;r den Status <TT>status</TT>.
+</P>
+
+<P>
+  <UL>
+    <LI>
+      <P>
+        Da es sich um eine Java-Applikation handelt, m&uuml;ssten Sie 
+        zun&auml;chst ein <TT>Frame</TT>-Objekt erzeugen, das als Container 
+        dient. Da dieses Objekt aber von einer Klasse stammen muss, die
+        das Interface <TT>ActionListener</TT> implementiert, muss die Klasse
+        <TT>Frame</TT> abgeleitet
+        werden und die abgeleitete Klasse (z.B. <TT>MyFrame</TT>)
+        das Interface <TT>ActionListener</TT> implementieren. Daher 
+        sollte man in der Java-Applikation gleich ein Objekt der Klasse
+        <TT>MyFrame</TT> anlegen. Dieses Objekt kann dann als Datenelemente
+        alle ben&ouml;tigten GUI-Komponenten beinhalten und vergleichbar
+        zu einem Applet-Objekt agieren.
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        Verwenden Sie die Klasse <TT>TextArea</TT> zur Anzeige
+        des File-Inhalts, deren Objekte mehrzeiligen
+        Text anzeigen k&ouml;nnen und automatisch bei Bedarf mit Scrollbars
+        ausgestattet werden. 
+        Sie erlauben automatisch auch, Zeilen und 
+        Zeichen zu &auml;ndern. Nennen Sie das Objekt dieser Klasse 
+        <TT>inhalt</TT>. 
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        <A NAME="A27_update">Verwenden</A>
+        Sie die drei Routinen <TT>oeffne_file_lesen()</TT>,
+        <TT>oeffne_file_schreiben()</TT> und <TT>update()</TT> aus dem
+        File "<A HREF="FileEditor.java"><TT>FileEditor.java</TT></A>" zum
+        Einlesen eines Files, Schreiben eines Files bzw. zum Update
+        einer GUI-Komponente. Die ersten beiden Routinen vertrauen
+        darauf, dass Sie die GUI-Komponenten <TT>inhalt</TT> bzw.
+        <TT>status</TT> nennen (wie oben geschildert). Die beiden
+        File-Routinen m&uuml;ssen von Ihnen noch an allen Stellen
+        mit "<TT>...</TT>" erg&auml;nzt werden, da an diesen Stellen
+        die beiden GUI-Komponenten <TT>inhalt</TT> und <TT>status</TT> 
+        verwendet werden. <BR>
+        Definieren Sie au&szlig;erdem ein String-Objekt namens <TT>newline</TT>,
+        das Sie mit dem Wert <TT>System.getProperty("line.separator")</TT> 
+        vorbesetzen.
+      </P>
+    </LI>
+  </UL>
+</P>
+
+<P>
+  <B>Abzugeben</B> ist der Java-Sourcecode und der zugeh&ouml;rige Bytecode
+  der Java-Applikation.
+</P>
+ 
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A28">&nbsp;</A>
+
+   <H2>
+     Teamaufgabe 28 <BR>
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi512@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Michael Butscher)
+   </H3>
+
+<P>
+  Programmieren Sie einen W&auml;hrungsrechner, der DM-Betr&auml;ge in
+  Euro, italienische Lire, &ouml;sterreichische Schillinge oder
+  franz&ouml;sische Francs umrechnen kann (ohne eine besondere Rundung 
+  <BR>
+  vorzunehmen). Das Java-Applet soll in etwa wie das unten stehende Applet
+  funktionieren:
+
+  <HR>
+  <APPLET CODE="WaehrungsRechner.class" HEIGHT=400 WIDTH=500>
+     Dieser WWW-Browser kann entweder keine Java-Applets starten
+     oder es ist ihm durch die Einstellungen untersagt worden.
+  </APPLET>
+  <HR>
+
+  Zur Information &uuml;ber die Kurse betrachten Sie sich z.B. die WWW-Seiten
+  der
+  <A HREF="http://europa.eu.int/euro/html/dossiers/00232/html/index-DE.html">Europ&auml;ischen Union (EU)</A>,
+  der
+  <A HREF="http://www.hypovereinsbank.de/?Category=/EuroExtra/Waehrungsunion&Page=Kurse">Hypo-Vereinsbank</A>,
+  der 
+  <A HREF="http://www.raiba-bw.de/euro/euro_uk.html">Raiffeisenbank Bad Windsheim eG</A>, ... .
+</P>
+
+<P>
+  <UL>
+    <LI>
+      <P>
+        Finden Sie unter den Layout-Managern <TT>FlowLayout</TT>,
+        <TT>BorderLayout</TT> und <TT>GridLayout</TT> den zum Applet
+        passenden Layout-Manager. F&uuml;gen Sie mit diesem die 
+        n&ouml;tigen GUI-Komponenten zum Applet hinzu.
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        Verwenden Sie f&uuml;r
+        die Auswahlliste bei den W&auml;hrungen die Klasse <TT>List</TT>,
+        bei der man durch die Methode <TT>add()</TT> die Auswahlbezeichnungen
+        als Strings hinzuf&uuml;gt. Welche anderen GUI-Komponenten brauchen
+        Sie?
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        Registrieren Sie f&uuml;r die GUI-Komponente 
+        zum Ausrechnen einen passenden Listener und w&auml;hlen Sie 
+        f&uuml;r die GUI-Komponente zur Betragseingabe denselben Listener.
+        Durch welches Windows-Ereignis (mit Maus oder Tastatur)
+        bei der Betragseingabe wird dieser ausgel&ouml;st?
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        Welchen Listener m&uuml;ssen Sie f&uuml;r die Auswahlliste
+        registrieren? <BR>
+        Wie erfahren Sie vom zugeh&ouml;rigen Event-Objekt, ob eine
+        Auswahl selektiert oder deselektiert wurde und welche
+        Auswahl selektiert wurde?
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        Um den Inhalt der GUI-Komponente zum Anzeigen des umgerechneten Betrags
+        im Applet zu &auml;ndern, m&uuml;ssen Sie die Methode 
+        <TT>invalidate()</TT> f&uuml;r diese Komponente aufrufen
+        (Zustand/Anzeige der GUI-Komponente wird als veraltet markiert)
+        und anschlie&szlig;end die Methode <TT>validate()</TT> f&uuml;r das
+        Applet (Applet soll alle in ihm enthaltenen GUI-Komponenten auf den
+        aktuellen Stand bringen). Vgl. die Methode <TT>update()</TT>
+        in der <A HREF="FileEditor.java">Vorgabe</A>
+        von <A HREF="#A27_update">Aufgabe 27</A>.
+      </P>
+    </LI>
+  </UL>
+</P>
+
+<P>
+  <B>Abzugeben</B> ist der Java-Sourcecode und der zugeh&ouml;rige Bytecode
+  des Applets und das HTML-File.
+</P>
+
+ </BODY>
+</HTML>

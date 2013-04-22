@@ -1,0 +1,264 @@
+<HTML
+><HEAD
+><TITLE
+>Versionsnumerierung</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Eine Einführung in den Linux-Kernel"
+HREF="anintro.html"><LINK
+REL="PREVIOUS"
+TITLE="Sicherheitsfragen"
+HREF="x320.html"><LINK
+REL="NEXT"
+TITLE="Lizenzbedingungen"
+HREF="x357.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x320.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 1. Eine Einführung in den Linux-Kernel</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x357.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN339"
+>Versionsnumerierung</A
+></H1
+><P
+>&#13;Bevor wir nun wirklich zur Programmierung kommen, möchten wir noch auf
+das etwas unübliche Numerierungsschema von Linux eingehen sowie
+erwähnen, auf welche Versionen sich dieses Buch bezieht.&#13;</P
+><P
+>Beachten Sie zunächst, daß <SPAN
+><I
+CLASS="EMPHASIS"
+>jedes</I
+></SPAN
+> Software-Paket,
+das in einem Linux-System verwendet wird, seine eigene Versionsnummer
+hat. Oft bestehen auch gegenseitige Abhängigkeiten unter ihnen: Sie benötigen
+eine bestimmte Version eines Pakets, um eine bestimmte Version eines
+anderen Pakets verwenden zu können. Die Linux-Distributoren kümmern
+sich normalerweise darum, die richtigen Versionen herauszusuchen; der
+Benutzer, der eine solche Distribution installiert, muß sich also
+nicht um die Versionsnummern kümmern. Diejenigen, die Systemsoftware
+selbst ersetzen oder aktualisieren, sind dagegen auf sich allein
+gestellt. Glücklicherweise kann man in
+einigen modernen Distributionen einzelne Pakete selbst aktualisieren,
+wobei die Distributionen die Abhängigkeiten zwischen den Paketen
+überprüfen. Der Paket-Manager der Distribution erlaubt keine
+Aktualisierung, sofern die Abhängigkeiten nicht erfüllt sind.</P
+><P
+>Um die Beispiele aus diesem Buch ausprobieren zu können, brauchen Sie
+nichts außer dem Kernel; jede halbwegs aktuelle Linux-Distribution
+kann verwendet werden. Wir geben hier keine genauen Anforderungen an,
+da die Datei <TT
+CLASS="FILENAME"
+>Documentation/Changes</TT
+> in Ihren
+Kernel-Quellen die beste Quelle für solche Informationen ist, wenn Sie
+ein bestimmtes Problem haben.</P
+><P
+>Was den Kernel angeht, sind die Kernel-Versionen mit geraden Nummern
+(also zum Beispiel 2.2.<SPAN
+><I
+CLASS="EMPHASIS"
+>x</I
+></SPAN
+> und
+2.4.<SPAN
+><I
+CLASS="EMPHASIS"
+>x</I
+></SPAN
+>) die stabilen, die für die allgemeine
+Verwendung vorgesehen sind. Die ungeraden Versionen (wie
+2.3.<SPAN
+><I
+CLASS="EMPHASIS"
+>x</I
+></SPAN
+>) sind dagegen Entwicklungs-Snapshots und
+verändern sich schnell; die neuesten stellen den aktuellen
+Entwicklungsstand dar, sind aber schon nach ein paar Tagen wieder
+veraltet.</P
+><P
+>Dieses Buch behandelt die Kernel-Versionen 2.0 bis 2.4. Wir haben uns
+darauf konzentriert, alle Features zu zeigen, die Treiber-Autoren in
+der Version 2.4, der derzeit aktuellen Version, zur Verfügung
+stehen. Wir behandeln auch 2.2 gründlich, wenn sich 2.2 und 2.4
+unterscheiden. Außerdem erwähnen wir Features, die in 2.0 nicht zur
+Verfügung stehen, und bieten Workarounds an, wo der Platz das
+zuläßt. Ganz allgemein ist der hier gezeigte Code so geschrieben,
+daß er auf so vielen Kernel-Versionen wie möglich läuft; er ist auf der
+Version 2.4.4 und, wo es möglich war, den Versionen 2.2.18 und 2.0.38
+getestet worden.</P
+><P
+>Wir gehen hier nicht speziell auf Kernel-Versionen mit ungeraden
+Nummern ein. Normale Anwender sollten diese nie
+verwenden. Entwickler, die mit neuen Features experimentieren,
+sollten aber immer die aktuellste Entwicklungsversion verwenden, um
+Fehlerkorrekturen und neue Implementationen von bestimmten Features
+mitzubekommen. Beachten Sie aber, daß es keine Garantie für
+experimentelle Kernel gibt,<A
+NAME="AEN354"
+HREF="#FTN.AEN354"
+>[1]</A
+> und daß niemand Ihnen helfen wird, wenn Sie ein
+Problem wegen eines Bugs in einem nicht aktuellen Entwicklungs-Kernel
+haben. Diejenigen, die ungerade Kernel-Versionen verwenden, haben
+normalerweise die notwendigen Kenntnisse, um sich selbständig in den
+Kernel einzuarbeiten &#8212; ein weiterer Grund dafür, hier nicht auf
+Entwicklungs-Kernel einzugehen.</P
+><P
+>Linux ist nicht mehr nur ein &#8220;Unix-Klon für PC-Klone&#8221;, sondern ein
+plattformunabhängiges Betriebssystem; es wird erfolgreich auf Alpha-
+und SPARC-Prozessoren, 68000- und PowerPC-Plattformen und noch einigen
+mehr eingesetzt. Dieses Buch ist ebenfalls so plattformunabhängig wie
+möglich; alle Beispiele sind auf mehreren Plattformen wie PCs, ALpha,
+ARM, IA-64, M68k, PowerPC, SPARC, SPARC64 und VR41xx (MIPS) getestet
+worden. Weil der Code sowohl auf 32-Bit- als auch auf
+64-Bit-Prozessoren getestet worden ist, sollte er auch auf allen
+anderen Plattformen kompiliert werden können und laufen. Natürlich gilt das nicht
+für die Code-Beispiele, die bestimmte Hardware benötigen, aber das ist
+dann jeweils im Quellcode angegeben.</P
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN354"
+HREF="x339.html#AEN354"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Auch für Kernel mit geraden Nummern gibt es keine
+Garantie, es sei denn ein kommerzieller Anbieter sieht das in seinen
+Lizenzbestimmungen vor.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x320.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x357.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Sicherheitsfragen</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="anintro.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Lizenzbedingungen</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

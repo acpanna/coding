@@ -1,0 +1,1241 @@
+<HTML
+><HEAD
+><TITLE
+>Major- und Minor-Nummern</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Zeichen-Treiber"
+HREF="char.html"><LINK
+REL="PREVIOUS"
+TITLE="Zeichen-Treiber"
+HREF="char.html"><LINK
+REL="NEXT"
+TITLE="Datei-Operationen"
+HREF="charfops.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="char.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 3. Zeichen-Treiber</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="charfops.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="CHARMAMI"
+>Major- und Minor-Nummern</A
+></H1
+><P
+>&#13;
+
+
+Auf Zeichen-Geräte wird über Namen (oder <I
+CLASS="FIRSTTERM"
+>Nodes</I
+>, dt. Knoten) im
+Dateisystem zugegriffen. Diese Namen nennt man &#8220;spezielle Dateien&#8221; oder
+&#8220;Gerätedateien&#8221; oder einfach &#8220;Knoten im Dateisystem-Baum&#8221;; normalerweise
+liegen sie im
+<TT
+CLASS="FILENAME"
+>/dev</TT
+>-Verzeichnis. Gerätedateien sind
+besondere Dateien, die durch ein &#8220;c&#8221; in der ersten Spalte
+der Ausgabe von <SPAN
+><I
+CLASS="EMPHASIS"
+>ls -l </I
+></SPAN
+> kenntlich gemacht werden.
+
+
+
+Auch Block-Geräte stehen in <TT
+CLASS="FILENAME"
+>/dev</TT
+>, werden aber
+durch ein &#8220;b&#8221; gekennzeichnet. Auch wenn einige der
+folgenden Informationen auch auf Block-Geräte zutreffen, werden wir
+uns hier auf Zeichen-Treiber konzentrieren.&#13;</P
+><P
+>Wenn Sie den Befehl <SPAN
+CLASS="APPLICATION"
+>ls -l</SPAN
+> eingeben, werden
+Sie bei jeder Gerätedatei zwei durch ein Komma getrennte Zahlen direkt
+vor dem Modifikationsdatum sehen, wo sonst die Dateilänge steht.
+
+
+Diese Zahlen sind die <I
+CLASS="FIRSTTERM"
+>Major</I
+>- und
+<I
+CLASS="FIRSTTERM"
+>Minor</I
+>-Nummern des jeweiligen Gerätes. Das folgende
+Listing zeigt einige wenige Geräte, wie sie auf unserem System
+aussehen. Die Major-Nummern sind 1, 4, 7 und 10, die Minor-Nummern 1,
+3, 5, 64, 65 und 129.&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; crw-rw-rw- 1 root   root    1, 3   Feb 23 1999  null
+ crw------- 1 root   root   10, 1   Feb 23 1999  psaux
+ crw------- 1 rubini tty     4, 1   Aug 16 22:22 tty1
+ crw-rw-rw- 1 root   dialout 4, 64  Jun 30 11:19 ttyS0
+ crw-rw-rw- 1 root   dialout 4, 65  Aug 16 00:00 ttyS1
+ crw------- 1 root   sys     7, 1   Feb 23 1999  vcs1
+ crw------- 1 root   sys     7, 129 Feb 23 1999  vcsa1
+ crw-rw-rw- 1 root   root    1, 5   Feb 23 1999  zero</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die Major-Nummer gibt an, welcher Treiber zu diesem Gerät
+gehört. Beispielsweise werden sowohl
+<TT
+CLASS="FILENAME"
+>/dev/null</TT
+> als auch
+<TT
+CLASS="FILENAME"
+>/dev/zero</TT
+> vom Treiber 1 verwaltet,
+während alle virtuellen Konsolen und seriellen Terminals vom Treiber 4
+verwaltet werden; gleichermaßen ist der Treiber 7 für die Geräte
+<SPAN
+><I
+CLASS="EMPHASIS"
+>vcs1</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>vcsa1</I
+></SPAN
+>
+zuständig. Der Kernel verwendet die Major-Nummer, um einem Gerät den
+passenden Treiber zuzuordnen.&#13;</P
+><P
+>&#13;
+Die Minor-Nummer wird nur vom durch die Major-Nummer angegebenen
+Gerätetreiber benutzt; andere Teile des
+Kernels betrachten sie nicht und geben sie lediglich an den Treiber
+weiter. Es ist nicht ungewöhnlich, daß ein Treiber mehrere Geräte
+kontrolliert (wie im obigen Beispiel) &#8212; die Minor-Nummer ist
+eine Möglichkeit für den Treiber, zwischen den Geräten zu
+unterscheiden.&#13;</P
+><P
+>In der Version 2.4 des Kernels kam ein neues (optionales) Feature
+hinzu, das <I
+CLASS="FIRSTTERM"
+>Device Filesystem</I
+>
+(<I
+CLASS="FIRSTTERM"
+>Geräte-Dateisystem</I
+>,
+<TT
+CLASS="FILENAME"
+>devfs</TT
+>). Wenn dieses Dateisystem verwendet wird,
+dann ist die Verwaltung der Gerätedateien einfacher und deutlich
+anders. Auf der anderen Seite bringt das neue  Dateisystem auch
+mehrere für den Benutzer sichtbare Inkompatibilitäten mit sich und
+ist von den Distributoren derzeit noch nicht als Default eingesetzt
+worden. Die obenstehende Beschreibung und die folgenden Anweisungen
+über das Hinzufügen eines neuen Treibers und einer speziellen Datei
+gehen davon aus, daß <TT
+CLASS="FILENAME"
+>devfs</TT
+> nicht vorhanden
+ist. Wir füllen diese Lücke später in diesem Kapitel, im Abschnitt
+"<A
+HREF="chardevfs.html"
+>the Section called <I
+>Das Device-Dateisystem</I
+></A
+>&#62;".</P
+><P
+>&#13;Wenn <TT
+CLASS="FILENAME"
+>devfs</TT
+> nicht verwendet wird, muß einem neuen
+Treiber eine Major-Nummer zugewiesen werden, um ihn zum System
+hinzuzufügen. Diese Zuweisung sollte während der
+Initialisierung des Treibers (bzw. des Moduls) vorgenommen werden, indem die folgende Funktion aufgerufen wird, die in
+<TT
+CLASS="LITERAL"
+>&#60;linux/fs.h&#62;</TT
+> definiert ist:
+&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+int register_chrdev(unsigned int major, const char *name,
+                    struct file_operations *fops);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Der Rückgabewert ist ein Fehlercode. Ein negativer Rückgabewert zeigt
+einen Fehler an; eine Null oder ein positiver Rückgabewert bedeuten
+eine erfolgreiche Ausführung.
+
+
+
+
+
+Das Argument <TT
+CLASS="LITERAL"
+>major</TT
+> ist die angeforderte
+Major-Nummer, <TT
+CLASS="LITERAL"
+>name</TT
+> ist der Name des Gerätes, wie er
+in <TT
+CLASS="FILENAME"
+>/proc/devices</TT
+> erscheinen soll, und
+<TT
+CLASS="LITERAL"
+>fops</TT
+> ist ein Zeiger auf ein Array aus
+Funktionszeigern, über die die Funktionen des Treibers aufgerufen
+werden (siehe <A
+HREF="charfops.html"
+>the Section called <I
+>Datei-Operationen</I
+></A
+> weiter unten in diesem Kapitel).&#13;</P
+><P
+>Die Major-Nummer ist eine kleine Integer-Zahl, die als Index in ein
+statisches Array von Zeichen-Treibern verwendet wird. &#62; weiter hinten in diesem Kapitel beschreibt,
+wie man eine Major-Nummer auswählt. Die 2.0-Kernel unterstützten 128
+Geräte; in 2.2 und 2.4 wurde dieser Wert auf 256 erweitert (wobei die
+Werte 0 und 255 für zukünftige Einsatzzwecke vorgesehen sind). Auch
+Minor-Nummern bestehen aus acht Bits, sie werden aber nicht an
+<SPAN
+><I
+CLASS="EMPHASIS"
+>register_chrdev</I
+></SPAN
+> übergeben, weil sie ja, wie
+bereits gesagt, nur vom Treiber verwendet werden. Es gibt einen
+gewaltigen Druck von seiten der Entwicklergemeinde, die Anzahl der im Kernel
+möglichen Geräte heraufzusetzen; die Unterstützung von Gerätenummern
+mit wenigstens 16 Bits ist eines der Ziele in der 2.5-Entwicklung.&#13;</P
+><P
+>Wenn der Treiber erst einmal in der Kernel-Tabelle registriert ist, wird
+jedesmal, wenn eine Operation auf einer Zeichen-Datei durchgeführt
+wird, deren Major-Nummer mit der des Treibers übereinstimmt, vom
+Kernel die korrekte Funktion im Treiber aufgerufen. Dazu wird die Adresse
+aus der <TT
+CLASS="LITERAL"
+>file_operations</TT
+>-Sprungtabelle genommen. Aus diesem Grund sollte der an
+<SPAN
+><I
+CLASS="EMPHASIS"
+>register_chrdev</I
+></SPAN
+> übergebene Zeiger auf eine
+globale Struktur im Treiber zeigen und nicht auf eine lokale Struktur in der
+Initialisierungsfunktion des Moduls.&#13;</P
+><P
+>&#13;
+
+Als nächstes stellt sich die Frage, wie man Programmen den Namen
+bekanntgibt, unter dem sie auf ihren Treiber zugreifen können. Ein
+solcher Name muß im <TT
+CLASS="FILENAME"
+>/dev</TT
+>-Verzeichnis stehen
+und mit der Major- und Minor-Nummer des Treibers verknüpft sein.&#13;</P
+><P
+>Der Befehl, um einen Knoten im Dateisystem zu erzeugen, lautet
+<SPAN
+CLASS="APPLICATION"
+>mknod</SPAN
+> und kann nur vom Superuser ausgeführt werden.
+
+Der Befehl erwartet neben dem Namen der zu erzeugende Knoten drei
+Argumente. Beispielsweise erzeugt der Befehl&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+mknod /dev/scull0 c 254 0</PRE
+></TD
+></TR
+></TABLE
+><P
+>ein Zeichen-Gerät (<TT
+CLASS="LITERAL"
+>c</TT
+>), dessen Major-Nummer 254 und
+dessen Minor-Nummer 0 ist. Minor-Nummern sollten im Bereich von 0 bis
+255 liegen, weil sie aus historischen Gründen manchmal in nur einem
+Byte abgespeichert werden. Es gibt gute Gründe, den Bereich der
+verfügbaren Minor-Nummern zu erweitern, aber zur Zeit gilt noch die
+8-Bit-Grenze. </P
+><P
+>Bitte beachten Sie, daß die spezielle Gerätedatei nach ihrer Erzeugung
+durch <SPAN
+CLASS="APPLICATION"
+>mknod</SPAN
+> wie alle anderen Informationen
+auf der Festplatte verbleibt, sofern sie nicht ausdrücklich wieder
+entfernt wird. Sie können das in diesem Beispiel erzeugte Gerät mit
+<SPAN
+CLASS="APPLICATION"
+>rm /dev/scull0</SPAN
+> wieder entfernen.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN2375"
+>Dynamische Zuweisung von Major-Nummern</A
+></H2
+><P
+>&#13;
+Manche Major-Nummern werden den gängigsten Geräten statisch
+zugewiesen. Eine Liste solcher Geräte finden Sie im Kernel-Quellenbaum
+in der Datei <TT
+CLASS="FILENAME"
+>documentation/devices.txt</TT
+>. Weil
+viele Nummern schon vergeben sind, kann es schwierig sein, eine
+eindeutige Nummer für einen neuen Treiber zu wählen, weil es sehr viel
+mehr spezielle Treiber als Major-Nummern gibt. Sie könnten eine der
+für &#8220;experimentelle oder lokale Verwendung&#8221; gekennzeichneten Nummern
+verwenden,<A
+NAME="AEN2385"
+HREF="#FTN.AEN2385"
+>[1]</A
+>
+ aber wenn Sie mit mehreren &#8220;lokalen&#8221; Treibern arbeiten oder
+Ihren Treiber auch anderen zur Verfügung stellen, haben Sie wieder das
+gleiche Problem.&#13;</P
+><P
+>Glücklicherweise (obwohl das weniger auf Glück als vielmehr auf der
+Genialität eines Entwicklers beruht) kann man eine dynamisch
+zugewiesene Major-Nummer anfordern. Wenn das Argument
+<TT
+CLASS="LITERAL"
+>major</TT
+> beim Aufruf von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>register_chardev</I
+></SPAN
+> auf Null gesetzt ist,
+wählt die Funktion eine freie Nummer aus und gibt diese zurück. Die
+Major-Nummer ist immer positiv und kann daher nicht mit Fehlercodes
+verwechselt werden. Bitte beachten Sie die Unterschiede im Verhalten
+in den beiden Fällen: Die Funktion gibt die allozierte Major-Nummer
+zurück, wenn der Aufrufer eine dynamische Nummer angefordert hat, aber
+0 (nicht die Major-Nummer), wenn eine vordefinierte Major-Nummer
+erfolgreich registriert werden konnte.
+&#13;</P
+><P
+>Bei privaten Treibern raten wir Ihnen dringend, die dynamische Zuweisung
+von Major-Nummern zu verwenden, anstatt eine willkürliche Nummer aus
+den gerade freien zu verwenden. Wenn Ihr Treiber dagegen allgemein
+verwendet werden und in den offiziellen Kernel aufgenommen werden
+soll, dann sollten Sie sich eine für Sie reservierte Major-Nummer
+zuweisen lassen.&#13;</P
+><P
+>Der Nachteil der dynamischen Zuweisung besteht darin,
+
+
+daß Sie die Geräteknoten nicht vorher anlegen können, weil nicht
+garantiert ist, daß Ihr Treiber jedesmal dieselbe Nummer erhält. Sie
+können also das in <A
+HREF="kerneld.html"
+>Kapitel 11</A
+> verwendete
+Laden-bei-Bedarf nicht verwenden. Bei normalen Treibern ist das aber
+kaum ein Problem, weil Sie die Nummer aus
+<TT
+CLASS="FILENAME"
+>/proc/devices</TT
+> auslesen können, wenn sie einmal
+zugewiesen worden ist.</P
+><P
+>Um einen Treiber mit einer dynamischen Major-Nummer zu laden, muß der
+Aufruf von <SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+> daher durch ein einfaches
+Skript ersetzt werden, das nach dem Aufruf von
+<SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+> die Datei <TT
+CLASS="FILENAME"
+>/proc/devices</TT
+>
+ausliest, um dann die spezielle(n) Gerätedatei(en) zu erzeugen.</P
+><P
+>Eine typische <TT
+CLASS="FILENAME"
+>/proc/devices</TT
+>-Datei sieht
+folgendermaßen aus:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+Character devices:
+ 1 mem
+ 2 pty
+ 3 ttyp
+ 4 ttyS
+ 6 lp
+ 7 vcs
+ 10 misc
+ 13 input
+ 14 sound
+ 21 sg
+180 usb
+
+Block devices:
+ 2 fd
+ 8 sd
+ 11 sr
+ 65 sd
+ 66 sd</PRE
+></TD
+></TR
+></TABLE
+><P
+>Das Skript, das ein Modul mit dynamisch zugewiesenen Major-Nummern
+laden soll, kann also ein Hilfsprogramm wie <SPAN
+CLASS="APPLICATION"
+>awk</SPAN
+>
+verwenden,
+
+
+um die Informationen aus <TT
+CLASS="FILENAME"
+>/proc/devices</TT
+>
+auszulesen und damit die Dateien in <TT
+CLASS="FILENAME"
+>/dev</TT
+> zu
+erzeugen.&#13;</P
+><P
+>Das folgende Skript <SPAN
+CLASS="APPLICATION"
+>scull_load</SPAN
+> ist ein
+Bestandteil der <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Distribution. Der Benutzer
+eines Treibers, der in Form eines Moduls ausgeliefert wird, kann solch
+ein Skript aus der <TT
+CLASS="FILENAME"
+>rc.local</TT
+>-Datei des Systems
+oder bei Bedarf, also wenn das Modul gebraucht wird, aufrufen. Es gibt
+auch noch eine dritte Möglichkeit: die Verwendung von
+<SPAN
+CLASS="APPLICATION"
+>kerneld</SPAN
+>.&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+#!/bin/sh
+module="scull"
+device="scull"
+group="wheel"
+mode="664"
+
+# insmod mit allen übergebenen Parametern aufrufen
+# dabei den Pfad angeben, weil neuere modutils defaultmäßig nicht in . suchen
+/sbin/insmod -f $module $* || exit 1
+
+# alte Nodes entfernen
+rm -f /dev/${device}[0-3]
+
+major=`cat /proc/devices | awk "\\$2==\"$module\" {print \\$1}"` /proc/devices`
+
+mknod /dev/${device}0 c $major 0
+mknod /dev/${device}1 c $major 1
+mknod /dev/${device}2 c $major 2
+mknod /dev/${device}3 c $major 3
+
+# passende Gruppe und Zugriffsrechte zuweisen und die Gruppe ändern
+# Nicht alle Distributionen enthalten staff; auf manchen muß "wheel" verwendet werden
+group="staff"
+grep '&#8257;staff:' /etc/group &#62; /dev/null || group="wheel"
+
+chgrp $group /dev/${device}[0-3]
+chmod $mode /dev/${device}[0-3]</PRE
+></TD
+></TR
+></TABLE
+><P
+>Das Skript kann an andere Treiber angepaßt werden, indem man die Variablen anders belegt und die <SPAN
+CLASS="APPLICATION"
+>mknod</SPAN
+>-Zeilen entsprechend modifiziert. Das
+Skript erzeugt vier Geräte, weil das der Vorgabewert in den
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Quellen ist.&#13;</P
+><P
+>&#13;
+
+Die letzten paar Zeilen des Skripts werden Ihnen vielleicht merkwürdig vorkommen: Warum
+sollte man die Gruppe und die Zugriffsrechte eines Gerätes ändern? Der
+Grund dafür besteht darin, daß das Skript vom Superuser ausgeführt
+werden muß und daher neu angelegte Knoten auch diesem gehören. Die
+Zugriffsrechte sind per Default so, daß
+nur der Superuser Schreibzugriff, daß aber jeder Lesezugriff hat. Ein
+Geräteknoten benötigt aber normalerweise andere Zugriffsrechte,
+weswegen diese verändert werden müssen. Als Default bekommt in unserem
+Skript eine Gruppe von Benutzern Zugriffsrechte, aber Sie brauchen
+möglicherweise etwas anderes. Im Abschnitt <A
+HREF="exaccess.html"
+>the Section called <I
+>Zugriffskontrolle auf Gerätedateien</I
+> in Kapitel 5</A
+> in <A
+HREF="extra.html"
+>Kapitel 5</A
+> werden wir im Code
+von <SPAN
+><I
+CLASS="EMPHASIS"
+>sculluid</I
+></SPAN
+> zeigen, wie ein Gerätetreiber selbst
+Zugriffsrechte auf Geräte implementieren kann. Es steht dann ein
+Skript namens <TT
+CLASS="FILENAME"
+>scull_unload</TT
+> zur Verfügung, um das
+<TT
+CLASS="FILENAME"
+>/dev</TT
+>-Verzeichnis aufzuräumen und das Modul zu
+entfernen.</P
+><P
+>Als Alternative zu einem Skriptenpaar zum Laden und Entladen
+könnten Sie ein <TT
+CLASS="LITERAL"
+>init</TT
+>-Skript schreiben, das in das Verzeichnis kommt,
+das Ihre Distribution für diese Skripten vorsieht.<A
+NAME="AEN2445"
+HREF="#FTN.AEN2445"
+>[2]</A
+> In den <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Quellen
+finden Sie ein ziemlich vollständiges und konfigurierbares Beispiel
+für ein <TT
+CLASS="LITERAL"
+>init</TT
+>-Skript namens <TT
+CLASS="FILENAME"
+>scull.init</TT
+>. Es
+versteht die üblichen Argumente (&#8220;start&#8221;, &#8220;stop&#8221; und &#8220;restart&#8221;) und
+übernimmt die Rolle sowohl von <TT
+CLASS="FILENAME"
+>scull_load</TT
+> als
+auch von <TT
+CLASS="FILENAME"
+>scull_unload</TT
+>.</P
+><P
+>Wenn es Ihnen zu aufwendig ist, immer wieder die
+<TT
+CLASS="FILENAME"
+>/dev</TT
+>-Knoten zu erzeugen und wieder zu löschen,
+haben wir eine Lösung für Sie: Wenn Sie immer nur einen Treiber laden
+und entladen, dann können Sie nach dem ersten Erzeugen der
+Spezialdateien einfach <SPAN
+CLASS="APPLICATION"
+>rmmod</SPAN
+> und
+<SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+> verwenden: Dynamische Nummern werden
+nicht zufällig zugewiesen; Sie können davon ausgehen, wieder die
+gleiche Nummer zu bekommen, wenn Sie in der Zwischenzeit nichts mit
+anderen (dynamischen) Modulen machen. In der Entwicklungsphase ist es sicher sinnvoll, längliche Skripte zu vermeiden. Unser Trick funktioniert aber natürlich leider nur solange, wie nicht mehr als ein Treiber beteiligt ist.</P
+><P
+>Unserer Meinung nach ist es am besten, die dynamische Zuweisung von
+Major-Nummern als Default vorzusehen, sich aber die Hintertür
+offenzuhalten, die Major-Nummer zur Lade- oder gar zur Kompilierzeit
+anzugeben. Die Implementation von <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> verwendet
+eine globale Variable, <TT
+CLASS="LITERAL"
+>scull_major</TT
+>, die die
+gewählte Nummer enthält. Diese Variable wird mit
+<TT
+CLASS="LITERAL"
+>SCULL_MAJOR</TT
+> aus <TT
+CLASS="FILENAME"
+>scull.h</TT
+>
+initialisiert. Der Default-Wert von
+<TT
+CLASS="LITERAL"
+>SCULL_MAJOR</TT
+> ist 0, steht also für
+<I
+CLASS="FIRSTTERM"
+>dynamische Zuweisung verwenden</I
+>. Der Benutzer
+kann diesen Default
+übernehmen oder eine bestimmte Major-Nummer wählen, indem er entweder
+das Makro vor dem Kompilieren verändert oder einen Wert für
+<TT
+CLASS="LITERAL"
+>scull_major</TT
+> auf der Kommandozeile
+angibt. Schließlich kann der Benutzer auch mit dem Skript
+<SPAN
+><I
+CLASS="EMPHASIS"
+>scull_load</I
+></SPAN
+> auf der Kommandozeile Argumente
+für <SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+> übergeben.<A
+NAME="AEN2471"
+HREF="#FTN.AEN2471"
+>[3]</A
+>&#13;</P
+><P
+>Wir verwenden in <SPAN
+CLASS="APPLICATION"
+>scull.c</SPAN
+> den folgenden
+Code, um eine Major-Nummer zu bekommen:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+result = register_chrdev(scull_major, "scull", &#38;scull_fops);
+if (result &#60; 0) {
+    printk(KERN_WARNING "scull: kann Major-Nummer nicht bekommen %d\n",scull_major);
+    return result;
+}
+if (scull_major == 0) scull_major = result; /* dynamisch */</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN2479"
+>Einen Treiber aus dem System entfernen</A
+></H2
+><P
+>&#13;
+
+
+Wenn ein Modul aus dem System entfernt wird, sollte die Major-Nummer
+freigegeben werden. Das geschieht mit der folgenden Funktion, die von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>cleanup_module</I
+></SPAN
+> aufgerufen wird:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+int unregister_chrdev(unsigned int major, const char *name);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die Argumente sind die freizugebende Major-Nummer und der Name des
+dazugehörenden Geräts. Der Kernel vergleicht den Namen mit dem für
+diese Nummer registrierten Namen (sofern vorhanden). Wenn diese nicht
+übereinstimmen,
+wird <TT
+CLASS="LITERAL"
+>-EINVAL</TT
+> zurückgegeben. Das geschieht auch wenn die
+Major-Nummer nicht im erlaubten Bereich für Major-Nummern liegt.&#13;</P
+><P
+>Wenn die Ressource nicht in der Aufräumfunktion freigegeben wird, hat das
+unschöne Nebeneffekte. <TT
+CLASS="FILENAME"
+>/proc/devices</TT
+> wird
+beim nächsten Leseversuch einen Fehler erzeugen, weil einer der
+Namensstrings noch auf den Speicher des Moduls verweist, der aber
+längst nicht mehr gültig ist. Diese Art von Fehler wird als
+<I
+CLASS="FIRSTTERM"
+>Oops</I
+> bezeichnet, weil der Kernel diese Meldung
+ausgibt, wenn er versucht, auf eine ungültige Adresse
+zuzugreifen.<A
+NAME="AEN2500"
+HREF="#FTN.AEN2500"
+>[4]</A
+>&#13;</P
+><P
+>Wenn Sie den Treiber entladen, ohne die Major-Nummer zu
+deregistrieren, kommen Sie aus dieser Situation schwerlich wieder
+heraus, denn der Aufruf von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>strcmp</I
+></SPAN
+> in
+<SPAN
+><I
+CLASS="EMPHASIS"
+>unregister_chrdev</I
+></SPAN
+> muß den Zeiger
+(<TT
+CLASS="LITERAL"
+>name</TT
+>) auf das ursprüngliche Modul verwenden. Wenn
+Sie jemals vergessen, eine Major-Nummer zu deregistrieren, müssen Sie
+sowohl das gleiche Modul als auch eines zum Deregistrieren
+entladen. Das fehlerhafte Modul bekommt mit etwas Glück die gleiche
+Adresse, und der String <TT
+CLASS="LITERAL"
+>name</TT
+> liegt an der gleichen
+Stelle, wenn Sie den Code nicht verändert haben. Die sichere
+Alternative ist natürlich, das System zu rebooten.&#13;</P
+><P
+>&#13;
+
+Über das Entladen des Moduls hinaus müssen Sie oft die Geräteknoten
+des entladenen Treibers entfernen. Wenn die Geräteknoten während des
+Ladens erzeugt wurden, dann kann man ein einfaches Skript schreiben,
+das diese beim Entladen entfernt. Für unser Beispiel-Gerät macht das
+das Skript <TT
+CLASS="FILENAME"
+>scull_unload</TT
+>; alternativ dazu
+können Sie auch <TT
+CLASS="FILENAME"
+>scull.init stop</TT
+> aufrufen.</P
+><P
+>Wenn dynamische
+Gerätedateien nicht aus <TT
+CLASS="FILENAME"
+>/dev</TT
+> entfernt werden, kann es
+unerwartete Fehler geben: Ein überschüssiger
+<TT
+CLASS="FILENAME"
+>/dev/framegrabber</TT
+>-Eintrag auf dem Rechner
+eines Entwicklers kann einen Monat später zu einem Feueralarm-Gerät
+gehören, wenn beide Treiber eine dynamische Zuweisung verwenden, um an eine
+Major-Nummer zu kommen. Wenn beim Öffnen von
+<TT
+CLASS="FILENAME"
+>/dev/framegrabber</TT
+> &#8220;No such file or
+directory&#8221; erscheint, dann ist das
+sicherlich angenehmer als das, was der neue Treiber erzeugen würde.
+
+
+&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN2528"
+>dev_t und kdev_t</A
+></H2
+><P
+>&#13;
+Bisher haben wir über die Major-Nummer gesprochen. Jetzt wird es Zeit,
+die Minor-Nummern zu untersuchen und zu sehen, wie der Treiber die
+Minor-Nummer verwendet, um zwischen verschiedenen Geräten zu
+unterscheiden.&#13;</P
+><P
+>Jedesmal, wenn der Kernel einen Gerätetreiber aufruft, teilt er
+diesem mit, um welches Gerät es geht. Die Major- und Minor-Nummern
+werden in einem einzigen Datentyp zusammengefaßt, der vom Treiber
+verwendet
+wird, um ein bestimmtes Gerät zu identifizieren. Die kombinierte
+Gerätenummer (also die aneinandergehängte Major- und Minor-Nummer)
+steht im Feld <TT
+CLASS="LITERAL"
+>i_rdev</TT
+> der
+<I
+CLASS="FIRSTTERM"
+>inode</I
+>-Struktur, die wir später kennenlernen
+werden. Manche
+Treiberfunktionen bekommen einen Zeiger auf <TT
+CLASS="LITERAL"
+>struct
+inode</TT
+> als erstes Argument übergeben. Wenn Sie diesen Zeiger
+(wie die meisten Treiber-Autoren) <TT
+CLASS="LITERAL"
+>inode</TT
+> nennen,
+dann kann die Funktion durch Zugriff auf
+<TT
+CLASS="LITERAL"
+>inode-&#62;i_rdev</TT
+> die Gerätenummer
+herausbekommen.
+&#13;</P
+><P
+>&#13;
+Traditionell wird unter Unix <TT
+CLASS="LITERAL"
+>dev_t</TT
+>
+(<SPAN
+><I
+CLASS="EMPHASIS"
+>device type</I
+></SPAN
+>) deklariert, um die Gerätenummern
+abzuspeichern. Früher war das ein 16-Bit-Integer-Wert, der in
+<TT
+CLASS="LITERAL"
+>&#60;sys/types.h&#62;</TT
+> definiert war. Heutzutage
+braucht man manchmal mehr als 256 Minor-Nummern, aber da es
+Applikationen gibt, die die Interna von
+<TT
+CLASS="LITERAL"
+>dev_t</TT
+> &#8220;kennen&#8221; und nicht mehr laufen würden,
+wenn diese Struktur geändert werden würde, kann man das nicht so
+einfach ändern. Die Grundlagen für größere Gerätenummern sind zwar
+vorhanden, die Nummern selbst sind aber immer noch
+16-Bit-Integer-Zahlen.&#13;</P
+><P
+>&#13;Im Linux-Kernel wird jedoch ein neuer Typ,
+<TT
+CLASS="LITERAL"
+>kdev_t</TT
+>, verwendet. Dieser neue Typ ist für
+alle Kernel-Funktionen eine Blackbox. Benutzerprogramme wissen nicht
+einmal von der Existenz dieses Typs, und Kernel-Funktionen wissen
+nicht, was sich dahinter verbirgt. Dadurch, daß
+<TT
+CLASS="LITERAL"
+>kdev_t</TT
+> versteckt bleibt, kann dieser Typ
+nach Belieben von einer Kernel-Version zur nächsten geändert werden,
+ohne daß gleich alle Gerätetreiber angepaßt werden müssen.&#13;</P
+><P
+>&#13;
+Die Informationen über <TT
+CLASS="LITERAL"
+>kdev_t</TT
+> sind in
+<TT
+CLASS="LITERAL"
+>&#60;linux/kdev_t.h&#62;</TT
+> versteckt. Diese
+Datei besteht zum größten
+Teil aus Kommentaren. Wenn Sie sich für die Überlegungen hinter dem Code
+interessieren, dann lohnt es sich, diese Header-Datei einmal
+durchzulesen. Sie müssen diese Datei nicht explizit in Ihre Treiber
+einbinden, weil <TT
+CLASS="LITERAL"
+>&#60;linux/fs.h&#62;</TT
+> das schon
+für Sie macht.</P
+><P
+>Sie können mit den folgenden Makros und Funktionen auf
+<TT
+CLASS="LITERAL"
+>kdev_t</TT
+>-Variablen operieren:&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>MAJOR(kdev_t dev);</TT
+></DT
+><DD
+><P
+>Holt die Major-Nummer aus einer
+        <TT
+CLASS="LITERAL"
+>kdev_t</TT
+>-Struktur.&#13;</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>MINOR(kdev_t dev);</TT
+></DT
+><DD
+><P
+>Holt die Minor-Nummer.&#13;</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>MKDEV(int ma, int mi);</TT
+></DT
+><DD
+><P
+>Erzeugt aus Major- und Minor-Nummer einen
+        <TT
+CLASS="LITERAL"
+>kdev_t</TT
+>.&#13;</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>kdev_t_to_nr(kdev_t dev);</TT
+></DT
+><DD
+><P
+>Konvertiert einen <TT
+CLASS="LITERAL"
+>kdev_t</TT
+>-Typ in eine Zahl
+(einen <TT
+CLASS="LITERAL"
+>dev_t</TT
+>).&#13;</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>to_kdev_t(int dev);</TT
+></DT
+><DD
+><P
+>Konvertiert eine Zahl in einen
+<TT
+CLASS="LITERAL"
+>kdev_t</TT
+>. Beachten Sie, daß
+<TT
+CLASS="LITERAL"
+>dev_t</TT
+> im Kernel-Modus nicht definiert ist,
+weswegen <TT
+CLASS="LITERAL"
+>int</TT
+> verwendet wird.&#13;</P
+></DD
+></DL
+></DIV
+><P
+>Solange Ihr Code diese Operationen verwendet, um mit Gerätenummern
+umzugehen, sollte er auch dann noch funktionieren, wenn sich die
+internen Datenstrukturen verändern.
+
+
+&#13;</P
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN2385"
+HREF="charmami.html#AEN2385"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Major-Nummern in den Bereichen 60 bis 63, 120 bis 127
+und 240 bis 254 sind für die lokale und experimentelle Verwendung
+reserviert; kein richtiges Gerät wird eine dieser Nummern zugewiesen
+bekommen.</P
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN2445"
+HREF="charmami.html#AEN2445"
+>[2]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Wo die <TT
+CLASS="LITERAL"
+>init</TT
+>-Skripten liegen, unterscheidet sich
+deutlich von Distribution zu Distribution; am häufigsten werden
+<TT
+CLASS="FILENAME"
+>/etc/init.d</TT
+>,
+<TT
+CLASS="FILENAME"
+>/etc/rc.d/init.d</TT
+> und
+<TT
+CLASS="FILENAME"
+>/sbin/init.d</TT
+> verwendet. Wenn Ihr Skript schon
+beim Booten ausgeführt werden soll, müssen Sie außerdem im passenden
+Runlevel-Verzeichnis (d.h. <TT
+CLASS="FILENAME"
+>../rc3.d</TT
+>) einen Link
+darauf anlegen.</P
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN2471"
+HREF="charmami.html#AEN2471"
+>[3]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Das init-Skript <TT
+CLASS="FILENAME"
+>scull.init</TT
+>
+akzeptiert keine Treiberoptionen auf der Kommandozeile, unterstützt
+aber eine Konfigurationsdatei, weil es für die automatische Verwendung
+beim Booten und Herunterfahren gedacht ist.</P
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN2500"
+HREF="charmami.html#AEN2500"
+>[4]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Das Wort &#8220;Oops&#8221; wird von
+                        Linux-Freaks sowohl als Substantiv als auch als Verb
+                        gebraucht.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="char.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="charfops.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Zeichen-Treiber</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="char.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Datei-Operationen</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

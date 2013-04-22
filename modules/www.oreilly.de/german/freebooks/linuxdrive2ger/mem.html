@@ -1,0 +1,1779 @@
+<HTML
+><HEAD
+><TITLE
+>mmap und DMA</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="PREVIOUS"
+TITLE="Schnellreferenz"
+HREF="x16412.html"><LINK
+REL="NEXT"
+TITLE="Die Geräteoperation mmap"
+HREF="memmap.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x16412.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="memmap.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="MEM"
+>Kapitel 13. mmap und DMA</A
+></H1
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Inhalt</B
+></DT
+><DT
+><A
+HREF="mem.html#MEMMAN"
+>Speicherverwaltung in Linux</A
+></DT
+><DT
+><A
+HREF="memmap.html"
+>Die Geräteoperation mmap</A
+></DT
+><DT
+><A
+HREF="memkiobuf.html"
+>Die kiobuf-Schnittstelle</A
+></DT
+><DT
+><A
+HREF="memdma.html"
+>Direct Memory Access und Bus Mastering</A
+></DT
+><DT
+><A
+HREF="membc.html"
+>Abwärtskompatibilität</A
+></DT
+><DT
+><A
+HREF="x18853.html"
+>Schnellreferenz</A
+></DT
+></DL
+></DIV
+><P
+>In diesem Kapitel tauchen wir in die Interna der Speicherverwaltung
+von Linux ein, wobei wir uns besonders auf die Techniken
+konzentrieren, die für Autoren von Gerätetreibern interessant
+sind. Der Stoff in diesem Kapitel ist etwas kompliziert, und nicht
+jeder muß ihn verstehen. Gleichwohl kann man viele Aufgaben nur
+erledigen, wenn man tiefer in die Speicherverwaltung einsteigt;
+außerdem ermöglicht dieses Kapitel einen interessanten Einblick in einen wichtigen
+Bestandteil des Kernels.</P
+><P
+>Das Material in diesem Kapitel teilt sich in drei Teile auf. Der erste
+behandelt die Implementation des Systemaufrufs
+<SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+>, mit dem man Gerätespeicher direkt in den
+Adreßraum eines Benutzerprozesses einblenden kann. Anschließend
+behandeln wir den <TT
+CLASS="LITERAL"
+>kiobuf</TT
+>-Mechanismus des Kernels,
+mit dem man aus dem Kernel-Space direkten Zugriff auf
+den Benutzer-Speicher bekommt. Mit dem <TT
+CLASS="LITERAL"
+>kiobuf</TT
+>-System
+kann man für manche Gerätearten &#8220;rohe&#8221; I/O implementieren. Der letzte
+Abschnitt behandelt dann I/O-Operationen mit direktem Speicherzugriff
+(Direct Memory Access, DMA), mit dem Peripheriegeräte direkten Zugriff
+auf den Systemspeicher bekommen.</P
+><P
+>Natürlich muß man für alle diese Techniken verstehen, wie die
+Speicherverwaltung unter Linux funktioniert, weswegen wir mit einem
+Überblick über dieses Subsystem anfangen.</P
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="MEMMAN"
+>Speicherverwaltung in Linux</A
+></H1
+><P
+>&#13;Anstatt hier die Theorie der Speicherverwaltung in Betriebssystemen zu
+beschreiben, versuchen wir in diesem Abschnitt, die Hauptmerkmale von
+Linux anzugehen. Obwohl Sie kein Experte in Sachen virtueller Speicher
+unter Linux sein müssen, um <SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+> zu
+implementieren, ist ein grundlegender Überblick darüber, wie die Dinge
+funktionieren, nützlich. Wir beginnen mit einer etwas längeren
+Beschreibung der Datenstrukturen, die der Kernel zur Verwaltung des
+Speichers verwendet. Wenn wir die notwendigen Hintergrundinformationen
+behandelt haben, können wir anfangen, mit diesen Strukturen zu arbeiten.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN16654"
+>Adreßtypen</A
+></H2
+><P
+>&#13;Linux ist natürlich ein System mit virtuellem Speicher, was bedeutet,
+daß die Adressen, die Benutzerprogramme zu sehen bekommen, nicht
+direkt mit den physikalischen Adressen übereinstimmen, die von der Hardware
+verwendet werden. Virtueller Speicher führt eine
+zusätzliche Abstraktionsschicht ein, was einige nette Dinge
+ermöglicht. Mit virtuellem Speicher können Programme im System
+deutlich mehr Speicher allozieren, als physikalisch verfügbar ist;
+selbst ein einziger Prozeß kann einen virtuellen Adreßraum haben, der
+größer ist als der physikalische Speicher des Systems. Mit virtuellem
+Speicher kann man auch eine Reihe von Tricks mit dem Adreßraum des
+Prozesses anstellen, darunter das Einblenden von Gerätespeicher.</P
+><P
+>Bisher haben wir über virtuelle und physikalische Adressen gesprochen,
+aber eine ganze Reihe von Details unberücksichtigt gelassen. Das
+Linux-System arbeitet mit verschiedenen Adreßtypen, die alle eine
+eigene Semantik haben. Leider steht im Kernel-Code nicht immer ausdrücklich, welcher Adreßtyp in einer bestimmten Situation verwendet wird, so daß man als Programmierer vorsichtig sein muß.</P
+><DIV
+CLASS="FIGURE"
+><A
+NAME="MEMFIGADDRS"
+></A
+><P
+><B
+>Abbildung 13-1. Adreßtypen in Linux</B
+></P
+><P
+><IMG
+SRC="ldr_1301.jpg"></P
+></DIV
+><P
+>Hier folgt eine Liste der in Linux verwendeten Adreßtypen. <A
+HREF="mem.html#MEMFIGADDRS"
+>Abbildung 13-1</A
+> zeigt, wie sich diese Adreßtypen zum
+physikalischen Speicher verhalten.</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+>virtuelle User-Adressen</DT
+><DD
+><P
+>&#13;Dies sind die normalen Adressen, die User-Space-Programme zu sehen
+bekommen. Diese Adressen sind entweder 32 oder 64 Bit breit, je nach
+zugrundeliegender Hardware-Architektur. Jeder Prozeß hat einen eigenen
+virtuellen Adreßraum.</P
+></DD
+><DT
+>physikalische Adressen</DT
+><DD
+><P
+>&#13;Die Adressen, die zwischen dem Prozessor und dem Systemspeicher
+verwendet werden. Physikalische Adressen sind 32 oder 64 Bit breit;
+selbst 32-Bit-Systeme können in manchen Situationen 64 Bit breite
+physikalische Adressen verwenden.</P
+></DD
+><DT
+>Bus-Adressen</DT
+><DD
+><P
+>&#13;
+Die Adressen, die zwischen den Peripherie-Bussen und dem Speicher
+verwendet werden. Oftmals sind dies die gleichen Adressen wie die vom
+Prozessor verwendeten physikalischen Adressen, aber dies muß nicht so
+sein. Bus-Adressen sind natürlich stark architekturabhängig.</P
+></DD
+><DT
+>logische Kernel-Adressen</DT
+><DD
+><P
+>&#13;
+Diese bilden den normalen Adreßraum des Kernels. Diese Adressen bilden
+den größten Teil oder sogar den gesamten Hauptspeicher ab und werden
+oft wie physikalische Adressen behandelt. Auf den meisten
+Architekturen sind logische Adressen und die zugehörigen
+physikalischen Adressen nur um einen konstanten Offset
+verschieden. Logische Adressen werden normalerweise in Variablen des
+Typs <TT
+CLASS="LITERAL"
+>unsigned long</TT
+> oder <TT
+CLASS="LITERAL"
+>void*</TT
+>
+gespeichert. Von <SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> zurückgegebener Speicher
+hat eine logische Adresse.</P
+></DD
+><DT
+>virtuelle Kernel-Adressen</DT
+><DD
+><P
+>&#13;
+Diese Adressen unterscheiden sich von logischen Adressen dadurch, daß
+sie nicht notwendigerweise eine direkte Abbildung auf physikalische
+Adressen haben. Alle logischen Adressen sind virtuelle
+Kernel-Adressen; Speicher, der mit <SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+>
+alloziert wurde, hat ebenfalls eine virtuelle Adresse (aber keine
+direkte physikalische Abbildung). Die Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kmap</I
+></SPAN
+>, die wir später in diesem Kapitel
+beschreiben, gibt ebenfalls virtuelle Adressen zurück. Virtuelle
+Adressen werden normalerweise in Zeiger-Variablen gespeichert.</P
+></DD
+></DL
+></DIV
+><P
+>&#13;
+
+
+Wenn Sie eine logische Adresse haben, dann können Sie mit dem Makro
+<SPAN
+><I
+CLASS="EMPHASIS"
+>__pa()</I
+></SPAN
+> (definiert in
+<TT
+CLASS="LITERAL"
+>&#60;asm/page.h&#62;</TT
+>) die zugehörige physikalische
+Adresse bekommen. Physikalische Adressen können mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>__va()</I
+></SPAN
+> zurück auf logische Adressen
+abgebildet werden, aber nur bei Seiten im niedrigen Speicher.</P
+><P
+>Unterschiedliche Kernel-Funktionen benötigen unterschiedliche
+Adressen. Es wäre schön, wenn es unterschiedliche C-Typen gäbe, so daß
+der verlangte Adreßtyp explizit gemacht würde, aber dieses Glück
+ist uns nicht zuteil geworden. Wir werden es in diesem Kapitel jeweils deutlich
+machen, welche Adressen wo verwendet werden.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN16724"
+>Hoher und niedriger Speicher</A
+></H2
+><P
+>&#13;
+
+
+
+Der Unterschied zwischen logischen und virtuellen Kernel-Adressen wird
+auf 32-Bit-Systemen mit viel Speicher deutlich. Mit 32 Bits kann man
+bis zu 4 GByte Speicher adressieren. Linux ist aufgrund der Konfiguration
+des virtuellen Adreßraums bis vor kurzem auf 32-Bit-Systemen auf
+deutlich weniger Speicher beschränkt gewesen. Das System konnte nicht
+mehr Speicher verwalten, als es logische Adressen einrichten konnte,
+weil es direkt eingeblendete Kernel-Adressen für sämtlichen Speicher
+brauchte.</P
+><P
+>Jüngere Entwicklungen haben die Begrenzungen beim Speicher beseitigt;
+32-Bit-Systeme können nun mit deutlich über 4 GByte Speicher arbeiten
+(natürlich sofern der Prozessor selbst soviel Speicher adressieren
+kann). Die Einschränkung, wieviel Speicher direkt mit logischen
+Adressen eingeblendet werden kann, bleibt aber. Nur der untere Teil des
+Speichers (bis zu 1 oder 2 GByte, je nach Hardware und
+Kernel-Konfiguration) hat logische Adressen, der Rest (hoher Speicher)
+nicht. Hoher Speicher kann 64 Bit breite physikalische Adressen
+benötigen, weswegen der Kernel explizite virtuelle Adreßeinblendungen
+einrichten muß, um den hohen Speicher zu manipulieren. Daher
+funktionieren viele Kernel-Funktionen nur mit niedrigem Speicher;
+hoher Speicher ist normalerweise für die Seiten von User
+Space-Prozessen reserviert.</P
+><P
+>Der Begriff &#8220;hoher Speicher&#8221; kann für manche Leute verwirrend sein,
+insbesondere weil er in der PC-Welt auch noch andere Bedeutungen
+hat. Daher definieren wir die Begriffe hier:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+>Niedriger Speicher</DT
+><DD
+><P
+>Speicher, für den logische Adressen im Kernel-Space existieren. Auf
+den allermeisten Systemen, mit denen Sie es zu tun haben werden,
+besteht der gesamte Speicher aus niedrigem Speicher.</P
+></DD
+><DT
+>Hoher Speicher</DT
+><DD
+><P
+>Speicher, für den keine logischen Adressen existieren, weil das System
+mehr physikalischen Speicher enthält, als mit 32 Bits adressiert
+werden kann.</P
+></DD
+></DL
+></DIV
+><P
+>Auf i386-Systemen liegt die Grenze zwischen niedrigem und hohen
+Speicher normalerweise knapp unter 1 GByte. Diese Grenze hat absolut
+nichts mit der alten 640-KByte-Einschränkung auf dem originalen PC zu
+tun, sondern ist eine Einschränkung des Kernels selbst, der den
+32-Bit-Adreßraum zwischen dem Kernel-Space und dem User-Space
+aufteilt.</P
+><P
+>Wir werden Einschränkungen bei der Arbeit mit hohem Speicher an den
+passenden Stellen in diesem Kapitel erwähnen.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="MEMMANMAP"
+>Die Speichertabelle und struct page</A
+></H2
+><P
+>&#13;
+Historisch gesehen hat der Kernel logische Adressen verwendet, um auf
+explizite Seiten im Speicher zu verweisen. Das Hinzufügen der
+Unterstützung hohen Speichers hat aber ein offensichtliches Problem
+mit diesem Ansatz freigelegt &#8212; logische Adressen stehen für
+hohen Speicher nicht zur Verfügung. Kernel-Funktionen, die mit
+Speicher arbeiten, verwenden daher in zunehmendem Maße Zeiger auf
+<TT
+CLASS="LITERAL"
+>struct page</TT
+>. Diese Datenstruktur verwaltet so
+ziemlich alles, was der Kernel über physikalischen Speicher wissen
+muß; es gibt eine <TT
+CLASS="LITERAL"
+>struct page</TT
+> für jede
+physikalische Seite im System. Zu den Feldern dieser Struktur gehören:
+
+
+
+
+
+
+
+
+
+&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>atomic_t count;</TT
+></DT
+><DD
+><P
+>Die Anzahl der Referenzen auf diese Seite. Wenn der Zähler auf Null
+fällt, wird die Seite an die Liste der freien Seiten zurückgegeben.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>wait_queue_head_t wait;</TT
+></DT
+><DD
+><P
+>Eine Liste der Prozesse, die auf diese Seite warten. Prozesse können
+auf eine Seite warten, wenn eine Kernel-Funktion diese aus irgendeinem
+Grund gesperrt hat. Treiber müssen sich darüber aber normalerweise
+keine Gedanken machen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void *virtual;</TT
+></DT
+><DD
+><P
+>Die virtuelle Kernel-Adresse der Seite, sofern diese eingeblendet ist;
+<TT
+CLASS="LITERAL"
+>NULL</TT
+> ansonsten. Seiten im niedrigen Speicher sind
+normalerweise eingeblendet, Seiten im hohen Speicher üblicherweise
+nicht.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long flags;</TT
+></DT
+><DD
+><P
+>&#13;
+Eine Menge von Bit-Flags, die den Status der Seite beschreiben. Dazu
+gehören <TT
+CLASS="LITERAL"
+>PG_locked</TT
+>, das angibt, daß die
+Seite im Speicher gesperrt ist, und
+<TT
+CLASS="LITERAL"
+>PG_reserved</TT
+>, das verhindert, daß das
+Speicherverwaltungssystem die Seite überhaupt anfaßt.</P
+></DD
+></DL
+></DIV
+><P
+>In <TT
+CLASS="LITERAL"
+>struct page</TT
+> finden sich viele Informationen, die
+aber ein Teil der schwarzen Magie der Speicherverwaltung und für
+Treiber-Autoren nicht relevant sind.</P
+><P
+>&#13;Der Kernel verwaltet ein oder mehrere Arrays von <TT
+CLASS="LITERAL"
+>struct
+page</TT
+>-Einträgen, die den gesamten physikalischen Speicher im
+System beschreiben. Auf den meisten Systemen ist dies ein einziges
+Array namens <TT
+CLASS="LITERAL"
+>mem_map</TT
+>. Auf manchen Systemen
+ist die Situation aber komplizierter. Auf Systemen mit uneinheitlichem
+Speicherzugriff ("Nonuniform Memory Access", NUMA) und solchen mit weit
+auseinandergerissenem physikalischem Speicher kann es mehr als ein
+Speichertabellen-Array geben. Daher sollte Code, der portabel sein soll,
+den Zugriff auf dieses Array nach Möglichkeit vermeiden. Glücklicherweise kann man normalerweise einfach mit den
+<TT
+CLASS="LITERAL"
+>struct page</TT
+>-Zeigern arbeiten, ohne sich darüber
+Gedanken machen zu müssen, woher diese kommen.</P
+><P
+>Manche Funktionen sind für die Konvertierung zwischen <TT
+CLASS="LITERAL"
+>struct
+page</TT
+>-Zeigern und virtuellen Adressen gedacht:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>struct page *virt_to_page(void *kaddr);</TT
+></DT
+><DD
+><P
+>&#13;Dieses Makro (definiert in <TT
+CLASS="LITERAL"
+>&#60;asm/page.h&#62;</TT
+>)
+erwartet eine logische Kernel-Adresse und gibt den zugehörigen
+<TT
+CLASS="LITERAL"
+>struct page</TT
+>-Zeiger zurück. Weil es eine logische
+Adresse benötigt, funktioniert es nicht mit Speicher von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+> oder hohem Speicher.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void *page_address(struct page *page);</TT
+></DT
+><DD
+><P
+>&#13;Gibt die virtuelle Kernel-Adresse dieser Seite zurück, wenn eine
+solche Adresse existiert. Bei hohem Speicher existiert die Adresse
+nur, wenn die Seite eingeblendet worden ist.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/highmem.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>void *kmap(struct page *page);</TT
+>, <TT
+CLASS="LITERAL"
+>void kunmap(struct page *page);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kmap</I
+></SPAN
+> gibt eine virtuelle Kernel-Adresse für
+beliebige Seiten im System zurück. Bei Seiten im niedrigen Speicher
+ist das einfach die logische Adresse der Seite, bei Seiten im hohen
+Speicher erzeugt <SPAN
+><I
+CLASS="EMPHASIS"
+>kmap</I
+></SPAN
+> eine spezielle
+Einblendung. Mit <SPAN
+><I
+CLASS="EMPHASIS"
+>kmap</I
+></SPAN
+> erzeugte Einblendungen sollten
+immer mit <SPAN
+><I
+CLASS="EMPHASIS"
+>kunmap</I
+></SPAN
+> wieder freigegeben werden. Es
+steht nur eine begrenzte Anzahl solcher Einblendungen zur Verfügung, so
+daß man diese nicht zu lange festhalten
+sollte. <SPAN
+><I
+CLASS="EMPHASIS"
+>kmap</I
+></SPAN
+>-Aufrufe sind additiv; wenn also zwei
+oder mehr Funktionen <SPAN
+><I
+CLASS="EMPHASIS"
+>kmap</I
+></SPAN
+> auf der gleichen Seite
+aufrufen, dann passiert das Richtige. Beachten Sie auch, daß
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kmap</I
+></SPAN
+> schlafen kann, wenn keine Einblendungen zur
+Verfügung stehen.</P
+></DD
+></DL
+></DIV
+><P
+>&#62;
+&#62;
+Wir werden einige dieser Funktionen noch in Aktionen sehen, wenn wir
+zum Beispiel-Code kommen.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="MEMMANPAGE"
+>Seitentabellen</A
+></H2
+><P
+>&#13;Wenn ein Programm eine virtuelle Adresse nachschlägt, muß die CPU die
+Adresse in eine physikalische Adresse konvertieren, um auf den
+physikalischen Speicher zuzugreifen. Dies geschieht normalerweise
+durch das Aufteilen der Adresse in Bitfelder. Jedes Bitfeld wird als
+Index in ein Array, die sogenannte <SPAN
+><I
+CLASS="EMPHASIS"
+>Seitentabelle</I
+></SPAN
+>
+verwendet, um entweder die Adresse der nächsten Tabelle oder die
+Adresse der physikalischen Seite mit der virtuellen Adresse zu
+bekommen.&#13;</P
+><P
+>Der Linux-Kernel verwaltet drei Ebenen von Seitentabellen, um
+virtuelle Adressen auf physikalische Adressen einzublenden. Diese mehrfachen
+Ebenen erlauben es, daß der Speicherbereich nur dünn besetzt ist;
+moderne Systeme breiten einen Prozeß über einen großen Bereich
+virtuellen Speichers aus. Das ist auch sinnvoll, weil damit eine große
+Flexibilität zur Laufzeit besteht.&#13;</P
+><P
+>Beachten Sie, daß Linux auch auf solcher Hardware ein
+Drei-Ebenen-System verwendet, die nur zwei Ebenen von Seitentabellen
+unterstützt, desgleichen auf Hardware, die ein anderes Verfahren
+verwendet, um virtuelle Adressen auf physikalische Adressen abzubilden.
+Durch die Verwendung dreier Ebenen in einer prozessorunabhängigen
+Implementation kann Linux sowohl Zwei-Ebenen- als auch
+Drei-Ebenen-Prozessoren (wie die Alpha-Prozessoren) unterstützen, ohne daß der
+Code durch zu viele <TT
+CLASS="LITERAL"
+>#ifdef</TT
+>-Anweisungen
+verunstaltet wird. Diese konservative Implementation
+führt nicht zu mehr Verwaltungsaufwand, wenn der Kernel auf
+Zwei-Ebenen-Prozessoren läuft, weil der Kernel die unbenutzte Ebene
+ohnehin wegoptimiert.&#13;</P
+><P
+>Schauen wir uns aber nun die Datenstrukturen an, die für das Ein- und
+Auslagern (Paging) verwendet werden.</P
+><P
+>Die folgende Liste faßt die Implementation der drei Ebenen in Linux
+zusammen; in <A
+HREF="mem.html#FIGMEMPAG"
+>Abbildung 13-2</A
+> wird das auch grafisch
+dargestellt:
+
+    </P
+><DIV
+CLASS="FIGURE"
+><A
+NAME="FIGMEMPAG"
+></A
+><P
+><B
+>Abbildung 13-2. Die drei Ebenen der Linux-Seitentabellen</B
+></P
+><P
+><IMG
+SRC="ldr_1301.jpg"></P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+>Page Directory (PGD)</DT
+><DD
+><P
+>&#13;
+Die Seitentabelle der obersten Ebene. Es handelt sich dabei um ein Array von
+<TT
+CLASS="LITERAL"
+>pgd_t</TT
+>-Elementen, von denen jedes auf eine
+Seitentabelle der zweiten Ebene zeigt. Jeder Prozeß hat ein eigenes
+Page Directory, außerdem gibt es eines für den Kernel-Space. Sie
+können sich das Page Directory als an Seiten
+ausgerichtetes Array von Daten des Typs
+<TT
+CLASS="LITERAL"
+>pfd_t</TT
+> vorstellen.</P
+></DD
+><DT
+>Page mid-level Directory (PMD)</DT
+><DD
+><P
+>&#13;
+Die Tabelle auf der zweiten Ebene. Ein PMD ist ein an Seiten
+ausgerichtetes Array von
+<TT
+CLASS="LITERAL"
+>pmd_t</TT
+>-Elementen. Ein
+<TT
+CLASS="LITERAL"
+>pmd_t</TT
+> ist dabei ein Zeiger auf die
+Seitentabelle der dritten Ebene. Zwei-Ebenen-Prozessoren haben keine
+physikalische PMD; sie deklarieren ihre PMD als
+Array mit einem einzigen Element, dessen Wert die PMD selbst ist
+&#8212; wir werden uns später noch ansehen, wie das in C gelöst ist
+und wie der Compiler diese Ebene hinwegoptimiert.</P
+></DD
+><DT
+>Page Table (Seitentabelle)</DT
+><DD
+><P
+>Auch bei der Page Table handelt es sich um ein an Seiten
+ausgerichtetes Array; dieses Mal haben die Elemente den Typ
+<TT
+CLASS="LITERAL"
+>pte_t</TT
+>. Ein <TT
+CLASS="LITERAL"
+>pte_t</TT
+>
+enthält die physikalische Adresse der Datenseite.</P
+></DD
+></DL
+></DIV
+><P
+>&#13;
+Die in dieser Liste eingeführten Typen sind in
+<TT
+CLASS="LITERAL"
+>&#60;asm/page.h&#62;</TT
+> deklariert. Diese Datei muß in jeder
+Quelldatei, bei der es um Paging geht, eingebunden werden.&#13;</P
+><P
+>Der Kernel muß während der normalen Programmausführung nichts in den
+Seitentabellen nachschlagen, weil das in der Hardware
+geschieht. Trotzdem muß der Kernel alles so einrichten, daß die
+Hardware ihre Aufgabe auch erfüllen kann. Er muß die Seitentabellen
+aufbauen und darin nachsehen, wenn der Prozessor einen &#8220;Page
+Fault&#8221; meldet, also wenn eine vom Prozessor benötigte virtuelle
+Adresse nicht im Speicher steht. Auch Gerätetreiber müssen
+Seitentabellen aufbauen und Faults behandeln können, wenn sie
+<SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+> implementieren.</P
+><P
+>Es ist interessant zu sehen, wie die Software-Speicherverwaltung die
+gleichen Seitentabellen verwendet wie die CPU selbst. Wenn eine CPU
+keine Seitentabellen implementiert, dann wird der Unterschied in den
+untersten Schichten des architekturabhängigen Codes versteckt. Sie
+können daher in der Linux-Speicherverwaltung immer über
+Drei-Ebenen-Seitentabellen sprechen, unabhängig davon, ob die Hardware Drei-Ebenen-Seitentabellen kennt oder nicht. Ein Beispiel einer CPU-Familie, die keine
+Seitentabellen verwendet, ist der PowerPC. PowerPC-Designer haben
+einen Hash-Algorithmus implementiert, der virtuelle Adressen auf eine
+Seitentabelle mit einer Ebene abbildet. Wenn auf eine Seite
+zugegriffen wird, die sich bereits im Speicher befindet, aber deren
+physikalische Adresse nicht mehr im CPU-Cache liegt, muß die CPU den
+Speicher nur einmal lesen und nicht zwei- oder dreimal wie beim Ansatz
+mit mehreren Seitentabellen. Der Hash-Algorithmus macht es wie
+Tabellen auf mehreren Ebenen möglich, die Verwendung des Speichers
+beim Einblenden virtueller Adressen auf physikalische Adressen zu reduzieren.</P
+><P
+>Unabhängig von dem von der CPU verwendeten Mechanismus basiert die
+Linux-Software-Implementation auf Seitentabellen mit drei Ebenen, und
+die folgenden Symbole werden verwendet, um auf die Seitentabellen
+zuzugreifen. Sowohl <TT
+CLASS="LITERAL"
+>&#60;asm/page.h&#62;</TT
+> als auch
+<TT
+CLASS="LITERAL"
+>&#60;asm/pgtable.h&#62;</TT
+> müssen eingebunden werden, damit
+alle zur Verfügung stehen.</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>PTRS_PER_PGD</TT
+>, <TT
+CLASS="LITERAL"
+>PTRS_PER_PMD</TT
+>, <TT
+CLASS="LITERAL"
+>PTRS_PER_PTE</TT
+></DT
+><DD
+><P
+>&#13;Die Größe jeder Tabelle. Auf Zwei-Ebenen-Prozessoren ist
+<TT
+CLASS="LITERAL"
+>PTRS_PER_PMD</TT
+> 1, damit die mittlere Ebene nicht
+benutzt wird.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long pgd_val(pgd_t pgd)</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned long pmd_val(pmd_t pmd)</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned long pte_val(pte_t pte)</TT
+></DT
+><DD
+><P
+>&#13;
+
+Diese drei Makros werden benutzt, um den <TT
+CLASS="LITERAL"
+>unsigned
+long</TT
+>-Wert aus dem getypten Datenelement herauszuholen. Der
+tatsächlich verwendete Typ ist von der zugrundeliegenden Architektur
+und der Kernel-Konfiguration abhängig; normalerweise ist das ein
+<TT
+CLASS="LITERAL"
+>unsigned long</TT
+> oder &#8212; auf 32-Bit-Prozessoren, die
+hohen Speicher unterstützen, ein <TT
+CLASS="LITERAL"
+>unsigned long
+long</TT
+>. SPARC64-Prozessoren verwenden <TT
+CLASS="LITERAL"
+>unsigned
+int</TT
+>. Die
+Makros helfen dabei, eine strenge Typenprüfung im Quellcode zu verwenden,
+ohne zusätzlichen Rechenaufwand zu produzieren.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>pgd_t * pgd_offset(struct mm_struct * mm, unsigned long address)</TT
+>, <TT
+CLASS="LITERAL"
+>pmd_t * pmd_offset(pgd_t * dir, unsigned long address)</TT
+>, <TT
+CLASS="LITERAL"
+>pte_t * pte_offset(pmd_t * dir, unsigned long address)</TT
+></DT
+><DD
+><P
+>&#13;
+
+Diese Inline-Funktionen<A
+NAME="AEN16947"
+HREF="#FTN.AEN16947"
+>[1]</A
+> werden dazu benutzt, die zu
+<TT
+CLASS="LITERAL"
+>address</TT
+> gehörenden <TT
+CLASS="LITERAL"
+>pgd</TT
+>-,
+<TT
+CLASS="LITERAL"
+>pmd</TT
+>- und <TT
+CLASS="LITERAL"
+>pte</TT
+> -Einträge
+nachzuschlagen. Das Nachschlagen von Seitentabellen beginnt mit einem
+Zeiger auf <TT
+CLASS="LITERAL"
+>struct mm_struct</TT
+>. Der Zeiger, der
+zur Speichertabelle des aktuellen Prozesses gehört, steht in
+<TT
+CLASS="LITERAL"
+>current-&#62;mm</TT
+>. Der Zeiger auf den Kernel-Space
+ist in <TT
+CLASS="LITERAL"
+>init_mm</TT
+> enthalten.
+Zwei-Ebenen-Prozessoren definieren
+<TT
+CLASS="LITERAL"
+>pmd_offset(dir,add)</TT
+> als
+<TT
+CLASS="LITERAL"
+>(pmd_t *)dir</TT
+>. Funktionen, die Seitentabellen
+absuchen, sind immer als <TT
+CLASS="LITERAL"
+>inline</TT
+> deklariert, und der
+Compiler optimiert jedes Nachschlagen in <TT
+CLASS="LITERAL"
+>pmd</TT
+> hinweg.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct* page pte_page(pte_t pte)</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion gibt einen Zeiger auf den <TT
+CLASS="LITERAL"
+>struct
+page</TT
+>-Eintrag der Seite in diesem Seitentabellen-Eintrag
+zurück. Code, der mit Seitentabellen arbeitet, sollte normalerweise
+<SPAN
+><I
+CLASS="EMPHASIS"
+>pte_page</I
+></SPAN
+> anstelle von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>pte_val</I
+></SPAN
+> verwenden, weil
+<SPAN
+><I
+CLASS="EMPHASIS"
+>pte_page</I
+></SPAN
+> das prozessorabhängige Format
+des Seitentabellen-Eintrags abdeckt und den <TT
+CLASS="LITERAL"
+>struct
+page</TT
+>-Zeiger zurückgibt, den man normalerweise braucht.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>pte_present(pte_t pte)</TT
+></DT
+><DD
+><P
+>&#13;Dieses Makro gibt einen Booleschen Wert zurück, der angibt, ob die
+Seite sich derzeit im Speicher befindet. Dies ist die meistbenutzte
+der Funktionen, die auf die unteren Bits in
+<TT
+CLASS="LITERAL"
+>pte</TT
+> zugreifen &#8212; also gerade auf diejenigen Bits,
+die von <SPAN
+><I
+CLASS="EMPHASIS"
+>pte_page</I
+></SPAN
+> verworfen
+werden. Seiten können natürlich nicht vorhanden sein, wenn der Kernel
+sie auf die Festplatte ausgelagert hat (oder wenn sie überhaupt noch nicht
+geladen worden sind). Die Seitentabellen selbst sind jedoch immer da
+(zumindest in der aktuellen Implementation von Linux). Das macht den
+Kernel-Code einfacher, weil <SPAN
+><I
+CLASS="EMPHASIS"
+>pgd_offset</I
+></SPAN
+> und
+verwandte Funktionen nie fehlschlagen können; auf der anderen Seite hält selbst ein
+Prozeß mit einer &#8220;residenten Speichergröße&#8221; von Null seine
+Seitentabellen im Speicher und verwendet so Speicher, der anderweitig
+besser verwendet werden könnte.</P
+></DD
+></DL
+></DIV
+><P
+>Jeder Prozeß im System hat eine <TT
+CLASS="LITERAL"
+>struct
+mm_struct</TT
+>-Struktur, die die Seitentabellen des
+Prozesses und vieles andere enthält, und außerdem ein Spinlock namens
+<TT
+CLASS="LITERAL"
+>page_table_lock</TT
+>, das während des
+Traversierens oder Veränderns gehalten werden sollte.</P
+><P
+>Um als Fachmann für die Speicherverwaltungsalgorithmen von Linux zu gelten, müssen Sie aber mehr als nur diese Liste von Funktionen kennen. Echte Speicherverwaltung ist sehr viel komplexer und muß
+sich auch mit anderen Komplikationen wie der Kohärenz des Caches
+auseinandersetzen. Die obige Liste sollte aber ausreichend sein, um
+Ihnen einen Eindruck davon zu geben, wie die Seitenverwaltung implementiert
+ist; mehr müssen Sie auch als Autor von Gerätetreibern nicht wissen, wenn
+Sie ab und zu mit Seitentabellen arbeiten wollen. Sie bekommen weitere
+Informationen aus den Bäumen
+<TT
+CLASS="FILENAME"
+>include/asm</TT
+> und <TT
+CLASS="FILENAME"
+>mm</TT
+> in den Kernel-Quellen.
+&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="MEMMANVMA"
+>Virtuelle Speicherbereiche
+(Virtual Memory Areas)</A
+></H2
+><P
+>&#13;
+
+Das Paging ist die unterste Ebene der Speicherverwaltung, aber es ist
+noch etwas mehr nötig, um die Ressourcen des Rechners effizient zu
+nutzen. Der Kernel benötigt einen Mechanismus auf einer höheren
+Ebene, um zu regeln, wie ein Prozeß seinen Speicher sieht. Dieser Mechanismus wird in Linux als virtuelle
+Speicherbereiche (Virtual Memory Areas) bezeichnet, die wir im
+folgenden VMAs oder einfach Bereiche nennen werden.&#13;</P
+><P
+>Ein Bereich ist eine homogene Region im virtuellen Speicher eines
+Prozesses, ein zusammenhängender Bereich von Adressen, die gleiche
+Schalter für die Zugriffsrechte haben. Er entspricht damit ungefähr dem
+Konzept eines Segments, läßt sich aber besser als
+&#8220;Speicherobjekt mit eigenen Eigenschaften&#8221;
+beschreiben. Die Speichertabelle eines
+Prozesses besteht aus:</P
+><P
+></P
+><UL
+><LI
+><P
+>einem Bereich für den ausführbaren Code des
+Programms (oft Text genannt).</P
+></LI
+><LI
+><P
+>je einem Bereich für alle Daten, darunter die
+initialisierten Daten (die zu Beginn der Ausführung einen explizit
+zugewiesenen Wert haben), uninitialisierte Daten (BSS)<A
+NAME="AEN17007"
+HREF="#FTN.AEN17007"
+>[2]</A
+> und den
+Stack des Programms</P
+></LI
+><LI
+><P
+>einem Bereich für alle aktiven
+Speicher-Einblendungen</P
+></LI
+></UL
+><P
+>Die Speicherbereiche eines Prozesses sind in
+<TT
+CLASS="FILENAME"
+>proc/</TT
+><TT
+CLASS="REPLACEABLE"
+><I
+>pid</I
+></TT
+><TT
+CLASS="FILENAME"
+>/maps</TT
+>
+zu sehen (wobei Sie <TT
+CLASS="REPLACEABLE"
+><I
+>pid</I
+></TT
+> natürlich durch die
+Prozeß-ID ersetzen müssen). <TT
+CLASS="FILENAME"
+>/proc/self</TT
+> ist ein
+Sonderfall von <TT
+CLASS="FILENAME"
+>/proc/pid</TT
+>, der immer auf den
+aktuellen Prozeß verweist. Hier sehen Sie als Beispiel einige
+Speicher-Tabellen, zu denen wir hinter dem Doppelkreuz einige kurze
+Kommentare hinzugefügt haben:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>&#13;
+08048000-0804e000 r-xp 00000000 08:01 51297      /sbin/init  # Text
+0804e000-08050000 rw-p 00005000 08:01 51297      /sbin/init  # Daten
+08050000-08054000 rwxp 00000000 00:00 0          # auf 0 eingeblendetes BSS
+40000000-40013000 r-xp 00000000 08:01 39003      /lib/ld-2.1.3.so # Text
+40013000-40014000 rw-p 00012000 08:01 39003      /lib/ld-2.1.3.so # Daten
+40014000-40015000 rw-p 00000000 00:00 0          # BSS für ld.so
+4001b000-40108000 r-xp 00000000 08:01 39006      /lib/libc-2.1.3.so # Text
+40108000-4010c000 rw-p 000ec000 08:01 39006      /lib/libc-2.1.3.so # Daten
+4010c000-40110000 rw-p 00000000 00:00 0          # BSS für libc.so
+bfffe000-c0000000 rwxp fffff000 00:00 0          # auf 0 eingeblendeter Stack
+
+morgana.root# rsh wolf head /proc/self/maps  #### alpha-axp: static ecoff
+000000011fffe000-0000000120000000 rwxp 0000000000000000 00:00 0     # Stack
+0000000120000000-0000000120014000 r-xp 0000000000000000 08:03 2844  # Text
+0000000140000000-0000000140002000 rwxp 0000000000014000 08:03 2844  # Daten
+0000000140002000-0000000140008000 rwxp 0000000000000000 00:00 0     # BSS</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die Felder in jeder Zeile haben die folgende Bedeutung:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+<SPAN
+><I
+CLASS="EMPHASIS"
+>start</I
+></SPAN
+>-<SPAN
+><I
+CLASS="EMPHASIS"
+>end perm offset major</I
+></SPAN
+>:<SPAN
+><I
+CLASS="EMPHASIS"
+>minor inode image</I
+></SPAN
+>.</PRE
+></TD
+></TR
+></TABLE
+><P
+>Jedes Feld in <TT
+CLASS="FILENAME"
+>/proc/*/maps</TT
+> (mit
+Ausnahme des Image-Namens) gehört zu einem Feld in
+<TT
+CLASS="LITERAL"
+>struct vm_area_struct</TT
+> und wird in der
+folgenden Liste beschrieben.</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>start</TT
+>, <TT
+CLASS="LITERAL"
+>end</TT
+></DT
+><DD
+><P
+>Die erste und letzte virtuelle Adresse dieses Speicherbereichs</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>perm</TT
+></DT
+><DD
+><P
+>Eine Bitmaske, die die
+Zugriffsrechte für das Lesen, Schreiben und Ausführen des Speicherbereichs
+enthält. Mit diesen
+Rechten wird angegeben, was der Prozeß mit den zu diesem Bereich
+gehörenden Seiten machen darf. Das letzte Zeichen in diesem Feld ist
+entweder <TT
+CLASS="LITERAL"
+>p</TT
+> für &#8220;private&#8221; oder <TT
+CLASS="LITERAL"
+>s</TT
+> für
+&#8220;shared&#8221;.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>offset</TT
+></DT
+><DD
+><P
+>Gibt an, wo der Speicherbereich in der eingeblendeten Datei beginnt. Der Wert 0 bedeutet natürlich, daß die erste Seite des
+Speicherbereichs der ersten Seite der Datei entspricht.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>major</TT
+>, <TT
+CLASS="LITERAL"
+>minor</TT
+></DT
+><DD
+><P
+>Die Major- und Minor-Nummern des Geräts, das die eingeblendete Datei
+enthält. Verwirrenderweise  verweisen die Major- und Minor-Nummern bei
+Geräte-Einblendungen auf die Gerätedatei, die vom Benutzer geöffnet wurde,
+und nicht auf das Gerät selbst.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>inode</TT
+></DT
+><DD
+><P
+>Die Inode-Nummer der eingeblendeten Datei</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>image</TT
+></DT
+><DD
+><P
+>Der Name der Datei (normalerweise ein ausführbares Image), die
+eingeblendet worden ist.</P
+></DD
+></DL
+></DIV
+><P
+>Ein Treiber, der die Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+> implementiert, muß eine
+VMA-Struktur im Adreßraum des Prozesses ausfüllen, der das Gerät
+einblendet. Der Treiberprogrammierer sollte daher wenigstens
+grundlegende Kenntnisse über VMAs besitzen, um diese benutzen zu können.&#13;</P
+><P
+>Schauen wir uns jetzt die wichtigsten Felder in <TT
+CLASS="LITERAL"
+>struct
+vm_area_struct</TT
+> (definiert in
+<TT
+CLASS="LITERAL"
+>&#60;linux/mm.h&#62;</TT
+>) an.
+
+Diese Felder können von Gerätetreibern in ihrer
+<SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+>-Implementation benutzt werden. Beachten Sie, daß der Kernel
+Listen und Bäume von VMAs verwaltet, um das Nachschlagen von Bereichen
+zu optimieren. Mehrere Felder in <TT
+CLASS="LITERAL"
+>vm_area_struct</TT
+>
+existieren zur Unterstützung dieser Verwaltung. VMAs können nicht
+beliebig von Treibern erzeugt werden, weil sonst diese Strukturen
+nicht mehr korrekt sind. Die wichtigsten Felder von VMAs sehen wie folgt aus
+(beachten Sie die Ähnlichkeit zwischen diesen Feldern und der
+<TT
+CLASS="FILENAME"
+>/proc</TT
+>-Ausgabe, die wir gerade gesehen haben):&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long vm_start;</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned long vm_end;</TT
+></DT
+><DD
+><P
+>Der von dieser VMA abgedeckte Adreßbereich. Diese Felder
+sind die ersten
+        beiden Felder, die in <TT
+CLASS="FILENAME"
+>/proc/*/maps</TT
+> angezeigt werden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct file *vm_file;</TT
+></DT
+><DD
+><P
+>Ein Zeiger auf die <TT
+CLASS="LITERAL"
+>struct file</TT
+>-Struktur, die zu
+diesem Bereich gehört (wenn es eine solche gibt).</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long vm_pgoff;</TT
+></DT
+><DD
+><P
+>Der Offset der Area in der Datei in Seiten. Wenn eine Datei oder ein
+Gerät eingeblendet wird, ist dies die Dateiposition der ersten in diesem
+Bereich eingeblendeten Seite.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long vm_flags;</TT
+></DT
+><DD
+><P
+>&#13;
+Eine Menge von Flags, die diesen Bereich beschreiben. Für Programmierer von Gerätetreibern sind die Flags <TT
+CLASS="LITERAL"
+>VM_IO</TT
+> und
+<TT
+CLASS="LITERAL"
+>VM_RESERVED</TT
+> am interessantesten. <TT
+CLASS="LITERAL"
+>VM_IO</TT
+> kennzeichnet einen VMA
+als einen in den Speicher eingeblendeten I/O-Bereich. Dieses Flag verhindert unter anderem, daß dieser Bereich in Core Dumps des Prozesses enthalten ist. <TT
+CLASS="LITERAL"
+>VM_RESERVED</TT
+> fordert das Speicherverwaltungssystem auf, diesen VMA nicht auszulagern; dieses Flag sollte in den meisten Geräteeinblendungen gesetzt sein.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct vm_operations
+_struct *vm_ops;</TT
+></DT
+><DD
+><P
+>Eine Reihe von Funktionen, die der Kernel aufrufen kann,
+um diesen Speicherbereich zu manipulieren. Das Vorhandensein dieses
+Feldes deutet darauf hin, daß ein Speicherbereich genau wie die
+<TT
+CLASS="LITERAL"
+>struct file</TT
+>, die wir in diesem Buch ständig
+verwendet haben, ein Kernel-"Objekt" ist.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void *vm_private_data;</TT
+></DT
+><DD
+><P
+>Ein Feld, in dem der Treiber seine eigenen Informationen abspeichern
+kann.</P
+></DD
+></DL
+></DIV
+><P
+>&#13;Wie <TT
+CLASS="LITERAL"
+>struct vm_area_struct</TT
+> ist <TT
+CLASS="LITERAL"
+>vm_operations_struct</TT
+> in
+<TT
+CLASS="LITERAL"
+>&#60;linux/mm.h&#62;</TT
+> definiert und enthält die unten aufgeführten
+Operationen. Diese Operationen sind die einzigen, die nötig sind, um
+die Speicherbedürfnisse des Prozesses zu befriedigen. Sie werden in
+der Reihenfolge aufgeführt, in der sie auch deklariert sind. Weiter
+unten in diesem Kapitel werden wir einige dieser
+Funktionen implementieren und sie dabei noch ausführlicher beschreiben.&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>void (*open)(struct vm_area_struct *vma);</TT
+></DT
+><DD
+><P
+>&#13;Die <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>-Methode wird vom Kernel aufgerufen, um
+dem Subsystem, das die VMA implementiert, die Möglichkeit zu geben,
+den Bereich zu initialisieren, Referenzzähler anzupassen usw. Diese
+Methode wird jedesmal aufgerufen, wenn eine neue Referenz auf die VMA
+angelegt wird (etwa wenn ein Prozeß forkt). Die einzige Ausnahme
+besteht beim ersten Erzeugen der VMA durch <SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+>:
+In diesem Fall wird die <SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+>-Methode des Treibers
+anstelle von <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> aufgerufen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void (*close)(struct vm_area_struct *vma);</TT
+></DT
+><DD
+><P
+>&#13;Wenn ein Bereich zerstört wird, ruft der Kernel seine
+<SPAN
+><I
+CLASS="EMPHASIS"
+>close</I
+></SPAN
+>-Methode auf. Es gibt übrigens bei VMAs keinen
+Verwendungszähler; der Bereich wird nur je einmal pro Prozeß geöffnet und
+geschlossen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void (*unmap)(struct vm_area_struct *vma,  unsigned long addr, size_t len);</TT
+></DT
+><DD
+><P
+>&#13;Der Kernel ruft diese Methode auf, um die Einblendung eines Teils oder
+auch des ganzen Bereichs aufzuheben. Wenn der gesamte Bereich
+betroffen ist, dann ruft der Kernel unmittelbar nach der Rückkehr von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>vm_ops-&#62;unmap</I
+></SPAN
+> auch <SPAN
+><I
+CLASS="EMPHASIS"
+>vm_ops-&#62;close</I
+></SPAN
+> auf.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void (*protect)(struct vm_area_struct *vma, unsigned long, size_t, unsigned int newprot);</TT
+></DT
+><DD
+><P
+>&#13;Diese Methode soll den Schutz des Speicherbereiches ändern, wird aber
+derzeit nicht verwendet. Der Speicherschutz wird von den
+Seitentabellen erledigt, und der Kernel erzeugt die Einträge in diesen
+Tabellen separat.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int (*sync)(struct vm_area_struct *vma, unsigned long, size_t, unsigned int flags);</TT
+></DT
+><DD
+><P
+>&#13;Diese Methode wird vom Systemaufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>sync</I
+></SPAN
+> aufgerufen, um einen
+veränderten Speicherabschnitt auf das Speichermedium zu schreiben. Der
+Rückgabewert sollte 0 im Erfolgsfall und sonst negativ sein.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct page *(*nopage)(struct vm_area_struct *vma, unsigned long address, int write_access);</TT
+></DT
+><DD
+><P
+>&#13;Wenn ein Prozeß versucht, auf eine Seite zuzugreifen, die zu einem
+gültigen VMA gehört, aber derzeit nicht im Speicher ist, dann wird die
+Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+> aufgerufen, sofern sie für den entsprechenden
+Bereich definiert ist. Sie gibt den <TT
+CLASS="LITERAL"
+>struct
+page</TT
+>-Zeiger der physikalischen Seite zurück, nachdem diese
+gegebenenfalls von einem Sekundärspeicher eingelesen worden ist. Wenn
+die Methode für den Bereich nicht definiert ist,
+dann alloziert der Kernel eine leere Seite. Das dritte
+Argument, <TT
+CLASS="LITERAL"
+>write_access</TT
+>, wird für &#8220;keine gemeinsame
+Nutzung&#8221; verwendet. Ein von Null verschiedener Wert bedeutet, daß
+die Seite dem aktuellen Prozeß gehören muß, während Null angibt, daß eine
+gemeinsame Nutzung möglich ist.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct page *(*wppage)(struct vm_area_struct *vma, unsigned long address, struct page *page);</TT
+></DT
+><DD
+><P
+>&#13;Die Methode bearbeitet Seitenfehler bei &#8220;schreibgeschützten&#8221;
+Seiten, wird aber derzeit nicht verwendet. Der Kernel behandelt
+Versuche, auf eine schreibgeschützte Seite zu schreiben, selbst, ohne
+die bereichsspezifische Funktion aufzurufen. Seitenfehler bei
+schreibgeschützten Seiten werden dazu verwendet, um copy-on-write zu
+implementieren. Eine private Seite kann so lange von mehreren Prozessen
+gemeinsam genutzt werden, bis ein Prozeß darauf schreibt. In diesem
+Fall wird die Seite kopiert, und der Prozeß schreibt auf seine eigene
+Kopie der Seite. Wenn der gesamte Bereich als schreibgeschützt
+gekennzeichnet ist, dann wird dem Prozeß das Signal <TT
+CLASS="LITERAL"
+>SIGSEGV</TT
+>
+gesendet und die Copy-on-write-Operation nicht durchgeführt.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int (*swapout)(struct page *page, struct file *file);</TT
+></DT
+><DD
+><P
+>&#13;
+Diese Methode wird aufgerufen, wenn eine Seite zum Auslagern
+ausgewählt worden ist. Der Rückgabewert 0 zeigt eine erfolgreiche
+Ausführung an, jeder andere Wert einen Fehler. Im Fehlerfall bekommt
+der Prozeß, dem die Seite gehört, ein <TT
+CLASS="LITERAL"
+>SIGBUS</TT
+>-Signal
+geschickt. Es ist höchst unwahrscheinlich, daß je ein Treiber
+<SPAN
+><I
+CLASS="EMPHASIS"
+>swapout</I
+></SPAN
+> implementieren muß; Geräte-Einblendungen
+sind nichts, was der Kernel einfach so auf die Festplatte schreiben
+könnte.</P
+></DD
+></DL
+></DIV
+><P
+>Damit haben wir unseren Überblick über die Datenstrukturen in der
+Linux-Speicherverwaltung abgeschlossen. Wir können jetzt mit der
+Implementation des Systemaufrufs <SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+>
+weitermachen.&#13;</P
+></DIV
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN16947"
+HREF="mem.html#AEN16947"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Übrigens sind diese Funktionen
+auf 32-Bit-SPARC-Prozessoren nicht <TT
+CLASS="LITERAL"
+>inline</TT
+>, sondern
+richtige, als
+<TT
+CLASS="LITERAL"
+>extern</TT
+> deklarierte Funktionen, die nicht an
+modularisierten Code exportiert werden. Daher können Sie diese
+Funktionen nicht in einem Modul auf SPARCs verwenden, werden das aber
+normalerweise auch nicht tun müssen.</P
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN17007"
+HREF="mem.html#AEN17007"
+>[2]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>&#13;Der Name <I
+CLASS="FIRSTTERM"
+>BSS</I
+> ist ein historisches Überbleibsel, das von
+einem alten Assembler-Operator namens &#8220;Block Started by
+Symbol&#8221; stammt. Das BSS-Segment wird in ausführbaren Dateien
+nicht auf der Festplatte abgespeichert; der Kernel blendet die
+Null-Seite auf den Adreßbereich von BSS ein.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x16412.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="memmap.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Schnellreferenz</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Die Geräteoperation mmap</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

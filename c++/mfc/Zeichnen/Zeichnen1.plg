@@ -1,0 +1,54 @@
+<html>
+<body>
+<pre>
+<h1>Erstellungsprotokoll</h1>
+<h3>
+--------------------Konfiguration: Zeichnen1 - Win32 Debug--------------------
+</h3>
+<h3>Befehlszeilen</h3>
+Creating command line "rc.exe /l 0x407 /fo"Debug/Zeichnen1.res" /d "_DEBUG" /d "_AFXDLL" "C:\C-Files\Projekte\Zeichnen1\Zeichnen1.rc"" 
+Erstellen der temporären Datei  "C:\TEMP\RSPA074.TMP" mit Inhalten
+[
+/nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_AFXDLL" /D "_MBCS" /Fp"Debug/Zeichnen1.pch" /Yu"stdafx.h" /Fo"Debug/" /Fd"Debug/" /FD /GZ   /c 
+"C:\C-Files\Projekte\Zeichnen1\Zeichnen1.cpp"
+"C:\C-Files\Projekte\Zeichnen1\MainFrm.cpp"
+"C:\C-Files\Projekte\Zeichnen1\Zeichnen1Doc.cpp"
+"C:\C-Files\Projekte\Zeichnen1\Zeichnen1View.cpp"
+]
+Creating command line "cl.exe @C:\TEMP\RSPA074.TMP" 
+Erstellen der temporären Datei  "C:\TEMP\RSPA075.TMP" mit Inhalten
+[
+/nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_AFXDLL" /D "_MBCS" /Fp"Debug/Zeichnen1.pch" /Yc"stdafx.h" /Fo"Debug/" /Fd"Debug/" /FD /GZ   /c 
+"C:\C-Files\Projekte\Zeichnen1\StdAfx.cpp"
+]
+Creating command line "cl.exe @C:\TEMP\RSPA075.TMP" 
+Erstellen der temporären Datei  "C:\TEMP\RSPA076.TMP" mit Inhalten
+[
+/nologo /subsystem:windows /incremental:yes /pdb:"Debug/Zeichnen1.pdb" /debug /machine:I386 /out:"Debug/Zeichnen1.exe" /pdbtype:sept 
+".\Debug\Zeichnen1.obj"
+".\Debug\StdAfx.obj"
+".\Debug\MainFrm.obj"
+".\Debug\Zeichnen1Doc.obj"
+".\Debug\Zeichnen1View.obj"
+".\Debug\Zeichnen1.res"
+]
+Erstellen der Befehlzeile "link.exe @C:\TEMP\RSPA076.TMP"
+<h3>Ausgabefenster</h3>
+Ressourcen werden kompiliert...
+Kompilierung läuft...
+StdAfx.cpp
+Kompilierung läuft...
+Zeichnen1.cpp
+MainFrm.cpp
+Zeichnen1Doc.cpp
+Zeichnen1View.cpp
+Generieren von Code...
+Linker-Vorgang läuft...
+
+
+
+<h3>Ergebnisse</h3>
+Zeichnen1.exe - 0 Fehler, 0 Warnung(en)
+</pre>
+</body>
+</html>

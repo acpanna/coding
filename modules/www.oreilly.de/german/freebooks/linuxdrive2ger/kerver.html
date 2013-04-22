@@ -1,0 +1,832 @@
+<HTML
+><HEAD
+><TITLE
+>Versionskontrolle in Modulen</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="kmod und fortgeschrittene Modularisierung"
+HREF="kerneld.html"><LINK
+REL="PREVIOUS"
+TITLE="Kommunikation zwischen Modulen"
+HREF="x14088.html"><LINK
+REL="NEXT"
+TITLE="Abwärtskompatibilität"
+HREF="x14360.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x14088.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 11. kmod und fortgeschrittene Modularisierung</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x14360.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="KERVER"
+>Versionskontrolle in Modulen</A
+></H1
+><P
+>&#13;
+
+Eines der Hauptprobleme beim Arbeiten mit Modulen ist ihre
+Versionsabhängigkeit, die wir bereits in &#8220;<A
+HREF="x666.html#BUIVERSION"
+>the Section called <I
+>Versionsabhängigkeit</I
+> in Kapitel 2</A
+>&#8221; in <A
+HREF="building.html"
+>Kapitel 2</A
+>
+erwähnt haben. Es kann mühsam werden, die Module gegen die
+Header-Datei jeder verwendeten Version kompilieren zu müssen, wenn Sie
+mehrere eigene Module verwenden; und wenn Sie ein in binärer Form
+ausgeliefertes kommerzielles Modul verwenden, ist das Neukompilieren
+überhaupt nicht möglich.&#13;</P
+><P
+>Glücklicherweise haben die Kernel-Entwickler eine flexible Möglichkeit
+gefunden, um  mit Versionsproblemen umzugehen. Der Grundgedanke ist, daß ein
+Modul nur dann inkompatibel mit einer anderen Kernel-Version ist, wenn
+sich die Software-Schnittstelle des Kernels verändert hat. Die
+Software-Schnittstelle kann also durch einen Funktionsprototyp und die
+exakte Definition aller im Funktionsaufruf verwendeten
+Datenstrukturen repräsentiert werden. Ein CRC-Algorithmus<A
+NAME="AEN14210"
+HREF="#FTN.AEN14210"
+>[1]</A
+>  dient dazu,
+alle Informationen über die Software-Schnittstelle auf eine 32 Bit-Zahl abzubilden.&#13;</P
+><P
+>Das Problem der Versionsabhängigkeit wird also dadurch beseitigt, daß jedes vom Kernel exportierte Symbol mit einer Prüfsumme
+kombiniert wird. Diese Information wird durch das Parsen der Header-Dateien und
+das Extrahieren der in ihnen stehenden Informationen ermittelt. Dieses
+Verfahren ist optional und kann zur Kompilationszeit eingeschaltet
+werden. In modularen Kerneln, die von Linux-Distributoren geliefert
+werden, ist die Versionsunterstützung normalerweise eingeschaltet.&#13;</P
+><P
+>Beispielsweise wird das Symbol <TT
+CLASS="LITERAL"
+>printk</TT
+> an Module
+als so etwas wie <TT
+CLASS="LITERAL"
+>printk_R12345678</TT
+> exportiert, wenn die
+Versionsunterstützung eingeschaltet ist, wobei
+<TT
+CLASS="LITERAL"
+>12345678</TT
+> eine hexadezimale Repräsentation der
+Prüfsumme der von der Funktion verwendeten Software-Schnittstelle
+ist. Wenn ein Modul in den Kernel geladen wird, kann
+<SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+> (oder
+<SPAN
+CLASS="APPLICATION"
+>modprobe</SPAN
+>) seine Arbeit nur durchführen,
+wenn die zu jedem Symbol im Kernel hinzugefügte Prüfsumme zu dem
+jeweiligen Symbol im Modul paßt.</P
+><P
+>Dieses Verfahren hat einige Einschränkungen. Das Laden eines für
+SMP-Systeme kompilierten Moduls in einen Einzelprozessor-Kernel oder
+umgekehrt sorgt häufig für Überraschungen. Weil diverse
+Inline-Funktionen (wie etwa Spinlock-Operationen) und Symbole in
+SMP-Kerneln anders definiert sind, ist es wichtig, daß sich die Module
+und der Kernel darüber einig sind, ob sie für SMP gebaut worden sind oder
+nicht. Die Version 2.4 und neuere 2.2-Kernel ergänzen jedes Symbol um
+<TT
+CLASS="LITERAL"
+>smp_</TT
+>, wenn für SMP kompiliert wird, um
+diesen Sonderfall abzudecken. Es gibt aber trotzdem noch Fallgruben.
+Module und der Kernel können sich in der verwendeten Compiler-Version
+unterscheiden, darin wie sie den Speicher organisieren, für welche
+Prozessorversion sie kompiliert worden sind und in vielem mehr. Die
+Versionsunterstützung kann die gängigsten Probleme abfangen, aber man
+sollte trotzdem vorsichtig sein.</P
+><P
+>Schauen wir uns an, was im Kernel und im Modul passiert, wenn die
+Versionsunterstützung eingeschaltet ist:&#13;</P
+><P
+></P
+><UL
+><LI
+STYLE="list-style-type: dash"
+><P
+>Im Kernel selbst wird das Symbol nicht modifiziert. Das Linken
+geschieht wie immer, und die Symboltabelle in der Datei
+<TT
+CLASS="FILENAME"
+>vmlinux</TT
+> sieht aus wie immer.</P
+></LI
+><LI
+STYLE="list-style-type: dash"
+><P
+>Die öffentliche Symboltabelle wird mit den Namen mit
+Versionsinformationen zusammengestellt. Diese erscheinen auch in
+<TT
+CLASS="FILENAME"
+>/proc/ksyms</TT
+>.</P
+></LI
+><LI
+STYLE="list-style-type: dash"
+><P
+>Das Modul muß mit den veränderten Namen kompiliert werden, die in den
+Objektdateien als undefinierte Symbole stehen.</P
+></LI
+><LI
+STYLE="list-style-type: dash"
+><P
+>Das Ladeprogramm (<SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+>) vergleicht die
+undefinierten Symbole im Modul mit den
+öffentlichen Symbolen im Kernel, verwendet also die
+Versionsinformation.</P
+></LI
+></UL
+><P
+>Beachten Sie, daß der Kernel und das Modul sich einig darüber sein müssen, ob die Versionsunterstützung verwendet werden soll oder nicht. Wenn einer von beiden Symbole
+mit Versionsinformationen verwendet und der andere nicht, lehnt
+<SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+> das Laden des Moduls ab.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN14236"
+>Versionsunterstützung in Modulen verwenden</A
+></H2
+><P
+>Treiber-Autoren müssen einiges an expliziter Unterstützung in ihre
+Module einbauen, damit diese mit Versionen funktionieren. Dies kann an
+einer von zwei Stellen  geschehen: im Makefile oder in der Quelle
+selbst. Weil die Dokumentation des Pakets
+<SPAN
+CLASS="APPLICATION"
+>modutils</SPAN
+> beschreibt, wie man das im
+<TT
+CLASS="FILENAME"
+>Makefile</TT
+> macht, zeigen wir Ihnen hier, wie es in
+den C-Quellen geschieht. Wir verwenden das
+<SPAN
+CLASS="APPLICATION"
+>master</SPAN
+>-Modul, um zu zeigen, wie
+<SPAN
+CLASS="APPLICATION"
+>kmod</SPAN
+> mit Versionsinformationen behaftete
+Symbole unterstützt. Diese Fähigkeit wird automatisch eingeschaltet,
+wenn der Kernel, mit dem die Module kompiliert wurden,
+Versionsunterstützung beinhaltet.
+
+
+&#13;</P
+><P
+>&#13;Der wichtigste Bestandteil zum Hinzufügen von Versionsinformationen zu
+Symbolnamen ist die Header-Datei
+<TT
+CLASS="LITERAL"
+>&#60;linux/modversions.h&#62;</TT
+>, die
+Präprozessordefinitionen für alle öffentlichen Kernel-Symbole
+enthält. Diese Datei wird während der Kompilation des Kernels (genauer
+gesagt, im &#8220;make depend&#8221;-Schritt) erzeugt. Wenn Ihr Kernel noch nie
+oder bisher ohne Versionsinformationen gebaut worden ist, wird da nicht viel
+Interessantes drinstehen. <TT
+CLASS="LITERAL"
+>&#60;linux/modversions.h&#62;</TT
+> muß vor
+allen anderen Header-Dateien eingebunden werden; stellen Sie sie also in Ihren Treiber-Quellen an den Anfang. Die übliche Technik ist aber,
+<SPAN
+CLASS="APPLICATION"
+>gcc</SPAN
+> mitzuteilen, die Datei direkt
+einzubinden:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>gcc -DMODVERSIONS -include /usr/src/linux/include/linux/modversions.h...</PRE
+></TD
+></TR
+></TABLE
+><P
+>Nach dem Einbinden des Headers sieht der Compiler immer die mit
+Versionsinformationen ergänzte Version, wenn das Modul ein
+Kernel-Symbol verwendet.</P
+><P
+>&#13;
+
+
+
+Um die Versionsinformationen im Modul einzuschalten, wenn sie bereits
+im Kernel aktiviert worden sind, müssen wir sichergehen, daß
+<TT
+CLASS="LITERAL"
+>CONFIG_MODVERSIONS</TT
+> bereits in
+<TT
+CLASS="LITERAL"
+>&#60;linux/autoconf.h&#62;</TT
+> definiert worden
+ist. Diese Header-Datei gibt an, welche Funktionalität im aktuellen
+Kernel aktiviert (also hineinkompiliert) worden ist. Jedes
+definierte <TT
+CLASS="LITERAL"
+>CONFIG_</TT
+>-Makro gibt an, daß die zugehörige Option
+aktiviert ist.<A
+NAME="AEN14269"
+HREF="#FTN.AEN14269"
+>[2]</A
+>&#13;</P
+><P
+><TT
+CLASS="FILENAME"
+>master.c</TT
+> beginnt daher mit den folgenden Zeilen:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+#include &#60;linux/config.h&#62; /* CONFIG_*-Makros holen */
+#if defined(CONFIG_MODVERSIONS) &#38;&#38; !defined(MODVERSIONS)
+#   define MODVERSIONS /* erzwingen */
+#endif
+
+#ifdef MODVERSIONS
+#  include &#60;linux/modversions.h&#62;
+#endif</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wenn diese Datei gegen einen Kernel mit Versionsinformationen
+kompiliert wird, bezieht sich die Symboltabelle im Objekt auf die
+Symbolnamen mit Versionsinformationen, die zu denen passen, die der
+Kernel selbst exportiert. Der folgende Auszug zeigt die Symbolnamen in
+<TT
+CLASS="FILENAME"
+>master.o</TT
+>. In der Ausgabe von
+<SPAN
+CLASS="APPLICATION"
+>nm</SPAN
+> bedeutet &#8220;T&#8221;
+&#8220;Text&#8221;, &#8220;D&#8221; &#8220;Daten&#8221; und
+&#8220;U&#8221; &#8220;undefiniert&#8221;. &#8220;Undefiniert&#8221;
+kennzeichnet Symbole, die von der Objektdatei referenziert, aber
+nicht definiert werden.&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>&#13;
+00000034 T cleanup_module
+00000000 t gcc2_compiled.
+00000000 T init_module
+00000034 T master_cleanup_module
+00000000 T master_init_module
+         U printk_Rsmp_1b7d4074
+         U request_module_Rsmp_27e4dc04
+morgana% fgrep 'printk' /proc/ksyms
+c011b8b0 printk_Rsmp_1b7d4074</PRE
+></TD
+></TR
+></TABLE
+><P
+>Weil die Prüfsummen, die den Symbolnamen in
+<TT
+CLASS="FILENAME"
+>master.o</TT
+> hinzugefügt worden sind, die gesamte
+Schnittstelle von <SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request_module</I
+></SPAN
+> beinhalten, ist das Modul
+kompatibel mit einer großen Anzahl von Kernel-Versionen. Wenn aber die
+Datenstrukturen, die von einer der beiden Funktionen benutzt werden,
+verändert werden, wird <SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+> das Modul
+wegen der Inkompatibilität mit dem Kernel nicht laden.&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN14287"
+>Exportieren von Symbolen mit Versionsinformationen</A
+></H2
+><P
+>&#13;
+
+Eine Situation wurde bisher noch nicht besprochen: Was passiert, wenn
+ein Modul Symbole exportiert, die von anderen Modulen verwendet werden
+sollen? Wenn wir uns auf die Versionsinformationen verlassen, um die
+Portabilität des Moduls sicherzustellen, dann würden wir auch unseren
+eigenen Symbolen gern einen CRC-Code hinzufügen. Dieser Bereich ist
+etwas kniffliger als das bloße Hinzulinken zum Kernel, weil wir die
+modifizierten Symbolnamen an die anderen Module exportieren müssen;
+wir müssen also einen Weg finden, die Prüfsummen zu erzeugen.&#13;</P
+><P
+>&#13;Das Programm <SPAN
+CLASS="APPLICATION"
+>genksyms</SPAN
+> ist dafür zuständig,
+die Header-Dateien zu parsen und die Prüfsummen zu erzeugen. Es stammt
+aus dem <SPAN
+CLASS="APPLICATION"
+>modules</SPAN
+>-Paket. Das Programm
+erwartet die Ausgabe des C-Präprozessors auf seiner Standardeingabe
+und gibt eine neue Header-Datei auf der Standardausgabe aus. Diese
+enthält Namen mit Prüfsummen für jedes Symbol, das von der
+ursprünglichen Quelldatei exportiert wird. Die Ausgabe von
+<SPAN
+CLASS="APPLICATION"
+>genksyms</SPAN
+> wird meistens mit dem Suffix
+<TT
+CLASS="FILENAME"
+>.ver</TT
+> abgespeichert. Wir werden hier dieser Praxis
+folgen.&#13;</P
+><P
+>Um Ihnen zu zeigen, wie Symbole exportiert werden, haben wir zwei
+Testmodule namens <SPAN
+><I
+CLASS="EMPHASIS"
+>export.c</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>import.c</I
+></SPAN
+>
+geschrieben. <SPAN
+CLASS="APPLICATION"
+>export</SPAN
+> exportiert eine
+einfache Funktion namens <SPAN
+><I
+CLASS="EMPHASIS"
+>export_function</I
+></SPAN
+>,
+die vom zweiten Modul, <TT
+CLASS="FILENAME"
+>import.c</TT
+>, importiert
+wird. Diese Funktion erwartet zwei Integer-Argumente und gibt deren
+Summe zurück. Wir sind hier aber nicht an der Funktion selbst, sondern
+am Link-Vorgang interessiert.&#13;</P
+><P
+>Das <TT
+CLASS="FILENAME"
+>Makefile</TT
+> im Verzeichnis
+<TT
+CLASS="FILENAME"
+>misc-modules</TT
+> enthält eine Regel, um die Datei
+<TT
+CLASS="FILENAME"
+>export.ver</TT
+> aus <TT
+CLASS="FILENAME"
+>export.c</TT
+> zu
+erzeugen, so daß im Modul <SPAN
+CLASS="APPLICATION"
+>import</SPAN
+> das mit
+einer Prüfsumme versehene Symbol für
+<SPAN
+><I
+CLASS="EMPHASIS"
+>export_function</I
+></SPAN
+> verwendet werden kann:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+ifdef CONFIG_MODVERSIONS
+export.o import.o: export.ver
+endif
+
+export.ver: export.c
+        $(CC) -I$(INCLUDEDIR) $(CFLAGS) -E -D_&#8201;_GENKSYMS_&#8201;_ $&#8257; | \
+                $(GENKSYMS) -k 2.4.0 &#62; $@</PRE
+></TD
+></TR
+></TABLE
+><P
+>Diese Zeilen führen vor, wie <TT
+CLASS="FILENAME"
+>export.ver</TT
+>
+
+erzeugt wird, und fügen diese Datei zu den Abhängigkeiten der beiden
+Objektdateien hinzu; allerdings nur, wenn
+<TT
+CLASS="LITERAL"
+>MODVERSIONS</TT
+> definiert ist. Einige wenige zusätzliche
+Zeilen in <TT
+CLASS="FILENAME"
+>Makefile</TT
+> sorgen dafür, daß
+<TT
+CLASS="LITERAL"
+>MODVERSIONS</TT
+> definiert ist, wenn die Versionsunterstützung im Kernel aktiviert ist, aber es lohnt sich
+nicht, diese hier zu zeigen. Die Option <SPAN
+><I
+CLASS="EMPHASIS"
+>-k</I
+></SPAN
+> muß
+verwendet werden, um <SPAN
+><I
+CLASS="EMPHASIS"
+>genksyms</I
+></SPAN
+> mitzuteilen, mit
+welcher Kernel-Version Sie arbeiten. Damit wird nur das Format der
+Ausgabedatei bestimmt; die verwendete Kernel-Version muß nicht
+hundertprozentig stimmen.</P
+><P
+>Die Definition des Symbols <TT
+CLASS="LITERAL"
+>GKSMP</TT
+> ist
+jedoch interessant. Wie bereits erwähnt, wird jeder Prüfsumme ein Präfix
+(<TT
+CLASS="LITERAL"
+>-p smp_</TT
+>) vorangestellt, wenn der Kernel für
+SMP-Systeme gebaut wird. Das Hilfsprogramm
+<SPAN
+><I
+CLASS="EMPHASIS"
+>genksyms</I
+></SPAN
+> fügt dieses Präfix nicht von selbst
+hinzu, sondern muß darauf hingewiesen werden. Der folgende
+Makefile-Ausschnitt sorgt dafür, daß alles korrekt zugeht:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+ifdef CONFIG_SMP
+        GENKSYMS += -p smp_
+endif</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die Quelldatei muß also die richtigen Präprozessor-Symbole für jeden
+denkbaren Präprozessor-Lauf deklarieren: die Eingabe von
+<SPAN
+CLASS="APPLICATION"
+>genksyms</SPAN
+> und die eigentliche Kompilierung,
+beide mit und ohne Versionsunterstützung. Außerdem sollte
+<TT
+CLASS="FILENAME"
+>export.c</TT
+> in der Lage sein, eine Versionsunterstützung
+im Kernel automatisch zu erkennen, genau wie
+<TT
+CLASS="FILENAME"
+>master.c</TT
+>. Das gelingt mit den folgenden Zeilen:
+&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+#include &#60;linux/config.h&#62; /* CONFIG_*-Makros holen*/
+#if defined(CONFIG_MODVERSIONS) &#38;&#38; !defined(MODVERSIONS)
+#   define MODVERSIONS
+#endif
+
+/*
+ * Die Definitionen mit Versionssymbolen fuer sowohl
+ * die  Kernelsymbole als auch unser Symbol holen, *sofern*
+ * wir  keine Pruefsummen erzeugen. (_&#8201;_GENKSYMS_&#8201;_ defined) */
+#if defined(MODVERSIONS) &#38;&#38; !defined(_&#8201;_GENKSYMS_&#8201;_)
+#    include &#60;linux/modversions.h&#62;
+#    include "export.ver" /* "export_function" umdefinieren, so  dass CRC-Pruefsummen gebildet werden */
+#endif</PRE
+></TD
+></TR
+></TABLE
+><P
+>Der Code ist zwar schwierig, hat aber den Vorteil, das
+<TT
+CLASS="FILENAME"
+>Makefile</TT
+> in einem sauberen Zustand zu
+lassen. Wenn wir die richtigen Schalter von
+<SPAN
+CLASS="APPLICATION"
+>make</SPAN
+> aus übergeben wollten, müßten wir für
+die verschiedenen Fälle lange Kommandozeilen schreiben, wozu wir hier
+keine Lust haben.
+
+&#13;</P
+><P
+>Das einfache Modul <SPAN
+CLASS="APPLICATION"
+>import</SPAN
+> ruft
+<TT
+CLASS="FILENAME"
+>export_function</TT
+> auf und übergibt dabei die
+Zahlen 2 und 2 als Argumente; das erwartete Resultat ist also 4. Das
+folgende Beispiel zeigt, daß <SPAN
+CLASS="APPLICATION"
+>import</SPAN
+>
+tatsächlich die Symbole mit Versionsinformationen von
+<SPAN
+CLASS="APPLICATION"
+>export</SPAN
+> verwendet und die Funktion
+aufruft. Die Symbole mit Versionsinformationen erscheinen auch in
+<TT
+CLASS="FILENAME"
+>/proc/ksyms</TT
+>.&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>&#13;
+morgana.root# <TT
+CLASS="USERINPUT"
+><B
+>insmod ./export.o</B
+></TT
+>
+morgana.root# <TT
+CLASS="USERINPUT"
+><B
+>grep export /proc/ksyms</B
+></TT
+>
+c883605c export_function_Rsmp_888cb211  [export]
+morgana.root# <TT
+CLASS="USERINPUT"
+><B
+>insmod ./import.o</B
+></TT
+>
+import: my mate tells that 2+2 = 4
+morgana.root# <TT
+CLASS="USERINPUT"
+><B
+>cat /proc/modules</B
+></TT
+>
+import                   312   0  (unused)
+export                   620   0  [import]</PRE
+></TD
+></TR
+></TABLE
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN14210"
+HREF="kerver.html#AEN14210"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>CRC bedeutet &#8220;cyclic redundancy check&#8221;, ein
+Verfahren, um kurze, eindeutige Zahlen aus beliebigen Datenmengen zu
+erzeugen.</P
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN14269"
+HREF="kerver.html#AEN14269"
+>[2]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Die <TT
+CLASS="LITERAL"
+>CONFIG_</TT
+>-Makros sind in
+<TT
+CLASS="LITERAL"
+>&#60;linux/autoconf.h&#62;</TT
+> definiert. Sie sollten
+statt dessen aber <TT
+CLASS="LITERAL"
+>&#60;linux/config.h&#62;</TT
+> einbinden,
+weil letztere Datei vor doppeltem Einbinden geschützt ist und
+<TT
+CLASS="LITERAL"
+>&#60;linux/autoconf.h&#62;</TT
+> intern einbindet.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x14088.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x14360.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Kommunikation zwischen Modulen</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="kerneld.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Abwärtskompatibilität</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

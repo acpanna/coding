@@ -1,0 +1,2994 @@
+<HTML
+><HEAD
+><TITLE
+>Ein Überblick über die Peripherie-Busse</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="PREVIOUS"
+TITLE="Schnellreferenz"
+HREF="x21078.html"><LINK
+REL="NEXT"
+TITLE="Ein Blick zurück: ISA"
+HREF="pciisa.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x21078.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="pciisa.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="PCI"
+>Kapitel 15. Ein Überblick über die Peripherie-Busse</A
+></H1
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Inhalt</B
+></DT
+><DT
+><A
+HREF="pci.html#PCIPCI"
+>Die PCI-Schnittstelle</A
+></DT
+><DT
+><A
+HREF="pciisa.html"
+>Ein Blick zurück: ISA</A
+></DT
+><DT
+><A
+HREF="pci104.html"
+>PC/104 und PC/104+</A
+></DT
+><DT
+><A
+HREF="pciother.html"
+>Andere PC-Busse</A
+></DT
+><DT
+><A
+HREF="pcisbus.html"
+>SBus</A
+></DT
+><DT
+><A
+HREF="x22248.html"
+>NuBus</A
+></DT
+><DT
+><A
+HREF="pciext.html"
+>Externe Bus-Systeme</A
+></DT
+><DT
+><A
+HREF="x22325.html"
+>Abwärtskompatibilität</A
+></DT
+><DT
+><A
+HREF="x22374.html"
+>Schnellreferenz</A
+></DT
+></DL
+></DIV
+><P
+>Während <A
+HREF="hard.html"
+>Kapitel 8</A
+> die unterste Ebene der
+Hardware-Ansteuerung beschrieb, gibt dieses Kapitel einen Überblick
+über die Bus-Architekturen höherer Ebenen. Ein Bus besteht sowohl aus
+einer elektrischen Schnittstelle als auch aus einer
+Programmierschnittstelle. In diesem Kapitel gehen wir auf die
+Programmierschnittstelle ein.&#13;</P
+><P
+>&#13;
+Dieses Kapitel behandelt eine Reihe von Bus-Architekturen. Der
+Schwerpunkt wird aber auf denjenigen Kernel-Funktionen liegen, die auf
+PCI-Peripherie-Geräte zugreifen, weil heutzutage der PCI-Bus der auf
+Desktop-Systemen und größeren Computern am
+häufigsten verwendete und auch der vom Kernel am besten unterstützte Bus
+ist. ISA ist für Elektronikbastler immer noch eine gängige Wahl und
+wird später näher beschrieben, auch wenn dieser Bus ziemlich einfach
+gestrickt ist und es über ihn nicht viel mehr als das zu sagen gibt, was wir
+bereits in <A
+HREF="hard.html"
+>Kapitel 8</A
+> und <A
+HREF="irq.html"
+>Kapitel 9</A
+> geschrieben
+haben.
+&#13;</P
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="PCIPCI"
+>Die PCI-Schnittstelle</A
+></H1
+><P
+>&#13;
+Obwohl viele Computerbenutzer PCI (Peripheral Component Interconnect)
+für ein Verfahren halten, elektrische Drähte zu organisieren, ist es
+eigentlich ein vollständiger Satz von Spezifikationen, der bestimmt,
+wie die einzelnen Teile eines Computers interagieren sollten.&#13;</P
+><P
+>Die PCI-Spezifikation behandelt die meisten Fragen aus dem
+Bereich der Computer-Schnittstellen. Wir werden hier nicht auf alle
+eingehen, sondern uns hauptsächlich darauf konzentrieren, wie ein
+PCI-Treiber seine Hardware finden und darauf Zugriff bekommen
+kann. Die in &#8220;<A
+HREF="buiconf.html"
+>the Section called <I
+>Automatische und manuelle
+Konfiguration</I
+> in Kapitel 2</A
+>&#8221; in <A
+HREF="building.html"
+>Kapitel 2</A
+> und in &#8220;<A
+HREF="irqinstall.html#IRQPROBE"
+>the Section called <I
+>Automatische Erkennung der IRQ-Nummer</I
+> in Kapitel 9</A
+>&#8221; in <A
+HREF="irq.html"
+>Kapitel 9</A
+>
+behandelten Suchtechniken können auch bei PCI-Geräten verwendet
+werden, aber die Spezifikation bietet auch noch eine Alternative zum
+Suchen.&#13;</P
+><P
+>Die PCI-Architektur wurde als ein Ersatz für den ISA-Standard
+entworfen und hatte drei Entwurfsziele: eine bessere Performance bei
+der Übertragung von Daten zwischen dem Computer und
+Peripherie-Geräten, größtmögliche Plattformunabhängigkeit und ein
+einfaches Hinzufügen und Entfernen von Peripherie-Geräten.&#13;</P
+><P
+>Der PCI-Bus erreicht seine bessere Performance durch Verwendung einer
+höheren Taktrate als ISA; diese beträgt 25 oder 33 MHz (der
+tatsächliche Wert ist ein Teiler des Systemtakts);
+66-MHz- und sogar 133-MHz-Implementationen sind ebenfalls bereits
+verfügbar. Außerdem ist der Datenbus
+32 Bit breit, eine 64 Bit-Erweiterung ist in die Spezifikation mit
+aufgenommen worden (auch wenn nur 64-Bit-Plattformen das
+implementieren). Plattformunabhängigkeit ist oft ein Ziel bei der
+Entwicklung von Computer-Bussen und ein besonders wichtiges
+Merkmal von PCI, weil die PC-Welt immer von prozessorspezifischen
+Schnittstellenstandards dominiert worden ist. PCI wird derzeit
+umfassend auf IA-32, Alpha, PowerPC, SPARC64 und IA-64-Systemen sowie
+einigen anderen Plattformen verwendet.&#13;</P
+><P
+>Für den Programmierer eines Treibers ist jedoch die Unterstützung der
+Autoerkennung von Karten am wichtigsten. PCI-Geräte haben im Gegensatz
+zu den meisten ISA-Peripherie-Geräten keine Jumper und werden beim
+Booten automatisch konfiguriert. Der Treiber-Programmierer muß also in
+der Lage sein, auf die Konfigurationsinformationen des Gerätes
+zuzugreifen, um die Initialisierung vervollständigen zu können. Das
+geschieht, ohne daß nach dem Gerät gesucht werden muß.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN21314"
+>PCI-Adressierung</A
+></H2
+><P
+>&#13;Jedes PCI-Peripherie-Gerät wird durch eine
+<I
+CLASS="FIRSTTERM"
+>Bus-Nummer</I
+>, eine
+<I
+CLASS="FIRSTTERM"
+>Gerätenummer</I
+> und eine
+<I
+CLASS="FIRSTTERM"
+>Funktionsnummer</I
+> identifiziert. Die
+PCI-Spezifikation erlaubt bis zu 256 Busse in einem System. Jeder Bus
+kann bis zu 32 Geräte enthalten, und
+jedes Gerät kann eine Multifunktionskarte (wie eine Soundkarte mit
+eingebautem CD-ROM-Anschluß) mit maximal acht Funktionen sein. Jede
+Funktion kann also auf Hardware-Ebene durch eine 16-Bit-Adresse
+(Schlüssel) identifiziert werden. Gerätetreiber für Linux müssen sich
+aber nicht mit diesen Binäradressen beschäftigen, weil sie eine
+bestimmte Datenstruktur namens <TT
+CLASS="LITERAL"
+>pci_dev</TT
+>
+verwenden, um auf den Geräten zu arbeiten. (Das ist natürlich genau
+die <TT
+CLASS="LITERAL"
+>struct pci_dev</TT
+>, die wir schon in <A
+HREF="mem.html"
+>Kapitel 13</A
+> kennengelernt haben.</P
+><P
+>&#13;Die meisten neueren Workstations enthalten mindestens zwei
+PCI-Busse. Bei mehreren Bussen in einem System werden sogenannte <SPAN
+><I
+CLASS="EMPHASIS"
+>Brücken</I
+></SPAN
+>
+(<SPAN
+><I
+CLASS="EMPHASIS"
+>bridges</I
+></SPAN
+>) verwendet, spezielle PCI-Peripherie-Geräte,
+deren Aufgabe es ist, die Busse zu verbinden. Das gesamte
+Layout eines PCI-Systems ist als Baum organisiert, in dem jeder Bus
+bis herauf zum Bus 0 mit einem Bus der nächsthöheren Schicht
+verbunden ist. Das CardBus PC-Karten-System wird ebenfalls über
+Brücken an das PCI-System angebunden. Ein typisches PCI-System ist in <A
+HREF="pci.html#PCIANDBRIDGES"
+>Abbildung 15-1</A
+> zu sehen, wo die diversen Brücken
+hervorgehoben sind.</P
+><DIV
+CLASS="FIGURE"
+><A
+NAME="PCIANDBRIDGES"
+></A
+><P
+><B
+>Abbildung 15-1. Layout eines typischen PCI-Systems</B
+></P
+><P
+><IMG
+SRC="ldr_1501.jpg"></P
+></DIV
+><P
+>&#13;
+
+Die 16-Bit-Hardware-Adressen von PCI-Peripherie-Geräten sind zwar
+meistens im <TT
+CLASS="LITERAL"
+>struct pci_dev</TT
+>-Objekt versteckt,
+aber trotzdem gelegentlich sichtbar, besonders wenn es um Listen von
+Geräten geht. Eine solche Situation ist die Ausgabe von
+<SPAN
+CLASS="APPLICATION"
+>lspci</SPAN
+> (einem Bestandteil des
+<SPAN
+CLASS="APPLICATION"
+>pciutils</SPAN
+>-Pakets, das in den meisten
+Distributionen enthalten ist) und das Informationslayout in
+<TT
+CLASS="FILENAME"
+>/proc/pci</TT
+> und
+<TT
+CLASS="FILENAME"
+>/proc/bus/pci</TT
+>.<A
+NAME="AEN21350"
+HREF="#FTN.AEN21350"
+>[1]</A
+> Wenn die Hardware-Adresse angezeigt wird, kann
+dies entweder als 16-Bit Wert, als zwei Werte (eine 8-Bit-Zahl und
+eine 8-Bit-Geräte- und Funktionsnummer) geschehen; alle Werte werden
+normalerweise als hexadezimale Zahlen dargestellt.</P
+><P
+>Beispielsweise verwendet <TT
+CLASS="FILENAME"
+>/proc/bus/pci/devices</TT
+>
+ein einziges 16-Bit-Feld (um das Parsen und Sortieren zu
+vereinfachen), während
+<TT
+CLASS="FILENAME"
+>/proc/bus/</TT
+><TT
+CLASS="REPLACEABLE"
+><I
+>busnummer</I
+></TT
+>
+die Adressen in drei Felder aufteilt. Hier können Sie sehen, wie diese
+Adressen erscheinen, wobei jeweils nur der Anfang der ausgegebenen
+Zeilen dargestellt ist:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>rudo% <TT
+CLASS="USERINPUT"
+><B
+>lspci | cut -d: -f1-2</B
+></TT
+>
+00:00.0 Host bridge
+00:01.0 PCI bridge
+00:07.0 ISA bridge
+00:07.1 IDE interface
+00:07.3 Bridge
+00:07.4 USB Controller
+00:09.0 SCSI storage controller
+00:0b.0 Multimedia video controller
+01:05.0 VGA compatible controller
+rudo% <TT
+CLASS="USERINPUT"
+><B
+>cat /proc/bus/pci/devices | cut -d\        -f1,3</B
+></TT
+>
+0000    0
+0008    0
+0038    0
+0039    0
+003b    0
+003c    b
+0048    a
+0058    b
+0128    a</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die beiden Gerätelisten sind in der gleichen Reihenfolge sortiert,
+weil <SPAN
+CLASS="APPLICATION"
+>lspci</SPAN
+> die
+<TT
+CLASS="FILENAME"
+>/proc</TT
+>-Dateien als Informationsquelle
+verwendet. Wenn wir den VGA-Video-Controller als Beispiel nehmen,
+bedeutet 0x128 nach der Aufteilung in Bus (acht Bits), Gerät (fünf
+Bits) und Funktion (drei Bits) <TT
+CLASS="LITERAL"
+>01:05.0</TT
+>. Das zweite
+Feld in den beiden Listings zeigt die Geräteklasse beziehungsweise die
+Interrupt-Nummer.</P
+><P
+>&#13;
+
+
+Die Hardware-Schaltkreise auf jeder Peripherie-Karte beantworten
+Fragen nach den drei Adreßräumen: Speicheradressen, I/O-Ports und
+Konfigurationsregister. Die ersten beiden Adreßräume werden von allen
+Geräten auf einem PCI-Bus gemeinsam genutzt (d. h. wenn Sie auf eine
+Speicheradresse zugreifen, dann sehen alle Geräte den Bus-Zyklus zum
+selben Zeitpunkt). Der Konfigurationsraum benutzt dagegen
+<I
+CLASS="FIRSTTERM"
+>eine geographische
+Adressierung</I
+>. Konfigurationstransaktionen (also
+Bus-Adressen im Konfigurationsraum) betreffen nur jeweils einen Steckplatz.
+Daher gibt es beim Zugriff auf Konfigurationsinformationen
+überhaupt keine Kollisionen.</P
+><P
+>Was den Treiber angeht, wird auf Speicher- und I/O-Bereiche wie sonst
+auch mit <SPAN
+><I
+CLASS="EMPHASIS"
+>inb</I
+></SPAN
+>, <SPAN
+><I
+CLASS="EMPHASIS"
+>readb</I
+></SPAN
+>
+usw. zugegriffen. Konfigurationstransaktionen werden dagegen durch
+Aufruf bestimmter Kernel-Funktionen ausgeführt, um auf die
+Konfigurationsregister zuzugreifen. Im Hinblick auf Interrupts hat
+jeder PCI-Steckplatz vier Interrupt-Pins, und jede Gerätefunktion kann
+einen davon verwenden, ohne sich darum kümmern zu müssen, wie diese
+Pins dann mit der CPU verbunden sind. Das liegt in der Verantwortung
+der jeweiligen Plattform und wird außerhalb des PCI-Busses
+implementiert. Weil die PCI-Spezifikation erwartet, daß
+Interrupt-Leitungen gemeinsam genutzt werden können, kann selbst ein
+Prozessor mit einer beschränkten Anzahl von IRQ-Leitungen wie die
+x86-Plattform viele PCI-Karten enthalten (die alle vier Interrupt-Pins
+haben).</P
+><P
+>&#13;
+
+
+Der I/O-Adreßraum in einem PCI-Bus verwendet einen 32-Bit-Adreß-Bus
+(und kann damit 4 GByte I/O-Ports adressieren), während der Speicherraum
+entweder mit 32-Bit- oder 64-Bit-Adressen angesprochen werden
+kann. 64-Bit-Adressen werden aber nur auf einigen wenigen Plattformen
+unterstützt. Die
+Adressen müssen eindeutig zu einem Gerät zugeordnet sein, aber es kann
+passieren, daß die Software zwei Geräte fälschlicherweise auf die
+gleiche Adresse
+abbildet, so daß auf keines von beiden zugegriffen werden
+kann. Dies passiert aber nur, wenn ein Treiber absichtlich mit
+Registern herumspielt, die ihn nichts angehen. Glücklicherweise kann
+jeder Speicher- und I/O-Adreßbereich auf
+der Karte mit Hilfe von Konfigurationsvorgängen umgeblendet
+werden. Die Firmware initialisiert also die PCI-Hardware beim Booten
+des Systems und bildet jeden Bereich auf eine andere Adresse ab, um
+Kollisionen zu vermeiden.<A
+NAME="AEN21392"
+HREF="#FTN.AEN21392"
+>[2]</A
+> Die Adressen, auf die
+diese Bereiche derzeit abgebildet werden, können aus dem
+Konfigurationsraum ausgelesen werden, so daß ein Linux-Treiber darauf
+ohne Suchen zugreifen kann. Nachdem die Konfigurationsregister einmal
+ausgelesen worden sind, kann der Treiber gefahrlos auf seine Hardware
+zugreifen.&#13;</P
+><P
+>&#13;
+Der PCI-Konfigurationsraum besteht aus 256 Bytes je Gerätefunktion,
+das Layout der Konfigurationsregister ist standardisiert. Vier Bytes
+des Konfigurationsraumes enthalten eine eindeutige Geräte-ID, so daß
+der Treiber sein Gerät durch einen Vergleich mit der spezifischen ID des
+Gerätes erkennen kann.<A
+NAME="AEN21400"
+HREF="#FTN.AEN21400"
+>[3]</A
+> Um es zusammenzufassen: Jede Karte wird also geographisch
+adressiert, um an ihre Konfigurationsregister
+heranzukommen. Diese Information kann dann verwendet werden, um
+normale I/O durchzuführen, ohne weiter eine geographische Adressierung
+verwenden zu müssen.&#13;</P
+><P
+>Es sollte aus dieser Beschreibung klargeworden sein, daß die
+wichtigste Verbesserung des PCI-Standards gegenüber ISA der
+Konfigurationsadreßraum ist. Daher muß ein PCI-Treiber neben dem
+üblichen Treiber-Code auch auf den Konfigurationsraum zugreifen
+können, um sich selbst riskantes Ausprobieren zu ersparen.&#13;</P
+><P
+>Im Rest dieses Kapitels werden wir das Wort &#8220;Gerät&#8221; für
+eine Gerätefunktion verwenden, weil jede Funktion auf einer
+Multifunktionskarte sich wie eine unabhängige Einheit verhält. Wenn
+wir also von einem Gerät sprechen, meinen wir das Tupel aus Bus-Nummer,
+Gerätenummer und Funktionsnummer, das durch eine 16-Bit-Zahl oder
+zwei 8-Bit-Zahlen (die normalerweise <TT
+CLASS="LITERAL"
+>bus</TT
+> und
+<TT
+CLASS="LITERAL"
+>devfn</TT
+> heißen) repräsentiert wird.&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN21406"
+>Hochfahren des Systems</A
+></H2
+><P
+>&#13;
+Schauen wir uns an, wie PCI funktioniert, und beginnen wir dabei mit
+dem Hochfahren des Systems, denn an dieser Stelle werden die Geräte
+konfiguriert.&#13;</P
+><P
+>Wenn Spannung an einem PCI-Gerät angelegt wird, bleibt die
+Hardware inaktiv. Mit anderen Worten: Das Gerät antwortet nur auf
+Konfigurationsvorgänge. Beim Einschalten bildet das Gerät keinen
+Speicher und keine I/O-Ports in den Adreßraum des Computers ab; alle
+anderen gerätespezifischen Merkmale wie das Melden von Interrupts sind
+ebenfalls abgeschaltet.&#13;</P
+><P
+>&#13;Glücklicherweise verfügt jede PCI-Hauptplatine über PCI-fähige
+Firmware, die je nach Plattform BIOS, NVRAM oder PROM heißt. Mit der
+Firmware kann durch das Lesen und Schreiben von Registern im
+PCI-Controller auf den Konfigurationsadreßraum des Gerätes zugegriffen
+werden.&#13;</P
+><P
+>Beim Hochfahren des Systems führt die Firmware (oder der Linux-Kernel,
+wenn er dafür konfiguriert ist) Konfigurationsvorgänge
+mit jedem PCI-Peripherie-Gerät durch, um für jeden Adreßbereich des
+Geräts einen sicheren Platz zu finden. Wenn der Gerätetreiber auf das
+Gerät zugreift, sind dessen Speicher und I/O-Bereiche bereits in den
+Adreßraum des Prozessors abgebildet worden. Der Treiber kann diese
+Default-Zuweisung ändern, wird das aber nie tun müssen.</P
+><P
+>&#13;
+Wie bereits erwähnt wurde, kann der Benutzer unter Linux die Liste der PCI-Geräte und die Konfigurationsregister des Gerätes in den Dateien <TT
+CLASS="FILENAME"
+>/proc/bus/pci/devices</TT
+> und
+<TT
+CLASS="FILENAME"
+>/proc/bus/pci/*/*</TT
+> einsehen. Erstere ist eine
+Textdatei mit hexadezimaler Geräteinformation, letzteres sind
+Binärdateien, die einen Schnappschuß der Konfigurationsregister mit
+einer Datei pro Gerät melden.&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN21428"
+>Konfigurationsregister und Initialisierung</A
+></H2
+><P
+>&#13;
+
+Es wurde bereits gesagt, daß das Layout des Konfigurationsraumes
+geräteunabhängig ist. In diesem Abschnitt werden wir uns die
+Konfigurationsregister anschauen, mit denen die Peripherie-Geräte
+konfiguriert werden.&#13;</P
+><P
+>PCI-Geräte haben einen 256-Byte-Adreßraum. Die ersten 64 Bytes sind
+standardisiert, der Rest ist geräteabhängig. <A
+HREF="pci.html#FIGPCICFG"
+>Abbildung 15-2</A
+> zeigt das Layout des geräteunabhängigen
+Konfigurationsraumes.
+
+    </P
+><DIV
+CLASS="FIGURE"
+><A
+NAME="FIGPCICFG"
+></A
+><P
+><B
+>Abbildung 15-2. Die standardisierten PCI-Konfigurationsregister</B
+></P
+><P
+><IMG
+SRC="ldr_1501.jpg"></P
+></DIV
+><P
+>Wie die Abbildung zeigt, sind einige der Konfigurationsregister
+obligatorisch und andere optional. Jedes PCI-Gerät muß in den
+obligatorischen Registern sinnvolle Werte enthalten, während der
+Inhalt der optionalen Register von den jeweiligen Fähigkeiten
+des Gerätes abhängig ist. Die optionalen Felder werden nur dann verwendet, wenn
+der Inhalt der obligatorischen Felder angibt, daß sie gültig sind. Die
+obligatorischen Felder bezeichnen also die Fähigkeiten der Karte:
+darunter auch, ob die anderen Felder verwendbar sind oder nicht.&#13;</P
+><P
+>Interessanterweise sind PCI-Register immer Little-Endian. Obwohl der
+Standard architekturunabhängig sein soll, tendieren die
+PCI-Entwickler manchmal ein wenig zur PC-Umgebung. Der
+Treiber-Programmierer muß daher vorsichtig mit der Byte-Reihenfolge
+sein, wenn auf mehr-bytige Konfigurationsregister zugegriffen
+wird. Code, der auf dem PC funktioniert, funktioniert auf anderen
+Plattformen möglicherweise nicht. Die Linux-Entwickler haben sich
+dieses Problems angenommen (siehe den nächsten Abschnitt &#8220;<A
+HREF="pci.html#PCIPCICFG"
+>the Section called <I
+>Zugriff auf den Konfigurationsraum</I
+></A
+>&#8221;), es darf aber trotzdem nicht vergessen
+werden. Wenn Sie jemals Daten von der Host-Reihenfolge in die PCI-Reihenfolge
+oder umgekehrt konvertieren müssen, können Sie die in
+<TT
+CLASS="LITERAL"
+>&#60;asm/byteorder.h&#62;</TT
+> definierten Funktionen
+verwenden, die in <A
+HREF="judas.html"
+>Kapitel 10</A
+> eingeführt wurden, weil Sie
+wissen, daß die PCI-Byte-Reihenfolge Little Endian ist.&#13;</P
+><P
+>Die Beschreibung aller Konfigurationselemente geht weit über den
+Umfang dieses Buches hinaus. Üblicherweise beschreibt die technische
+Dokumentation jedes Gerätes, welche Register unterstützt werden. Wir
+interessieren uns hier dafür, wie ein Treiber sein Gerät finden und
+auf dessen Konfigurationsraum zugreifen kann.&#13;</P
+><P
+>Ein Gerät wird durch drei oder fünf PCI-Register identifiziert:
+<TT
+CLASS="LITERAL"
+>vendorID</TT
+>, <TT
+CLASS="LITERAL"
+>deviceID</TT
+> und
+<TT
+CLASS="LITERAL"
+>class</TT
+> werden immer verwendet. Jeder PCI-Hersteller
+weist diesen Registern nur lesbare Werte zu, und Treiber können sie verwenden,
+um nach einem Gerät zu suchen. Außerdem verwenden manche Hersteller
+die Felder <TT
+CLASS="LITERAL"
+>subsystem vendorID</TT
+> und
+<TT
+CLASS="LITERAL"
+>subsystem deviceID</TT
+>, um ähnliche Geräte voneinander
+zu unterscheiden.</P
+><P
+>Schauen wir uns
+diese Register etwas detaillierter an:&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+>vendorID</DT
+><DD
+><P
+>&#13;Dieses 16-Bit-Register gibt den Hardware-Hersteller an. Beispielsweise
+hat jedes Intel-Gerät die gleiche <SPAN
+><I
+CLASS="EMPHASIS"
+>vendor</I
+></SPAN
+>-Nummer,
+nämlich <TT
+CLASS="LITERAL"
+>0x8086</TT
+> (ob das nur Zufall ist?). Es gibt eine globale Liste
+dieser Nummern, bei der sich Hersteller eine eindeutige Nummer
+zuweisen lassen müssen.</P
+></DD
+><DT
+>deviceID</DT
+><DD
+><P
+>&#13;Ein weiteres 16-Bit-Register, das der Hersteller auswählen kann. Für
+<SPAN
+><I
+CLASS="EMPHASIS"
+>deviceID</I
+></SPAN
+> ist keine offizielle Registrierung
+notwendig. Diese ID wird normalerweise mit der Hersteller-ID zu einem
+eindeutigen 32-Bit-Identifikator für ein Gerät kombiniert. Wir verwenden im
+Folgenden den Begriff <I
+CLASS="FIRSTTERM"
+>Signatur</I
+> für das Paar aus
+vendorID und deviceID. Ein
+Gerätetreiber verläßt sich normalerweise auf die Signatur, um ein
+Gerät zu identifizieren; der Treiber-Programmierer weiß aus der
+Hardware-Dokumentation, nach welchem Wert er suchen muß.</P
+></DD
+><DT
+>class</DT
+><DD
+><P
+>Jedes Peripherie-Gerät gehört zu einer
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>Klasse</I
+></SPAN
+>. Das
+        <TT
+CLASS="LITERAL"
+>class</TT
+>-Register ist ein 16-Bit-Wert, dessen
+        obere acht Bits die &#8220;Basisklasse&#8221; (oder
+        <I
+CLASS="FIRSTTERM"
+>Gruppe</I
+>) bezeichnen. Beispielsweise sind
+        &#8220;Ethernet&#8221; und &#8220;Token Ring&#8221; zwei Klassen,
+        die zur &#8220;Netzwerk&#8221;-Gruppe gehören, während die Klassen
+        &#8220;seriell&#8221; und &#8220;parallel&#8221; zur Gruppe
+        &#8220;Kommunikation&#8221; gehören. Manche Treiber können mehrere
+        ähnliche Geräte unterstützen, die alle eine unterschiedliche
+        Signatur haben, aber zur gleichen Klasse gehören. Diese Treiber
+        können das <SPAN
+><I
+CLASS="EMPHASIS"
+>class</I
+></SPAN
+>-Register verwenden, um (wie
+        unten gezeigt wird) ihre Peripherie-Geräte zu identifizieren.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>subsystem vendorID</TT
+>, <TT
+CLASS="LITERAL"
+>subsystem deviceID</TT
+></DT
+><DD
+><P
+>&#13;
+Diese Felder können zur weiteren Identifikation eines Geräts verwendet
+werden. Wenn der Chip selbst ein generischer Schnittstellen-Chip für
+einen lokalen Bus ist, dann wird dieser oft in völlig
+unterschiedlichen Rollen verwendet, und der Treiber muß herausfinden,
+mit welcher Hardware er eigentlich redet. Die Subsystem-Bezeichner
+sind dafür gedacht.</P
+></DD
+></DL
+></DIV
+><P
+>Mit diesen Bezeichnern können Sie Ihr Gerät finden. In der
+Kernel-Version 2.4 sind das Konzept eines
+<SPAN
+><I
+CLASS="EMPHASIS"
+>PCI-Treibers</I
+></SPAN
+> und eine spezialisierte
+Initialisierungsschnittstelle eingeführt worden. Während diese
+Schnittstelle die bevorzugte für neue Treiber ist, steht sie für
+ältere Kernel-Versionen nicht zur Verfügung.  Als Alternative zur
+PCI-Treiber-Schnittstelle können die folgenden Header-Dateien, Makros
+und Funktionen in PCI-Modulen verwendet werden, um nach
+Hardware-Geräten zu suchen. Wir haben uns dazu entschieden, diese
+abwärtskompatible Schnittstelle zuerst einzuführen, weil sie portabel
+über alle in diesem Buch behandelten Kernel-Versionen ist. Außerdem
+ist sie etwas zugänglicher, weil sie weniger stark von der direkten
+Hardware-Verwaltung abstrahiert.&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/config.h&#62;</TT
+></DT
+><DD
+><P
+>&#13;
+Der Treiber muß wissen, welche PCI-Funktionen im Kernel zur Verfügung
+stehen. Indem er diese Header-Datei einbindet, bekommt er Zugriff auf
+die <TT
+CLASS="LITERAL"
+>CONFIG_</TT
+>-Makros einschließlich
+<TT
+CLASS="LITERAL"
+>CONFIG_PCI</TT
+>, das unten beschrieben
+wird. Beachten Sie aber, daß jede Quelldatei, die
+<TT
+CLASS="LITERAL"
+>&#60;linux/module.h&#62;</TT
+> einbindet, diese
+Header-Datei automatisch mit importiert.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>CONFIG_PCI</TT
+></DT
+><DD
+><P
+>&#13;Dieses Makro ist definiert, wenn der Kernel PCI-Aufrufe
+unterstützt. Nicht jeder Computer verfügt über einen PCI-Bus, weswegen
+die Kernel-Entwickler sich entschieden haben, PCI zu einer zur
+Kompilierzeit auswählbaren Option zu machen, um Speicher zu sparen,
+wenn Linux auf Nicht-PCI-Computern läuft. Wenn
+<TT
+CLASS="LITERAL"
+>CONFIG_PCI</TT
+> nicht eingeschaltet ist, dann
+sind alle PCI-Funktionsaufrufe so definiert, daß sie einen Fehler
+zurückmelden. Auf diese Weise kann der Treiber Präprozessor-Anweisungen
+verwenden, um die PCI-Unterstützung herauszunehmen, muß das aber nicht tun. Wenn der
+Treiber nur mit PCI-Geräten (und nicht mit anderen) umgeht, dann
+sollte er einen Compile-Fehler erzeugen, wenn dieses Makro nicht
+definiert ist.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/pci.h&#62;</TT
+></DT
+><DD
+><P
+>&#13;
+Diese Header-Datei deklariert alle in diesem Abschnitt eingeführten
+Prototypen sowie die zu PCI-Registern und -Bits gehörenden
+symbolischen Namen. Sie sollte immer eingebunden werden und definiert
+auch symbolische Werte für von den Funktionen zurückgegebene
+Fehler-Codes.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int pci_present(void);</TT
+></DT
+><DD
+><P
+>Weil die PCI-Funktionen auf Nicht-PCI-Computern keinen Sinn
+        ergeben, teilt die Funktion
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>pci_present</I
+></SPAN
+> dem Treiber mit, ob
+        der Rechner PCI unterstützt. Dieser Aufruf sollte in 2.4 nicht
+mehr verwendet werden, weil er nur noch überprüft, ob sich überhaupt
+ein PCI-Gerät finden läßt. In 2.0 mußten Treiber aber diese Funktion
+aufrufen, um unangenehme Fehler beim Suchen nach Geräten zu
+vermeiden. Neuere Kernel melden einfach, daß es kein Gerät gibt. Die
+Funktion gibt den Booleschen Wert <TT
+CLASS="LITERAL"
+>true</TT
+> zurück, wenn
+der Host PCI-fähig ist.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct pci_dev;</TT
+></DT
+><DD
+><P
+>&#13;Diese Datenstruktur wird als Software-Objekt verwendet, das ein
+PCI-Gerät repräsentiert. Sie liegt jeder PCI-Operation im System
+zugrunde.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct pci_dev *pci_find_device (unsigned int vendor, unsigned int device, const struct pci_dev *from);</TT
+></DT
+><DD
+><P
+>&#13;Wenn <TT
+CLASS="LITERAL"
+>CONFIG_PCI</TT
+> definiert und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>pci_present</I
+></SPAN
+> <TT
+CLASS="LITERAL"
+>true</TT
+> ist,
+wird diese Funktion verwendet, um die Liste der installierten Geräte
+nach einem Gerät mit einer bestimmten Signatur zu durchsuchen. Das Argument
+<TT
+CLASS="LITERAL"
+>from</TT
+> wird verwendet, um mehrere Geräte mit der
+gleichen Signatur zu finden; dieses Argument sollte auf das letzte
+gefundene Gerät verweisen, so daß die Suche dort fortgesetzt werden kann,
+anstatt wieder am Anfang der Liste anzufangen. Um das erste Gerät zu
+finden, wird <TT
+CLASS="LITERAL"
+>from</TT
+> als <TT
+CLASS="LITERAL"
+>NULL</TT
+>
+angegeben. Wenn kein (weiteres) Gerät gefunden wird, wird
+<TT
+CLASS="LITERAL"
+>NULL</TT
+> zurückgegeben.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct pci_dev *pci_find_class (unsigned int class, const struct pci_dev *from);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion ähnelt der letzten, sucht aber nach Geräten einer
+bestimmten Klasse (die in 16 Bit angegeben wird, sowohl mit der
+Basisklasse als auch mit der Subklasse). Dies wird heutzutage außer in
+PCI-Treibern sehr niedriger Ebene selten verwendet. Das
+<TT
+CLASS="LITERAL"
+>from</TT
+>-Argument wird genau wie bei
+<SPAN
+><I
+CLASS="EMPHASIS"
+>pci_find_device</I
+></SPAN
+> verwendet.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int pci_enable_device(struct pci_dev *dev);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion schaltet das Gerät erst ein. Sie weckt das Gerät und
+weist in manchen Fällen auch eine Interrupt-Leitung und I/O-Bereiche
+zu. Dies passiert beispielsweise bei CardBus-Geräten (die auf
+Treiber-Ebene vollständig äquivalent mit PCI sind).</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct pci_dev *pci_find_slot (unsigned int bus, unsigned int devfn);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion gibt eine PCI-Gerätestruktur anhand eines
+Bus/Geräte-Paares zurück. Das Argument <TT
+CLASS="LITERAL"
+>devfn</TT
+>
+repräsentiert sowohl das Gerät als auch die Funktion. Dies wird nur
+sehr selten verwendet (Treiber sollten sich nicht dafür interessieren,
+in welchem Steckplatz ihr Gerät sitzt) und ist hier nur der
+Vollständigkeit halber aufgeführt.</P
+></DD
+></DL
+></DIV
+><P
+>Auf der Basis dieser Informationen sieht die
+Initialisierung eines typischen Gerätetreibers, der nur einen
+Gerätetyp unterstützt, wie im folgenden Code aus. Der Code ist für ein
+hypothetisches Gerät namens <SPAN
+CLASS="APPLICATION"
+>jail</SPAN
+>
+geschrieben, was für Just Another Instruction List steht:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+#ifndef CONFIG_PCI
+#  error "This driver needs PCI support to be available"
+#endif
+
+int jail_find_all_devices(void)
+{
+    struct pci_dev *dev = NULL;
+    int found;
+
+    if (!pci_present())
+    return -ENODEV;
+
+    for (found=0; found &#60; JAIL_MAX_DEV;) {
+        dev = pci_find_device(JAIL_VENDOR, JAIL_ID, dev);
+        if (!dev) /* keine weiteren Geraete */
+            break;
+        /* geraetespezifische Aktionen ausfuehren, Geraet zaehlen */
+        found += jail_init_one(dev);
+    }
+    return  (index == 0) ? -ENODEV : 0;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die Aufgabe von <SPAN
+CLASS="APPLICATION"
+>jail_init_one</SPAN
+>
+ist sehr gerätespezifisch, weswegen diese Funktion hier nicht gezeigt
+wird. Es gibt aber einiges, das man im Kopf behalten sollte, wenn man
+diese Funktion schreibt:</P
+><P
+></P
+><UL
+><LI
+><P
+>Die Funktion muß möglicherweise zusätzliche Überprüfungen vornehmen,
+um sicherzustellen, daß das Gerät wirklich eines der unterstützten
+Geräte ist. Manche PCI-Peripherie-Geräte enthalten einen allgemein
+verwendbaren PCI-Schnittstellen-Chip und gerätespezifische
+Schaltkreise. Jedes Peripherie-Gerät, das den gleichen
+Schnittstellen-Chip verwendet, hat die gleiche Signatur. Weitere
+Überprüfungen können entweder durch Auslesen der Subsystem-Bezeichner
+oder durch Auslesen spezifischer Geräteregister (in den später
+beschriebenen Geräte-I/O-Regionen) vorgenommen werden.</P
+></LI
+><LI
+><P
+>Bevor man auf Geräteressourcen (I/O-Bereiche oder Interrupts)
+zugreift, muß der Treiber
+<SPAN
+><I
+CLASS="EMPHASIS"
+>pci_enable_device</I
+></SPAN
+> aufrufen. Wenn
+bei den gerade besprochenen zusätzlichen Überprüfungen auf
+Gerätespeicher oder I/O-Bereiche zugegriffen werden muß, muß die
+Funktion vorher aufgerufen werden.</P
+></LI
+><LI
+><P
+>Ein Netzwerk-Treiber sollte sicherstellen, daß
+<TT
+CLASS="LITERAL"
+>dev-&#62;driver_data</TT
+> auf die zu dieser
+Schnittstelle gehörende <TT
+CLASS="LITERAL"
+>struct net_device</TT
+>
+zeigt.</P
+></LI
+></UL
+><P
+>Die im obenstehenden Code gezeigte Funktion gibt 0 zurück, wenn das
+Gerät nicht unterstützt wird, und 1, wenn es akzeptiert wird
+(möglicherweise auf Basis weiterer Überprüfungen, wie gerade
+beschrieben).</P
+><P
+>Der gezeigte Code-Schnipsel ist korrekt, wenn der Treiber es nur mit
+einer Art von PCI-Gerät zu tun hat, die durch
+<TT
+CLASS="LITERAL"
+>JAIL_VENDOR</TT
+> und
+<TT
+CLASS="LITERAL"
+>JAIL_ID</TT
+> identifiziert wird. Wenn Sie weitere
+Hersteller/Geräte-Paare unterstützen müssen, dann sollten Sie am
+besten die später in &#8220;<A
+HREF="pci.html#PCIDRV"
+>the Section called <I
+>Hardware-Abstraktionen</I
+></A
+>&#8221; beschriebene Technik
+        verwenden, sofern Sie keine älteren Kernel unterstützen
+        müssen: In diesem Fall wäre
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>pci_find_class</I
+></SPAN
+> die Funktion
+        der Wahl.</P
+><P
+>&#13;
+
+Die Verwendung von <SPAN
+><I
+CLASS="EMPHASIS"
+>pci_find_class</I
+></SPAN
+>
+verlangt, daß
+<SPAN
+><I
+CLASS="EMPHASIS"
+>jail_find_all_devices</I
+></SPAN
+> etwas
+mehr Arbeit als im Beispiel gezeigt leistet. Die Funktion sollte das
+frisch vorgefundene Gerät mit einer Liste von
+Hersteller/Geräte-Paaren vergleichen, möglicherweise anhand von
+<TT
+CLASS="LITERAL"
+>dev-&#62;vendor</TT
+> und
+<TT
+CLASS="LITERAL"
+>dev-&#62;device</TT
+>. Das könnte so aussehen:
+&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;struct devid {unsigned short vendor, device} devlist[] = {
+    {JAIL_VENDOR1, JAIL_DEVICE1},
+    {JAIL_VENDOR2, JAIL_DEVICE2},
+    /* ... */
+    { 0, 0 }
+};
+
+    /* ... */
+
+    for (found=0; found &#60; JAIL_MAX_DEV;) {
+        struct devid *idptr;
+        dev = pci_find_class(JAIL_CLASS, dev);
+        if (!dev) /* keine weiteren Geraete */
+            break;
+        for (idptr = devlist; idptr-&#62;vendor; idptr++) {
+           if (dev-&#62;vendor != idptr-&#62;vendor) continue;
+           if (dev-&#62;device != idptr-&#62;device) continue;
+           break;
+        }
+        if (!idptr-&#62;vendor) continue; /* keines von unseren */
+        jail_init_one(dev); /* geraetespezifische Initialisierung */
+        found++;
+    }</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="PCIPCICFG"
+>Zugriff auf den Konfigurationsraum</A
+></H2
+><P
+>&#13;
+
+
+Nachdem der Treiber das Gerät entdeckt hat, muß er normalerweise drei
+Adreßräume auslesen bzw. diese beschreiben: den Speicher, den Port und
+die Konfiguration. Insbesondere der Zugriff auf den Konfigurationsraum
+ist für den Treiber sehr wichtig, weil er nur so herausfinden kann, wo
+das Gerät in den Speicher und in den I/O-Raum eingeblendet wird.&#13;</P
+><P
+>Weil der Mikroprozessor keine Möglichkeit hat, direkt auf den
+Konfigurationsraum zuzugreifen, muß der Computer-Hersteller dafür eine
+Möglichkeit bereitstellen. Um auf den Konfigurationsraum zuzugreifen,
+muß die CPU Register im PCI-Controller lesen und schreiben. Die genaue
+Implementation dafür ist herstellerabhängig und hier nicht relevant,
+weil Linux eine Standardschnittstelle für den Zugriff auf den
+Konfigurationsraum enthält.&#13;</P
+><P
+>Was den Treiber angeht, kann auf den Konfigurationsraum mit 8-Bit-,
+16-Bit- und 32-Bit-Datenübertragungen zugegriffen werden. Die
+Prototypen der relevanten Funktionen stehen in
+<TT
+CLASS="LITERAL"
+>&#60;linux/pci.h&#62;</TT
+>:&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>int pci_read_config_byte(struct pci_dev *dev, int where, u8 *ptr);</TT
+>, <TT
+CLASS="LITERAL"
+>int pci_read_config_word(struct pci_dev *dev, int where, u16 *ptr);</TT
+>, <TT
+CLASS="LITERAL"
+>int pci_read_config_dword(struct pci_dev *dev, int where, u32 *ptr);</TT
+></DT
+><DD
+><P
+>&#13;
+
+Eines, zwei oder vier Bytes aus dem Konfigurationsraum des durch
+<TT
+CLASS="LITERAL"
+>dev</TT
+> bezeichneten Geräts auslesen. Das Argument
+<TT
+CLASS="LITERAL"
+>where</TT
+> ist der Byte-Offset vom Anfang des
+Konfigurationsraums. Der aus dem Konfigurationsraum geholte Wert wird
+über <TT
+CLASS="LITERAL"
+>ptr</TT
+> zurückgegeben; der Rückgabewert dieser
+Funktionen ist ein Fehler-Code. Die <SPAN
+><I
+CLASS="EMPHASIS"
+>word</I
+></SPAN
+>- und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>dword</I
+></SPAN
+>-Funktionen konvertieren den gerade
+gelesenen Wert aus der Little-Endian-Byte-Reihenfolge in die native
+Byte-Reihenfolge des Prozessors, damit Sie sich nicht darum kümmern
+brauchen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int pci_write_config_byte (struct pci_dev *dev, int where, u8 val);</TT
+>, <TT
+CLASS="LITERAL"
+>int pci_write_config_word (struct pci_dev *dev, int where, u16 val);</TT
+>, <TT
+CLASS="LITERAL"
+>int pci_write_config_dword (struct pci_dev *dev, int where, u32 val);</TT
+></DT
+><DD
+><P
+>&#13;Ein, zwei oder vier Bytes in den Konfigurationsraum schreiben. Wie immer bezeichnet <TT
+CLASS="LITERAL"
+>dev</TT
+> das Gerät, und der zu schreibende Wert wird in <TT
+CLASS="LITERAL"
+>val</TT
+> übergeben. Die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>word-</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>dword-</I
+></SPAN
+>Funktionen wandeln diesen Wert erst in Little-Endian um, bevor sie ihn auf das Peripheriegerät rausschreiben.</P
+></DD
+></DL
+></DIV
+><P
+>&#13;Der bevorzugte Weg zum Lesen der benötigten Konfigurationsvariablen
+führt über die Felder in der <TT
+CLASS="LITERAL"
+>struct pci_dev</TT
+>
+Ihres Geräts. Gleichwohl brauchen Sie aber die gerade genannten
+Funktionen, wenn Sie eine Konfigurationsvariable schreiben und
+zurücklesen müssen. Außerdem brauchen Sie die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>pci_read_</I
+></SPAN
+>-Funktionen für die
+Abwärtskompatibilität mit Kerneln vor 2.4.<A
+NAME="AEN21674"
+HREF="#FTN.AEN21674"
+>[4]</A
+></P
+><P
+>Die beste Möglichkeit, mit den
+<SPAN
+><I
+CLASS="EMPHASIS"
+>pci_read_</I
+></SPAN
+>-Funktionen auf die
+Konfigurationsvariablen zuzugreifen,
+ist die Verwendung der symbolischen Namen, die in
+<TT
+CLASS="LITERAL"
+>&#60;linux/pci.h&#62;</TT
+> definiert
+sind. Beispielsweise holt der folgende Zweizeiler die Revisions-ID
+eines Gerätes, indem er den symbolischen Namen im Argument
+<TT
+CLASS="LITERAL"
+>where</TT
+> von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>pci_read_config_byte</I
+></SPAN
+>
+übergibt.&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+unsigned char jail_get_revision(unsigned char bus, unsigned char fn)
+{
+    unsigned char *revision;
+
+    pci_read_config_byte(bus, fn, PCI_REVISION_ID, &#38;revision);
+    return revision;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wenn Sie auf Mehr-Byte-Werte zugreifen, müssen Sie wie bereits erwähnt
+daran denken, auf Probleme mit der Byte-Reihenfolge zu achten.&#13;</P
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN21686"
+>Einen Konfigurations-Snapshot ansehen</A
+></H3
+><P
+>&#13;
+
+Wenn Sie den Konfigurationsraum der PCI-Geräte auf Ihrem System
+durchsuchen wollen, können Sie auf zweierlei Art und Weise
+vorgehen. Einfacher ist es, die Ressourcen zu verwenden, die Linux
+bereits in <TT
+CLASS="FILENAME"
+>/proc/bus/pci</TT
+> bereitstellt, auch wenn
+diese in der Kernel-Version 2.0 noch nicht zur Verfügung standen. Die
+Alternative, die wir hier verfolgen, ist statt dessen das Schreiben
+eigenen Codes; dieser Code ist portabel über alle bekannten
+2.<SPAN
+><I
+CLASS="EMPHASIS"
+>x</I
+></SPAN
+>-Kernel-Versionen und eine gute Möglichkeit,
+die Werkzeuge in Aktion zu sehen. Die Quelldatei
+<TT
+CLASS="FILENAME"
+>pci/pcidata.c</TT
+> finden Sie im Beispiel-Code auf dem
+FTP-Server von O'Reilly.&#13;</P
+><P
+>Dieses Modul erzeugt eine dynamische Datei namens
+<TT
+CLASS="FILENAME"
+>/proc/pcidata</TT
+>, die einen binären Snapshot
+des Konfigurationsraumes Ihrer PCI-Geräte enthält. Dieser Snapshot
+wird jedesmal aktualisiert, wenn aus dieser Datei gelesen wird. Die
+Größe von <TT
+CLASS="FILENAME"
+>/proc/pcidata</TT
+> ist auf
+<TT
+CLASS="LITERAL"
+>PAGE_SIZE</TT
+> Bytes beschränkt (eine
+Einschränkung, die aus den dynamischen
+<TT
+CLASS="FILENAME"
+>/proc</TT
+>-Dateien, die in &#8220;<A
+HREF="x4562.html#DEBPROC"
+>the Section called <I
+>Das /proc-Dateisystem verwenden</I
+> in Kapitel 4</A
+>&#8221; in <A
+HREF="debug.html"
+>Kapitel 4</A
+> eingeführt wurden,
+herrührt). Daher wird nur der Konfigurationsspeicher für die ersten
+<TT
+CLASS="LITERAL"
+>PAGE_SIZE/256</TT
+> Geräte ausgegeben, also
+je nach verwendeter Plattform für 16 oder 32 Geräte. Wir haben uns
+dazu entschlossen,
+<TT
+CLASS="FILENAME"
+>/proc/pcidata</TT
+> binär zu halten, anstatt
+daraus eine Textdatei wie die anderen
+<TT
+CLASS="FILENAME"
+>/proc</TT
+>-Dateien zu machen. Beachten Sie, daß
+auch die Dateien in <TT
+CLASS="FILENAME"
+>/proc/bus/pci</TT
+> binär sind.&#13;</P
+><P
+>Eine weitere Beschränkung von <SPAN
+CLASS="APPLICATION"
+>pcidata</SPAN
+> besteht
+darin, daß das Programm nur den ersten PCI-Bus im System absucht. Wenn
+Ihr Computer Brücken zu anderen PCI-Bussen enthält, werden diese von
+<SPAN
+CLASS="APPLICATION"
+>pcidata</SPAN
+> ignoriert. Dies sollte kein Problem
+in Beispiel-Code sein, der nicht für eine echte Verwendung gedacht ist.&#13;</P
+><P
+>Geräte stehen in <TT
+CLASS="FILENAME"
+>/proc/pcidata</TT
+> in der
+gleichen Reihenfolge wie in <TT
+CLASS="FILENAME"
+>/proc/bus/pci/devices</TT
+>
+(aber in umgekehrter Reihenfolge als in der Reihenfolge, die im 2.0-Kernel in
+<TT
+CLASS="FILENAME"
+>/proc/pci</TT
+> verwendet wird).&#13;</P
+><P
+>Beispielsweise erscheint unser Framegrabber zweimal in
+<TT
+CLASS="FILENAME"
+>/proc/pcidata</TT
+> und hat (derzeit) die
+folgenden Konfigurationsregister:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>&#13;
+morgana% <TT
+CLASS="USERINPUT"
+><B
+>dd bs=256 skip=1 count=1 if=/proc/pcidata | od -Ax -t x1</B
+></TT
+>
+1+0 records in
+1+0 records out
+000000 86 80 23 12 06 00 00 02 00 00 00 04 00 20 00 00
+000010 00 00 00 f1 00 00 00 00 00 00 00 00 00 00 00 00
+000020 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+000030 00 00 00 00 00 00 00 00 00 00 00 00 0a 01 00 00
+000040 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+*
+000100</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die Zahlen in diesem Auszug repräsentieren die PCI-Register. Anhand
+von <A
+HREF="pci.html#FIGPCICFG"
+>Abbildung 15-2</A
+> können Sie die Zahlen
+entschlüsseln. Alternativ können Sie auch das Programm
+<SPAN
+CLASS="APPLICATION"
+>pcidump</SPAN
+>, das Sie ebenfalls auf dem
+FTP-Server finden, verwenden, das die Ausgabe formatiert und
+beschriftet.
+&#13;</P
+><P
+>Es lohnt sich nicht, den Code von <SPAN
+CLASS="APPLICATION"
+>pcidump</SPAN
+>
+hier anzugeben, weil das Programm nur aus einer langen Tabelle sowie
+zehn Codezeilen besteht, die die Tabelle durchsuchen. Schauen wir uns
+statt dessen einige ausgewählte Ausgabezeilen an:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>&#13;
+morgana% <TT
+CLASS="USERINPUT"
+><B
+>dd bs=256 skip=1 count=1 if=/proc/pcidata | ./pcidump</B
+></TT
+>
+1+0 records in
+1+0 records out
+        Compulsory registers:
+Vendor id: 8086
+Device id: 1223
+I/O space enabled: n
+Memory enabled: y
+Master enabled: y
+Revision id (decimal): 0
+Programmer Interface: 00
+Class of device: 0400
+Header type: 00
+Multi function device: n
+        Optional registers:
+Base Address 0: f1000000
+Base Address 0 Is I/O: n
+Base Address 0 is 64-bits: n
+Base Address 0 is below-1M: n
+Base Address 0 is prefetchable: n
+Does generate interrupts: y
+Interrupt line (decimal): 10
+Interrupt pin (decimal): 1</PRE
+></TD
+></TR
+></TABLE
+><P
+><SPAN
+CLASS="APPLICATION"
+>pcidata</SPAN
+> und
+<SPAN
+CLASS="APPLICATION"
+>pcidump</SPAN
+> können zusammen mit
+<SPAN
+CLASS="APPLICATION"
+>grep</SPAN
+> hilfreiche Werkzeuge zum Debuggen des
+Initialisierungscodes eines Treibers sein, selbst wenn ihre Aufgabe
+bereits durch das in allen neueren Linux-Distributionen enthaltene
+Paket <SPAN
+CLASS="APPLICATION"
+>pciutils</SPAN
+> übernommen wird.
+ Beachten Sie aber, daß das
+Modul <TT
+CLASS="FILENAME"
+>pcidata.c</TT
+> im Gegensatz zum sonstigen Code
+in diesem Buch der GPL unterliegt, weil wir die
+Suchschleife nach PCI-Geräten aus den Kernel-Quellen entnommen
+haben. Das sollte Sie als Treiber-Programmierer aber nicht stören, weil
+wir das Modul in den Quellen nur als Hilfsprogramm aufgenommen haben,
+nicht als einen Programmcode, der in neuen Treibern weiterverwendet
+werden soll.
+
+&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN21739"
+>Zugriff auf die I/O- und Speicherräume</A
+></H2
+><P
+>&#13;Ein PCI-Peripherie-Gerät implementiert bis zu sechs Adreßregionen. Jede
+Region besteht entweder aus Speicher- oder I/O-Bereichen. Die meisten Geräte implementieren ihre I/O-Register
+in Speicherbereiche, weil das generell sinnvoller ist (wie in &#8220;<A
+HREF="hard.html#HARDCLASS"
+>the Section called <I
+>I/O-Ports und I/O-Speicher</I
+> in Kapitel 8</A
+>&#8221; in <A
+HREF="hard.html"
+>Kapitel 8</A
+> erläutert wird). Im
+Gegensatz zu normalem Speicher sollten aber I/O-Register nicht von der
+      CPU zwischengespeichert werden, weil jeder Zugriff Nebeneffekte
+      haben kann. PCI-Geräte, die I/O-Register als Speicherbereiche
+      implementieren, kennzeichnen den Unterschied dadurch, daß sie ein
+      &#8220;memory-is-prefetchable&#8221;-Bit in ihrem Konfigurationsregister setzen.<A
+NAME="AEN21747"
+HREF="#FTN.AEN21747"
+>[5]</A
+>
+Wenn der Speicherbereich so markiert ist, kann die CPU den Inhalt
+      zwischenspeichern und beliebig optimieren, ansonsten darf der
+      Zugriff nicht optimiert werden, weil jeder Zugriff Nebeneffekte
+      haben kann, genau wie das normalerweise bei I/O-Ports der Fall
+      ist.
+Peripherie-Geräte, die ihre Kontrollregister auf einen
+Adreßbereich im Speicher abbilden, deklarieren diesen Speicherbereich
+als &#8220;non-prefetchable&#8221;, während so etwas wie der
+Videospeicher auf PCI-Karten &#8220;prefetchable&#8221; ist.
+In diesem Abschnitt verwenden wir den Begriff &#8220;Region&#8221;, um
+uns damit auf einen PCI-Adreßbereich zu beziehen &#8212; unabhängig davon,
+ob es sich um Speicher oder I/O handelt.&#13;</P
+><P
+>Eine Schnittstellen-Karte meldet die Größe und aktuelle Lage ihrer
+Regionen mittels Konfigurationsregistern, genauer gesagt durch die sechs 32-Bit-Register, die in <A
+HREF="pci.html#FIGPCICFG"
+>Abbildung 15-2</A
+> zu sehen sind und deren
+symbolische Namen
+<TT
+CLASS="LITERAL"
+>PCI_BASE_ADDRESS_0</TT
+> bis
+<TT
+CLASS="LITERAL"
+>PCI_BASE_ADDRESS_5</TT
+> lauten.
+
+Weil der von PCI definierte I/O-Raum ein 32-Bit-Adreßraum ist, ist
+es sinnvoll, die gleiche Konfigurationsschnittstelle für Speicher und
+I/O zu verwenden. Wenn das Gerät einen 64-Bit-Adreß-Bus benutzt,
+kann es Regionen im 64-Bit-Speicherraum deklarieren, indem es für jede
+Region zwei aufeinanderfolgende
+<TT
+CLASS="LITERAL"
+>PCI_BASE_ADDRESS</TT
+>-Register
+verwendet. Ein Gerät kann sowohl 32-Bit- als auch 64-Bit-Regionen
+anbieten.</P
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN21761"
+>PCI-I/O-Ressourcen in Linux 2.4</A
+></H3
+><P
+>&#13;
+In Linux 2.4 sind die I/O-Bereiche von PCI-Geräten in die allgemeine
+Ressourcen-Verwaltung integriert worden. Aus diesem Grund müssen Sie
+nicht mehr auf die Konfigurationsvariablen zugreifen, um zu wissen,
+wohin in den Speicher oder I/O-Bereich Ihr Gerät eingeblendet worden
+ist. Die bevorzugte Schnittstelle für das Erfragen von
+Bereichsinformationen besteht aus den folgenden Funktionen:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long pci_resource_start(struct pci_dev *dev, int bar);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion gibt die erste Adresse (Speicheradresse oder
+I/O-Port-Nummer) zurück, die zu einem der sechs PCI-I/O-Bereiche
+gehört. Der Bereich wird durch den Integer-Wert <TT
+CLASS="LITERAL"
+>bar</TT
+>
+(Base Address Register) ausgewählt und kann zwischen 0 und 5
+(einschließlich) liegen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long pci_resource_end(struct pci_dev *dev, int bar);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion gibt die letzte Adresse zurück, die zum I/O-Bereich
+<TT
+CLASS="LITERAL"
+>bar</TT
+> gehört. Beachten Sie, daß dies die letzte
+verwendbare Adresse ist, nicht die erste Adresse nach dem Bereich.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long pci_resource_flags(struct pci_dev *dev, int bar);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion gibt die zu dieser Ressource gehörenden Flags zurück.</P
+></DD
+></DL
+></DIV
+><P
+>Ressourcen-Flags werden verwendet, um einige Merkmale der einzelnen
+Ressourcen zu definieren. Für PCI-Ressourcen, die zu
+PCI-I/O-Speicherbereichen gehören, wird die Information aus den Basis-Adreßregistern extrahiert, sie kann aber für andere Ressourcen auch aus
+anderen Quellen stammen.</P
+><P
+>Alle Ressourcen-Flags sind in
+<TT
+CLASS="LITERAL"
+>&#60;linux/ioport.h&#62;</TT
+> definiert. Wir nennen hier
+nur die wichtigsten:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>IORESOURCE_IO</TT
+>, <TT
+CLASS="LITERAL"
+>IORESOURCE_MEM</TT
+></DT
+><DD
+><P
+>&#13;
+Wenn der zugehörige I/O-Bereich existiert, wird genau eines dieser
+Flags gesetzt.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>IORESOURCE_PREFETCH</TT
+>, <TT
+CLASS="LITERAL"
+>IORESOURCE_READONLY</TT
+></DT
+><DD
+><P
+>&#13;
+Diese Flags sagen aus, ob ein Speicher-Bereich prefetchable und/oder
+schreibgeschützt ist. Das zweite Flag wird für PCI-Ressourcen nie
+gesetzt.</P
+></DD
+></DL
+></DIV
+><P
+>Durch Verwendung der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>pci_resource_</I
+></SPAN
+>-Funktionen kann ein
+Gerätetreiber die zugrundeliegenden PCI-Register vollständig
+ignorieren, weil das System diese bereits zur Strukturierung der
+Ressourcen-Informationen verwendet hat.&#13;</P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN21822"
+>Ein Blick auf die Basis-Adreßregister</A
+></H3
+><P
+>&#13;
+
+Wenn Sie den direkten Zugriff auf die PCI-Register vermeiden, bekommen
+Sie eine bessere Hardware-Abstraktion und Aufwärtskompatibilität, aber
+keine Abwärtskompatibilität. Wenn Ihr Gerätetreiber mit älteren
+Linux-Versionen als 2.4 arbeiten soll, können Sie diese schöne
+Schnittstelle nicht verwenden, sondern müssen direkt mit den
+PCI-Registern arbeiten.</P
+><P
+>In diesem Abschnitt schauen wir uns an, wie sich Basis-Adreßregister
+verhalten und wie man darauf zugreifen kann. All dies ist natürlich
+überflüssig, wenn Sie die oben gezeigte Ressourcen-Verwaltung
+verwenden können.</P
+><P
+>Wir werden hier nicht zu sehr auf die Details der Basis-Adreßregister
+eingehen, denn wenn Sie einen
+PCI-Treiber schreiben wollen, dann brauchen Sie das Hardware-Handbuch
+für das Gerät sowieso. Insbesondere werden wir hier weder das
+Prefetchable-Bit verwenden noch die beiden &#8220;Typ&#8221;-Bits der
+Register, und wir werden uns in der Diskussion auch auf 32-Bit-Peripherie-Geräte beschränken. Trotzdem ist es interessant zu sehen,
+wie solche Sachen im allgemeinen Fall implementiert werden und wie die
+Linux-Treiber mit PCI-Speicher umgehen.&#13;</P
+><P
+>Die PCI-Spezifikation legt fest, daß die Hersteller jede
+implementierte Region auf
+eine konfigurierbare Adresse abbilden müssen. Das bedeutet, daß das
+Gerät für jede implementierte Region einen programmierbaren 32-Bit-Adreßdecoder
+haben muß und daß es außerdem auf jedem Gerät, das die
+64-Bit-PCI-Erweiterung verwendet, einen programmierbaren 64-Bit-Adreßdecoder geben muß.&#13;</P
+><P
+>Die eigentliche Implementation und die Verwendung eines
+programmierbaren Decoders werden dadurch erleichtert, daß die Anzahl der
+Bytes in einer Region normalerweise eine Zweierpotenz ist, also zum
+Beispiel 32 Bytes, 4 KBytes oder 2 MBytes. Außerdem wäre es nicht sehr sinnvoll,
+eine Region an eine nicht ausgerichtete Adresse
+abzubilden. 1-MByte-Regionen werden natürlicherweise an einer Adresse
+ausgerichtet, die ein Vielfaches von 1 MByte ist, und 32-Byte-Regionen an
+einem Vielfachen von 32. Die PCI-Spezifikation nutzt diese Ausrichtung
+aus. Sie legt fest, daß der Adreßdecoder nur die höherwertigen Bits
+auf dem Adreß-Bus ansehen darf und daß nur diese auch programmierbar
+sind. Diese Konvention bringt es auch mit sich, daß die Größe jeder
+Region eine Zweierpotenz sein muß.&#13;</P
+><P
+>&#13;
+Das Einblenden einer PCI-Region in den physikalischen Adreßraum
+erfolgt dadurch, daß ein passender Wert in
+den höherwertigen Bits eines Konfigurationsregisters gesetzt
+wird. Beispielsweise wird eine 1-MByte-Region, die einen Adreßraum von 20
+Bits hat, umgeblendet, indem die zwölf höherwertigen Bits des Registers
+gesetzt werden. Um also die Karte auf den Adreßbereich von 64 MByte bis
+65 MByte reagieren zu lassen, können Sie in das Register jede Adresse im
+<TT
+CLASS="LITERAL"
+>0x040</TT
+><TT
+CLASS="REPLACEABLE"
+><I
+>xxxxx</I
+></TT
+>-Bereich
+schreiben. In der Praxis werden nur
+sehr hohe Adressen verwendet, um PCI-Regionen einzublenden.&#13;</P
+><P
+>Diese Technik der &#8220;teilweisen Decodierung&#8221; hat den
+zusätzlichen Vorteil, daß die Software jetzt die Größe einer
+PCI-Region bestimmen kann, indem sie die Anzahl der
+nicht-programmierbaren Bits im Konfigurationsregister ermittelt. Zu
+diesem Zweck legt der PCI-Standard fest, daß unbenutzte Bits immer als
+0 ausgelesen werden. Indem eine minimale Größe von 8 Bytes für
+I/O-Regionen und 16 Bytes für Speicherregionen festgelegt wird,
+kann der Standard einige zusätzliche Informationen im gleichen
+PCI-Register unterbringen:</P
+><P
+></P
+><UL
+><LI
+><P
+>Bit 0 ist das &#8220;Space&#8221;-Bit. Es ist 0, wenn der
+Bereich in den Speicher-Adreßraum eingeblendet wird, und 1, wenn der
+Bereich in den I/O-Adreßraum eingeblendet wird. </P
+></LI
+><LI
+><P
+>Die Bits 1 und 2 sind die &#8220;Typen&#8221;-Bits:
+Speicherbereiche können als 32-Bit-Bereiche, 64-Bit-Bereiche oder als &#8220;32
+Bit-Bereiche, die unterhalb von 1 MByte eingeblendet werden müssen&#8221; (eine
+veraltete, x86-spezifische Idee; wird nicht mehr verwendet) markiert
+werden.</P
+></LI
+><LI
+><P
+>Bit 3 ist das &#8220;prefetchable&#8221; Bit, das für
+Speicherbereiche verwendet wird.</P
+></LI
+></UL
+><P
+>Das Ermitteln der Größe einer PCI-Region wird durch die Verwendung
+mehrerer Bitmasken erleichtert, die in
+<TT
+CLASS="LITERAL"
+>&#60;linux/pci.h&#62;</TT
+> definiert sind:
+<TT
+CLASS="LITERAL"
+>PCI_BASE_ADDRESS_SPACE</TT
+> ist
+eine Bitmaske, die auf
+<TT
+CLASS="LITERAL"
+>PCI_BASE_ADDRESS_SPACE_MEMORY</TT
+>
+gesetzt ist, wenn es sich um einen Speicherbereich handelt, sowie auf
+<TT
+CLASS="LITERAL"
+>PCI_BASE_ADDRESS_SPACE_IO</TT
+>,
+wenn es sich um einen I/O-Bereich handelt. Um die tatsächliche Adresse
+herauszufinden, an der ein Speicherbereich eingeblendet ist, können
+Sie das PCI-Register mit
+<TT
+CLASS="LITERAL"
+>PCI_BASE_ADDRESS_MEM_MASK</TT
+>
+logisch UND-verknüpfen, um die oben genannten unteren Bits zu
+verwerfen. Für I/O-Bereiche verwenden Sie entsprechend
+<TT
+CLASS="LITERAL"
+>PCI_BASE_ADDRESS_IO_MASK</TT
+>.
+Beachten Sie, daß PCI-Regionen von Geräte-Herstellern in beliebiger
+Reihenfolge alloziert werden können; es ist also nicht ungewöhnlich,
+daß ein Gerät den ersten und dritten Bereich verwendet und den zweiten
+unbenutzt läßt.&#13;</P
+><P
+>Typischer Code zum Ermitteln der aktuellen Lage und Größe der
+PCI-Regionen sieht etwa so aus wie der Code im
+<SPAN
+CLASS="APPLICATION"
+>pciregions</SPAN
+>-Modul, das Sie im gleichen
+Verzeichnis wie <SPAN
+CLASS="APPLICATION"
+>pcidata</SPAN
+> finden. Dieses
+Modul erzeugt unter Verwendung des oben gezeigten Codes zum Erzeugen
+der Daten eine <TT
+CLASS="FILENAME"
+>/proc/pciregions</TT
+>-Datei. Das
+Programm schreibt Einsen in alle Konfigurationsregister und liest
+diese wieder aus, um herauszufinden, wie viele Bits der Register programmiert
+werden können. Während das Programm die
+Konfigurationsregister antestet, ist das Gerät am oberen Ende des
+physikalischen Adreßraumes eingeblendet, weswegen das Melden von
+Interrupts währenddessen abgeschaltet ist (damit kein Treiber auf den
+Bereich zugreift, während dieser an der falschen Stelle eingeblendet
+ist).</P
+><P
+>Obwohl die PCI-Spezifikationen angeben, daß der I/O-Adreßraum 32 Bits
+breit ist, tun einige Hersteller in ihrer x86-zentrischen Sicht so,
+als wären es nur 64 KByte und implementieren nicht alle 32 Bits des Basis-Adreßregisters. Deswegen ignoriert der folgende Code (und der
+Kernel selbst) die hohen Bits der Adreßmaske für I/O-Bereiche:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+static u32 addresses[] = {
+    PCI_BASE_ADDRESS_0,
+    PCI_BASE_ADDRESS_1,
+    PCI_BASE_ADDRESS_2,
+    PCI_BASE_ADDRESS_3,
+    PCI_BASE_ADDRESS_4,
+    PCI_BASE_ADDRESS_5,
+    0
+};
+
+int pciregions_read_proc(char *buf, char **start, off_t offset,
+                   int len, int *eof, void *data)
+{
+    /* Dieses Makro haelt die folgenden Zeilen kurz. */
+#define PRINTF(fmt, args...) sprintf(buf+len, fmt, ## args)
+    len=0;
+
+    /* Die Geraete durchlaufen (Code hier nicht abgedruckt) */
+
+        /* Die Adreßbereiche dieses Geraets ausgeben */
+        for (i=0; addresses[i]; i++) {
+            u32 curr, mask, size;
+            char *type;
+
+            pci_read_config_dword(dev, addresses[i],&#38;curr);
+            cli();
+            pci_write_config_dword(dev, addresses[i],&#732;0);
+            pci_read_config_dword(dev, addresses[i],&#38;mask);
+            pci_write_config_dword(dev, addresses[i],curr);
+            sti();
+
+            if (!mask)
+                continue; /* es kann noch andere Bereiche geben */
+
+            /*
+             * Die I/O- oder Speichermaske auf die aktuelle Position
+             * anwenden. Beachten Sie, daß I/O auf 0xffff beschraenkt
+             * ist und 64 Bit von dieser einfachen Implementation
+             * nicht unterstuetzt werden.
+             */
+            if (curr &#38; PCI_BASE_ADDRESS_SPACE_IO) {
+                curr &#38;= PCI_BASE_ADDRESS_IO_MASK;
+            } else {
+                curr &#38;= PCI_BASE_ADDRESS_MEM_MASK;
+            }
+
+            len += PRINTF("\tregion %i: mask 0x%08lx, now at 0x%08lx\n",
+                        i, (unsigned long)mask,
+                           (unsigned long)curr);
+            /* den Typ und die programmierbaren Bits extrahieren */
+            if (mask &#38; PCI_BASE_ADDRESS_SPACE_IO) {
+                type = "I/O"; mask &#38;= PCI_BASE_ADDRESS_IO_MASK;
+                size = (&#732;mask + 1) &#38; 0xffff; /* Bleah */
+            } else {
+                type = "mem"; mask &#38;= PCI_BASE_ADDRESS_MEM_MASK;
+                size = &#732;mask + 1;
+            }
+            len += PRINTF("\tregion %i: type %s, size %i (%i%s)\n", i,
+                          type, size,
+                          (size &#38; 0xfffff) == 0 ? size &#62;&#62; 20 :
+                            (size &#38; 0x3ff) == 0 ? size &#62;&#62; 10 : size,
+                          (size &#38; 0xfffff) == 0 ? "MB" :
+                            (size &#38; 0x3ff) == 0 ? "KB" : "B");
+            if (len &#62; PAGE_SIZE / 2) {
+                len += PRINTF("... more info skipped ...\n");
+                *eof = 1; return len;
+            }
+        }
+    return len;
+}
+
+&#13;</PRE
+></TD
+></TR
+></TABLE
+><P
+>Hier sehen Sie als Beispiel, was <TT
+CLASS="FILENAME"
+>/proc/pciregion</TT
+> für
+unseren Framegrabber meldet:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+
+Bus 0, device 13, fun  0 (id 8086-1223)
+        region 0: mask 0xfffff000, now at 0xf1000000
+        region 0: type mem, size 4096</PRE
+></TD
+></TR
+></TABLE
+><P
+>Interessanterweise kann die vom obigen Programm gemeldete Größe des
+Speichers übertrieben sein. Beispielsweise meldet
+<TT
+CLASS="FILENAME"
+>/proc/pciregions</TT
+>, daß unsere Videokarte
+16 MByte hat, wo es eigentlich nur 1 MByte ist. Diese Lüge ist aber
+akzeptabel, weil die Größeninformation nur von der Firmware verwendet
+wird, um Adreßbereiche zu verwenden. Übergroße Bereiche sind kein
+Problem für Treiber-Autoren, die die internen Details des Geräts
+kennen und mit dem von der Firmware zugewiesenen Adreßbereich korrekt
+umgehen könnnen. In diesem Fall könnte später Geräte-RAM hinzugefügt
+werden, ohne daß währenddessen das Verhalten der PCI-Register verändert werden
+müßte.</P
+><P
+>Ein solches Übertreiben bei der Größenangabe spiegelt sich in der
+Ressourcen-Schnittstelle wieder;
+<SPAN
+><I
+CLASS="EMPHASIS"
+>pci_resource_size</I
+></SPAN
+> meldet die
+übertriebene Größe.&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN21879"
+>PCI-Interrupts</A
+></H2
+><P
+>&#13;
+Was die Interrupts angeht, ist PCI einfach zu benutzen. Wenn Linux
+bootet, hat die Firmware
+des Rechners dem Gerät bereits eine eindeutige Interrupt-Nummer
+zugeteilt, und der Treiber muß diese einfach nur noch verwenden. Die
+Interrupt-Leitung wird im Konfigurationsregister 60
+(<TT
+CLASS="LITERAL"
+>PCI_INTERRUPT_LINE</TT
+>) abgelegt, das ein
+Byte breit ist und damit bis zu 256 Interrupt-Leitungen erlaubt, auch
+wenn die tatsächliche Obergrenze von der verwendeten CPU abhängt. Der
+Treiber muß sich nicht darum kümmern, die Interrupt-Nummer zu
+überprüfen, denn der Wert in
+<TT
+CLASS="LITERAL"
+>PCI_INTERRUPT_LINE</TT
+> ist garantiert
+richtig.&#13;</P
+><P
+>Wenn das Gerät keine Interrupts unterstützt, dann ist das Register 61
+(<TT
+CLASS="LITERAL"
+>PCI_INTERRUPT_PIN</TT
+>) 0, ansonsten hat
+es einen von Null verschiedenen Wert. Da der Treiber aber weiß, ob ein
+Gerät Interrupt-gesteuert ist oder nicht, muß er normalerweise
+<TT
+CLASS="LITERAL"
+>PCI_INTERRUPT_PIN</TT
+> nicht auslesen.&#13;</P
+><P
+>PCI-spezifischer Code muß also nur zur Verwaltung von Interrupts das Konfigurationsbyte auslesen, um die
+Interrupt-Nummer zu bekommen, die in einer lokalen Variable
+gespeichert wird, wie der folgende Code zeigt. Ansonsten gilt
+weiterhin das in <A
+HREF="irq.html"
+>Kapitel 9</A
+> Gesagte.&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+result = pci_read_config_byte(dev, PCI_INTERRUPT_LINE, &#38;myirq);
+if (result) { /* Fehler behandeln */ }</PRE
+></TD
+></TR
+></TABLE
+><P
+>Der Rest dieses Abschnitts enthält zusätzliche Informationen für
+neugierige Leser, ist aber zur Programmierung von Treibern nicht weiter
+notwendig.&#13;</P
+><P
+>Ein PCI-Steckverbinder hat vier Pins für Interrupts, und eine
+Peripherie-Karte kann beliebige davon verwenden. Jeder Pin wird
+einzeln zum Interrupt-Controller der Hauptplatine durchgeführt, so
+daß Interrupts ohne elektrische Probleme gemeinsam genutzt werden
+können. Der Interrupt-Controller ist dafür verantwortlich, die
+Interrupt-Drähte (-Anschlüsse) mit der Hardware des Prozessors zu
+verbinden. Diese plattformabhängige Operation wird dem Controller
+überlassen, damit der Bus selbst plattformunabhängig bleibt.&#13;</P
+><P
+>Das nur-lesbare Konfigurationsregister bei
+<TT
+CLASS="LITERAL"
+>PCI_INTERRUPT_PIN</TT
+> wird verwendet, um
+dem Computer mitzuteilen, welcher Pin eigentlich verwendet wird. Man
+sollte nicht vergessen, daß jede Karte bis zu acht Geräte enthalten
+kann; jedes Gerät benutzt einen einzelnen Interrupt-Pin und teilt
+diesen über sein eigenes Konfigurationsregister mit. Verschiedene
+Geräte auf derselben Karte können verschiedene Interrupt-Pins
+verwenden oder einen gemeinsam nutzen.&#13;</P
+><P
+>Das Register <TT
+CLASS="LITERAL"
+>PCI_INTERRUPT_LINE</TT
+> kann
+dagegen auch beschrieben werden. Wenn der Computer hochgefahren wird,
+sucht die Firmware die PCI-Geräte und setzt dieses Register für jedes
+Gerät entsprechend dem Interrupt-Pin, der für diesen PCI-Slot verwendet
+wird. Der Wert wird von der Firmware zugewiesen, weil nur diese weiß,
+wie die Hauptplatine die verschiedenen Interrupt-Pins an den Prozessor
+weiterleitet. Der Gerätetreiber kann das Register
+<TT
+CLASS="LITERAL"
+>PCI_INTERRUPT_LINE</TT
+> nur
+lesen. Interessanterweise können neuere Versionen des Linux-Kernels
+unter manchen Umständen Interrupt-Leitungen ohne Hilfe des BIOS
+zuweisen.
+
+&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN21905"
+>Hot-Pluggable-Geräte</A
+></H2
+><P
+>&#13;
+
+Während der 2.3-Entwicklung überholten die Kernel-Entwickler die
+PCI-Programmierschnittstelle, um die Arbeit zu vereinfachen und
+Hot-Pluggable-Geräte zu unterstützen, also solche Geräte, die während
+der Laufzeit zum System hinzugefügt oder aus ihm entfernt werden können
+(wie CardBus-Geräte). Was in diesem Abschnitt besprochen wird, steht
+im 2.2-Kernel und davor nicht zur Verfügung, ist aber für neu
+entwickelte Treiber der bevorzugte Weg.</P
+><P
+>Dieser Ansatz basiert auf der Idee, daß alle verfügbaren
+Gerätetreiber überprüfen müssen, ob ein neues Gerät, das während der
+Laufzeit des Systems erscheint, ihres ist oder nicht. Daher müssen
+Hot-Plug-fähige Treiber anstelle der klassischen
+<SPAN
+><I
+CLASS="EMPHASIS"
+>init</I
+></SPAN
+>- und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>cleanup</I
+></SPAN
+>-Einsprungpunkte ein Objekt beim Kernel
+registrieren; die <SPAN
+><I
+CLASS="EMPHASIS"
+>probe</I
+></SPAN
+>-Funktion dieses Objekts
+wird dann gebeten, jedes Gerät im System zu überprüfen und sich zu
+eigen zu machen (oder auch nicht).</P
+><P
+>Dieser Ansatz hat keine Nachteile: Der Standardfall einer statischen
+Geräteliste wird durch einmaliges Durchsuchen der Geräteliste pro
+Gerät beim Booten des Systems erledigt; modularisierte Treiber werden
+wie üblich entladen, wenn kein Gerät vorhanden ist, und ein externer
+Prozeß, der den Bus überwacht, lädt diese bei Bedarf. Genauso hat das
+PCMCIA-Subsystem schon immer funktioniert, und die Integration dieses
+Systems in den Kernel selbst erlaubt einen konsistenteren Umgang mit
+ähnlichen Fragen in anderen Hardware-Umgebungen.</P
+><P
+>Sie werden vielleicht einwenden, daß Hot-Plug-PCI heutzutage nicht
+besonders geläufig ist, aber die neue Treiber-Objekt-Technik ist auch
+bei Nicht-Hot-Plug-Treibern, die mit einer Reihe alternativer Geräte
+klarkommen müssen, sehr nützlich. Der Initialisierungscode wird
+vereinfacht und gestrafft, weil er nur das
+<SPAN
+><I
+CLASS="EMPHASIS"
+>aktuelle</I
+></SPAN
+> Gerät mit einer Liste bekannter Geräte
+vergleichen muß, anstatt durch das Durchlaufen
+von <SPAN
+><I
+CLASS="EMPHASIS"
+>pci_find_class</I
+></SPAN
+> oder
+<SPAN
+><I
+CLASS="EMPHASIS"
+>pci_find_device</I
+></SPAN
+> aktiv auf dem
+PCI-Bus nach dem Gerät zu suchen.</P
+><P
+>&#13;Schauen wir uns jetzt aber etwas Code an: Das Design ist um eine in
+<TT
+CLASS="LITERAL"
+>&#60;linux/pci.h&#62;</TT
+> definierte Struktur namens
+<TT
+CLASS="LITERAL"
+>struct pci_driver</TT
+> herumgebaut. Diese
+Struktur definiert die implementierten Operationen und enthält auch
+eine Liste der unterstützten Geräte (um unnütze Aufrufe des Codes
+darin zu vermeiden). Hier sehen Sie die Initialisierung und das
+Aufräumen eines hypothetischen &#8220;Hot-Plug-PCI-Moduls&#8221; (HPPM):</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;struct pci_driver hppm_driver = { /* .... */ };
+
+int hppm_init_module(void)
+{
+    return pci_module_init(&#38;hppm_driver);
+}
+
+int hppm_cleanup_module(void)
+{
+    pci_unregister_driver(&#38;hppm_driver);
+}
+
+module_init(hppm);
+module_exit(hppm);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Das ist schon alles. Es ist geradezu unglaublich einfach. Die
+versteckte Zauberei verteilt sich auf die Implementation von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>pci_module_init</I
+></SPAN
+> sowie die Interna
+der Treiber-Struktur. Wir arbeiten besser top-down und fangen mit den
+relevanten Funktionen an:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>int pci_register_driver(struct pci_driver *drv);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion fügt einen Treiber in einer verketteten Liste ein, die
+vom System verwaltet wird. Auf diese Weise erledigen einkompilierte
+Treiber ihre Initialisierung; von modularisiertem Code wird diese Funltion nicht
+direkt verwendet. Der Rückgabewert ist die Anzahl der vom Treiber
+abgedeckten Geräte.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int pci_module_init(struct pci_driver *drv);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion ist ein Wrapper um die eben genannte Funktion und sollte von
+modularisiertem Initialisierungscode aufgerufen werden. Sie gibt 0 im
+Erfolgsfall und <TT
+CLASS="LITERAL"
+>-ENODEV</TT
+>, wenn kein Gerät gefunden
+wurde, zurück. Dies soll ein Modul daran hindern, im Speicher zu verbleiben,
+wenn gerade kein Gerät vorhanden ist (mit dem
+Hintergedanken, daß das Modul automatisch geladen wird, wenn ein
+passendes Gerät auftaucht). Weil diese Funktion als
+<TT
+CLASS="LITERAL"
+>inline</TT
+> definiert ist, ändert sich das Verhalten je
+nachdem, ob <TT
+CLASS="LITERAL"
+>MODULE</TT
+> definiert ist oder nicht; sie
+kann also selbst in nicht-modularisiertem Code als unveränderter
+Ersatz für <SPAN
+><I
+CLASS="EMPHASIS"
+>pci_register_driver</I
+></SPAN
+>
+verwendet werden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void pci_unregister_driver(struct pci_driver *drv);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion entfernt den Treiber aus der verketteten Liste
+bekannter Treiber.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void pci_insert_device(struct pci_dev *dev, struct pci_bus *bus);</TT
+>, <TT
+CLASS="LITERAL"
+>void pci_remove_device(struct pci_dev *dev);</TT
+></DT
+><DD
+><P
+>&#13;
+Diese beiden Funktionen implementieren die aktive Komponente des
+Hot-Plug-Systems; sie werden von den Ereignisbehandlungsroutinen
+aufgerufen, die das Hinzufügen oder Entfernen von Geräten auf einem
+Bus überwachen. Die Struktur <TT
+CLASS="LITERAL"
+>dev</TT
+> wird dazu
+verwendet, die Liste der registrierten Treiber zu
+durchsuchen. Gerätetreiber müssen diese Funktionen nicht aufrufen, sie
+stehen hier nur, um Ihnen ein vollständiges Bild des Designs rund um
+PCI-Treiber zu geben.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct pci_driver *pci_dev_driver(const struct pci_dev *dev);</TT
+></DT
+><DD
+><P
+>&#13;Dies ist eine Hilfsfunktion, die den Treiber zu einem Gerät (so
+vorhanden) heraussucht. Sie wird von den Hilfsfunktionen für
+<TT
+CLASS="FILENAME"
+>/proc/bus</TT
+> verwendet und sollte von Gerätetreibern
+nicht aufgerufen werden.</P
+></DD
+></DL
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN21980"
+>Die Struktur pci_driver</A
+></H3
+><P
+>&#13;Die Datenstruktur <TT
+CLASS="LITERAL"
+>pci_driver</TT
+> ist der
+zentrale Bestandteil der Hot-Plug-Unterstützung; wir beschreiben sie
+daher hier detailliert, um das Gesamtbild zu vervollständigen. Die
+Struktur ist recht klein; sie besteht nur aus einigen Methoden und der
+Geräte-ID-Liste.</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>struct list_head node;</TT
+></DT
+><DD
+><P
+>Wird dazu verwendet, eine Liste von Treibern zu verwalten. Dies ist
+ein Beispiel für die generischen Listen, die in &#8220;<A
+HREF="judaslist.html"
+>the Section called <I
+>Verkettete Listen</I
+> in Kapitel 10</A
+>&#8221; in <A
+HREF="judas.html"
+>Kapitel 10</A
+> eingeführt wurden, und
+sollte nicht von Gerätetreibern verwendet werden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>char *name;</TT
+></DT
+><DD
+><P
+>Der Name des Treibers, wird nur zu Informationszwecken verwendet.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>const struct pci_device_id *id_table;</TT
+></DT
+><DD
+><P
+>&#13;Ein Array, das die von diesem Treiber unterstützten Geräte
+aufführt. Die Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>probe</I
+></SPAN
+> wird nur für Geräte
+aufgerufen, die auf eines der Elemente in diesem Array passen. Wenn
+das Feld mit <TT
+CLASS="LITERAL"
+>NULL</TT
+> belegt wird, wird die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>probe</I
+></SPAN
+>-Funktion für jedes Gerät im System
+aufgerufen. Wenn das Feld nicht <TT
+CLASS="LITERAL"
+>NULL</TT
+> ist, dann muß
+das letzte Element im Array 0 sein.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int (*probe)(struct pci_dev *dev, const struct pci_device_id *id);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion muß das übergebene Gerät initialisieren und im
+Erfolgsfalle 0 sowie im Fehlerfall einen negativen Fehler-Code
+zurückgeben (der Fehler-Code wird derzeit nicht verwendet, aber man
+kann getrost einen <TT
+CLASS="LITERAL"
+>errno</TT
+>-Fehler-Code zurückgeben, nicht nur einfach -1 ).</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void (*remove)(struct pci_dev *dev);</TT
+></DT
+><DD
+><P
+>&#13;Die Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>remove</I
+></SPAN
+> wird dazu verwendet, dem
+Gerätetreiber mitzuteilen, daß er das Gerät herunterfahren und sich
+nicht mehr damit beschäftigen sowie allen zugehörigen Speicher
+freigeben soll. Die Funktion wird entweder aufgerufen, wenn das Gerät
+aus dem System entfernt wird oder wenn der Treiber
+<SPAN
+><I
+CLASS="EMPHASIS"
+>pci_unregister_driver</I
+></SPAN
+> aufruft, um
+aus dem System entladen zu werden. Im Gegensatz zu
+<SPAN
+><I
+CLASS="EMPHASIS"
+>probe</I
+></SPAN
+> wird ist diese Methode
+PCI-Geräte-spezifisch und gilt nicht für alle von diesem Treiber
+abgedeckten Geräte; das jeweilige Gerät wird als Argument übergeben.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int (*suspend)(struct pci_dev *dev, u32 state);</TT
+>, <TT
+CLASS="LITERAL"
+>int (*resume)(struct pci_dev *dev);</TT
+></DT
+><DD
+><P
+>&#13;
+Dies sind die Power Management-Funktionen für PCI-Geräte. Wenn der
+Gerätetreiber das Power Management unterstützt, sollten diese beiden
+Methoden verwendet werden, um das Gerät herunterzufahren und zu
+reaktivieren; sie werden zu den passenden Zeitpunkten von den höheren
+Schichten aufgerufen.</P
+></DD
+></DL
+></DIV
+><P
+>Das PCI-Treiber-Objekt ist ziemlich offensichtlich aufgebaut und
+angenehm zu verwenden. Zur Aufzählung der Felder gibt es wenig
+hinzuzufügen, weil der normale Code zum Umgang mit der Hardware gut in
+diese Abstraktion paßt, ohne entsprechend verbogen werden zu müssen.</P
+><P
+>&#13;Jetzt müssen wir nur noch das <TT
+CLASS="LITERAL"
+>struct
+pci_device_id</TT
+>-Objekt beschreiben. Die Struktur enthält
+mehrere ID-Felder. Das jeweilige Gerät, das einen Treiber benötigt,
+wird mit allen Feldern verglichen. Alle Felder können auf
+<TT
+CLASS="LITERAL"
+>PCI_ANY_ID</TT
+> gesetzt werden, um dem
+System mitzuteilen, es zu ignorieren.</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned int vendor, device;</TT
+></DT
+><DD
+><P
+>Die Hersteller- und Geräte-IDs des Geräts, an dem dieser Treiber
+interessiert ist. Die Werte werden mit den Registern 0x00 und 0x02 des
+PCI-Konfigurationsraums verglichen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned int subvendor, subdevice;</TT
+></DT
+><DD
+><P
+>Die Unter-IDs, die mit den Registern 0x2C und 0x2E des
+PCI-Konfigurationsraums verglichen werden. Sie werden beim Suchen des
+Geräts verwendet, weil ein Hersteller/Geräte-ID-Paar manchmal eine
+ganze Gruppe von Geräten identifiziert, der Treiber aber
+möglicherweise nur mit einigen davon umgehen kann.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned int class, class_mask;</TT
+></DT
+><DD
+><P
+>Wenn ein Gerätetreiber eine ganze Klasse oder eine Teilmenge davon
+abdecken will, dann kann er die obengenannten Felder auf
+<TT
+CLASS="LITERAL"
+>PCI_ANY_ID</TT
+> setzen und statt dessen
+die Klassen-Bezeichner verwenden. Die
+<TT
+CLASS="LITERAL"
+>class_mask</TT
+> gibt es, um sowohl Treiber zu
+ermöglichen, die eine Basisklasse abdecken wollen, als auch solche,
+die nur an einer Subklasse interessiert sind. Wenn die Geräte-Auswahl
+über die Hersteller/Geräte-Bezeichner geschieht, müssen diese Felder
+auf 0 gesetzt werden (nicht auf
+<TT
+CLASS="LITERAL"
+>PCI_ANY_ID</TT
+>, weil die Überprüfung über ein
+logisches UND mit dem Maskenfeld geschieht).</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long driver_data;</TT
+></DT
+><DD
+><P
+>Ein Feld zur Verwendung durch den Gerätetreiber. Es kann
+beispielsweise dazu verwendet werden, die einzelnen Geräte zur
+Kompilierzeit zu unterscheiden, und so umständliche Arrays bedingter
+Abfragen zur Laufzeit vermeiden.</P
+></DD
+></DL
+></DIV
+><P
+>&#62;
+&#62;
+&#62;
+&#62;
+Interessanterweise ist die Datenstruktur
+<TT
+CLASS="LITERAL"
+>pci_device_id</TT
+> nur ein Hinweis vom
+System; Gerätetreiber selbst dürfen trotzdem noch 0 aus der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>probe</I
+></SPAN
+>-Methode zurückgeben und so das Gerät
+zurückweisen, auch wenn es auf das Array der Geräte-Bezeichner gepaßt
+hat. Wenn also beispielsweise mehrere Geräte mit der gleichen Signatur
+existieren, dann kann der Treiber nach weiteren Informationen suchen,
+anhand derer er entscheiden kann, ob er für das Peripherie-Gerät
+geeignet ist oder nicht.</P
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="PCIDRV"
+>Hardware-Abstraktionen</A
+></H2
+><P
+>&#13;
+Wir vervollständigen die Behandlung von PCI hier durch einen schnellen
+Blick darauf, wie das System mit der Unzahl von PCI-Controllern umgeht, die es
+auf dem Markt gibt. Dies ist lediglich zur Information gedacht, um
+neugierigen Lesern zu zeigen, wie sich das objektorientierte Layout
+des Kernels bis in die untersten Schichten hinunter erstreckt.</P
+><P
+>Der Mechanismus zur Implementation der Hardware-Abstraktion ist die
+übliche Struktur mit enthaltenen Methoden. Dies ist eine leistungsfähige
+Technik, die nur den minimalen zusätzlichen Aufwand erfordert einen Zeiger
+über den normalen Funktionsaufruf
+hinaus zu dereferenzieren. Im Falle der PCI-Verwaltung sind die einzigen
+Hardware-abhängigen Operationen diejenigen, die die
+Konfigurationsregister auslesen und beschreiben, weil alles andere in
+der PCI-Welt durch direktes Lesen und Schreiben der I/O- und
+Speicher-Adreßräume geschieht und diese unter direkter Kontrolle der
+CPU stehen.</P
+><P
+>&#13;Die Struktur für die Hardware-Abstraktion enthält dementsprechend nur
+sechs Felder:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;struct pci_ops {
+    int (*read_byte)(struct pci_dev *, int where, u8 *val);
+    int (*read_word)(struct pci_dev *, int where, u16 *val);
+    int (*read_dword)(struct pci_dev *, int where, u32 *val);
+    int (*write_byte)(struct pci_dev *, int where, u8 val);
+    int (*write_word)(struct pci_dev *, int where, u16 val);
+    int (*write_dword)(struct pci_dev *, int where, u32 val);
+};</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+Diese Struktur wird in <TT
+CLASS="LITERAL"
+>&#60;linux/pci.h&#62;</TT
+>
+definiert und von <SPAN
+><I
+CLASS="EMPHASIS"
+>drivers/pci/pci.c</I
+></SPAN
+> verwendet, wo
+auch die eigentlichen öffentlichen Funktionen definiert sind.</P
+><P
+>Die sechs Funktionen, die auf dem PCI-Konfigurationsraum arbeiten,
+bringen mehr Aufwand als das Dereferenzieren eines Zeigers mit sich,
+weil sie aufgrund des hohen Grades an Objektorientierung kaskadierende
+Zeiger verwenden; dies ist aber angesichts der Operationen, die selten
+(und nie in zeitkritischen Situationen) ausgeführt werden) kein
+Problem. Die Implementation von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>pci_read_config_byte(dev)</I
+></SPAN
+>
+expandiert beispielsweise zu:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;dev-&#62;bus-&#62;ops-&#62;read_byte();</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Die diversen PCI-Bus-Systeme im System werden beim Booten erkannt. Zu
+diesem Zeitpunkt werden auch die <TT
+CLASS="LITERAL"
+>struct
+pci_bus</TT
+>-Elemente erzeugt und mit ihren Merkmalen,
+darunter dem <TT
+CLASS="LITERAL"
+>ops</TT
+>-Feld, verknüpft.</P
+><P
+>&#13;
+
+Das Implementieren von Hardware-Abstraktionen via
+"Hardware-Operations-Datenstrukturen" ist typisch für den
+Linux-Kernel. Ein wichtiges Beispiel ist die Datenstruktur
+<TT
+CLASS="LITERAL"
+>struct alpha_machine_vector</TT
+>. Diese
+ist in <TT
+CLASS="LITERAL"
+>&#60;asm-alpha/machvec.h&#62;</TT
+> definiert und
+        deckt alle Unterschiede ab, die es zwischen den einzelnen
+        Alpha-basierten Computern gibt.&#13;</P
+></DIV
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN21350"
+HREF="pci.html#AEN21350"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Bitte beachten Sie, daß das hier Gesagte wie üblich
+auf der Version 2.4 des Kernels basiert und wir die Fragen der
+Abwärtskompatibilität am Ende des Kapitels behandeln werden.</P
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN21392"
+HREF="pci.html#AEN21392"
+>[2]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Die Konfiguration ist übrigens nicht auf das Booten
+des Systems begrenzt; sogenannte &#8220;Hot-pluggable-Geräte&#8221; stehen
+beispielsweise nicht beim Booten zur Verfügung, sondern erscheinen
+erst später. Bei diesen Geräten müssen die Gerätetreiber die Adressen
+von I/O- und Speicherbereichen nicht ändern.</P
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN21400"
+HREF="pci.html#AEN21400"
+>[3]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Die ID eines jeden Gerätes sollte im Handbuch zur Hardware stehen. In der
+Datei pci.ids im Package pciutils sowie in den Kernelquellen finden Sie
+ebenfalls eine Liste. Diese behauptet gar nicht erst, vollständig zu sein,
+enthält aber die bekanntesten Hersteller und Geräte.</P
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN21674"
+HREF="pci.html#AEN21674"
+>[4]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Die Feldnamen in <TT
+CLASS="LITERAL"
+>struct
+pci_dev</TT
+> wurden zwischen 2.2 und 2.4 geändert, weil
+sich das erste Layout als nicht ganz optimal herausgestellt hatte. In 2.0 gab
+es keine <TT
+CLASS="LITERAL"
+>pci_dev</TT
+>-Struktur; die Struktur, die Sie dann
+verwenden, ist eine einfache Emulation aus der Header-Datei
+<TT
+CLASS="FILENAME"
+>pci-compat.h</TT
+>.</P
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN21747"
+HREF="pci.html#AEN21747"
+>[5]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Diese Information steckt in den niedrigwertigen Bits
+                        der Basisadressen-PCI-Register. Die Bits sind
+in <TT
+CLASS="LITERAL"
+>&#60;linux/pci.h&#62;</TT
+> definiert.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x21078.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="pciisa.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Schnellreferenz</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Ein Blick zurück: ISA</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

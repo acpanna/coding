@@ -1,0 +1,401 @@
+<HTML
+><HEAD
+><TITLE
+>Abwärtskompatibilität</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Der Lauf der Zeit"
+HREF="flow.html"><LINK
+REL="PREVIOUS"
+TITLE="Kernel-Timer"
+HREF="flowtimers.html"><LINK
+REL="NEXT"
+TITLE="Schnellreferenz"
+HREF="x8972.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="flowtimers.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 6. Der Lauf der Zeit</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x8972.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN8892"
+>Abwärtskompatibilität</A
+></H1
+><P
+>&#13;
+Task-Schlangen und das Timing sind über die Jahre relativ konstant
+geblieben, aber einige Dinge haben sich trotzdem geändert und müssen
+beachtet werden.</P
+><P
+>&#13;Die Funktionen <SPAN
+><I
+CLASS="EMPHASIS"
+>sleep_on_timeout</I
+></SPAN
+>,
+<SPAN
+><I
+CLASS="EMPHASIS"
+>interruptible_sleep_on_timeout</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>schedule_timeout</I
+></SPAN
+> wurden alle für den 2.2-Kernel
+hinzugefügt. Zu Zeiten von 2.0 wurden Timeouts mit einer Variable
+namens <TT
+CLASS="LITERAL"
+>timeout</TT
+> in der Task-Struktur
+abgedeckt. Code, der heute so aussieht:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; interruptible_sleep_on_timeout(my_queue, timeout);</PRE
+></TD
+></TR
+></TABLE
+><P
+>sah damals also so aus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;current-&#62;timeout = jiffies + timeout;
+interruptible_sleep_on(my_queue);</PRE
+></TD
+></TR
+></TABLE
+><P
+>In der Header-Datei <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> wird
+<SPAN
+><I
+CLASS="EMPHASIS"
+>schedule_timeout</I
+></SPAN
+> für Kernel vor 2.4
+nachimplementiert, so daß Sie die neue Syntax auch unter 2.0 und 2.2
+verwenden können:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+extern inline void schedule_timeout(int timeout)
+{
+    current-&#62;timeout = jiffies + timeout;
+    current-&#62;state = TASK_INTERRUPTIBLE;
+    schedule();
+    current-&#62;timeout = 0;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+
+In 2.0 gab es eine Reihe zusätzlicher Funktionen, um Funktionen in
+Task-Schlangen einzustellen. <SPAN
+><I
+CLASS="EMPHASIS"
+>queue_task_irq</I
+></SPAN
+>
+konnte in Situationen, in denen Interrupts abgeschaltet waren,
+anstelle von <SPAN
+><I
+CLASS="EMPHASIS"
+>queue_task</I
+></SPAN
+> aufgerufen werden, was
+eine (sehr) kleine Performance-Verbesserung mit sich
+brachte. <SPAN
+><I
+CLASS="EMPHASIS"
+>queue_task_irq_off</I
+></SPAN
+> ist noch schneller,
+funktioniert aber nicht richtig, wenn der Task schon in die Schlange gestellt ist
+oder schon läuft, und kann daher nur verwendet werden, wenn das
+garantiert nicht der Fall sein kann. Keine dieser beiden Funktionen
+hat aber besonders viel Performance-Gewinn gebracht, weswegen sie beide
+im Kernel 2.1.30 entfernt wurden. Verwenden Sie immer
+<SPAN
+><I
+CLASS="EMPHASIS"
+>queue_task</I
+></SPAN
+>; sie funktioniert mit allen Kernel-Versionen. (Beachten
+Sie aber, daß <SPAN
+><I
+CLASS="EMPHASIS"
+>queue_task</I
+></SPAN
+> in 2.2 und davor den
+Rückgabetyp <TT
+CLASS="LITERAL"
+>void</TT
+> hatte.)</P
+><P
+>&#13;
+
+
+Vor 2.4 gab es weder die Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>schedule_task</I
+></SPAN
+>
+noch den dazugehörigen Prozeß
+<SPAN
+CLASS="APPLICATION"
+>keventd</SPAN
+>. Statt dessen gab es eine andere
+vordefinierte Task-Schlange namens
+<TT
+CLASS="LITERAL"
+>tq_scheduler</TT
+>. Tasks in
+<TT
+CLASS="LITERAL"
+>tq_scheduler</TT
+> wurden in der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>schedule</I
+></SPAN
+>-Funktion ausgeführt und liefen deswegen
+immer im Prozeß-Kontext. Wessen Kontext verwendet wurde, war aber
+immer verschieden; es war immer derjenige Prozeß, der gerade an der
+CPU anstand. <TT
+CLASS="LITERAL"
+>tq_scheduler</TT
+> hatte meistens größere
+Latenzen &#8212; insbesondere bei Tasks, die sich selbst wieder eingestellt
+hatten. <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> enthält die folgende
+Implementation von <SPAN
+><I
+CLASS="EMPHASIS"
+>schedule_task</I
+></SPAN
+> für 2.0- und
+2.2-Systeme:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+extern inline int schedule_task(struct tq_struct *task)
+{
+        queue_task(task, &#38;tq_scheduler);
+        return 1;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wie bereits erwähnt, wurde in der 2.3-Entwicklungsserie der
+Tasklet-Mechanismus eingeführt; vorher standen Task-Schlangen nur für
+die &#8220;unmittelbare verzögerte&#8221; Ausführung zur Verfügung. Das Subsystem der
+unteren Hälften war anders implementiert, obwohl die meisten
+Änderungen für Gerätetreiber-Entwickler gar nicht sichtbar sind. Wir
+haben keine Tasklets für ältere Kernel in
+<TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> emuliert, weil diese nicht unbedingt
+notwendig sind, um einen Treiber zu schreiben. Wenn Sie
+abwärtskompatibel sein wollen, dann müssen Sie entweder eine eigene
+Emulation schreiben oder statt dessen Task-Schlangen verwenden.</P
+><P
+>&#13;
+Die Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>in_interrupt</I
+></SPAN
+> existierte in Linux 2.0
+noch nicht. Statt dessen gab es eine globale Variable namens
+<TT
+CLASS="LITERAL"
+>intr_count</TT
+>, in der die Anzahl der gerade laufenden
+Interrupt-Handler gespeichert war. Das Auslesen von
+<TT
+CLASS="LITERAL"
+>intr_count</TT
+> ist semantisch das gleiche wie das
+Aufrufen von <SPAN
+><I
+CLASS="EMPHASIS"
+>in_interrupt</I
+></SPAN
+>, so daß es kein Problem
+war, die Kompatibilität in <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> zu
+gewährleisten.</P
+><P
+>&#13;
+Die Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>del_timer_sync</I
+></SPAN
+> existiert erst seit
+dem Entwicklungs-Kernel 2.4.0-test2. <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+>
+definiert einen minimalen Ersatz, wenn Sie mit älteren
+Kernel-Header-Dateien kompilieren. In der Kernel-Version 2.0 gab es
+auch kein <SPAN
+><I
+CLASS="EMPHASIS"
+>mod_timer</I
+></SPAN
+>. Auch diese Lücke wird von
+unserer Header-Datei gefüllt.&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="flowtimers.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x8972.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Kernel-Timer</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="flow.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Schnellreferenz</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

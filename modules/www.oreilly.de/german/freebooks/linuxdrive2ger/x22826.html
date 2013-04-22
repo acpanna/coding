@@ -1,0 +1,429 @@
+<HTML
+><HEAD
+><TITLE
+>Das Verzeichnis fs</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Der physikalische Aufbau der Kernel-Quellen"
+HREF="tour.html"><LINK
+REL="PREVIOUS"
+TITLE="Das Verzeichnis kernel"
+HREF="x22772.html"><LINK
+REL="NEXT"
+TITLE="Das Verzeichnis mm"
+HREF="x22924.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x22772.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 16. Der physikalische Aufbau der Kernel-Quellen</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x22924.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN22826"
+>Das Verzeichnis fs</A
+></H1
+><P
+>&#13;
+Die Dateiverwaltung ist einer der zentralen Bestandteile eines jeden
+Unix-Systems, und das Verzeichnis <TT
+CLASS="FILENAME"
+>fs</TT
+> ist das
+wohlgefüllteste aller Verzeichnisse. Es enthält alle von der aktuellen
+Linux-Version unterstützten Dateisysteme (jeweils in einem eigenen
+Unterverzeichnis) sowie die wichtigsten Systemaufrufe nach
+<SPAN
+><I
+CLASS="EMPHASIS"
+>fork</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>exit</I
+></SPAN
+>.</P
+><P
+>&#13;
+
+Der Systemaufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>execve</I
+></SPAN
+> befindet sich in
+<TT
+CLASS="FILENAME"
+>exec.c</TT
+> und benutzt die diversen
+verfügbaren Binärformate, um die in den ausführbaren Dateien
+vorgefundenen binären Daten zu interpretieren. Das wichtigste
+Binärformat ist heutzutage ELF, das in
+<TT
+CLASS="FILENAME"
+>binfmt_elf.c</TT
+> implementiert
+wird. <TT
+CLASS="FILENAME"
+>binfmt_script.c</TT
+> unterstützt die
+Ausführung interpretierter Dateien. Nachdem festgestellt wurde, daß
+ein Interpreter benötigt wird (üblicherweise durch die
+<TT
+CLASS="LITERAL"
+>#!</TT
+>-Zeile, auch &#8220;shebang&#8221; genannt), benutzt die
+Datei die anderen Binärformate, um den Interpreter zu laden.</P
+><P
+>Diverse Binärformate (wie das ausführbare Format von Java) können
+durch den Benutzer mittels einer in
+<TT
+CLASS="FILENAME"
+>binfmt_misc.c</TT
+> definierten
+<TT
+CLASS="FILENAME"
+>/proc</TT
+>-Schnittstelle definiert werden. Das
+<SPAN
+><I
+CLASS="EMPHASIS"
+>misc</I
+></SPAN
+>-Binärformat ist in der Lage, ein
+interpretiertes Binärformat auf der Basis des Inhalts der ausführbaren
+Datei zu identifizieren und den passenden Interpreter mit den
+passenden Argumenten zu starten. Dies wird in
+<TT
+CLASS="FILENAME"
+>/proc/sys/fs/binfmt_misc</TT
+> konfiguriert.</P
+><P
+>&#13;
+
+
+Die grundlegenden Systemaufrufe für den Datenzugriff sind in
+<TT
+CLASS="FILENAME"
+>open.c</TT
+> und in
+<TT
+CLASS="FILENAME"
+>read_write.c</TT
+> definiert. 
+definiert auch <SPAN
+><I
+CLASS="EMPHASIS"
+>close</I
+></SPAN
+> und einige andere
+Systemaufrufe für den Dateizugriff (zum Beispiel
+<SPAN
+><I
+CLASS="EMPHASIS"
+>chown</I
+></SPAN
+>). <TT
+CLASS="FILENAME"
+>select.c</TT
+>
+implementiert <SPAN
+><I
+CLASS="EMPHASIS"
+>select</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+>. Die Dateien <TT
+CLASS="FILENAME"
+>pipe.c</TT
+> und
+<TT
+CLASS="FILENAME"
+>fifo.c</TT
+> implementieren Pipes und benannte
+Pipes. <TT
+CLASS="FILENAME"
+>readdir.c</TT
+> implementiert den Systemaufruf
+<SPAN
+><I
+CLASS="EMPHASIS"
+>getdents</I
+></SPAN
+>, mit dem User-Space-Programme
+Verzeichnisse lesen (der Name steht für &#8220;get directory
+entries&#8221;). Andere Programmierschnittstellen für den Zugriff auf
+Verzeichnisdaten (wie etwa die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>readdir</I
+></SPAN
+>-Schnittstelle) sind alle als
+Bibliotheksfunktionen im User-Space definiert und verwenden den
+Systemaufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>getdents</I
+></SPAN
+>.</P
+><P
+>&#13;
+Die meisten Systemaufrufe zum Herumbewegen von Dateien wie etwa
+<SPAN
+><I
+CLASS="EMPHASIS"
+>mkdir</I
+></SPAN
+>, <SPAN
+><I
+CLASS="EMPHASIS"
+>rmdir</I
+></SPAN
+>,
+<SPAN
+><I
+CLASS="EMPHASIS"
+>rename</I
+></SPAN
+>, <SPAN
+><I
+CLASS="EMPHASIS"
+>link</I
+></SPAN
+>,
+<SPAN
+><I
+CLASS="EMPHASIS"
+>symlink</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>mknod</I
+></SPAN
+> sind in der Datei
+<TT
+CLASS="FILENAME"
+>namei.c</TT
+> implementiert, die wiederum auf dem
+Verzeichniseintrag-Cache aufbaut, der in <TT
+CLASS="FILENAME"
+>dcache.c</TT
+>
+implementiert ist.</P
+><P
+>Das Ein- und Aushängen von Dateisystemen wie auch die Unterstützung
+von temporären Wurzelverzeichnissen für <SPAN
+><I
+CLASS="EMPHASIS"
+>initrd</I
+></SPAN
+>
+werden in <TT
+CLASS="FILENAME"
+>super.c</TT
+> implementiert.</P
+><P
+>&#13;
+
+Für Gerätetreiber ist <TT
+CLASS="FILENAME"
+>devices.c</TT
+> besonders
+interessant, wo die Register für Zeichen- und Block-Treiber
+registriert werden und alle Geräte angesteuert werden. Dies geschieht
+durch das Implementieren der generischen
+<SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>-Methode, die verwendet wird, bevor die
+gerätespezifische <TT
+CLASS="LITERAL"
+>file_operations</TT
+>-Struktur
+geholt und verwendet wird. <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+> für Block-Geräte sind in
+<TT
+CLASS="FILENAME"
+>block_dev.c</TT
+> implementiert, was wiederum
+alle Arbeiten rund um die Puffer-Verwaltung an
+<TT
+CLASS="FILENAME"
+>buffer.c</TT
+> delegiert.</P
+><P
+>&#13;
+
+
+Es gibt in diesem Verzeichnis noch mehrere andere Dateien, die aber
+weniger interessant sind. Die wichtigsten sind
+<TT
+CLASS="FILENAME"
+>inode.c</TT
+> und <TT
+CLASS="FILENAME"
+>file.c</TT
+>, die die
+interne Organisation von Datenstrukturen für Dateien und Inodes
+erledigen, dann die Datei <TT
+CLASS="FILENAME"
+>ioctl.c</TT
+>, die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+> implementiert, sowie
+<TT
+CLASS="FILENAME"
+>dquot.c</TT
+>, die Quoten implementiert.</P
+><P
+>Wie wir bereits erwähnt haben, enthalten die meisten Unterverzeichnisse von
+<TT
+CLASS="FILENAME"
+>fs</TT
+> die Implementationen der einzelnen
+Dateisysteme. <TT
+CLASS="FILENAME"
+>fs/partitions</TT
+> ist allerdings kein
+Dateisystemtyp, sondern vielmehr ein Container für den Code zur
+Partitionsverwaltung. Manche Dateien in diesem Verzeichnis werden
+unabhängig von der Kernel-Konfiguration immer kompiliert, andere
+dagegen, die die Unterstützung spezieller Partitionierungsschemata
+implementieren, können individuell ein- oder ausgeschaltet werden.&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x22772.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x22924.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Das Verzeichnis kernel</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="tour.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Das Verzeichnis mm</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

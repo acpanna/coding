@@ -1,0 +1,368 @@
+<HTML
+><HEAD
+><TITLE
+>Die aktuelle Zeit ermitteln</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Der Lauf der Zeit"
+HREF="flow.html"><LINK
+REL="PREVIOUS"
+TITLE="Der Lauf der Zeit"
+HREF="flow.html"><LINK
+REL="NEXT"
+TITLE="Die Ausführung verzögern"
+HREF="x8199.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="flow.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 6. Der Lauf der Zeit</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x8199.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN8127"
+>Die aktuelle Zeit ermitteln</A
+></H1
+><P
+>&#13;
+
+Kernel-Code kann immer auf die aktuelle Uhrzeit zugreifen, indem der
+Wert von <TT
+CLASS="LITERAL"
+>jiffies</TT
+> ausgelesen wird. Die Tatsache, daß
+dieser Wert nur die Zeit seit dem letzten Booten angibt, ist
+normalerweise für den Treiber nicht relevant, weil er ohnehin nur
+so lange existiert, wie auch das System hochgefahren ist. Treiber
+können den aktuellen Wert von <TT
+CLASS="LITERAL"
+>jiffies</TT
+> verwenden, um
+die Intervalle zwischen Ereignissen zu berechnen (um beispielsweise
+einfache Klicks von Doppelklicks in Maus-Gerätetreibern zu
+unterscheiden). <TT
+CLASS="LITERAL"
+>jiffies</TT
+> ist also kurz gesagt fast
+immer ausreichend, wenn Sie Intervalle messen müssen; und wenn Sie
+sehr genaue Messungen für kurze Intervalle benötigen, können Sie immer
+noch prozessorspezifische Register verwenden.&#13;</P
+><P
+>Es ist unwahrscheinlich, daß ein Treiber jemals die aktuelle Uhrzeit
+wissen muß; das interessiert normalerweise nur Benutzerprogramme wie
+<SPAN
+CLASS="APPLICATION"
+>cron</SPAN
+> und
+<SPAN
+CLASS="APPLICATION"
+>at</SPAN
+>. Wenn so eine Fähigkeit benötigt wird,
+dann handelt es sich um eine sehr treiberspezifische Sache. In diesem
+Fall kann der Treiber die Uhrzeit problemlos von einem
+Benutzerprogramm bekommen, das die Konvertierung von der realen
+Uhrzeit in die Systemzeit leicht durchführen kann. Die direkte
+Verwendung der Uhrzeit in einem Treiber ist oft ein Zeichen dafür, daß
+eine Policy implementiert wird und Sie daher noch einmal einen
+genauen Blick darauf werfen sollten.&#13;</P
+><P
+>&#13;Wenn Ihr Treiber wirklich die aktuelle Uhrzeit wissen muß, dann kommt
+Ihnen die Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>do_gettimeofday</I
+></SPAN
+> zu
+Hilfe. Die Funktion gibt nicht etwa den aktuellen Tag in der Woche
+oder etwas ähnliches zurück, sondern füllt statt dessen einen Zeiger
+auf eine <TT
+CLASS="LITERAL"
+>struct timeval</TT
+> &#8212; genau wie der
+Systemaufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>gettimeofday</I
+></SPAN
+> &#8212; mit den
+üblichen Sekunden- und Mikrosekunden-Werten. Der Prototyp sieht
+folgendermaßen aus:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+
+#include &#60;linux/time.h&#62;
+void do_gettimeofday(struct timeval *tv);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+In den Quellen steht, daß <SPAN
+><I
+CLASS="EMPHASIS"
+>do_gettimeofday</I
+></SPAN
+>
+eine Auflösung &#8220;im Bereich von Mikrosekunden&#8221; auf
+vielen Architekturen hat. Die Präzision variiert aber von Architektur
+zu Architektur und kann in älteren Kerneln kleiner sein. Mit
+geringerer Präzision ist die aktuelle Zeit auch aus
+der Variablen <TT
+CLASS="LITERAL"
+>xtime</TT
+> erhältlich (Typ <TT
+CLASS="LITERAL"
+>struct
+timeval</TT
+>); es wird jedoch davon abgeraten, diesen Wert zu
+benutzen, weil Sie nicht atomar auf die
+<TT
+CLASS="LITERAL"
+>timeval</TT
+>-Felder <TT
+CLASS="LITERAL"
+>tv_sec</TT
+> und
+<TT
+CLASS="LITERAL"
+>tv_usec</TT
+> zugreifen können, es sei denn, Sie
+schalten die Interrupts ab. Ab dem Kernel 2.2 kann man die Zeit
+schnell und sicher, aber möglicherweise mit geringerer Präzision, mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>get_fast_time</I
+></SPAN
+> bekommen:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; void get_fast_time(struct timeval *tv);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+
+Der Code zum Lesen der aktuellen Uhrzeit steht im Modul
+<SPAN
+CLASS="APPLICATION"
+>jit</SPAN
+> ("Just In Time") in den Quelldateien
+auf dem O'Reilly-FTP-Server. <SPAN
+CLASS="APPLICATION"
+>jit</SPAN
+> erzeugt
+eine Datei namens <TT
+CLASS="FILENAME"
+>/proc/currentime</TT
+>, die beim
+Lesen drei Dinge in ASCII zurückgibt:</P
+><P
+></P
+><UL
+><LI
+><P
+>die aktuelle Uhrzeit, wie sie von <SPAN
+><I
+CLASS="EMPHASIS"
+>do_gettimeofday</I
+></SPAN
+>
+zurückgegeben wird</P
+></LI
+><LI
+><P
+>die aktuelle Uhrzeit laut <TT
+CLASS="LITERAL"
+>xtime</TT
+></P
+></LI
+><LI
+><P
+>den aktuellen <TT
+CLASS="LITERAL"
+>jiffies</TT
+>-Wert</P
+></LI
+></UL
+><P
+>Wir verwenden eine dynamische <TT
+CLASS="FILENAME"
+>/proc</TT
+>-Datei, weil
+das Modul so weniger Code enthält; es lohnt sich nicht, ein ganzes
+Gerät anzulegen, nur weil man drei Textzeilen zurückgeben möchte.</P
+><P
+>Wenn Sie <SPAN
+CLASS="APPLICATION"
+>cat</SPAN
+> mehrfach während eines
+Timer-Ticks aufrufen, sehen Sie den Unterschied zwischen
+<TT
+CLASS="LITERAL"
+>xtime</TT
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>do_gettimeofday</I
+></SPAN
+>, was die Tatsache
+widerspiegelt, daß <TT
+CLASS="LITERAL"
+>xtime</TT
+> seltener aktualisiert
+wird:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>morgana% <TT
+CLASS="USERINPUT"
+><B
+>cd /proc; cat currentime currentime currentime</B
+></TT
+>
+gettime: 846157215.937221
+xtime:   846157215.931188
+jiffies: 1308094
+gettime: 846157215.939950
+xtime:   846157215.931188
+jiffies: 1308094
+gettime: 846157215.942465
+xtime:   846157215.941188
+jiffies: 1308095</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="flow.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x8199.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Der Lauf der Zeit</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="flow.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Die Ausführung verzögern</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

@@ -1,0 +1,916 @@
+<HTML
+><HEAD
+><TITLE
+>open und release</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Zeichen-Treiber"
+HREF="char.html"><LINK
+REL="PREVIOUS"
+TITLE="Die Struktur file"
+HREF="charfile.html"><LINK
+REL="NEXT"
+TITLE="Die Verwendung von
+Speicher in scull"
+HREF="charscullmem.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="charfile.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 3. Zeichen-Treiber</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="charscullmem.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN2969"
+>open und release</A
+></H1
+><P
+>Nachdem wir uns jetzt die Felder kurz angeschaut haben, benutzen
+wir sie in echten <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Funktionen.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="CHAROPEN"
+>Die Methode open</A
+></H2
+><P
+>&#13;
+Die Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> wird von Treibern
+bereitgestellt, um mit Initialisierungen spätere Operationen
+vorzubereiten. Außerdem erhöht <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> normalerweise
+den Verwendungszähler des Gerätes, damit das Modul nicht entladen wird,
+bevor die Datei wieder geschlossen wird. Der Zähler, der in Abschnitt  in <A
+HREF="building.html"
+>Kapitel 2</A
+> beschrieben wird,
+wird dann von der Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>release</I
+></SPAN
+> wieder
+heruntergezählt.&#13;</P
+><P
+>In den meisten Treibern macht <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> folgendes:&#13;</P
+><P
+></P
+><UL
+><LI
+STYLE="list-style-type: dash"
+><P
+>Es inkrementiert den Verwendungszähler.</P
+></LI
+><LI
+STYLE="list-style-type: dash"
+><P
+>Es fragt gerätespezifische Fehler ab (beispielsweise könnte das Gerät
+nicht bereit sein oder andere Hardware-Fehler könnten auftreten).</P
+></LI
+><LI
+STYLE="list-style-type: dash"
+><P
+>Es initialisiert das Gerät, wenn es das erste Mal
+geöffnet wird.</P
+></LI
+><LI
+STYLE="list-style-type: dash"
+><P
+>Es identifiziert die Minor-Nummer und aktualisiert
+gegebenenfalls den <TT
+CLASS="LITERAL"
+>f_op</TT
+>-Zeiger.</P
+></LI
+><LI
+STYLE="list-style-type: dash"
+><P
+>Es alloziert und füllt Datenstrukturen, die in
+<TT
+CLASS="LITERAL"
+>filp-&#62;private_data</TT
+> untergebracht werden
+sollen.</P
+></LI
+></UL
+>ark=dash&#62;<P
+>In <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> hängen die meisten der obengenannten Aufgaben von der Minor-Nummer des geöffneten Gerätes
+ab. Daher muß als erstes das Gerät, um das es geht, identifiziert
+werden. Dazu sehen wir uns
+<TT
+CLASS="LITERAL"
+>inode-&#62;i_rdev</TT
+> an.&#13;</P
+><P
+>Wir haben bereits darüber gesprochen, daß der Kernel die Minor-Nummer
+des Gerätes selbst nicht verwendet, so daß der Treiber diese nach
+Belieben verwenden kann. In der Praxis werden verschiedene
+Minor-Nummern verwendet, um auf verschiedene Geräte zuzugreifen oder
+um ein und dasselbe Gerät auf verschiedene Arten zu
+öffnen. Beispielsweise verweisen <TT
+CLASS="FILENAME"
+>/dev/st0</TT
+>
+(Minor-Nummer 0) und <TT
+CLASS="FILENAME"
+>/dev/st1</TT
+> (Minor-Nummer 1)
+auf verschiedene SCSI-Bandlaufwerke, aber
+<SPAN
+><I
+CLASS="EMPHASIS"
+>/dev/nst0</I
+></SPAN
+> (Minor-Nummer 128) ist das gleiche
+physikalische Gerät wie <SPAN
+><I
+CLASS="EMPHASIS"
+>/dev/st0</I
+></SPAN
+>, verhält sich
+aber anders (es spult das Band nicht zurück, wenn das Gerät
+geschlossen wird). Alle Gerätedateien für Bandlaufwerke haben
+unterschiedliche Minor-Nummern, damit der Treiber sie
+auseinanderhalten kann.</P
+><P
+>Ein Treiber kennt selbst nie den Namen des Gerätes, das gerade
+geöffnet wird, nur die Gerätenummer. Benutzer können sich das zunutze
+machen, indem sie zur Bequemlichkeit Aliasnamen für Geräte anlegen. Wenn Sie zwei Gerätedateien mit dem gleichen Paar aus Minor-
+und Major-Nummer anlegen, dann sind das die gleichen Geräte, die
+Dateien können nicht unterschieden werden. Den gleichen Effekt
+erreichen Sie mit einem symbolischen oder harten Link; das ist auch
+die empfohlene Vorgehensweise.&#13;</P
+><P
+>Der <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Treiber verwendet Minor-Nummern
+folgendermaßen: Das höherwertige Nibble (vier Bits) identifiziert den
+Typ (die Personality) des Gerätes, und das niederwertige Nibble dient
+zur Unterscheidung zwischen den einzelnen Geräten, wenn der Typ mehr als eine
+Geräteinstanz unterstützt (<SPAN
+CLASS="APPLICATION"
+>scull0-3</SPAN
+> und
+<SPAN
+CLASS="APPLICATION"
+>scullpipe0-3</SPAN
+>). <SPAN
+CLASS="APPLICATION"
+>scull0</SPAN
+>
+unterscheidet sich also von <SPAN
+CLASS="APPLICATION"
+>scullpipe0</SPAN
+> im
+höherwertigen Nibble, <SPAN
+CLASS="APPLICATION"
+>scull0</SPAN
+> und
+<SPAN
+CLASS="APPLICATION"
+>scull1</SPAN
+> im niederwertigen Nibble.<A
+NAME="AEN3024"
+HREF="#FTN.AEN3024"
+>[1]</A
+> Zwei Makros (<TT
+CLASS="LITERAL"
+>TYPE</TT
+> und <TT
+CLASS="LITERAL"
+>NUM</TT
+>) werden
+                        definiert, um die Bits aus der Gerätenummer
+zu gewinnen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+#define TYPE(dev) (MINOR(dev) &#62;&#62; 4) /* oberes Nibble */
+#define NUM(dev) (MINOR(dev) &#38; 0xf) /* unteres Nibble */</PRE
+></TD
+></TR
+></TABLE
+><P
+>Zu jedem Gerätetyp definiert <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> eine
+spezifische Struktur <TT
+CLASS="LITERAL"
+>file_operations</TT
+>, die
+beim Öffnen in <TT
+CLASS="LITERAL"
+>filp-&#62;f_op</TT
+> eingesetzt
+wird. Der folgende Code zeigt, wie das Aufteilen in Bits und mehrfache
+<TT
+CLASS="LITERAL"
+>fops</TT
+> implementiert werden:
+
+&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+struct file_operations *scull_fop_array[]={
+ &#38;scull_fops,  /* type 0 */
+ &#38;scull_priv_fops, /* type 1 */
+ &#38;scull_pipe_fops, /* type 2 */
+ &#38;scull_sngl_fops, /* type 3 */
+ &#38;scull_user_fops, /* type 4 */
+ &#38;scull_wusr_fops /* type 5 */
+};
+#define SCULL_MAX_TYPE 5
+
+/* In scull_open wird fop_array entsprechend TYPE(dev) verwendet */
+ int type = TYPE(inode-&#62;i_rdev);
+
+  if (type &#62; SCULL_MAX_TYPE) return -ENODEV;
+  filp-&#62;f_op = scull_fop_array[type];</PRE
+></TD
+></TR
+></TABLE
+><P
+>Der Kernel ruft <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> entsprechend der
+Major-Nummer auf, und <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> verwendet dann die
+Minor-Nummer in den oben definierten Makros. <TT
+CLASS="LITERAL"
+>TYPE</TT
+>
+wird als Index in das Array
+<TT
+CLASS="LITERAL"
+>scull_fop_array</TT
+> verwendet, um den
+richtigen Satz von Methoden für den gerade geöffneten Gerätetyp zu
+bekommen.&#13;</P
+><P
+>In <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> haben wir die korrekte
+<TT
+CLASS="LITERAL"
+>file_operations</TT
+>-Struktur entsprechend des Typs der
+Minor-Nummer an
+<TT
+CLASS="LITERAL"
+>filp-&#62;f_op</TT
+> zugewiesen. Dann wird die in
+den neuen
+<TT
+CLASS="LITERAL"
+>fops</TT
+> definierte <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>-Methode
+aufgerufen. Normalerweise ruft ein Treiber seine eigenen
+<TT
+CLASS="LITERAL"
+>fops</TT
+> nicht auf, diese werden vom Kernel verwendet,
+um die richtige Treiber-Methode aufzurufen. Aber wenn die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>-Methode mit verschiedenen Gerätetypen
+umgehen können muß, dann kann es doch sinnvoll sein,
+<TT
+CLASS="LITERAL"
+>fops-&#62;open</TT
+> aufzurufen, nachdem der
+<TT
+CLASS="LITERAL"
+>fops</TT
+>-Zeiger entsprechend der Minor-Nummer des
+geöffneten Gerätes modifiziert wurde.&#13;</P
+><P
+>Der eigentliche Code von <SPAN
+><I
+CLASS="EMPHASIS"
+>scull_open</I
+></SPAN
+> steht
+hier. Er verwendet die oben definierten Makros <TT
+CLASS="LITERAL"
+>TYPE</TT
+>
+und <TT
+CLASS="LITERAL"
+>NUM</TT
+>, um die Minor-Nummer aufzuteilen:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+int scull_open(struct inode *inode, struct file *filp)
+{
+ Scull_Dev *dev; /* Geraeteinformation */
+ int num = NUM(inode-&#62;i_rdev);
+ int type = TYPE(inode-&#62;i_rdev);
+
+ /*
+  * Wenn private_data nicht gueltig ist, dann verwenden wir kein devfs
+  * und benutzen deswegen den Typ (aus der Minor-Nr.), um ein f_op
+  * auszuwaehlen
+  */
+ if (!filp-&#62;private_data &#38;&#38; type) {
+  if (type &#62; SCULL_MAX_TYPE) return -ENODEV;
+  filp-&#62;f_op = scull_fop_array[type];
+  return filp-&#62;f_op-&#62;open(inode, filp); /* an spezifisches open
+                                               * weiterleiten */
+ }
+
+ /* Typ 0, Geraetenummer ueberpruefen (sofern private_data nicht gueltig ist) */
+ dev = (Scull_Dev *)filp-&#62;private_data;
+ if (!dev) {
+  if (num &#62;= scull_nr_devs) return -ENODEV;
+  dev = &#38;scull_devices[num];
+  filp-&#62;private_data = dev; /* for other methods */
+ }
+
+ MOD_INC_USE_COUNT; /* Moeglicherweise vor dem Schlafen */
+ /* jetzt die Laenge des Geraets auf 0 setzen, wenn es nur zum Schreiben
+    geöffnet wurde */
+ if ( (filp-&#62;f_flags &#38; O_ACCMODE) == O_WRONLY) {
+  if (down_interruptible(&#38;dev-&#62;sem)) {
+   MOD_DEC_USE_COUNT;
+   return -ERESTARTSYS;
+  }
+  scull_trim(dev); /* Fehler ignorieren */
+  up(&#38;dev-&#62;sem);
+ }
+
+ return 0;   /* Erfolg */
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Hier sind wahrscheinlich noch einige Erklärungen angebracht. Die
+Datenstruktur, in der der Speicherbereich untergebracht wird, heißt
+<TT
+CLASS="LITERAL"
+>Scull_dev</TT
+> und wird gleich erläutert. Die globalen
+Variablen <TT
+CLASS="LITERAL"
+>scull_nr_devs</TT
+> und
+<TT
+CLASS="LITERAL"
+>scull_devices[]</TT
+> (alle in
+Kleinbuchstaben) geben die Anzahl der verfügbaren Geräte und das
+eigentliche Array von Zeigern in <TT
+CLASS="LITERAL"
+>Scull_dev</TT
+>
+an.</P
+><P
+>Die Aufrufe von <SPAN
+><I
+CLASS="EMPHASIS"
+>down_interruptible</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>up</I
+></SPAN
+> können Sie im Moment ignorieren, wir kommen
+darauf in Kürze zurück.</P
+><P
+>Der Code sieht ziemlich dürftig aus, weil er beim
+<SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> nicht auf bestimmte Geräte eingeht. Das muß
+auch nicht sein, weil die Geräte <TT
+CLASS="LITERAL"
+>scull0-3</TT
+> vom
+Design her global und persistent sind. Insbesondere gibt es kein
+&#8220;Initialisieren des Gerätes beim ersten Öffnen&#8221;, weil wir
+keinen Zähler der geöffneten <SPAN
+><I
+CLASS="EMPHASIS"
+>sculls</I
+></SPAN
+> mitführen,
+nur den Verwendungszähler des Moduls.&#13;</P
+><P
+>In Anbetracht der Tatsache, daß der Kernel den Verwendungszähler des
+Moduls über das <TT
+CLASS="LITERAL"
+>owner</TT
+>-Feld in der Struktur
+<TT
+CLASS="LITERAL"
+>file_operations</TT
+> verwalten kann, wundern Sie sich
+vielleicht, warum wir das hier manuell machen. Das liegt daran, daß
+Module in älteren Kerneln die gesamte Verwaltungsarbeit selbst machen
+mußten; es gab den <TT
+CLASS="LITERAL"
+>owner</TT
+>-Mechanismus damals noch
+nicht. Um zu älteren Kerneln portabel zu sein, implementiert
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> seinen eigenen
+Verwendungszähler. Dieses Verhalten führt dazu, daß der
+Verwendungszähler auf 2.4-Systemen zu groß ist, was aber kein Problem
+ist, denn er fällt gleichwohl auf Null zurück, wenn das Modul nicht
+verwendet wird.</P
+><P
+>&#13;
+Die einzige reale Operation, die hier auf dem Gerät vorgenommen wird,
+ist das Verkürzen auf eine Länge von Null, wenn das Gerät zum
+Schreiben geöffnet wird. Das Überschreiben des Gerätes mit einer
+kürzeren Datei führt zu einem kleineren Gerätedatenbereich, ähnlich
+wie das Öffnen einer normalen Datei zum Schreiben die Datei auf Null
+verkürzt. Die Operation tut nichts, wenn das Gerät zum Lesen geöffnet
+ist.</P
+><P
+>Später, wenn wir uns die anderen Personalities von
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> anschauen, werden wir noch sehen, wie
+richtige Initialisierungen funktionieren.
+&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN3088"
+>Die Methode release</A
+></H2
+><P
+>&#13;
+
+Die Aufgabe der Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>release</I
+></SPAN
+> ist das Gegenstück
+zu <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>. Manchmal wird die Methodenimplementation
+auch <TT
+CLASS="REPLACEABLE"
+><I
+>device</I
+></TT
+><TT
+CLASS="LITERAL"
+>_close</TT
+>
+anstelle von
+<TT
+CLASS="REPLACEABLE"
+><I
+>device</I
+></TT
+><TT
+CLASS="LITERAL"
+>_release</TT
+>
+genannt. In jedem Falle sollte sie aber folgende Aufgaben erfüllen:&#13;</P
+><P
+></P
+><UL
+><LI
+STYLE="list-style-type: dash"
+><P
+>deallozieren von allem, das <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>
+in <TT
+CLASS="LITERAL"
+>filp-&#62;private_data</TT
+> alloziert
+hat</P
+></LI
+><LI
+STYLE="list-style-type: dash"
+><P
+>beim letzten Schließen das Gerät herunterfahren</P
+></LI
+><LI
+STYLE="list-style-type: dash"
+><P
+>Verwendungszähler dekrementieren</P
+></LI
+></UL
+>ark=dash&#62;<P
+>Die grundlegende Form von <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> muß das
+Gerät nicht herunterfahren, so daß der benötigte Code minimal
+ist:<A
+NAME="AEN3116"
+HREF="#FTN.AEN3116"
+>[2]</A
+>&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+int scull_release (struct inode *inode, struct file *filp)
+{
+    MOD_DEC_USE_COUNT;
+    return 0;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Das Dekrementieren des Verwendungszählers ist wichtig, weil der Kernel
+das Modul nicht entladen kann, solange der Zähler nicht auf Null
+zurückgeht.&#13;</P
+><P
+>Wie kann der Zähler konsistent bleiben, wenn eine Datei manchmal
+geschlossen wird, ohne vorher geöffnet worden zu sein? Wir wissen
+alle, daß <SPAN
+><I
+CLASS="EMPHASIS"
+>dup</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>fork</I
+></SPAN
+> aus
+einer geöffneten Datei zwei machen, ohne <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>
+aufzurufen, aber jede dieser Dateien wird beim Beenden des Programms
+wieder geschlossen. Beispielsweise öffnen die meisten Programme ihre
+<TT
+CLASS="LITERAL"
+>stdin</TT
+>-Datei (oder ihr <TT
+CLASS="LITERAL"
+>stdin</TT
+>-Gerät) nicht, aber alle
+schließen sie letztendlich.&#13;</P
+><P
+>Die Antwort ist einfach: Nicht jeder
+<SPAN
+><I
+CLASS="EMPHASIS"
+>close</I
+></SPAN
+>-Systemaufruf verursacht einen Aufruf der
+Methode <TT
+CLASS="LITERAL"
+>release</TT
+>. Nur diejenigen, die wirklich die
+Gerätedatenstruktur freigeben, rufen auch die Methode auf &#8212;
+daher auch der Name. Der Kernel verwaltet einen Zähler, der registriert, wie oft eine
+<TT
+CLASS="LITERAL"
+>file</TT
+>-Struktur verwendet wird. Weder
+<SPAN
+><I
+CLASS="EMPHASIS"
+>fork</I
+></SPAN
+> noch <SPAN
+><I
+CLASS="EMPHASIS"
+>dup</I
+></SPAN
+> erzeugen eine
+neue <TT
+CLASS="LITERAL"
+>file</TT
+>-Struktur (das tut nur
+<SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>); sie inkrementieren nur den Zähler in der
+existierenden Struktur.&#13;</P
+><P
+>Der Systemaufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>close</I
+></SPAN
+> führt die
+Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>release</I
+></SPAN
+> nur dann aus, wenn der Zähler der
+Struktur auf Null fällt, was genau dann passiert, wenn die Struktur
+zerstört wird. Dieser Zusammenhang zwischen der Methode
+<TT
+CLASS="LITERAL"
+>release</TT
+> und dem Systemaufruf
+<SPAN
+><I
+CLASS="EMPHASIS"
+>close</I
+></SPAN
+> garantiert, daß der Verwendungszähler von
+Modulen immer konsistent ist.</P
+><P
+>Beachten Sie, daß die Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>flush</I
+></SPAN
+> immer dann
+aufgerufen wird, wenn eine Applikation <SPAN
+><I
+CLASS="EMPHASIS"
+>close</I
+></SPAN
+>
+aufruft. Nur wenige Treiber implementieren <SPAN
+><I
+CLASS="EMPHASIS"
+>flush</I
+></SPAN
+>
+aber, weil es normalerweise nichts beim Schließen zu tun gibt, solange
+<SPAN
+><I
+CLASS="EMPHASIS"
+>release</I
+></SPAN
+> nicht im Spiel ist.</P
+><P
+>Wie Sie sich vielleicht vorstellen können, gilt all das hier Gesagte
+auch, wenn die Applikation beendet wird, ohne explizit ihre offenen
+Dateien zu schließen: Der Kernel schließt automatisch alle offenen
+Dateien beim Beenden des Prozesses, indem er den Systemaufruf
+<SPAN
+><I
+CLASS="EMPHASIS"
+>close</I
+></SPAN
+> intern aufruft.
+
+&#13;</P
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN3024"
+HREF="x2969.html#AEN3024"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Die Aufteilung in verschiedene Bits ist eine
+                        typische Anwendungsweise für Minor-Nummern. Der
+                        IDE-Treiber verwendet beispielsweise die oberen beiden
+                        Bits für die Plattennummer und die unteren sechs Bits für
+                        die Partitionsnummer.</P
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN3116"
+HREF="x2969.html#AEN3116"
+>[2]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Die anderen Arten des Gerätes werden von anderen
+                        Funktionen geschlossen, weil
+                        <SPAN
+><I
+CLASS="EMPHASIS"
+>scull_open</I
+></SPAN
+> andere Werte in
+                        <TT
+CLASS="LITERAL"
+>filp-&#62;f_op</TT
+> eingesetzt
+                        hat. Diese Funktionen werden wir später sehen.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="charfile.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="charscullmem.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Die Struktur file</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="char.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Die Verwendung von
+Speicher in scull</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

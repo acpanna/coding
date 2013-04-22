@@ -1,0 +1,276 @@
+<HTML
+><HEAD
+><TITLE
+>Abwärtskompatibilität</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Hardware-Verwaltung"
+HREF="hard.html"><LINK
+REL="PREVIOUS"
+TITLE="I/O-Speicher verwenden"
+HREF="hardmem.html"><LINK
+REL="NEXT"
+TITLE="Schnellreferenz"
+HREF="x11066.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="hardmem.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 8. Hardware-Verwaltung</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x11066.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="HARDBACK"
+>Abwärtskompatibilität</A
+></H1
+><P
+>&#13;Glücklicherweise hat sich im Bereich des grundlegenden
+Hardware-Zugriffs wenig geändert. Es gibt nur einige wenige Dinge, die
+Sie beachten müssen, wenn Sie abwärtskompatible Treiber schreiben.</P
+><P
+>&#13;
+Hardware-Speicherbarrieren existierten in der Version 2.0 des Kernels
+noch nicht. Auf den damals unterstützten Plattformen waren solche
+Anweisungen nicht notwendig. Wenn Sie <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> in
+Ihrem Treiber einbinden, erledigt sich das Problem dadurch, daß die
+Hardware-Barrieren als synonym mit den Software-Barrieren definiert
+werden.</P
+><P
+>Gleichermaßen wurden nicht alle Port-Zugriffsfunktionen (wie
+<SPAN
+><I
+CLASS="EMPHASIS"
+>inb</I
+></SPAN
+>) auf allen Architekturen in älteren Kerneln
+unterstützt. Insbesondere die String-Funktionen waren oft nicht
+vorhanden. Wir liefern die fehlenden Funktionen in
+<TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> nicht nach: Es wäre nicht besonders
+einfach, das sauber durchzuführen, und es ist höchstwahrscheinlich auch
+nicht die Mühe wert, wenn man bedenkt, wie Hardware-abhängig diese
+Funktionen sind.</P
+><P
+>&#13;
+
+
+In Linux 2.0 hießen <SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>iounmap</I
+></SPAN
+> <SPAN
+><I
+CLASS="EMPHASIS"
+>vremap</I
+></SPAN
+>
+und <SPAN
+><I
+CLASS="EMPHASIS"
+>vfree</I
+></SPAN
+>. Die Parameter und die Funktionalität
+waren gleich. Daher reichen oft einige Definitionen, die die
+Funktionsnamen auf ihre älteren Gegenstücke abbilden.</P
+><P
+>Unglücklicherweise funktionierte <SPAN
+><I
+CLASS="EMPHASIS"
+>vremap</I
+></SPAN
+> zwar beim
+Zugriff auf &#8220;hohen&#8221; Speicher (wie auf PCI-Karten) wie
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+>, weigerte sich aber, die
+ISA-Speicherbereiche abzubilden. Damals wurde auf diesen Speicher
+direkt über Zeiger zugegriffen, so daß es nicht notwendig war, den
+Adreßraum abzubilden. Eine vollständigere Lösung, um
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+> für Linux 2.0 auf der x86-Plattform
+nachzubilden, sieht also folgendermaßen aus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+extern inline void *ioremap(unsigned long phys_addr, unsigned long size)
+{
+    if (phys_addr &#62;= 0xA0000 &#38;&#38; phys_addr + size &#60;= 0x100000)
+        return (void *)phys_addr;
+    return vremap(phys_addr, size);
+}
+
+extern inline void iounmap(void *addr)
+{
+    if ((unsigned long)addr &#62;= 0xA0000
+            &#38;&#38; (unsigned long)addr &#60; 0x100000)
+        return;
+    vfree(addr);
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wenn Sie <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> in Ihren Treibern verwenden,
+können Sie <SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+> selbst beim Zugriff auf
+ISA-Speicher problemlos verwenden.</P
+><P
+>Die Allokation von Speicherregionen (mit <SPAN
+><I
+CLASS="EMPHASIS"
+>check_mem_region</I
+></SPAN
+>
+und verwandten Funktionen) wurde im Kernel 2.3.17 eingeführt. In den 2.0- und
+2.2-Kerneln gab es keine zentrale Möglichkeit, Speicher-Ressourcen zu
+allozieren. Sie können die Makros bei Verwendung von
+<TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> aber trotzdem einsetzen, weil sie die
+drei Makros unter 2.0 und 2.2 leer definieren.&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="hardmem.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x11066.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>I/O-Speicher verwenden</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="hard.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Schnellreferenz</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

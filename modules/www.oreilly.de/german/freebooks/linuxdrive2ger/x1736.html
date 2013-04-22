@@ -1,0 +1,622 @@
+<HTML
+><HEAD
+><TITLE
+>Abwärtskompatibilität</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Module erstellen und starten"
+HREF="building.html"><LINK
+REL="PREVIOUS"
+TITLE="Im User-Space arbeiten"
+HREF="x1670.html"><LINK
+REL="NEXT"
+TITLE="Schnellreferenz"
+HREF="x1916.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x1670.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 2. Module erstellen und starten</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x1916.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN1736"
+>Abwärtskompatibilität</A
+></H1
+><P
+>Der Linux-Kernel ist ein sich bewegendes Ziel; viele Dinge ändern sich
+während der Entwicklung neuer Features. Die Schnittstelle, die wir in
+diesem Kapitel beschrieben haben, ist diejenige, die Sie im 2.4-Kernel
+vorfinden werden; wenn Ihr Code auch mit älteren Versionen laufen
+soll, müssen Sie einige Änderungen vornehmen.</P
+><P
+>Dies ist der erste von vielen Abschnitten mit dem Titel
+"Abwärtskompatibilität" in diesem Buch. Am Ende jedes Kapitels werden
+wir die Dinge behandeln, die sich seit der Kernel-Version 2.0
+verändert haben, und beschreiben, was Sie tun müssen, damit Ihr Code portabel
+wird.</P
+><P
+>&#13;
+Zunächst einmal wurde das Makro <TT
+CLASS="LITERAL"
+>KERNEL_VERSION</TT
+> mit
+der Version 2.1.90 eingeführt. Die Header-Datei
+<TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> enthält einen Ersatz für die Kernel, die
+das benötigen.</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN1748"
+>Änderungen in der Ressourcen-Verwaltung</A
+></H2
+><P
+>&#13;
+
+Die neue Ressourcen-Verwaltung bringt einige Portabilitätsprobleme mit
+sich, wenn Sie einen Treiber schreiben wollen, der mit
+Kernel-Versionen vor 2.4 funktioniert. In diesem Abschnitt beschreiben
+wir, auf welche Probleme Sie stoßen werden und wie die Header-Datei
+<TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> versucht, die Probleme vor Ihnen zu
+verbergen.</P
+><P
+>&#13;
+
+Die offensichtlichste Änderung im neuen Code zur
+Ressourcen-Verwaltung ist das Hinzufügen von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request_mem_region</I
+></SPAN
+> und verwandten
+Funktionen. Ihre Rolle beschränkt sich auf den Zugriff auf die
+I/O-Speicher-Datenbank, ohne bestimmte Operationen auf irgendwelcher
+Hardware durchzuführen. In älteren Kerneln sollten Sie also diese
+Funktionen einfach nicht aufrufen. Das geht leicht mit der
+Header-Datei <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+>, die diese Funktionen
+einfach als Makros definiert, die in Kerneln vor der Version 2.4
+<TT
+CLASS="LITERAL"
+>0</TT
+> zurückgeben.</P
+><P
+>&#13;
+
+Ein weiterer Unterschied zwischen 2.4 und früheren Kernel-Versionen
+besteht in den Prototypen von <SPAN
+><I
+CLASS="EMPHASIS"
+>request_region</I
+></SPAN
+> und
+zugehörigen Funktionen selbst.</P
+><P
+>Kernel vor 2.4 haben sowohl
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request_region</I
+></SPAN
+> als auch
+<SPAN
+><I
+CLASS="EMPHASIS"
+>release_region</I
+></SPAN
+> als Funktionen deklariert, die
+<TT
+CLASS="LITERAL"
+>void</TT
+> zurückgeben, (und erzwangen damit den
+vorhergehenden Aufruf von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>check_region</I
+></SPAN
+>). Die neue Implementation enthält
+jetzt Funktionen, die einen Zeiger-Wert zurückgeben, so daß Fehler
+gemeldet werden können (was
+<SPAN
+><I
+CLASS="EMPHASIS"
+>check_region</I
+></SPAN
+> ziemlich nutzlos macht). Der
+Zeiger-Wert selbst kann in Treiber-Code für nichts als einen Test
+auf <TT
+CLASS="LITERAL"
+>NULL</TT
+> verwendet werden; dieser Wert bedeutet,
+daß die Anforderung fehlgeschlagen ist.</P
+><P
+>Wenn Sie sich ein paar Zeilen Code in Ihren Treibern sparen wollen und
+Ihnen die Abwärtskompatibilität egal ist, dann können Sie auch die
+neuen Funktionsaufrufe ausnutzen und die Verwendung von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>check_region</I
+></SPAN
+> in Ihrem Code
+vermeiden. <SPAN
+><I
+CLASS="EMPHASIS"
+>check_region</I
+></SPAN
+> ist jetzt mit Hilfe von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request_region</I
+></SPAN
+> implementiert, gibt den
+I/O-Bereich frei und meldet eine erfolgreiche Ausführung, wenn die
+Anfrage erfüllt werden konnte; der zusätzliche Aufwand ist
+vernachlässigbar, weil keine dieser Funktionen jemals aus
+zeitkritischem Code aufgerufen wird.</P
+><P
+>Wenn Sie lieber portablen Code haben möchten, dann können Sie es beim
+weiter oben vorgeschlagenen Code belassen und die Rückgabewerte von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request_region</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>release_region</I
+></SPAN
+>
+ignorieren. <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> deklariert die beiden
+Funktionen sowieso als Makros, die 0 (Erfolg) zurückgeben, so daß Sie
+sowohl portabel sein als auch den Rückgabewert jeder
+aufgerufenen Funktion abfragen können.</P
+><P
+>Der letzte Unterschied in der I/O-Registry zwischen Version 2.4 und
+früheren Kernel-Versionen besteht in den Datentypen, die für die
+Argumente <TT
+CLASS="LITERAL"
+>start</TT
+> und <TT
+CLASS="LITERAL"
+>len</TT
+>
+verwendet werden. Während neuere Kernel immer <TT
+CLASS="LITERAL"
+>unsigned
+long</TT
+> verwenden, benutzen ältere Kernel kürzere Typen. Diese
+Änderung hat aber keinen Einfluß auf die Portabilität des Treibers.&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN1806"
+>Kompilieren auf Multiprozessor-Systemen</A
+></H2
+><P
+>&#13;
+
+
+In der Version 2.0 des Kernels wurde die Konfigurationsoption
+<TT
+CLASS="LITERAL"
+>CONFIG_SMP</TT
+> nicht verwendet, um Kernel auf SMP-Systemen zu bauen; statt dessen wurde eine globale Zuweisung im
+Haupt-<TT
+CLASS="FILENAME"
+>Makefile</TT
+> des Kernels benutzt. Beachten Sie,
+daß Module, die für einen SMP-Rechner kompiliert worden sind, nicht
+in einem Einzelprozessor-Kernel laufen und umgekehrt; es ist also
+wichtig, daß hier nichts durcheinandergerät.</P
+><P
+>Der Beispiel-Code zu diesem Buch kümmert sich automatisch um SMP in
+den Makefiles, so daß der oben gezeigte Code nicht in jedes Modul
+kopiert werden muß. Allerdings unterstützen wir kein SMP in der
+Kernel-Version 2.0. Dies sollte aber kein Problem sein, weil die
+Multiprozessor-Unterstützung in Linux 2.0 ohnehin nicht so besonders
+stabil war; alle, die SMP-Systeme verwenden, sollten 2.2 oder 2.4
+benutzen. Version 2.0 wird in diesem Buch behandelt, weil das immer
+noch die Plattform der Wahl (insbesondere in der MMU-freien
+Implementation) für kleine eingebettete Systeme ist. Solche Systeme
+haben aber nicht mehrere Prozessoren.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN1823"
+>Symbole in Linux 2.0 exportieren</A
+></H2
+><P
+>&#13;
+
+
+
+Der Mechanismus zum Exportieren von Symbolen in Linux 2.0 wurde um
+eine Funktion namens <SPAN
+><I
+CLASS="EMPHASIS"
+>register_symtab</I
+></SPAN
+> herum
+entwickelt. Ein Linux 2.0-Modul baut eine Tabelle mit allen zu
+exportierenden Symbolen auf und ruft dann aus seiner
+Initialisierungsfunktion heraus <SPAN
+><I
+CLASS="EMPHASIS"
+>register_symtab</I
+></SPAN
+>
+auf. Nur in dieser expliziten Symboltabelle aufgeführte Symbole wurden
+an den Kernel exportiert. Wenn die Funktion dagegen gar nicht
+aufgerufen wurde, wurden alle globalen Symbole exportiert.</P
+><P
+>&#13;
+Wenn Ihr Modul keine Symbole exportieren muß und Sie nicht alles als
+<TT
+CLASS="LITERAL"
+>static</TT
+> deklarieren wollen, dann verstecken Sie
+einfach die globalen Symbole durch Hinzufügen der gleich gezeigten
+Zeile zu <SPAN
+><I
+CLASS="EMPHASIS"
+>init_module</I
+></SPAN
+>. Dieser Aufruf von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>register_symtab</I
+></SPAN
+> überschreibt einfach die
+Default-Symboltabelle des Moduls mit einer leeren Tabelle:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; register_symtab(NULL);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Genau so ist <TT
+CLASS="LITERAL"
+>EXPORT_NO_SYMBOLS</TT
+> in
+<TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> definiert, wenn für die Version 2.0
+kompiliert wird. Aus diesem Grund muß
+<TT
+CLASS="LITERAL"
+>EXPORT_NO_SYMBOLS</TT
+> auch in
+<SPAN
+><I
+CLASS="EMPHASIS"
+>init_module</I
+></SPAN
+> stehen, um unter Linux 2.0 korrekt zu
+funktionieren.</P
+><P
+>Wenn Sie aber Symbole aus Ihrem Modul exportieren müssen, dann müssen
+Sie eine Symboltabellenstruktur erzeugen, die diese Symbole
+beschreibt. Das Füllen einer solchen Struktur für Linux 2.0 ist eine
+knifflige Aufgabe, aber die Kernel-Entwickler haben Header-Dateien
+geschrieben, die die Sache vereinfachen. Die folgenden Code-Zeilen
+zeigen, wie eine Symboltabelle mittels der Header-Dateien von Linux
+2.0 deklariert und exportiert wird:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+static struct symbol_table skull_syms = {
+
+#include &#60;linux/symtab_begin.h&#62;
+  X(skull_fn1),
+  X(skull_fn2),
+  X(skull_variable),
+#include &#60;linux/symtab_end.h&#62;
+        };
+
+ register_symtab(&#38;skull_syms);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+Das Schreiben portablen Codes, der die Sichtbarkeit von Symbolen
+steuert, erfordert spezielle Maßnahmen des
+Treiber-Programmierers. Dies ist ein Fall, in dem es nicht reicht,
+einige Kompatibilitätsmakros zu definieren; statt dessen gilt es, eine nicht
+zu vernachlässigende Menge von bedingtem Präprozessor-Code zu
+schreiben. Die Konzepte aber sind einfach. Zunächst müssen die zu
+verwendende Kernel-Version ermittelt und einige Symbole entsprechend
+definiert werden. Wir haben uns entschieden, in
+<TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> ein Makro namens
+<TT
+CLASS="LITERAL"
+>REGISTER_SYMTAB()</TT
+> zu definieren, das in Version 2.2
+und neuer zu nichts expandiert und in Version 2.0 zu
+<SPAN
+><I
+CLASS="EMPHASIS"
+>register_symtab</I
+></SPAN
+>. Außerdem wird
+<TT
+CLASS="LITERAL"
+>__USE_OLD_SYMTAB__</TT
+> definiert, wenn alter Code
+verwendet werden muß.</P
+><P
+>&#13;Durch Verwendung dieses Codes kann ein Modul, das Symbole exportiert,
+dies jetzt portabel tun. Im Beispiel-Code finden Sie ein Modul namens
+<TT
+CLASS="FILENAME"
+>misc-modules/export.c</TT
+>, das nichts tut, außer ein
+Symbol zu exportieren. Dieses Modul, das in &#8220;<A
+HREF="kerver.html"
+>the Section called <I
+>Versionskontrolle in Modulen</I
+> in Kapitel 11</A
+>&#62;&#8221;
+in <A
+HREF="kerneld.html"
+>Kapitel 11</A
+>&#62; genauer besprochen wird, enthält die
+folgenden Zeilen, um das Symbol portabel zu exportieren:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+#ifdef _&#8201;_USE_OLD_SYMTAB_&#8201;_
+ static struct symbol_table export_syms = {
+  #include &#60;linux/symtab_begin.h&#62;
+  X(export_function),
+  #include &#60;linux/symtab_end.h&#62;
+ };
+#else
+ EXPORT_SYMBOL(export_function);
+#endif
+
+int export_init(void)
+{
+ REGISTER_SYMTAB(&#38;export_syms);
+ return 0;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wenn <TT
+CLASS="LITERAL"
+>_&#8201;_USE_OLD_SYMTAB_&#8201;_</TT
+> gesetzt ist
+(es sich also um einen 2.0-Kernel handelt), dann wird die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>symbol_table</I
+></SPAN
+>-Struktur wie benötigt definiert;
+ansonsten wird <TT
+CLASS="LITERAL"
+>EXPORT_SYMBOL</TT
+> verwendet, um das
+Symbol direkt zu exportieren. In <TT
+CLASS="FILENAME"
+>init_module</TT
+> wird
+dann <TT
+CLASS="LITERAL"
+>REGISTER_SYMTAB</TT
+> aufgerufen, was auf allen
+anderen Kerneln als 2.0 zu nichts expandiert.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN1887"
+>Modul-Konfigurationsparameter</A
+></H2
+><P
+>&#13;&#62;
+&#62;
+&#62;
+&#62;
+
+
+
+
+<TT
+CLASS="LITERAL"
+>MODULE_PARM</TT
+> wurde mit der Kernel-Version 2.1.18
+eingeführt. Im 2.0-Kernel wurden keine Parameter explizit
+deklariert. Statt dessen konnte <SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+> den
+Wert beliebiger Variablen im Modul ändern. Dieses Verfahren hatte den
+Nachteil, dem Benutzer Zugriff auf Variablen zu geben, die nicht für
+solchen Zugriff vorgesehen waren; außerdem war keine Typenüberprüfung
+der Parameter möglich. <TT
+CLASS="LITERAL"
+>MODULE_PARM</TT
+> macht
+Modul-Parameter viel sauberer und sicherer, macht aber auch Linux 2.2-Module
+inkompatibel zu 2.0-Kerneln.</P
+><P
+>&#62;
+Wenn die Kompatibilität mit 2.0 für Sie ein Problem ist, dann kann ein
+einfacher Präprozessor-Test verwendet werden, um die diversen
+<TT
+CLASS="LITERAL"
+>MODULE_</TT
+>-Makros so zu definieren, daß sie nichts tun. Die
+Header-Datei <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> im Beispiel-Code definiert
+diese Makros bei Bedarf.</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x1670.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x1916.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Im User-Space arbeiten</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="building.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Schnellreferenz</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

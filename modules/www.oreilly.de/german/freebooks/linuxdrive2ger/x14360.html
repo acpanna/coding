@@ -1,0 +1,192 @@
+<HTML
+><HEAD
+><TITLE
+>Abwärtskompatibilität</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="kmod und fortgeschrittene Modularisierung"
+HREF="kerneld.html"><LINK
+REL="PREVIOUS"
+TITLE="Versionskontrolle in Modulen"
+HREF="kerver.html"><LINK
+REL="NEXT"
+TITLE="Schnellreferenz"
+HREF="x14393.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="kerver.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 11. kmod und fortgeschrittene Modularisierung</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x14393.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN14360"
+>Abwärtskompatibilität</A
+></H1
+><P
+>&#13;Das Laden bei Bedarf wurde in der 2.1-Entwicklungsserie vollständig
+neu implementiert. Glücklicherweise bekommen das nur sehr wenige
+Module zu spüren. Der Vollständigkeit halber beschreiben wir die
+alte Implementation hier aber trotzdem.</P
+><P
+>&#13;Beim 2.0-Kernel wurde das Laden bei Bedarf von einem
+separaten Daemon-Prozeß im User-Space (namens
+<SPAN
+CLASS="APPLICATION"
+>kerneld</SPAN
+>) erledigt. Dieser Prozeß war an den
+Kernel über eine spezielle Schnittstelle angebunden und empfing
+Anfragen zum Laden (und Entladen) von Modulen vom Kernel-Code. Das
+hatte eine Vielzahl von Nachteilen, darunter auch den, daß Module
+nicht geladen werden konnten, bis die System-Initialisierung weit genug
+fortgeschritten war, um <SPAN
+CLASS="APPLICATION"
+>kerneld</SPAN
+> zu starten.</P
+><P
+>&#13;
+
+
+Die Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>request_module</I
+></SPAN
+> blieb dagegen
+unverändert, wie auch die Module selbst. Allerdings mußte damals
+<TT
+CLASS="LITERAL"
+>&#60;linux/kerneld.h&#62;</TT
+> anstelle von
+<TT
+CLASS="LITERAL"
+>&#60;linux/kmod.h&#62;</TT
+> eingebunden werden.</P
+><P
+>&#13;Die Versionssymbole im 2.0-Kernel verwendeten das Präfix
+<TT
+CLASS="LITERAL"
+>smp_</TT
+> auf SMP-Systemen nicht. Deswegen lud
+<SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+> ohne zu klagen ein SMP-Modul in
+einen Einzelprozessor-Kernel und umgekehrt. Das Ergebnis einer
+solchen mangelnden Übereinstimmung war normalerweise extremes Chaos.</P
+><P
+>User Mode-Hilfsprogramme und der Mechanismus zur Kommunikation
+zwischen Modulen stehen erst seit Linux 2.4 zur Verfügung.&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="kerver.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x14393.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Versionskontrolle in Modulen</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="kerneld.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Schnellreferenz</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

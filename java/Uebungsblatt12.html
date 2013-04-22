@@ -1,0 +1,267 @@
+<HTML>
+ <HEAD>
+   <TITLE>
+     &Uuml;bungsblatt 12, 08.02.2000
+   </TITLE>
+ </HEAD>
+ <BODY>
+   <H1>
+     &Uuml;bungsblatt 12, 08.02.2000
+   </H1>
+   <H2>
+     Abgabetermin: Mo, 14.02.2000, 23:59 Uhr
+   </H2>
+
+<P>
+<DIV ALIGN="right">
+  <A HREF="mailto:Robert.Baier@uni-bayreuth.de">R. Baier</A> <BR>
+  <A HREF="mailto:hiwi512@btcipmatx1.cip.uni-bayreuth.de">M. Butscher</A> <BR>
+  <A HREF="mailto:hiwi501@btcipmatx1.cip.uni-bayreuth.de">P. Lerner</A>
+  <BR CLEAR="all">
+</DIV>
+</P>
+
+Das &Uuml;bungsblatt besteht aus der Aufgabe <A HREF="#A29">29</A>, 
+der Teamaufgabe <A HREF="#A30">30</A> und der freiwillige Aufgabe
+<A HREF="#A31">31</A> mit jeweils 4 Punkten. <BR>
+Das &Uuml;bungsblatt inkl. aller Sourcecodes, Bilder, HTML-Seiten, ... kann auch
+als
+
+<UL>
+  <LI><A HREF="blatt_12.tar.gz"><TT>gzip</TT>'tes <TT>tar</TT>-Archive</A>
+  </LI>
+  <LI>
+      <A HREF="blatt_12.zip"><TT>ZIP</TT>-Archive</A>
+  </LI>
+</UL>
+heruntergeladen werden. <BR>
+<EM>Beachten Sie die <A HREF="http://www.uni-bayreuth.de/departments/math/~rbaier/lectures/java/uebung/allgemein/hinweise.html">allgemeinen Abgabehinweise</A>!!</EM>
+
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A29">&nbsp;</A>
+
+   <H2>
+     Aufgabe 29 <BR>
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi501@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Peter Lerner)
+   </H3>
+
+<P>
+  Schreiben Sie eine Java-Applikation, die eine Datei aus einem bestimmten
+  Verzeichnis einladen und anzeigen soll. Das Layout der Applikation soll in etwa
+  dem im folgenden Bild gleichen:
+  
+  <BLOCKQUOTE>
+    <IMG SRC="FileApplikation.gif" WIDTH=0 HEIGHT=0 ALT="Screenshot der Applikation">
+  </BLOCKQUOTE>
+  
+  Zur Auswahl des Verzeichnisnamens soll ein Auswahlelement von Java dienen,
+  das z.B. unter Windows die Verzeichnisse
+  
+  <PRE>
+    c:\windows
+    d:\work
+    k:\
+  </PRE>
+  
+  anbietet bzw. unter Unix die Verzeichnisse
+  
+  <PRE>
+    /usr/lib/java/lib
+    /home/oop03
+    /home/oop03/java
+  </PRE>
+  
+  Der Dateiname soll in einem unver&auml;nderbaren <TT>TextField</TT>-Objekt
+  angezeigt werden, der Inhalt der Datei in einem unver&auml;nderbaren 
+  <TT>TextArea</TT>-Objekt.
+</P>
+
+<P>
+  <B>Vorgehen:</B> <BR>
+  Nach erfolgreicher Auswahl eines Verzeichnisnamens soll ein sogenannter
+  File-Dialog zur Auswahl eines Files in dem gew&uuml;nschten Verzeichnis 
+  aufgehen. Hier bietet Java die Klasse <TT>FileDialog</TT> an, deren Objekte
+  eigenst&auml;ndige Fenster zur Auswahl von Filenamen sind. Bei dem 
+  Konstruktor muss das <TT>Frame</TT>-Objekt mit angegeben werden, von dem
+  aus sich der File-Dialog &ouml;ffnen soll. Das gew&uuml;nschte Verzeichnis
+  muss dem <TT>FileDialog</TT>-Objekt durch die Methode <TT>setDirectory()</TT>
+  mitgeteilt werden. Damit die Benutzerin/der Benutzer gezwungen ist, zuerst den
+  File-Dialog zu beenden, bevor sie/er zur&uuml;ck zum Applikations-<TT>Frame</TT>
+  kommt, sollte der File-Dialog mit <TT>setModal(true)</TT> auf modalen Dialog
+  eingestellt werden. Danach kann der File-Dialog mit <TT>show()</TT> angezeigt
+  werden. Durch erfolgreiche Dateiauswahl bzw. durch Abbrechen wird das Fenster
+  des File-Dialogs automatisch wieder beendet.
+</P>
+
+<P>
+  <B>helfende Fragen:</B> <BR>
+  
+  <UL>
+    <LI>
+      <P>
+        Wie kann man mit dem File-Dialog feststellen, welches Verzeichnis und welche
+        Datei ausgew&auml;hlt wurde? Wie stellt man fest, ob der Dialog abgebrochen
+        wurde?
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        K&ouml;nnen Sie auf Ihrem verwendeten Betriebssystem/Ihrer JVM einen Unterschied
+        zwischen dem File-Dialog zum Laden und zum Speichern feststellen?
+      </P>
+    </LI>
+  </UL>
+</P>
+
+<P>
+  Verwenden Sie zum Einlesen und Anzeigen der Datei wieder die
+  <A HREF="Einlesen.java">Vorgabe</A>, die Sie ggf. noch geeignet modifizieren
+  m&uuml;ssen, wenn Sie Ihr <TT>TextArea</TT>-Objekt nicht <TT>ta_inhalt</TT> nennen.
+</P>
+
+<P>
+  <B>Abzugeben</B> sind der Java-Sourcecode und der Java-Bytecode
+  der Applikation.
+</P>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A30">&nbsp;</A>
+
+   <H2>
+     Teamaufgabe 30 <BR>
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi512@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Michael Butscher)
+   </H3>
+
+<P>
+  Schreiben Sie ein Java-Applet, das ein bestimmtes Bild, z.B. den
+  <A HREF="pinguin.gif">Linux-Pinguin</A>, in einem scrollbaren Bereich
+  anzeigt und in einer Statuszeile angibt, ob das Bildladen gestartet bzw. erfolgreich
+  beendet wurde.
+</P>
+
+<P>
+  <B>Vorgehen:</B>
+  
+  <UL>
+    <LI>
+      <P>
+        Speichern Sie das Bild in ein Objekt der Klasse <TT>java.awt.Image</TT>, das
+        Sie mit einem Media-Tracker (Klasse <TT>java.awt.MediaTracker</TT>) einladen.
+        Vergleichen Sie dazu die <A HREF="../blatt_10/BildAnalyse.java">Vorgabe</A>
+        von Blatt <A HREF="../blatt_10/">10</A>, 
+        Aufgabe <A HREF="../blatt_10/#A25">25</A>. <BR>
+        
+        Da <TT>Image</TT>-Objekte keine GUI-Komponenten sind, m&uuml;ssen Sie in einem
+        <TT>Canvas</TT>-Objekt angezeigt werden. Entwerfen Sie, vergleichbar zur Vorlesung
+        vom 08.02.2000, eine eigene Klasse <TT>BildCanvas</TT>, die Sie von
+        <TT>Canvas</TT> ableiten. Das eingeladene Bild wird in dem Objekt der
+        Klasse <TT>BildCanvas</TT> mit dessen <TT>paint()</TT>-Methode
+        und <TT>drawImage()</TT> (als zugeh&ouml;riges <TT>ImageObserver</TT>-Objekt
+        w&auml;hlen Sie das aktuelle Canvas-Objekt) 
+        angezeigt. W&auml;hlen Sie als gew&uuml;nschte Gr&ouml;&szlig;e des
+        Canvas-Objekts einfach die Bildgr&ouml;&szlig;e.
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        W&auml;hlen Sie f&uuml;r den Scrollbereich ein Objekt der Klasse
+        <TT>ScrollPane</TT>, dem Sie das Objekt Ihrer Klasse <TT>BildCanvas</TT>
+        hinzuf&uuml;gen. Die Gr&ouml;&szlig;e des Appletbereichs sollte dabei
+        kleiner sein als die Bildgr&ouml;&szlig;e, damit nicht gleich das komplette
+        Bild im <TT>ScrollPane</TT>-Objekt erscheint.
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        Damit Sie in der Statuszeile die momentane Bildposition angeben k&ouml;nnen,
+        zu der Sie sich mit dem horizontalem bzw. vertikalem Scrollbar bewegt
+        haben, m&uuml;ssen Sie vom <TT>ScrollPane</TT>-Objekt die beiden
+        Scrollbars ermitteln (z.B. als Referenzen auf das Interface 
+        <TT>Adjustable</TT>). Registrieren Sie f&uuml;r beide Scrollbars
+        den passenden Listener und &auml;ndern Sie bei Scroll-Events die Statuszeile
+        so ab, dass man die momentane Bildposition (mit der Methode <TT>getValue()</TT>
+        des Interfaces <TT>Adjustable</TT>)
+        und die Art der Scroll-Bewegung in der Statuszeile erkennen kann.
+      </P>
+    </LI>
+  </UL>
+</P>
+
+<P>
+  <B>helfende Fragen:</B> <BR>
+  
+  <UL>
+    <LI>
+      <P>
+        Welcher Listener passt zum Scroll-Event? Welche Methoden m&uuml;ssen
+        implementiert werden?
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        Wie kann man in dem Event-Handler feststellen, wer der Verursacher
+        des Scroll-Events war und welche Art der Scroll-Bewegung (blockweise,
+        einzeln, gezogen) vorlag?
+      </P>
+    </LI>
+  </UL>
+</P>
+
+<P>
+  <B>Achtung:</B> <BR>
+  Versuchen Sie nicht, Eigenschaften der <TT>Adjustable</TT>-Referenzen auf die
+  beiden Scrollbars zu verstellen. Dies ist bei <TT>ScrollPane</TT>-Objekten nicht
+  erlaubt.
+</P>
+
+<P>
+  <B>Abzugeben</B> sind der Java-Sourcecode und der Java-Bytecode
+  des Applets sowie das zugeh&ouml;rige HTML-File (ggf. auch das verwendete Bild).
+</P>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A31">&nbsp;</A>
+
+   <H2>
+     freiwillige Aufgabe 31 <BR>
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi512@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Michael Butscher)
+   </H3>
+
+<P>
+  Versuchen Sie, in Aufgabe <A HREF="#A30">30</A> ohne ein <TT>ScrollPane</TT>-Objekt
+  zurechtzukommen und legen Sie
+  stattdessen zwei <TT>ScrollBar</TT>-Objekte an. Sie m&uuml;ssen dann aber die
+  Verschiebung des Bildes in dem Canvas-Objekt selbst realisieren. Dazu kann man 
+  z.B. die Methode <TT>translate()</TT> f&uuml;r das <TT>Graphics</TT>-Objekt
+  des Canvas-Objekts nutzen.
+</P>
+
+<P>
+  Verstellen Sie die Scrollbar-Eigenschaften so, dass beim Dr&uuml;cken der Pfeile
+  der Scrollbars das Bild um 2 Pixel verschoben wird und bei blockweisem Verschieben
+  das Bild um 20 Pixel weiterr&uuml;ckt. <BR>
+  Nach dieser Aufgabe werden Sie den Komfort der Klasse <TT>ScrollPane</TT>
+  noch mehr zu sch&auml;tzen wissen.
+</P>
+
+<P>
+  <B>Abzugeben</B> sind der Java-Sourcecode und der Java-Bytecode
+  des Applets sowie das zugeh&ouml;rige HTML-File (ggf. auch das verwendete Bild).
+</P>
+
+ </BODY>
+</HTML>

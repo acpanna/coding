@@ -1,0 +1,530 @@
+<HTML>
+ <HEAD>
+   <TITLE>
+     &Uuml;bungsblatt 01, 09.11.1999
+   </TITLE>
+ </HEAD>
+ <BODY>
+   <H1>
+     &Uuml;bungsblatt 01, 09.11.1999
+   </H1>
+   <H2>
+     Abgabetermin: Mo, 15.11.1999, 23:59 Uhr
+   </H2>
+
+<P>
+<DIV ALIGN="right">
+  <A HREF="mailto:Robert.Baier@uni-bayreuth.de">R. Baier</A> <BR>
+  <A HREF="mailto:hiwi512@btcipmatx1.cip.uni-bayreuth.de">M. Butscher</A> <BR>
+  <A HREF="mailto:hiwi501@btcipmatx1.cip.uni-bayreuth.de">P. Lerner</A>
+  <BR CLEAR="all">
+</DIV>
+</P>
+
+Das &Uuml;bungsblatt besteht aus den Aufgaben <A HREF="#A01">01</A> und
+<A HREF="#A02">02</A> sowie der Teamaufgabe <A HREF="#A03">03</A>, auf die
+es jeweils maximal 4 Punkte zu erreichen gibt. <BR>
+Das &Uuml;bungsblatt inkl. aller Sourcecodes, Bilder, HTML-Seiten, ... kann auch
+als
+<UL>
+  <LI><A HREF="blatt_01.tar.gz"><TT>gzip</TT>'tes <TT>tar</TT>-Archive</A>
+  </LI>
+  <LI>
+      <A HREF="blatt_01.zip"><TT>ZIP</TT>-Archive</A>
+  </LI>
+</UL>
+heruntergeladen werden. <BR>
+<EM>Beachten Sie die <A HREF="http://www.uni-bayreuth.de/departments/math/~rbaier/lectures/java/uebung/allgemein/hinweise.html">allgemeinen Abgabehinweise</A>!!</EM>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A01">&nbsp;</A>
+
+   <H2>
+     Aufgabe 01
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi512@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Michael Butscher)
+   </H3>
+
+<OL TYPE=a>
+  <LI> Tippen Sie folgendes Java-Applet ein und bringen Sie es zum
+       Laufen:
+
+       <PRE>
+import java.applet.Applet;
+import java.awt.*;
+import java.awt.event.*;
+
+public class Koordinaten extends Applet implements MouseListener
+{
+  int x, y, width, height;
+  Dimension groesse;
+  FontMetrics fm;
+  String ausgabe;
+
+  public void init()
+  {
+    groesse = new Dimension(getBounds().width, getBounds().height);
+    fm = getFontMetrics(getFont());
+    addMouseListener(this);
+  }
+
+  public void mousePressed(MouseEvent evt)
+  {
+    x = evt.getX();
+    y = evt.getY();
+    ausgabe = "Koordinaten: (x,y) = (" + x + "," + y + ")";
+    height = fm.getHeight();
+    width  = fm.stringWidth(ausgabe);
+
+    if (x + width > groesse.width)
+      x = x - width;
+    if (y - height < 0)
+      y = y + height;
+    setForeground(Color.blue);
+    getGraphics().drawString(ausgabe, x, y);
+  }
+
+  public void mouseReleased(MouseEvent evt)
+  {
+    setForeground(getBackground());
+    getGraphics().drawString(ausgabe, x, y);
+  }
+
+  // notwendige Definitionen fuer MouseListener
+  // da keine Reaktion auf diese Events, leere Funktionen
+  public void mouseClicked(MouseEvent evt)
+  {
+  }
+
+  public void mouseEntered(MouseEvent evt)
+  {
+  }
+
+  public void mouseExited(MouseEvent evt)
+  {
+  }
+}
+       </PRE>
+
+       <P>
+       Klicken Sie mit der linken Maustaste (etwas l&auml;nger halten
+       und dann wieder loslassen) in den Appletbereich? <BR>
+       Was macht das Programm?
+       </P>
+  </LI>
+
+  <LI> 
+       <P>
+       Welches der beiden Bytecodes in den Files
+       "<A HREF="Unicode_1.class"><TT>Unicode_1.class</TT></A>" bzw.
+       "<A HREF="Unicode_2.class"><TT>Unicode_2.class</TT></A>" ist
+       ein Java-Applet und welches eine Java-Applikation? <BR>
+       Versuchen Sie die Java-Programme einfach zu starten!
+       </P>
+
+       <P>
+       Die beiden Java-Programme zeigen, da&szlig; Java alle m&ouml;glichen
+       Zeichen ausgeben kann (Buchstabe a mit Akzenten, griechische oder
+       kyrillische Buchstaben sowie deutsche Umlaute). Leider scheitert die
+       korrekte Ausgabe zumeist an fehlenden Fonts (und in Windows NT
+       daran, da&szlig; in der DOS-Box Windows-Umlaute ausgegeben werden).
+       </P>
+  </LI>
+</OL>
+
+<P>
+<B>Abzugeben</B> sind das Java-File, der Bytecode und das HTML-File f&uuml;r
+Teilaufgabe a) sowie in b) eine ausf&uuml;hrlichere Antwort zu der Frage.
+</P>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A02">&nbsp;</A>
+
+   <H2>
+     Aufgabe 02
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi501@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Peter Lerner)
+   </H3>
+
+Das folgende Applet zeigt, da&szlig; Java parallele Prozesse verwalten
+kann. Dem Applet werden &uuml;ber Parameter im HTML-File mitgeteilt,
+welche und wieviel T&auml;tigkeiten mit jeweils welcher Priorit&auml;t
+an einem Tag ausgef&uuml;hrt werden sollen. Das Applet wird dann ausgeben,
+welche T&auml;tigkeit an einem der 5 Werktage zuerst ausgef&uuml;hrt wird 
+und welche zuletzt.
+
+<P>
+Beispiel: 
+
+<P>
+  <TABLE ALIGN="center" BORDER="1" CELLPADDING="5">
+    <TR>
+
+      <TH>
+        T&auml;tigkeit
+      </TH>
+      <TH>
+        Priorit&auml;t
+      </TH>
+    </TR>
+
+    <TR>
+      <TD>
+        schlafen
+      </TD>
+      <TD ALIGN="center">
+        1
+      </TD>
+    </TR>
+
+    <TR>
+      <TD>
+        Java programmieren
+      </TD>
+      <TD ALIGN="center">
+        5
+      </TD>
+    </TR>
+
+    <TR>
+      <TD>
+        in der Mensa essen
+      </TD>
+      <TD ALIGN="center">
+        3
+      </TD>
+    </TR>
+
+  </TABLE>
+</P>
+</P>
+
+Die Priorit&auml;t wird in den meisten Java-Implementationen durch eine 
+ganze Zahl zwischen 1 und 10 angegeben und ist oft auch durch 4 oder 5 begrenzt.
+Je h&ouml;her die Priorit&auml;t ist, desto eher wird die T&auml;tigkeit
+ausgef&uuml;hrt.
+
+<P>
+Damit nun nicht das Java-Applet neu &uuml;bersetzt werden mu&szlig;,
+wenn sich Priorit&auml;ten bzw. T&auml;tigkeiten &auml;ndern, gibt es 
+in HTML/Java einen Mechanismus der &Uuml;bergabe von Parametern.
+
+Die zu &uuml;bergebenen Parameter werden in einer Liste
+innerhalb des <TT>&lt;APPLET&gt;</TT>-Tags in der das Applet aufrufenden 
+HTML-Seite abgelegt.
+</P>
+
+Beispiel:
+
+<PRE>
+  &lt;APPLET CODE="<I>Name des Bytecodes</I>"
+     WIDTH="<I>Breite in Pixel</I>" HEIGHT="<I>H&ouml;he in Pixel</I>"&gt;
+
+     &lt;PARAM NAME="<I>Parameter-Name 1</I>" VALUE="<I>Parameter-Wert 1</I>"&gt;
+     &lt;PARAM NAME="<I>Parameter-Name 2</I>" VALUE="<I>Parameter-Wert 2</I>"&gt;
+     ...
+     &lt;PARAM NAME="<I>Parameter-Name n</I>" VALUE="<I>Parameter-Wert n</I>"&gt;
+
+     Das Java-Applet kann nicht starten! Einstellungen verstellt oder
+     WWW-Browser zu alt!
+  &lt;/APPLET&gt;
+</PRE>
+
+</P>
+
+Das Applet erwartet die folgenden Parameter, wenn man 3 verschiedene
+T&auml;tigkeiten pro Tag durchf&uuml;hren will:
+
+<P>
+  <TABLE ALIGN="center" BORDER="1" CELLPADDING="5">
+    <TR>
+
+      <TH>
+        Parametername
+      </TH>
+      <TH>
+        Bedeutung des Parameterwerts
+      </TH>
+    </TR>
+
+    <TR>
+      <TD>
+        <TT>anzahl</TT>
+      </TD>
+      <TD>
+        Anzahl der verschiedenen T&auml;tigkeiten pro Tag, hier: 3
+      </TD>
+    </TR>
+
+    <TR>
+      <TD>
+        <TT>Taetigkeit1</TT>
+      </TD>
+      <TD>
+        Name der 1. T&auml;tigkeit
+      </TD>
+    </TR>
+
+    <TR>
+      <TD>
+        <TT>Prioritaet1</TT>
+      </TD>
+      <TD>
+        Zahl f&uuml;r die Priorit&auml;t der 1. T&auml;tigkeit
+      </TD>
+    </TR>
+
+    <TR>
+      <TD>
+        <TT>Taetigkeit2</TT>
+      </TD>
+      <TD>
+        Name der 2. T&auml;tigkeit
+      </TD>
+    </TR>
+
+    <TR>
+      <TD>
+        <TT>Prioritaet2</TT>
+      </TD>
+      <TD>
+        Zahl f&uuml;r die Priorit&auml;t der 2. T&auml;tigkeit
+      </TD>
+    </TR>
+
+    <TR>
+      <TD>
+        <TT>Taetigkeit3</TT>
+      </TD>
+      <TD>
+        Name der 3. T&auml;tigkeit
+      </TD>
+    </TR>
+
+    <TR>
+      <TD>
+        <TT>Prioritaet3</TT>
+      </TD>
+      <TD>
+        Zahl f&uuml;r die Priorit&auml;t der 3. T&auml;tigkeit
+      </TD>
+    </TR>
+
+  </TABLE>
+</P>
+
+<P>
+Schreiben Sie ein passendes HTML-File, um das schon fertig compilierte
+Java-Applet "<A HREF="Parallel.class"><TT>Parallel.class</TT></A>" 
+einzubinden. <BR>
+Testen Sie das Applet mit verschiedenen Anzahlen von T&auml;tigkeiten,
+anderen Namen f&uuml;r die T&auml;tigkeiten und anderen Priorit&auml;tsstufen.
+<BR>
+  
+Zu Ihrer Information finden Sie hier den Source-Code 
+"<A HREF="Parallel.java"><TT>Parallel.java</TT></A>", den Sie aber f&uuml;r
+die Aufgabe nicht ben&ouml;tigen.
+</P>
+
+<P>
+<B>Abzugeben</B> sind das HTML-File, das unver&auml;nderte Java-Applet 
+"<TT>Parallel.class</TT>" sowie die Ergebnisse von 2 Testl&auml;ufen mit 
+verschiedenen &Uuml;bergaben von Parametern. Beantworten Sie die Frage,
+ob es Unterschiede zwischen dem WWW-Browser und dem Appletviewer beim Ablauf 
+der Programme gibt.
+</P>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A03">&nbsp;</A>
+
+   <H2>
+     Teamaufgabe 03 (Abgabe von bis zu 2 Leuten gemeinsam m&ouml;glich
+     und erw&uuml;nscht)
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi512@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Michael Butscher)
+   </H3>
+
+Das folgende Java-Applet 
+"<A HREF="Entenhausen.class"><TT>Entenhausen.class</TT></A>" (Hauptklasse)
+mit den zus&auml;tzlichen Bytecodes f&uuml;r Hilfsklassen
+"<A HREF="Bild.class"><TT>Bild.class</TT></A>" und
+"<A HREF="FrameCanvas.class"><TT>FrameCanvas.class</TT></A>" und
+l&auml;dt die folgenden JPEG- bzw. GIF-Bilder 
+
+<P>
+<TABLE ALIGN="center" BORDER="1" CELLPADDING="5">
+  <TR>
+
+    <TH>
+      Name der Bilddatei
+    </TH>
+    <TH>
+      Bildformat
+    </TH>
+  </TR>
+
+  <TR>
+    <TD>
+      "<A HREF="tick_trick_track.jpg"><TT>tick_trick_track.jpg</TT></A>"
+    </TD>
+    <TD>
+      JPEG-Format
+    </TD>
+  </TR>
+
+  <TR>
+    <TD>
+      "<A HREF="donald.gif"><TT>donald.gif</TT></A>"
+    </TD>
+    <TD>
+      GIF-Format
+    </TD>
+  </TR>
+
+  <TR>
+    <TD>
+      "<A HREF="dagobert.gif"><TT>dagobert.gif</TT></A>"
+    </TD>
+    <TD>
+      GIF-Format
+    </TD>
+  </TR>
+
+</TABLE>
+</P>
+
+und zeigt sie an oder l&auml;sst sie wieder verschwinden.
+
+<OL TYPE="a">
+  <LI>
+    Starten Sie das Java-Applet zun&auml;chst ganz normal, indem Sie
+    den Bytecode einbinden und den Parameter "<TT>url_basis</TT>"
+    (URL f&uuml;r die Bilddateien) richtig setzen (vgl. <A HREF="#A02">Aufgabe
+    2</A>). Unter dieser URL m&uuml;ssen sich dann die 3 Bilddateien 
+    befinden. <BR>
+  
+    Eine URL kann z.B. folgende Formen annehmen:
+
+    <P>
+    <TABLE ALIGN="center" BORDER="1" CELLPADDING="5">
+      <TR>
+
+        <TH>
+          URL
+        </TH>
+        <TH>
+          Bedeutung
+        </TH>
+      </TR>
+
+      <TR>
+        <TD>
+          <TT>file:///C:/work/</TT>
+        </TD>
+        <TD>
+          Bilddateien befinden sich auf dem lokalen Rechner unter dem
+          Verzeichnis <TT>C:\work</TT> (unter Windows)
+        </TD>
+      </TR>
+
+      <TR>
+        <TD>
+          <TT>file:///home/oop01/java/uebung/blatt_01/</TT>
+        </TD>
+        <TD>
+          Bilddateien befinden sich auf dem lokalen Rechner unter dem
+          Verzeichnis
+          <TT>/home/oop01/java/uebung/blatt_01/</TT> (unter Unix/Linux)
+        </TD>
+      </TR>
+
+      <TR>
+        <TD>
+          <TT>http://www.uni-bayreuth.de/departments/math/</TT>
+          <TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~rbaier/lectures/java/uebung/blatt_01/</TT>
+          <BR>
+          &nbsp;&nbsp;&nbsp; (zusammen schreiben!)
+        </TD>
+        <TD>
+          Bilddateien befinden sich im Internet auf dem Server
+          <TT>www.uni-bayreuth.de</TT> in dem dortigen Verzeichnis
+          <TT>/departments/math/~rbaier/lectures/java/uebung/blatt_01/</TT>
+        </TD>
+      </TR>
+
+    </TABLE>
+
+    </P>
+  </LI>
+
+  <LI>
+    <P>
+    Etwas eleganter geht das durch Verwendung von Java-Archiven,
+    sogenannten <TT>jar</TT>-Files. Erstellen Sie aus den 3 Bytecodes und
+    den 3 Bilddateien ein <TT>jar</TT>-File (z.B. mit dem Namen
+    "<TT>Entenhausen.jar</TT>" mit dem Kommando
+
+    <PRE>
+      jar cvf <I>Entenhausen</I>.jar <I>Bytecodename_1</I> <I>Bytecodename_2</I> <I>Bytecodename_3</I> <I>Bildname_1</I> <I>Bildname_2</I> <I>Bildname_3</I>
+    </PRE>
+
+    Kontrollieren Sie die Erstellung, indem Sie sich den Inhalt des 
+    <TT>jar</TT>-Files mit dem Kommando 
+
+    <PRE>
+      jar tvf <I>Entenhausen</I>.jar
+    </PRE>
+
+    ansehen. Welches neue File sehen Sie noch? 
+
+    <P>
+    Testen Sie das Auspacken der Files in einem neuen Unterverzeichnis
+    (kopieren Sie das <TT>jar</TT>-File auch dort hin) mit dem Kommando
+
+    <PRE>
+      cd <I>Subdirectory</I>
+      jar xvf <I>Entenhausen</I>.jar
+    </PRE>
+    </P>
+
+    Binden Sie das komplette <TT>jar</TT>-File mit dem HTML-Befehl
+
+   <PRE>
+  &lt;APPLET ARCHIVE="<I>Name des jar-Files</I>" CODE="<I>Name des Bytecodes der Hauptklasse</I>"
+     WIDTH="<I>Breite in Pixel</I>" HEIGHT="<I>H&ouml;he in Pixel</I>"&gt;
+
+     ... <I>Parameter&uuml;bergabe</I> ...
+
+     Das Java-Applet kann nicht starten! Einstellungen verstellt oder
+     WWW-Browser zu alt!
+  &lt;/APPLET&gt;
+   </PRE>
+
+    ein.
+
+    <P>
+    Welche der beiden Methoden, a) oder b), scheint Ihnen schneller
+    abzulaufen?
+    </P>
+  </LI>
+</OL>
+  
+<P>
+Zu Ihrer Information finden Sie hier den Source-Code 
+"<A HREF="Entenhausen.java"><TT>Entenhausen.java</TT></A>", den Sie aber 
+f&uuml;r die Aufgabe nicht ben&ouml;tigen.
+</P>
+
+<P>
+<B>Abzugeben</B> sind die beiden HTML-Files, das erzeugte <TT>jar</TT>-Archiv
+sowie die Beantwortung der Fragen in b).
+</P>
+
+ </BODY>
+</HTML>

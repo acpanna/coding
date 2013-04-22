@@ -1,0 +1,726 @@
+<HTML
+><HEAD
+><TITLE
+>Die Socket-Buffer</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Netzwerk-Treiber"
+HREF="net.html"><LINK
+REL="PREVIOUS"
+TITLE="Änderungen im Verbindungszustand"
+HREF="x20332.html"><LINK
+REL="NEXT"
+TITLE="MAC-Adreßauflösung"
+HREF="netarp.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x20332.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 14. Netzwerk-Treiber</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="netarp.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="NETSKB"
+>Die Socket-Buffer</A
+></H1
+><P
+>&#13;
+
+Wir haben jetzt den größten Teil der Themen aus dem Bereich der
+Netzwerk-Schnittstellen erläutert. In den nächsten Abschnitten folgt
+noch eine detaillierte Erklärung, wie die
+<TT
+CLASS="LITERAL"
+>sk_buff</TT
+>-Struktur aufgebaut ist. Diese
+Struktur befindet sich im Kern des Netzwerk-Subsystems des
+Linux-Kernels, und wir führen hier sowohl die wichtigsten Felder der
+Struktur ala auch die darauf operierenden Funktionen ein.&#13;</P
+><P
+>Obwohl es streng genommen nicht nötig ist, die Interna von
+<TT
+CLASS="LITERAL"
+>sk_buff</TT
+> zu verstehen, kann es bei der Fehlersuche und der Code-Optimierung hilfreich sein, wenn man in der Lage
+ist, den Inhalt zu analysieren. Wenn Sie beispielsweise einen Blick in
+<TT
+CLASS="FILENAME"
+>loopback.c</TT
+> werfen, werden Sie eine Optimierung
+finden, die auf Wissen über die Interna von
+<TT
+CLASS="LITERAL"
+>sk_buff</TT
+> basiert. Auch hier gilt die übliche
+Warnung: Wenn Sie Code schreiben, der sich interne Details der Struktur <TT
+CLASS="LITERAL"
+>sk_buff</TT
+> zunutze macht, dann sollten Sie
+darauf vorbereitet sein, daß der Code mit zukünftigen Kernel-Versionen
+nicht mehr funktioniert. Manchmal rechtfertigen die
+Performance-Vorteile aber den zusätzlichen Pflegeaufwand.&#13;</P
+><P
+>Wir werden hier nicht die gesamte Struktur beschreiben, sondern uns
+auf die Felder beschränken, die von einem Treiber verwendet werden
+können. Wenn Sie alle Felder sehen möchten, sollten Sie sich
+<TT
+CLASS="LITERAL"
+>&#60;linux/skbuff.h&#62;</TT
+> anschauen,
+wo die Struktur definiert ist und die Prototypen der Funktionen stehen.
+&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN20378"
+>Die wichtigen Felder</A
+></H2
+><P
+>Mit &#8220;Die wichtigen Felder&#8221; sind hier diejenigen Felder in der Struktur
+gemeint, die für einen Treiberprogrammierer nützlich sein können. Die
+folgende Liste hat keine bestimmte Reihenfolge:&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>struct net_device *rx_dev;</TT
+>, <TT
+CLASS="LITERAL"
+>struct net_device *dev;</TT
+></DT
+><DD
+><P
+>Die Geräte, die diesen Puffer senden oder empfangen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>union { /* ... */ } h;</TT
+>, <TT
+CLASS="LITERAL"
+>union { /* ... */ } nh;</TT
+>, <TT
+CLASS="LITERAL"
+>union { /*... */} mac;</TT
+></DT
+><DD
+><P
+>Zeiger auf die verschiedenen Ebenen von Headern im Paket. Jedes Feld
+der Unions ist ein Zeiger auf einen anderen Typ von
+Datenstruktur. <TT
+CLASS="LITERAL"
+>h</TT
+> enthält Zeiger auf Header der
+Transport-Schicht (beispielsweise <TT
+CLASS="LITERAL"
+>struct tcphdr
+*th</TT
+>), <TT
+CLASS="LITERAL"
+>nh</TT
+> enthält Header der
+Netzwerk-Schicht (wie <TT
+CLASS="LITERAL"
+>struct iphdr *iph</TT
+>), und
+<TT
+CLASS="LITERAL"
+>mac</TT
+> enthält Zeiger auf Header der
+Verbindungsschicht (wie <TT
+CLASS="LITERAL"
+>struct ethdr *ethernet</TT
+>).</P
+><P
+>Wenn Ihr Treiber die Quell- und Ziel-Adresse eines TCP-Pakets
+anschauen muß, dann kann er diese Adressen in <TT
+CLASS="LITERAL"
+>skb-&#62;h.th</TT
+>
+finden. Sehen Sie sich dazu die Header-Datei an, in der alle Header-Typen stehen,
+auf die auf diese Weise zugegriffen werden kann.</P
+><P
+>Beachten Sie, daß Netzwerk-Treiber für das Setzen des
+<TT
+CLASS="LITERAL"
+>mac</TT
+>-Zeigers bei eingehenden Paketen verantwortlich
+sind. Diese Aufgabe wird normalerweise
+von <SPAN
+><I
+CLASS="EMPHASIS"
+>ether_type_trans</I
+></SPAN
+> erledigt, aber
+Nicht-Ethernet-Treiber müssen <TT
+CLASS="LITERAL"
+>skb-&#62;mac.raw</TT
+>
+direkt setzen, wie in &#8220;<A
+HREF="netarp.html#NETARPOTHER"
+>the Section called <I
+>Nicht-Ethernet-Header</I
+></A
+>&#8221; noch gezeigt wird.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned char *head;</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned char *data;</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned char *tail;</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned char *end;</TT
+></DT
+><DD
+><P
+>Mit diesen Zeigern werden die Daten im Paket
+        adressiert. <TT
+CLASS="LITERAL"
+>head</TT
+> zeigt auf den Anfang des
+        allozierten Bereichs, <TT
+CLASS="LITERAL"
+>data</TT
+> ist der Anfang der
+        gültigen Oktetts (und damit meistens etwas größer als
+        <TT
+CLASS="LITERAL"
+>head</TT
+>), <TT
+CLASS="LITERAL"
+>tail</TT
+> ist das Ende der
+        gültigen Oktetts, und <TT
+CLASS="LITERAL"
+>end</TT
+> zeigt auf die maximal
+        für <TT
+CLASS="LITERAL"
+>tail</TT
+> zulässige Adresse. Man kann es sich
+        auch so vorstellen, daß der verfügbare Platz eine Größe von
+        <TT
+CLASS="LITERAL"
+>skb-&#62;end - skb-&#62;head</TT
+> und der
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>aktuell belegte</I
+></SPAN
+> Platz eine Größe von
+        <TT
+CLASS="LITERAL"
+>skb-&#62;tail - skb-&#62;data</TT
+> hat.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long len;</TT
+></DT
+><DD
+><P
+>Die Länge der Daten selbst (<TT
+CLASS="LITERAL"
+>skb-&#62;tail -
+        skb-&#62;head</TT
+>).</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned char ip_summed;</TT
+></DT
+><DD
+><P
+>&#13;Dieses Feld wird vom Treiber bei eingehenden Paketen gefüllt und wird
+bei der Bildung der TCP/UDP-Prüfsummen verwendet. Es wurde bereits
+weiter vorn in &#8220;<A
+HREF="netrx.html"
+>the Section called <I
+>Paket-Empfang</I
+></A
+>&#8221; beschrieben.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned char pkt_type;</TT
+></DT
+><DD
+><P
+>Für die Auslieferung verwendete
+Paket-Klassifizierung. Dieses Feld wird intern für die Auslieferung
+eingehender
+        Pakete verwendet. Der Treiber muß dieses Feld auf
+        <TT
+CLASS="LITERAL"
+>PACKET_HOST</TT
+> ("dieses Paket ist für mich"),
+        <TT
+CLASS="LITERAL"
+>PACKET_BROADCAST</TT
+>,
+        <TT
+CLASS="LITERAL"
+>PACKET_MULTICAST</TT
+> oder
+        <TT
+CLASS="LITERAL"
+>PACKET_OTHERHOST</TT
+> ("nein, dieses Paket ist
+        nicht für mich")setzen. Ethernet-Treiber modifizieren
+        <TT
+CLASS="LITERAL"
+>pkt_type</TT
+> nicht explizit, weil
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>eth_type_trans</I
+></SPAN
+> das schon für
+        sie macht.</P
+></DD
+></DL
+></DIV
+><P
+>Die verbleibenden Felder der Struktur sind nicht besonders
+interessant. Sie werden hauptsächlich dazu benutzt, Puffer-Listen und
+den Speicher, der zum Socket gehört, zu verwalten usw.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN20457"
+>Funktionen, die auf Socket-Buffern operieren</A
+></H2
+><P
+>&#13;Netzwerk-Geräte, die einen <TT
+CLASS="LITERAL"
+>sock_buff</TT
+>
+verwenden, greifen darauf mittels der offiziellen Funktionen zu. Es
+gibt viele Funktionen, die auf Socket-Buffern operieren, aber die
+folgenden sind die interessantesten:&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>struct sk_buff *alloc_skb(unsigned int len, int priority);</TT
+>, <TT
+CLASS="LITERAL"
+>struct sk_buff *dev_alloc_skb(unsigned int len);</TT
+></DT
+><DD
+><P
+>&#13;
+Einen Puffer allozieren. Die Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>alloc_skb</I
+></SPAN
+> alloziert einen Puffer und
+initialisiert <TT
+CLASS="LITERAL"
+>skb-&#62;data</TT
+> und
+<TT
+CLASS="LITERAL"
+>skb-&#62;tail</TT
+> mit
+<TT
+CLASS="LITERAL"
+>skb-&#62;head</TT
+>. Die Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>dev_alloc_skb</I
+></SPAN
+> ist eine
+Bequemlichkeitsfunktion, die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>alloc_skb</I
+></SPAN
+> mit der Priorität
+<TT
+CLASS="LITERAL"
+>GFP_ATOMIC</TT
+> aufruft und etwas Platz zwischen
+<TT
+CLASS="LITERAL"
+>skb-&#62;head</TT
+> und <TT
+CLASS="LITERAL"
+>skb-&#62;data</TT
+>
+reserviert. Dieser Datenbereich wird für Optimierungen in der
+Netzwerk-Schicht verwendet und sollte vom Treiber nicht angefaßt
+werden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void kfree_skb(struct sk_buff *skb);</TT
+>, <TT
+CLASS="LITERAL"
+>void dev_kfree_skb(struct sk_buff *skb);</TT
+></DT
+><DD
+><P
+>&#13;
+Einen Puffer freigeben. <SPAN
+><I
+CLASS="EMPHASIS"
+>kfree_skb</I
+></SPAN
+> wird
+intern vom Kernel verwendet. Treiber sollten
+<SPAN
+><I
+CLASS="EMPHASIS"
+>dev_kfree_skb</I
+></SPAN
+> verwenden, was im
+Treiber-Kontext sicher aufgerufen werden kann.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned char *skb_put(struct
+sk_buff *skb, int len);</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned char *__skb_put(struct sk_buff *skb, int len);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktionen aktualisieren die Felder <TT
+CLASS="LITERAL"
+>tail</TT
+>
+und <TT
+CLASS="LITERAL"
+>len</TT
+> der <TT
+CLASS="LITERAL"
+>sk_buff</TT
+>-Struktur und werden dazu
+benutzt, Daten am Ende des Puffers anzuhängen. Der Rückgabewert jeder
+Funktion ist der vorherige Wert von <TT
+CLASS="LITERAL"
+>skb-&#62;tail</TT
+>
+(zeigt also auf den neu erzeugten Datenbereich). Manche Treiber
+verwenden den Rückgabewert, indem Sie <TT
+CLASS="LITERAL"
+>ins(ioaddr,
+skb_put(...))</TT
+> oder
+<TT
+CLASS="LITERAL"
+>memcpy(skb_put(...),data,len)</TT
+>
+aufrufen. Der Unterschied zwischen den beiden Funktionen besteht
+darin, daß <SPAN
+><I
+CLASS="EMPHASIS"
+>skb_put</I
+></SPAN
+> sicherstellt, daß die
+Daten in den Puffer passen, während
+<SPAN
+><I
+CLASS="EMPHASIS"
+>__skb_put</I
+></SPAN
+> diese Kontrolle
+wegläßt.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned char *skb_push(struct
+sk_buff *skb, int len);</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned char *__skb_push(struct sk_buff *skb, int len);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktionen dekrementieren <TT
+CLASS="LITERAL"
+>skb-&#62;data</TT
+> und
+inkrementieren <TT
+CLASS="LITERAL"
+>skb-&#62;len</TT
+>. Sie ähneln damit
+<TT
+CLASS="LITERAL"
+>skb_put</TT
+>, außer daß die Daten am Anfang des
+Pakets anstatt am Ende angefügt werden. Der Rückgabewert zeigt auf den gerade neu
+erzeugten Datenbereich. Die Funktionen werden verwendet, um einen
+Hardware-Header vor der Übertragung eines Pakets hinzuzufügen. Auch
+hier unterscheidet sich
+<SPAN
+><I
+CLASS="EMPHASIS"
+>__skb_push</I
+></SPAN
+> dadurch von der anderen Funktion, daß sie
+nicht prüft, ob genug Platz zur Verfügung steht.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int skb_tailroom(struct sk_buff *skb);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion gibt die Menge des Speichers zurück, die für die Ablage
+von Daten im Puffer noch zur Verfügung steht. Wenn ein Treiber mehr
+Daten in einen Puffer schreibt, als hineinpassen, dann kommt es zu
+einer System-Panik. Sie werden jetzt vielleicht einwenden, daß ein
+<SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+> schon ausreichend wäre, um auf den Fehler
+hinzuweisen, aber die Beschädigung des Speichers ist so schwerwiegend
+für das gesamte System, daß die Entwickler sich entschlossen haben,
+hier konsequent zu sein. In der Praxis sollte es nicht notwendig sein,
+den verfügbaren Platz zu überprüfen, wenn der Puffer korrekt alloziert
+worden ist. Weil die Treiber normalerweise die Paketgröße wissen,
+bevor sie den Puffer allozieren, wird nur ein sehr fehlerhafter
+Treiber zu viele Daten in den Puffer schreiben, und dann ist eine
+Panik auch eine angemessene Bestrafung.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int skb_headroom(struct sk_buff *skb);</TT
+></DT
+><DD
+><P
+>&#13;Gibt die Menge des Speichers zurück, der vor <TT
+CLASS="LITERAL"
+>data</TT
+>
+noch zur Verfügung steht, gibt also an, wie viele Oktette noch mit
+<TT
+CLASS="LITERAL"
+>skb_push</TT
+> in den Puffer gestellt werden können.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void skb_reserve(struct sk_buff *skb, int len);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion inkrementiert sowohl <TT
+CLASS="LITERAL"
+>data</TT
+> als auch
+<TT
+CLASS="LITERAL"
+>tail</TT
+>. Sie kann verwendet werden, um Platz zu
+reservieren, bevor der Puffer gefüllt wird. Die meisten
+Ethernet-Schnittstellen reservieren vor dem Paket zwei Bytes, so daß
+der IP-Header nach dem 14 Byte großen Ethernet-Header an einer
+16-Byte-Grenze steht. <SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> macht das auch
+so, auch wenn der Aufruf dieser Funktion in &#8220;<A
+HREF="netrx.html"
+>the Section called <I
+>Paket-Empfang</I
+></A
+>&#8221; nicht zu sehen war, weil wir das Einführen zu vieler
+Konzepte zu diesem Zeitpunkt vermeiden wollten.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned char * skb_pull(struct sk_buff *skb, int len);</TT
+></DT
+><DD
+><P
+>&#13;Daten vom Anfang des Pakets entfernen. Ein Treiber benötigt diese Funktion
+nicht, aber wir haben sie der Vollständigkeit halber hier
+aufgeführt. Die Funktion dekrementiert <TT
+CLASS="LITERAL"
+>skb-&#62;len</TT
+>
+und inkrementiert skb-&#62;data. Auf diese Art und Weise wird der
+Ethernet-Header am Anfang eingehender Pakete abgeschnitten.</P
+></DD
+></DL
+></DIV
+><P
+>Der Kernel definiert noch eine Reihe weiterer Funktionen, die auf
+Socket-Buffern operieren, aber diese sind für die oberen Schichten des
+Netzwerk-Codes gedacht; Treiber benötigen sie nicht.
+
+&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x20332.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="netarp.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Änderungen im Verbindungszustand</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="net.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>MAC-Adreßauflösung</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

@@ -1,0 +1,726 @@
+<HTML
+><HEAD
+><TITLE
+>Schnellreferenz</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Fortgeschrittene Operationen in Zeichen-Treibern"
+HREF="extra.html"><LINK
+REL="PREVIOUS"
+TITLE="Abwärtskompatibilität"
+HREF="excompat.html"><LINK
+REL="NEXT"
+TITLE="Der Lauf der Zeit"
+HREF="flow.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="excompat.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 5. Fortgeschrittene Operationen in Zeichen-Treibern</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="flow.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN7658"
+>Schnellreferenz</A
+></H1
+><P
+>In diesem Kapitel wurden die folgenden Symbole und
+Header-Dateien eingeführt:&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/ioctl.h&#62;</TT
+></DT
+><DD
+><P
+>Diese Header-Datei deklariert alle Makros, die man zur
+        Definition von <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Befehlen benötigt. Sie
+        wird derzeit von <TT
+CLASS="LITERAL"
+>&#60;linux/fs.h&#62;</TT
+>
+        eingebunden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>_IOC_NRBITS</TT
+>, <TT
+CLASS="LITERAL"
+>_IOC_TYPEBITS</TT
+>, <TT
+CLASS="LITERAL"
+>_IOC_SIZEBITS</TT
+>, <TT
+CLASS="LITERAL"
+>_IOC_DIRBITS</TT
+></DT
+><DD
+><P
+>Die Anzahl der Bits, die in den verschiedenen Bitfeldern der
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Befehle zur Verfügung stehen. Außerdem
+        gibt es vier Makros, die die <TT
+CLASS="LITERAL"
+>MASK</TT
+>en, und vier,
+        die die <TT
+CLASS="LITERAL"
+>SHIFT</TT
+>s angeben. Diese sind allerdings
+        hauptsächlich zum internen Gebrauch
+        gedacht. <TT
+CLASS="LITERAL"
+>_IOC_SIZEBITS</TT
+> ist ein
+        wichtiger Wert, den es zu überprüfen gilt, weil er in
+        unterschiedlichen Architekturen unterschiedlich ist.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>_IOC_NONE</TT
+>, <TT
+CLASS="LITERAL"
+>_IOC_READ</TT
+>, <TT
+CLASS="LITERAL"
+>_IOC_WRITE</TT
+></DT
+><DD
+><P
+>Die möglichen Werte für das
+        &#8220;direction&#8221;-Bitfeld. Zum Lesen und Schreiben gibt es
+        verschiedene Bits, die ODER-verknüpft werden können, um
+        gleichzeitigen Lese- und Schreibzugriff anzuzeigen. Die Werte sind
+        0-basiert.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>_IOC(dir,type,nr,size)</TT
+>, <TT
+CLASS="LITERAL"
+>_IO(type,nr)</TT
+>, <TT
+CLASS="LITERAL"
+>_IOR(type,nr,size)</TT
+>, <TT
+CLASS="LITERAL"
+>_IOW(type,nr,size)</TT
+>, <TT
+CLASS="LITERAL"
+>_IOWR(type,nr,size)</TT
+></DT
+><DD
+><P
+>Makros, mit denen ein <SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Befehl
+        erzeugt werden kann.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>_IOC_DIR(nr)</TT
+>, <TT
+CLASS="LITERAL"
+>_IOC_TYPE(nr)</TT
+>, <TT
+CLASS="LITERAL"
+>_IOC_NR(nr)</TT
+>, <TT
+CLASS="LITERAL"
+>_IOC_SIZE(nr)</TT
+></DT
+><DD
+><P
+>Makros, die zum Decodieren eines Befehls verwendet
+        werden. <TT
+CLASS="LITERAL"
+>_IOC_TYPE(nr)</TT
+> ist eine
+        ODER-Kombination aus <TT
+CLASS="LITERAL"
+>IOC_READ</TT
+> und
+        <TT
+CLASS="LITERAL"
+>_IOC_WRITE</TT
+>.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;asm/uaccess.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>int access_ok(int type, const void
+              *addr, unsigned long size);</TT
+></DT
+><DD
+><P
+>&#13;        Diese Funktion überprüft, ob ein Zeiger in den User-Space auch
+        wirklich verwendet werden kann. <SPAN
+><I
+CLASS="EMPHASIS"
+>access_ok</I
+></SPAN
+> gibt
+              einen von Null verschiedenen Wert zurück, wenn der
+              Zugriff erlaubt ist.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>VERIFY_READ</TT
+>, <TT
+CLASS="LITERAL"
+>VERIFY_WRITE</TT
+></DT
+><DD
+><P
+>&#13;        Die möglichen Werte für das <TT
+CLASS="LITERAL"
+>mode</TT
+>-Argument in
+        <SPAN
+><I
+CLASS="EMPHASIS"
+>access_ok</I
+></SPAN
+>. <TT
+CLASS="LITERAL"
+>VERIFY_WRITE</TT
+> ist eine Obermenge von VERIFY_READ.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;asm/uaccess.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>int put_user(datum,ptr);</TT
+>, <TT
+CLASS="LITERAL"
+>int get_user(ptr);</TT
+>, <TT
+CLASS="LITERAL"
+>int __put_user(datum,ptr);</TT
+>, <TT
+CLASS="LITERAL"
+>int __get_user(ptr);</TT
+></DT
+><DD
+><P
+>Makros, mit denen ein einzelnes Datum in den User-Space
+        geschrieben oder von dort gelesen werden kann. Die Anzahl der
+        übertragenen Bytes hängt von <TT
+CLASS="LITERAL"
+>sizeof(*ptr)</TT
+>
+        ab. Die normalen Versionen rufen zunächst
+                <SPAN
+><I
+CLASS="EMPHASIS"
+>access_ok</I
+></SPAN
+> auf, während die
+                Versionen mit den Unterstrichen vorweg annehmen, daß
+                <SPAN
+><I
+CLASS="EMPHASIS"
+>access_ok</I
+></SPAN
+> bereits aufgerufen
+                worden ist.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/capability.h&#62;</TT
+></DT
+><DD
+><P
+>&#13;
+Definiert die diversen <TT
+CLASS="LITERAL"
+>CAP_</TT
+>-Symbole für
+              Capabilities ab Linux 2.2.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int capable(int capability);</TT
+></DT
+><DD
+><P
+>&#13;Gibt einen von Null verschiedenen Wert zurück, wenn der Prozeß die
+              angegebene Capability hat.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/wait.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>typedef struct { /* ... */ } wait_queue_head_t;</TT
+>, <TT
+CLASS="LITERAL"
+>void init_waitqueue_head(wait_queue_head_t *queue);</TT
+>, <TT
+CLASS="LITERAL"
+>DECLARE_WAIT_QUEUE_HEAD(queue);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+Der definierte Typ für Linux-Warteschlangen. Ein
+              <TT
+CLASS="LITERAL"
+>wait_queue_head_t</TT
+> muß explizit
+              initialisiert werden; entweder mit
+              <SPAN
+><I
+CLASS="EMPHASIS"
+>init_waitqueue_head</I
+></SPAN
+> zur Laufzeit
+              oder mit <SPAN
+><I
+CLASS="EMPHASIS"
+>declare_wait_queue_head</I
+></SPAN
+>
+              zur Kompilierzeit.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/sched.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>void interruptible_sleep_on(struct wait_queue **q);</TT
+>, <TT
+CLASS="LITERAL"
+>void sleep_on(struct wait_queue **q);</TT
+>, <TT
+CLASS="LITERAL"
+>void
+              interruptible_sleep_on_timeout(wait_queue_head_t *q,
+              long timeout);</TT
+>, <TT
+CLASS="LITERAL"
+>void sleep_on_timeout(wait_queue_head_t *q, long timeout);</TT
+></DT
+><DD
+><P
+>Rufen Sie eine dieser Funktionen auf, um den aktuellen
+        Prozeß in einer Warteschlange schlafen zu legen. Normalerweise
+        werden Sie die <TT
+CLASS="LITERAL"
+>interruptible</TT
+>-Form verwenden, um
+        blockierendes Lesen oder Schreiben zu implementieren.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void wake_up(struct wait_queue **q);</TT
+>, <TT
+CLASS="LITERAL"
+>void wake_up_interruptible(struct wait_queue **q);</TT
+>, <TT
+CLASS="LITERAL"
+>void wake_up_sync(struct wait_queue
+              **q);</TT
+>, <TT
+CLASS="LITERAL"
+>void wake_up_interruptible_sync(struct wait_queue **q);</TT
+></DT
+><DD
+><P
+>Diese Funktionen wecken Prozesse, die gerade in der
+        Warteschlange <TT
+CLASS="LITERAL"
+>q</TT
+> schlafen. Die
+              <SPAN
+><I
+CLASS="EMPHASIS"
+>interruptible</I
+></SPAN
+>-Form weckt nur
+              unterbrechbare Prozesse auf. Die
+              <SPAN
+><I
+CLASS="EMPHASIS"
+>_sync</I
+></SPAN
+>-Versionen rufen den Scheduler
+              vor dem Rücksprung nicht auf.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>typedef struct { /* ... */ } wait_queue_t;</TT
+>, <TT
+CLASS="LITERAL"
+>init_waitqueue_entry(wait_queue_t *entry, struct task_struct *task);</TT
+></DT
+><DD
+><P
+>&#13;Der Typ <TT
+CLASS="LITERAL"
+>wait_queue_t</TT
+> wird verwendet, wenn ohne
+              Aufruf von <SPAN
+><I
+CLASS="EMPHASIS"
+>sleep_on</I
+></SPAN
+> geschlafen
+              wird. Warteschlangen-Einträge müssen immer vor ihrer
+              Verwendung initialisiert werden; das Argument
+              <TT
+CLASS="LITERAL"
+>task</TT
+> ist fast immer
+              <TT
+CLASS="LITERAL"
+>current</TT
+>.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void add_wait_queue(wait_queue_head_t *q, wait_queue_t *wait);</TT
+>, <TT
+CLASS="LITERAL"
+>void add_wait_queue_exclusive(wait_queue_head_t *q, wait_queue_t *wait);</TT
+>, <TT
+CLASS="LITERAL"
+>void remove_wait_queue(wait_queue_head_t *q, wait_queue_t *wait);</TT
+></DT
+><DD
+><P
+>&#13;
+
+Diese Funktionen fügen einen Eintrag zu einer Warteschlange hinzu;
+<SPAN
+><I
+CLASS="EMPHASIS"
+>add_wait_queue_exclusive</I
+></SPAN
+> hängt den Eintrag am Ende
+              der Schlange an (für exklusives Warten). Einträge
+              sollten nach dem Schlafen mit
+              <SPAN
+><I
+CLASS="EMPHASIS"
+>remove_wait_queue</I
+></SPAN
+> entfernt werden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void wait_event(wait_queue_head_t q, int
+ condition);</TT
+>, <TT
+CLASS="LITERAL"
+>int wait_event_interruptible(wait_queue_head_t q, int condition);</TT
+></DT
+><DD
+><P
+>&#13;
+
+Diese beiden Makros legen den Prozeß so lange in der angegebenen
+              Warteschlange schlafen, bis die angegebene Bedingung
+              <TT
+CLASS="LITERAL"
+>condition</TT
+> zu true evaluiert.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void schedule(void);</TT
+></DT
+><DD
+><P
+>&#13;        Diese Funktion wählt einen Prozeß aus der Schlange der
+        startbereiten Prozesse aus. Der gewählte Prozeß kann entweder
+        <TT
+CLASS="LITERAL"
+>current</TT
+> oder ein anderer sein. Normalerweise
+        müssen Sie <SPAN
+><I
+CLASS="EMPHASIS"
+>schedule</I
+></SPAN
+> nicht direkt aufrufen,
+        weil die <SPAN
+><I
+CLASS="EMPHASIS"
+>sleep_on</I
+></SPAN
+>-Funktionen das schon
+        intern selbst machen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/poll.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>void poll_wait(struct file *filp, wait_queue_head_t *q, poll_table *p)</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+        Diese Funktion stellt den aktuellen Prozeß in eine Warteschlange,
+        ohne direkt die Auswahl eines neuen Prozesses zu veranlassen. Sie
+        ist für die Verwendung in <SPAN
+><I
+CLASS="EMPHASIS"
+>poll</I
+></SPAN
+>-Methoden von
+        Gerätetreibern gedacht.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int fasync_helper(struct inode *inode, struct file *filp, int mode, struct fasync_struct **fa);</TT
+></DT
+><DD
+><P
+>Diese Funktion ist eine &#8220;Hilfsfunktion&#8221; für die
+        Implementierung der Geräte-Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>fasync</I
+></SPAN
+>. Das
+        <TT
+CLASS="LITERAL"
+>mode</TT
+>-Argument ist der gleiche Wert wie der, der
+        an die Methode übergeben wurde; <TT
+CLASS="LITERAL"
+>fa</TT
+> zeigt auf
+        eine gerätespezifische <TT
+CLASS="LITERAL"
+>fasync_struct *</TT
+>.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void kill_fasync(struct fasync_struct *fa, int sig, int band);</TT
+></DT
+><DD
+><P
+>&#13;        Wenn der Treiber die asynchrone Benachrichtigung unterstützt, dann kann
+        diese Funktion dazu verwendet werden, um an die in
+        <TT
+CLASS="LITERAL"
+>fa</TT
+> registrierten Prozesse ein Signal zu
+        schicken. </P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/spinlock.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>typedef struct { /* ... */ } spinlock_t;</TT
+>, <TT
+CLASS="LITERAL"
+>void spin_lock_init(spinlock_t *lock);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+Der Typ <TT
+CLASS="LITERAL"
+>spinlock_t</TT
+> definiert ein Spinlock, das vor der Verwendung mit <SPAN
+><I
+CLASS="EMPHASIS"
+>spin_lock_init</I
+></SPAN
+>
+              initialisiert werden muß.
+            </P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>spin_lock(spinlock_t *lock);</TT
+>, <TT
+CLASS="LITERAL"
+>spin_unlock(spinlock_t *lock);</TT
+></DT
+><DD
+><P
+>&#13;
+<SPAN
+><I
+CLASS="EMPHASIS"
+>spin_lock</I
+></SPAN
+> sperrt die angegebene Sperre und wartet
+              gegebenenfalls, bis sie verfügbar wird. Die Sperre kann
+              dann mit <SPAN
+><I
+CLASS="EMPHASIS"
+>spin_unlock</I
+></SPAN
+> wieder
+              freigegeben werden.</P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="excompat.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="flow.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Abwärtskompatibilität</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="extra.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Der Lauf der Zeit</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

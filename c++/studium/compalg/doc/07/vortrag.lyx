@@ -1,0 +1,2318 @@
+#LyX 1.1 created this file. For more info see http://www.lyx.org/
+\lyxformat 2,15
+\textclass article
+\begin_preamble
+\usepackage[T1]{fontenc}
+\usepackage[latin1]{inputenc}
+\pagestyle{plain}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\makeatletter
+
+\usepackage{amsmath, amsfonts ,amssymb, german, a4, theorem} 
+\theorembodyfont{\normalfont}
+\theoremstyle{break}
+\newtheorem{Def}{\underline{Definition}}
+
+\theorembodyfont{\normalfont}
+\theoremstyle{break}
+\newtheorem{Sat}{\underline{Satz}}
+
+\theorembodyfont{\normalfont}
+\theoremstyle{break}
+\newtheorem{Bem}{\underline{Bemerkung}}
+
+\theorembodyfont{\normalfont}
+\theoremstyle{break}
+\newtheorem{Bei}{\underline{Beispiel}}
+
+\newcommand{\ggT}{ \textrm{ggT} }
+\newcommand{\kgV}{ \textrm{kgV} }
+\newcommand{\R}{\textrm{r} }
+
+\usepackage{babel}
+\makeatother
+\end_preamble
+\options german
+\language default
+\inputencoding latin1
+\fontscheme default
+\graphics default
+\paperfontsize 12
+\spacing single 
+\papersize a4paper
+\paperpackage a4
+\use_geometry 0
+\use_amsmath 0
+\paperorientation portrait
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\defskip medskip
+\quotes_language english
+\quotes_times 2
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+
+\layout Standard
+\align left 
+
+\series bold 
+\size large 
+Seminar: Computeralgebra 1
+\series default 
+\size default 
+
+\newline 
+
+\layout Standard
+\align left 
+Thema 7 : Algorithmus Minpoly und Ordpoly
+\newline 
+ Hannes Buchholzer 
+\latex latex 
+
+\backslash 
+
+\backslash 
+*
+\layout Standard
+\noindent 
+
+\bar under 
+Generalvoraussetzungen:
+\bar default 
+
+\newline 
+ Seien 
+\begin_inset Formula \( K \)
+\end_inset 
+
+ ein Körper, 
+\begin_inset Formula \( R \)
+\end_inset 
+
+ ein euklidischer Ring, 
+\begin_inset Formula \( V \)
+\end_inset 
+
+ ein 
+\begin_inset Formula \( K \)
+\end_inset 
+
+-Vektorraum mit 
+\begin_inset Formula \( dimV=n\: (n\in \mathbb {N}) \)
+\end_inset 
+
+, 
+\begin_inset Formula \( \tau \in End(V) \)
+\end_inset 
+
+ , und 
+\begin_inset Formula \( M \)
+\end_inset 
+
+ ein eindlich erzeugter Modul über 
+\begin_inset Formula \( R \)
+\end_inset 
+
+.
+\layout Section
+
+Wiederholung
+\layout Enumerate
+
+Der Polynomring 
+\begin_inset Formula \( K[X] \)
+\end_inset 
+
+ ist ein euklidischer Ring, insbesondere ein Hauptidealring (HIR).
+ 
+\layout Enumerate
+
+Das Annihilatorideal von M ist 
+\begin_inset Formula \( A(M):=\{r\in R\mid rm=0\: \forall m\in M\} \)
+\end_inset 
+
+.
+ 
+\layout Enumerate
+
+Das Ordnungsideal von 
+\begin_inset Formula \( m\in M \)
+\end_inset 
+
+ ist 
+\begin_inset Formula \( O(m):=\{r\in R\mid r\cdot m=0\} \)
+\end_inset 
+
+.
+ 
+\begin_inset Formula \( O(m) \)
+\end_inset 
+
+ ist ein Ideal.
+ 
+\layout Enumerate
+
+Ein Element 
+\begin_inset Formula \( m\in M \)
+\end_inset 
+
+ heißt Torsionselement, wenn 
+\begin_inset Formula \( O(m)\supsetneqq \{0\} \)
+\end_inset 
+
+.
+ Ist jedes 
+\begin_inset Formula \( m\in M \)
+\end_inset 
+
+ Torsionselement, so heißt 
+\begin_inset Formula \( M \)
+\end_inset 
+
+ Torsionsmodul.
+ 
+\layout Standard
+
+
+\latex latex 
+
+\backslash 
+begin{Def}[ {
+\backslash 
+(K[X]
+\backslash 
+)-Modul 
+\backslash 
+(V_{
+\backslash 
+tau}
+\backslash 
+)} ]
+\newline 
+Sei 
+\backslash 
+( f 
+\backslash 
+in K[X]
+\backslash 
+) und 
+\backslash 
+(v 
+\backslash 
+in V
+\backslash 
+).
+ Durch die Definition 
+\newline 
+
+\backslash 
+( f 
+\backslash 
+cdot v :=  (f(
+\backslash 
+tau))(v) 
+\backslash 
+) wird 
+\backslash 
+(V
+\backslash 
+) zu einem 
+\backslash 
+(K[X]
+\backslash 
+)-Modul, bezeichnet mit 
+\backslash 
+(V_{
+\backslash 
+tau}
+\backslash 
+).
+ 
+\newline 
+
+\backslash 
+end{Def}
+\layout Standard
+
+
+\latex latex 
+
+\backslash 
+begin{Bem}
+\newline 
+
+\backslash 
+begin{enumerate}
+\newline 
+
+\backslash 
+item Für Elemente 
+\backslash 
+(k 
+\backslash 
+in K 
+\backslash 
+subset K[X]
+\backslash 
+) folgt aus diese Definition: 
+\backslash 
+( k 
+\backslash 
+cdot v = k 
+\backslash 
+cdot 
+\backslash 
+tau ^{0} (v) = 
+\newline 
+k 
+\backslash 
+star v 
+\backslash 
+), wobei 
+\backslash 
+( 
+\backslash 
+star 
+\backslash 
+) die Skalarmultiplikation im 
+\backslash 
+(K
+\backslash 
+)-Vektorraum 
+\backslash 
+(V
+\backslash 
+) bezeichnet.
+ 
+\newline 
+
+\backslash 
+item Der Modul 
+\backslash 
+(V_{
+\backslash 
+tau}
+\backslash 
+) ist endlich erzeugt.
+ 
+\newline 
+
+\backslash 
+item Außerdem ist 
+\backslash 
+(V_{
+\backslash 
+tau}
+\backslash 
+) ein Torsionsmodul.
+  
+\newline 
+
+\backslash 
+end{enumerate}
+\newline 
+
+\backslash 
+end{Bem}
+\layout Section
+
+Der Algorithmus Ordpoly
+\layout Subsection
+
+Definition des Ordnungspolynoms und Beispiel
+\layout Standard
+
+
+\latex latex 
+
+\backslash 
+begin{Def}
+\newline 
+Sei 
+\backslash 
+(v 
+\backslash 
+in V 
+\backslash 
+) und 
+\backslash 
+(o 
+\backslash 
+in K[X]
+\backslash 
+) normiert mit 
+\backslash 
+( (o) = K[X] o = O(v)
+\backslash 
+).
+ Dann heißt 
+\backslash 
+(o
+\backslash 
+) Ordnungspolynom von 
+\backslash 
+(v
+\backslash 
+).
+ 
+\newline 
+
+\backslash 
+end{Def}
+\layout Standard
+
+
+\latex latex 
+
+\backslash 
+begin{Bem} 
+\newline 
+
+\backslash 
+begin{enumerate}
+\newline 
+
+\newline 
+
+\backslash 
+item Das Ordnungspolynom ist eindeutig bestimmt, weil 
+\backslash 
+(K[X]
+\backslash 
+) ein
+\newline 
+   H.I.R.
+ ist und weil es normiert ist.
+\newline 
+
+\backslash 
+item Allgemein gilt: Jedes Ideal 
+\backslash 
+(I 
+\backslash 
+subset K[X]
+\backslash 
+) wird von allen
+\newline 
+Polynomen des kleinsten Grades in 
+\backslash 
+(I
+\backslash 
+) erzeugt.
+ Diese sind alle assoziiert, d.h.
+ sie unterscheiden sich nur durch Einheiten und es gibt darunter nur ein
+ normiertes Polynom.
+\newline 
+ 
+\backslash 
+end{enumerate} 
+\newline 
+
+\backslash 
+end{Bem}
+\layout Standard
+
+
+\latex latex 
+
+\backslash 
+begin{Bei}
+\newline 
+
+\newline 
+Hier sei 
+\backslash 
+(K=
+\backslash 
+mathbb{Z}_{5}
+\backslash 
+) und 
+\backslash 
+(V=
+\backslash 
+left(
+\backslash 
+mathbb{Z}_{5}
+\backslash 
+right)^{3}
+\backslash 
+).
+\newline 
+Dann ist 
+\backslash 
+(v
+\backslash 
+in 
+\backslash 
+left(
+\backslash 
+mathbb{Z}_{5}
+\backslash 
+right)^{3}
+\backslash 
+: ,
+\backslash 
+: End(V)=Mat(3
+\backslash 
+times 3,
+\backslash 
+mathbb{Z}_{5})
+\backslash 
+)
+\newline 
+und 
+\backslash 
+(
+\backslash 
+tau =A
+\backslash 
+in Mat(3
+\backslash 
+times 3,
+\backslash 
+mathbb{Z}_{5})
+\backslash 
+).
+ Sei 
+\backslash 
+(v:=
+\backslash 
+left(
+\backslash 
+begin{array}{c}
+\newline 
+ 1
+\backslash 
+
+\backslash 
+
+\newline 
+ 2
+\backslash 
+
+\backslash 
+
+\newline 
+ 1
+\backslash 
+end{array}
+\newline 
+
+\backslash 
+right)
+\backslash 
+quad 
+\backslash 
+textrm{und}
+\backslash 
+quad A:=
+\backslash 
+left(
+\backslash 
+begin{array}{ccc}
+\newline 
+ 3 & 0 & 0
+\backslash 
+
+\backslash 
+
+\newline 
+ 2 & 1 & 0
+\backslash 
+
+\backslash 
+
+\newline 
+ 4 & 1 & 2
+\backslash 
+end{array}
+\newline 
+
+\backslash 
+right)
+\backslash 
+).
+ Dann ist : 
+\backslash 
+(Av=
+\backslash 
+left(
+\backslash 
+begin{array}{c}
+\newline 
+ 3
+\backslash 
+
+\backslash 
+
+\newline 
+ 4
+\backslash 
+
+\backslash 
+
+\newline 
+ 3
+\backslash 
+end{array}
+\newline 
+
+\backslash 
+right)
+\backslash 
+: ,
+\backslash 
+: A^{2}v=
+\backslash 
+left(
+\backslash 
+begin{array}{c}
+\newline 
+ 4
+\backslash 
+
+\backslash 
+
+\newline 
+ 0
+\backslash 
+
+\backslash 
+
+\newline 
+ 2
+\backslash 
+end{array}
+\newline 
+
+\backslash 
+right)
+\backslash 
+)und 
+\backslash 
+(A^{3}v=
+\backslash 
+left(
+\backslash 
+begin{array}{c}
+\newline 
+ 2
+\backslash 
+
+\backslash 
+
+\newline 
+ 3
+\backslash 
+
+\backslash 
+
+\newline 
+ 0
+\backslash 
+end{array}
+\newline 
+
+\backslash 
+right)
+\backslash 
+).
+ Jetzt bestimme durch sukzessiven Test 
+\backslash 
+(s
+\backslash 
+) minimal, so daß 
+\backslash 
+(v,
+\backslash 
+, Av,
+\backslash 
+ldots ,A^{s}v
+\backslash 
+)
+\newline 
+linear abhängig sind.
+ Hier ist 
+\backslash 
+(s=3
+\backslash 
+) , denn 
+\backslash 
+(v,
+\backslash 
+, Av,
+\backslash 
+, A^{2}v
+\backslash 
+)
+\newline 
+sind noch linear unabhängig.
+ Also ist 
+\backslash 
+(v,
+\backslash 
+, Av,
+\backslash 
+, A^{2}v
+\backslash 
+) eine Basis
+\newline 
+von 
+\backslash 
+(
+\backslash 
+left(
+\backslash 
+mathbb{Z}_{5}
+\backslash 
+right)^{3}
+\backslash 
+) und 
+\backslash 
+(A^{3}v
+\backslash 
+) läßt sich in
+\newline 
+dieser Basis darstellen.
+ Es ist: 
+\backslash 
+(A^{3}v=v+4Av+A^{2}v
+\backslash 
+; 
+\backslash 
+Rightarrow 
+\backslash 
+; A^{3}v-A^{2}v-4Av-v=0
+\backslash 
+; 
+\backslash 
+Rightarrow 
+\backslash 
+; (A^{3}+4A^{2}+1A+4E)
+\backslash 
+cdot v=0
+\backslash 
+).
+\newline 
+Deswegen annuliert das Polynom 
+\backslash 
+(o=X^{3}+4X^{2}+X+4
+\backslash 
+) den Vektor 
+\backslash 
+(v
+\backslash 
+).
+\newline 
+Dies ist gleichzeitig das Ordnungspolynom, denn der Grad ist wegen
+\newline 
+der Minimalität von 
+\backslash 
+(s
+\backslash 
+) minimal.
+ Außerdem ist 
+\backslash 
+(o
+\backslash 
+) normiert.
+\newline 
+
+\newline 
+
+\backslash 
+end{Bei}
+\layout Subsection
+
+Ordnungspolynom in einem Faktorraum 
+\begin_inset Formula \( V/U \)
+\end_inset 
+
+ 
+\layout Standard
+
+Dies erfordert den Übergang zum 
+\begin_inset Formula \( K[X] \)
+\end_inset 
+
+-Faktormodul 
+\begin_inset Formula \( V_{\tau }/U_{\tau } \)
+\end_inset 
+
+: 
+\latex latex 
+
+\backslash 
+
+\backslash 
+*
+\layout Enumerate
+
+Dies Untermoduln von 
+\begin_inset Formula \( V_{\tau } \)
+\end_inset 
+
+ sind gerade diejenigen Unterräume 
+\begin_inset Formula \( U \)
+\end_inset 
+
+ von 
+\begin_inset Formula \( V \)
+\end_inset 
+
+ die 
+\begin_inset Formula \( \tau (U)\subset U \)
+\end_inset 
+
+ erfüllen, hier bezeichnet mit 
+\begin_inset Formula \( U_{\tau } \)
+\end_inset 
+
+.
+ 
+\layout Enumerate
+
+Der Endomorphismus 
+\begin_inset Formula \( \tau  \)
+\end_inset 
+
+ muss nun verändert werden: Setze 
+\begin_inset Formula 
+\[
+\overline{\tau }\: :\: V_{\tau }/U_{\tau }\longrightarrow V_{\tau }/U_{\tau }\quad ;\: \overline{\tau }(\overline{v})=\overline{\tau (v)}\]
+
+\end_inset 
+
+ Dies ist die kanonische Definition.
+ 
+\layout Enumerate
+
+Die Addition ist gegeben durch 
+\begin_inset Formula \( \overline{v}+\overline{w}=\overline{v+w}\quad \forall \, v,w\in V_{\tau } \)
+\end_inset 
+
+.
+ Und die Multiplikation ist gegeben durch 
+\begin_inset Formula \( p\cdot \overline{v}=p(\overline{\tau })(\overline{v})=\overline{p(\tau )(v)}\quad \forall p\in K[X]\; \forall v\in V \)
+\end_inset 
+
+.
+ 
+\begin_inset Formula \( \qquad \Rightarrow  \)
+\end_inset 
+
+ Man rechnet ganz in 
+\begin_inset Formula \( V_{\tau } \)
+\end_inset 
+
+ und macht erst zum Schluss der Rechnung den Übergang modulo 
+\begin_inset Formula \( U_{\tau } \)
+\end_inset 
+
+.
+ ( Ganz genauso wie man in 
+\begin_inset Formula \( \mathbb {Z}_{5} \)
+\end_inset 
+
+ rechnet ).
+ 
+\layout Subsection
+
+Algorithmus Ordpoly
+\layout Standard
+
+Sei 
+\begin_inset Formula \( \overline{v}\in V_{\tau }/U_{\tau } \)
+\end_inset 
+
+ , und 
+\begin_inset Formula \( U\: \tau  \)
+\end_inset 
+
+-invariant.
+ Weiter sei 
+\begin_inset Formula \( b_{0},\ldots \, \, b_{k} \)
+\end_inset 
+
+ eine Basis von 
+\begin_inset Formula \( U_{\tau } \)
+\end_inset 
+
+.
+\newline 
+ Setzte 
+\begin_inset Formula \( i:=0 \)
+\end_inset 
+
+
+\newline 
+ Wiederhole solange die Vektoren 
+\begin_inset Formula \( b_{0},\ldots ,b_{k},v,\tau (v),\ldots ,\tau ^{i}(v) \)
+\end_inset 
+
+ linear unabhängig sind ( dies wird mit der Funktion gauss getestet ) :
+ setzte 
+\begin_inset Formula \( i:=i+1 \)
+\end_inset 
+
+ .
+ 
+\newline 
+ Setze 
+\begin_inset Formula \( m:=i \)
+\end_inset 
+
+.
+\newline 
+ Die Funktion gauss liefert dann einen Vektor 
+\begin_inset Formula \( f \)
+\end_inset 
+
+, so daß gilt : 
+\begin_inset Formula 
+\[
+\tau ^{m}(v)=f_{0}b_{0}+\cdots +f_{k}b_{k}+f_{k+1}v+\cdots +f_{k+m}\tau ^{m-1}(v)\]
+
+\end_inset 
+
+
+\newline 
+ Setze 
+\begin_inset Formula \( w:=(f_{0},\ldots ,f_{k}) \)
+\end_inset 
+
+
+\latex latex 
+ 
+\backslash 
+hspace{12pt}
+\latex default 
+ ( Anteil in 
+\begin_inset Formula \( U_{\tau } \)
+\end_inset 
+
+ ) 
+\newline 
+ Setze 
+\begin_inset Formula \( f:=(f_{k+1},\ldots ,f_{k+m}) \)
+\end_inset 
+
+
+\latex latex 
+ 
+\backslash 
+hspace{12pt}
+\latex default 
+ ( Anteil im direkten Komplement von 
+\begin_inset Formula \( U_{\tau } \)
+\end_inset 
+
+ ).
+ 
+\newline 
+ Dann gilt: 
+\begin_inset Formula \( \tau ^{m}(v)-f_{m-1}\tau ^{m-1}(v)-\cdots -f_{0}v=w_{0}b_{0}+\cdots +w_{k}b_{k} \)
+\end_inset 
+
+.
+\newline 
+ modulo 
+\begin_inset Formula \( U_{\tau } \)
+\end_inset 
+
+: 
+\begin_inset Formula \( \quad \overline{\tau }^{m}(\overline{v})-f_{m-1}\overline{\tau }^{m-1}(\overline{v})-\cdots -f_{0}\overline{v}=\overline{0} \)
+\end_inset 
+
+
+\newline 
+ Setze 
+\begin_inset Formula \( o:=X^{m}-f_{m-1}X^{m-1}-\cdots -f_{1}X-f_{0} \)
+\end_inset 
+
+ .
+\newline 
+ Dies ist dann das Ordnungspolynom, denn es hat den kleinstmöglichen Grad
+ und ist normiert.
+\layout Section
+
+Der Algorithmus Minpoly
+\layout Subsection
+
+Definition des Minimalpolynoms und Beispiel
+\layout Standard
+
+
+\latex latex 
+
+\backslash 
+begin{Def}[Minimalpolynom]
+\newline 
+Das normierte Polynom 
+\backslash 
+(m 
+\backslash 
+in K[X]
+\backslash 
+) für das gilt: 
+\backslash 
+(K[X]m = A(V_{
+\backslash 
+tau }) = 
+\backslash 
+{ p 
+\backslash 
+in K[X] 
+\backslash 
+mid p 
+\backslash 
+cdot v = 0 
+\backslash 
+quad v 
+\backslash 
+in V_{
+\backslash 
+tau }
+\backslash 
+} 
+\backslash 
+: 
+\backslash 
+) hei
+\backslash 
+ss t Minimalpolynom von 
+\backslash 
+(
+\backslash 
+tau 
+\backslash 
+in End(v) 
+\backslash 
+).
+\newline 
+
+\backslash 
+end{Def}
+\layout Standard
+
+
+\latex latex 
+
+\backslash 
+begin{Bei}[für den Algorithmus Minpoly]
+\newline 
+
+\newline 
+Gegeben sei eine Basis von dem 
+\backslash 
+(
+\backslash 
+mathbb{Z}_{5}
+\backslash 
+)-Vekorraum 
+\backslash 
+(V=
+\backslash 
+left(
+\backslash 
+mathbb{Z}_{5}
+\backslash 
+right)^{4}
+\backslash 
+):
+\newline 
+
+\backslash 
+(
+\backslash 
+; v_{0}=
+\backslash 
+left(
+\backslash 
+begin{array}{c}
+\newline 
+ 0
+\backslash 
+
+\backslash 
+
+\newline 
+ 1
+\backslash 
+
+\backslash 
+
+\newline 
+ 0
+\backslash 
+
+\backslash 
+
+\newline 
+ 0
+\backslash 
+end{array}
+\newline 
+
+\backslash 
+right),
+\backslash 
+: v_{1}=
+\backslash 
+left(
+\backslash 
+begin{array}{c}
+\newline 
+ 2
+\backslash 
+
+\backslash 
+
+\newline 
+ 2
+\backslash 
+
+\backslash 
+
+\newline 
+ 4
+\backslash 
+
+\backslash 
+
+\newline 
+ 1
+\backslash 
+end{array}
+\newline 
+
+\backslash 
+right),
+\backslash 
+: v_{2}=
+\backslash 
+left(
+\backslash 
+begin{array}{c}
+\newline 
+ 3
+\backslash 
+
+\backslash 
+
+\newline 
+ 3
+\backslash 
+
+\backslash 
+
+\newline 
+ 2
+\backslash 
+
+\backslash 
+
+\newline 
+ 0
+\backslash 
+end{array}
+\newline 
+
+\backslash 
+right),
+\backslash 
+: v_{3}=
+\backslash 
+left(
+\backslash 
+begin{array}{c}
+\newline 
+ 2
+\backslash 
+
+\backslash 
+
+\newline 
+ 0
+\backslash 
+
+\backslash 
+
+\newline 
+ 0
+\backslash 
+
+\backslash 
+
+\newline 
+ 0
+\backslash 
+end{array}
+\newline 
+
+\backslash 
+right)
+\backslash 
+)~,, ein Endomorphismus von 
+\backslash 
+(A=
+\backslash 
+tau 
+\backslash 
+in End(V)
+\backslash 
+) : 
+\backslash 
+(
+\backslash 
+; A=
+\backslash 
+left(
+\backslash 
+begin{array}{cccc}
+\newline 
+ 3 & 4 & 2 & 4
+\backslash 
+
+\backslash 
+
+\newline 
+ 0 & 1 & 3 & 0
+\backslash 
+
+\backslash 
+
+\newline 
+ 0 & 0 & 1 & 4
+\backslash 
+
+\backslash 
+
+\newline 
+ 0 & 0 & 0 & 2
+\backslash 
+end{array}
+\newline 
+
+\backslash 
+right)
+\backslash 
+; 
+\backslash 
+)und schließlich noch die Ordnungspolynome zu den Basisvektoren: 
+\newline 
+
+\newline 
+
+\backslash 
+(
+\backslash 
+begin{array}{ll}
+\newline 
+ o_{0}=X^{3}+X+3=(X+2)(X+4) & 
+\backslash 
+quad o_{1}=X^{2}+1=(X+2)(X+3)
+\backslash 
+
+\backslash 
+
+\newline 
+ o_{2}=X^{3}+2X+2=(x+2)(X+4)^{2} & 
+\backslash 
+quad o_{3}=X+2
+\backslash 
+end{array}
+\newline 
+
+\backslash 
+).
+\newline 
+
+\newline 
+
+\backslash 
+begin{description}
+\newline 
+
+\backslash 
+item [Schritt~0:]Setze: 
+\backslash 
+(
+\backslash 
+: m:=o_{0}
+\backslash 
+: 
+\backslash 
+) und 
+\backslash 
+(
+\backslash 
+: v:=v_{0}
+\backslash 
+).
+\newline 
+
+\backslash 
+item [Schritt~1:]Setze: 
+\backslash 
+(c:=m=(X+2)(X+4)
+\backslash 
+; ,
+\backslash 
+; d:=o_{1}=(X+2)(X+3)
+\backslash 
+)
+\backslash 
+
+\backslash 
+
+\newline 
+Berechne: 
+\backslash 
+begin{eqnarray*}
+\newline 
+t & := & 
+\backslash 
+ggT (c,d)=(X+2)
+\backslash 
+
+\backslash 
+
+\newline 
+C & := & 
+\backslash 
+R (c,
+\backslash 
+frac{d}{t})=
+\backslash 
+R (
+\backslash 
+, (X+2)(X+4),
+\backslash 
+: (X+3)
+\backslash 
+, )=(X+2)(X+4)
+\backslash 
+
+\backslash 
+
+\newline 
+D & := & 
+\backslash 
+R (d,
+\backslash 
+frac{c}{t})=
+\backslash 
+R (
+\backslash 
+, (X+2)(X+3),
+\backslash 
+: (X+4)
+\backslash 
+, )=(X+2)(X+3)
+\backslash 
+
+\backslash 
+
+\newline 
+T & := & 
+\backslash 
+ggT (C,D)=(X+2)
+\backslash 
+
+\backslash 
+
+\newline 
+D_{2} & := & 
+\backslash 
+frac{D}{T}=(X+3)
+\backslash 
+
+\backslash 
+
+\newline 
+m & := & D_{2}C=(X+2)(X+3)(X+4)
+\backslash 
+
+\backslash 
+
+\newline 
+v & := & 
+\backslash 
+frac{c}{C}
+\backslash 
+cdot v+
+\backslash 
+frac{d}{D_{2}}
+\backslash 
+cdot v_{1}=1
+\backslash 
+cdot 
+\backslash 
+left(
+\backslash 
+begin{array}{c}
+\newline 
+ 0
+\backslash 
+
+\backslash 
+
+\newline 
+ 1
+\backslash 
+
+\backslash 
+
+\newline 
+ 0
+\backslash 
+
+\backslash 
+
+\newline 
+ 0
+\backslash 
+end{array}
+\newline 
+
+\backslash 
+right)+(X+2)
+\backslash 
+left(
+\backslash 
+begin{array}{c}
+\newline 
+ 2
+\backslash 
+
+\backslash 
+
+\newline 
+ 2
+\backslash 
+
+\backslash 
+
+\newline 
+ 4
+\backslash 
+
+\backslash 
+
+\newline 
+ 1
+\backslash 
+end{array}
+\newline 
+
+\backslash 
+right)=
+\backslash 
+left(
+\backslash 
+begin{array}{c}
+\newline 
+ 0
+\backslash 
+
+\backslash 
+
+\newline 
+ 4
+\backslash 
+
+\backslash 
+
+\newline 
+ 1
+\backslash 
+
+\backslash 
+
+\newline 
+ 4
+\backslash 
+end{array}
+\newline 
+
+\backslash 
+right)
+\newline 
+
+\backslash 
+end{eqnarray*}
+\newline 
+
+\newline 
+
+\backslash 
+item [Schritt~2:]Setze: 
+\backslash 
+(c:=m=(X+2)(X+3)(X+4)
+\backslash 
+; ,
+\backslash 
+; d:=o_{2}=(X+2)(X+4)^{2}
+\backslash 
+)
+\backslash 
+
+\backslash 
+
+\newline 
+Berechne: 
+\backslash 
+begin{eqnarray*}
+\newline 
+t & := & 
+\backslash 
+ggT (c,d)=(X+2)(X+4)
+\backslash 
+
+\backslash 
+
+\newline 
+C & := & 
+\backslash 
+R (c,
+\backslash 
+frac{d}{t})=R(
+\backslash 
+, (X+2)(X+3)(X+4),
+\backslash 
+: (X+4)
+\backslash 
+, )=(X+2)(X+3)
+\backslash 
+
+\backslash 
+
+\newline 
+D & := & 
+\backslash 
+R (d,
+\backslash 
+frac{c}{t})=
+\backslash 
+R (
+\backslash 
+, (X+2)(X+4)^{2},
+\backslash 
+: (X+3)
+\backslash 
+, )=(X+2)(X+4)^{2}
+\backslash 
+
+\backslash 
+
+\newline 
+T & := & 
+\backslash 
+ggT (C,D)=(X+2)
+\backslash 
+
+\backslash 
+
+\newline 
+D_{2} & := & 
+\backslash 
+frac{D}{T}=(X+4)^{2}
+\backslash 
+
+\backslash 
+
+\newline 
+m & := & D_{2}C=(X+2)(X+3)(X+4)^{2}
+\backslash 
+
+\backslash 
+
+\newline 
+v & := & 
+\backslash 
+frac{c}{C}
+\backslash 
+cdot v+
+\backslash 
+frac{d}{D_{2}}
+\backslash 
+cdot v_{1}=(X+4)
+\backslash 
+left(
+\backslash 
+begin{array}{c}
+\newline 
+ 0
+\backslash 
+
+\backslash 
+
+\newline 
+ 4
+\backslash 
+
+\backslash 
+
+\newline 
+ 1
+\backslash 
+
+\backslash 
+
+\newline 
+ 4
+\backslash 
+end{array}
+\newline 
+
+\backslash 
+right)+(X+2)
+\backslash 
+left(
+\backslash 
+begin{array}{c}
+\newline 
+ 3
+\backslash 
+
+\backslash 
+
+\newline 
+ 3
+\backslash 
+
+\backslash 
+
+\newline 
+ 2
+\backslash 
+
+\backslash 
+
+\newline 
+ 0
+\backslash 
+end{array}
+\newline 
+
+\backslash 
+right)=
+\backslash 
+left(
+\backslash 
+begin{array}{c}
+\newline 
+ 0
+\backslash 
+
+\backslash 
+
+\newline 
+ 3
+\backslash 
+
+\backslash 
+
+\newline 
+ 2
+\backslash 
+
+\backslash 
+
+\newline 
+ 4
+\backslash 
+end{array}
+\newline 
+
+\backslash 
+right)
+\newline 
+
+\backslash 
+end{eqnarray*}
+\newline 
+
+\backslash 
+
+\backslash 
+
+\newline 
+Hier Abbruch der Berechnungen, denn das Minimalpolynom 
+\backslash 
+(
+\backslash 
+, m
+\backslash 
+, 
+\backslash 
+)kann
+\newline 
+nach der Theorie nicht mehr größer werden.
+\newline 
+
+\backslash 
+end{description}
+\newline 
+
+\backslash 
+end{Bei}
+\layout Subsection
+
+Bestimmung des Minimalpolynoms
+\layout Standard
+
+
+\series bold 
+\bar under 
+Ziel:
+\series default 
+\bar default 
+Bestimmung des Minimalpolynoms von 
+\begin_inset Formula \( \tau  \)
+\end_inset 
+
+ aus einer möglichst geringen Anzahl von Ordnungspolynomen.
+\layout Subsubsection*
+
+1.
+ Schritt:
+\layout Standard
+
+Es sei 
+\begin_inset Formula \( m\in K[X] \)
+\end_inset 
+
+ das Minimalpolynom von 
+\begin_inset Formula \( \tau  \)
+\end_inset 
+
+.
+ Dann gilt 
+\begin_inset Formula 
+\begin{equation}
+\label{eq:1}
+K[X]m=A(V_{\tau })=\bigcap _{v\in V}O(v)
+\end{equation}
+
+\end_inset 
+
+ nach Definition.
+\layout Subsubsection*
+
+2.
+ Schritt:
+\layout Standard
+
+Sei 
+\begin_inset Formula \( E=(e_{0},e_{1},\ldots ,e_{k}) \)
+\end_inset 
+
+ ein endliches Erzeugendensystem von 
+\begin_inset Formula \( M \)
+\end_inset 
+
+.
+ Wegen dem Satz 1, reicht es den Schnitt in (
+\begin_inset LatexCommand \ref{eq:1}
+
+\end_inset 
+
+) nur über das Erzeugendensystem 
+\begin_inset Formula \( E \)
+\end_inset 
+
+ zu bilden:
+\begin_inset Formula 
+\[
+K[X]m=\bigcap _{i=0}^{k}O(e_{i})\]
+
+\end_inset 
+
+
+\newline 
+
+\layout Standard
+
+
+\latex latex 
+
+\backslash 
+begin{Sat}
+\newline 
+Sei 
+\backslash 
+(e_{0}, e_{1} , 
+\backslash 
+ldots , e_{k} 
+\backslash 
+) ein Erzeugendensystem von dem 
+\backslash 
+(R
+\backslash 
+)-Modul 
+\backslash 
+(M
+\backslash 
+).
+ Dann gilt : 
+\backslash 
+[A(M) = 
+\backslash 
+bigcap_{i=0}^{k} O(e_{i}) 
+\backslash 
+]
+\newline 
+
+\backslash 
+end{Sat}
+\layout Subsubsection*
+
+3.
+ Schritt:
+\layout Standard
+
+Sei 
+\begin_inset Formula \( o_{i}\in K[X] \)
+\end_inset 
+
+ das Ordnungspolynom von 
+\begin_inset Formula \( e_{i} \)
+\end_inset 
+
+ für 
+\begin_inset Formula \( i=0,\ldots ,k \)
+\end_inset 
+
+ d.h.
+ 
+\begin_inset Formula \( K[X]o_{i}=O(e_{i})\quad (i=0,\ldots ,k) \)
+\end_inset 
+
+.
+ Dann gilt nach einem Resultat aus der Algebra: 
+\begin_inset Formula 
+\[
+K[X]m=K[X]s\quad \forall s\in \kgV (o_{0},\ldots ,o_{k})\]
+
+\end_inset 
+
+
+\newline 
+
+\layout Standard
+
+
+\latex latex 
+
+\backslash 
+begin{Sat}
+\newline 
+Seien 
+\backslash 
+( b_{0}, 
+\backslash 
+ldots , b_{m} 
+\backslash 
+in R 
+\backslash 
+).
+ Dann gilt: 
+\backslash 
+[ 
+\backslash 
+bigcap_{i=0}^{m} R b_{i} = R v 
+\backslash 
+qquad 
+\backslash 
+forall 
+\backslash 
+, v 
+\backslash 
+in  
+\backslash 
+kgV(b_{0}, 
+\backslash 
+ldots , b_{m}) 
+\backslash 
+]
+\newline 
+
+\backslash 
+end{Sat}
+\layout Standard
+
+
+\latex latex 
+
+\backslash 
+begin{Bem}
+\newline 
+ Seien 
+\backslash 
+( r_{0},
+\backslash 
+ldots,r_{m},r,s 
+\backslash 
+in R 
+\backslash 
+).
+ Dann gilt:   
+\newline 
+
+\backslash 
+begin{eqnarray*}
+\newline 
+
+\backslash 
+kgV(r_{0},
+\backslash 
+ldots ,r_{m}) & = & 
+\backslash 
+kgV(r_{0},
+\backslash 
+kgV(r_{1},
+\backslash 
+ldots ,r_{m}) ) 
+\backslash 
+
+\backslash 
+
+\newline 
+
+\backslash 
+kgV(r,s) & = & 
+\backslash 
+frac{rs}{ 
+\backslash 
+ggT(r,s) }
+\newline 
+
+\backslash 
+end{eqnarray*}
+\newline 
+
+\newline 
+
+\backslash 
+end{Bem}
+\layout Subsection
+
+Bestimmung eines Vektors mit maximalem Ordnungspolynom
+\layout Standard
+
+
+\series bold 
+\bar under 
+Ziel:
+\series default 
+\bar default 
+ Bestimmung eines Vektors 
+\begin_inset Formula \( v\in V \)
+\end_inset 
+
+ der das Minimalpolynom als Ordnungspolynom hat.
+\layout Standard
+
+
+\latex latex 
+
+\backslash 
+begin{Sat}
+\newline 
+Seien 
+\backslash 
+(c,d 
+\backslash 
+in R
+\backslash 
+).
+ Setzte: 
+\backslash 
+( 
+\backslash 
+quad t:= 
+\backslash 
+ggT(c,d) 
+\backslash 
+: , 
+\backslash 
+: C:=r(c, 
+\backslash 
+frac{d}{t} )
+\backslash 
+) und 
+\backslash 
+(D:= r(d, 
+\backslash 
+frac{c}{t} )
+\backslash 
+).
+ Dann gilt:
+\newline 
+
+\backslash 
+[ 
+\backslash 
+kgV(c,d) = 
+\backslash 
+kgV(C,D) 
+\backslash 
+]
+\newline 
+
+\backslash 
+end{Sat}
+\layout Standard
+
+
+\latex latex 
+
+\backslash 
+begin{Bei} Seien 
+\backslash 
+(c=2^{3}3^{2}5^{4},
+\backslash 
+, d=2^{3}37^{2}
+\backslash 
+in 
+\backslash 
+mathbb{Z}
+\backslash 
+).
+\newline 
+Dann ist: 
+\backslash 
+(t=
+\backslash 
+ggT (c,d)=2^{3}3
+\backslash 
+; 
+\backslash 
+Rightarrow 
+\backslash 
+; 
+\backslash 
+frac{c}{t}=35^{4}
+\backslash 
+: ,
+\backslash 
+: 
+\backslash 
+frac{d}{t}=7^{2}
+\backslash 
+).
+\newline 
+Weiter ist: 
+\backslash 
+(C=r(c,
+\backslash 
+frac{d}{t})=r(2^{3}3^{2}5^{4},
+\backslash 
+, 7^{2})=2^{3}3^{2}5^{4}
+\backslash 
+quad D=r(d,
+\backslash 
+, 
+\backslash 
+frac{c}{t})=r(2^{3}37^{2},
+\backslash 
+, 35^{4})=2^{3}7^{2}
+\backslash 
+)
+\newline 
+und 
+\backslash 
+(T=
+\backslash 
+ggT (C,D)=2^{3}
+\backslash 
+; 
+\backslash 
+Rightarrow 
+\backslash 
+; 
+\backslash 
+kgV (C,D)=
+\backslash 
+frac{CD}{T}=2^{3}3^{2}5^{4}7^{2}
+\backslash 
+).
+\newline 
+
+\newline 
+
+\backslash 
+end{Bei}
+\layout Standard
+
+
+\latex latex 
+
+\backslash 
+begin{Sat}
+\newline 
+Seien 
+\backslash 
+(v_{0}, v_{1} 
+\backslash 
+in M
+\backslash 
+) Torsionselemente.
+ Ferner sei 
+\backslash 
+(O(v_{0}) = R c 
+\backslash 
+) und 
+\backslash 
+(O(v_{1}) = R d
+\backslash 
+).
+ Setze:   
+\backslash 
+( 
+\backslash 
+quad  C:=r(c, 
+\backslash 
+frac{d}{
+\backslash 
+ggT(c,d)} ) 
+\backslash 
+: , 
+\backslash 
+: D:= r(d, 
+\backslash 
+frac{c}{
+\backslash 
+ggT(c,d)} )
+\backslash 
+) und 
+\backslash 
+( D_{2}:=
+\backslash 
+frac{D}{
+\backslash 
+ggT(C,D)}
+\backslash 
+).
+ Setze ferner 
+\backslash 
+(v:= 
+\backslash 
+frac{c}{C} v_{0} + 
+\backslash 
+frac{d}{D_{2}} v_{1}
+\backslash 
+).
+ Dann gilt: 
+\backslash 
+[ O(v) = O(v_{0}) 
+\backslash 
+cap O(v_{1}) = R a 
+\backslash 
+quad 
+\backslash 
+forall a 
+\backslash 
+in 
+\backslash 
+kgV(C,D_{2})
+\backslash 
+]
+\newline 
+
+\backslash 
+end{Sat}
+\layout Subsection
+\noindent 
+Algorithmus Minpoly
+\layout Standard
+
+Sei 
+\begin_inset Formula \( v_{0},v_{1},\ldots ,v_{n} \)
+\end_inset 
+
+ eine Basis von 
+\begin_inset Formula \( V \)
+\end_inset 
+
+.
+ Dann ist 
+\begin_inset Formula \( \overline{v}_{0},\overline{v}_{1},\ldots ,\overline{v}_{n} \)
+\end_inset 
+
+ eine Basis von 
+\begin_inset Formula \( V_{\tau }/U_{\tau } \)
+\end_inset 
+
+ ( auch 
+\begin_inset Formula \( U_{\tau }=\{0\} \)
+\end_inset 
+
+ möglich ).
+ 
+\newline 
+
+\layout Description
+
+Vorarbeit:
+\protected_separator 
+ Berechne Ordnungspolynom von 
+\begin_inset Formula \( v_{i} \)
+\end_inset 
+
+ und speichere es in 
+\begin_inset Formula \( ordpol[i] \)
+\end_inset 
+
+ für 
+\begin_inset Formula \( \: i=0,\ldots ,n-1 \)
+\end_inset 
+
+ .
+ 
+\layout Description
+
+Schritt
+\protected_separator 
+0:
+\protected_separator 
+ Setze 
+\begin_inset Formula \( v \)
+\end_inset 
+
+ und 
+\begin_inset Formula \( m \)
+\end_inset 
+
+ wie folgt: 
+\begin_inset Formula 
+\begin{eqnarray*}
+v & := & v_{0}\\
+m & := & ordpol[0]
+\end{eqnarray*}
+
+\end_inset 
+
+
+\layout Description
+
+Schritt
+\protected_separator 
+i:
+\protected_separator 
+ ( Für 
+\begin_inset Formula \( i=1,\ldots ,n-1 \)
+\end_inset 
+
+ ) 
+\newline 
+ Setze: 
+\begin_inset Formula \( \qquad c:=m\:  \)
+\end_inset 
+
+ und 
+\begin_inset Formula \( d:=ordpol[i]\quad  \)
+\end_inset 
+
+ , wobei 
+\begin_inset Formula \( m=\kgV (ordpol[0],\ldots ,ordpol[i-1]) \)
+\end_inset 
+
+
+\newline 
+ Berechne Hilfsvariblen: 
+\begin_inset Formula \( \qquad t:=\kgV (c,d)\: ,\: C:=r(c,\frac{d}{t})\: ,\: D:=r(d,\frac{c}{t})\: ,\: T:=\ggT (C,D)\:  \)
+\end_inset 
+
+ und 
+\begin_inset Formula \( \: D_{2}:=\frac{D}{T} \)
+\end_inset 
+
+.
+ 
+\newline 
+ Berechne neues 
+\begin_inset Formula \( m \)
+\end_inset 
+
+ und neues 
+\begin_inset Formula \( v \)
+\end_inset 
+
+ : 
+\begin_inset Formula 
+\begin{eqnarray*}
+m:= & C\cdot D_{2} & \quad (\textrm{ d}.\textrm{h}.\: m:=\kgV (m,orpol[i])\: \: )\\
+v:= & \frac{c}{C}v+\frac{d}{D_{2}}v_{i} & \quad (\textrm{ d}.\textrm{h}.\: O(v)=K[X]m\: \: )
+\end{eqnarray*}
+
+\end_inset 
+
+ Falls 
+\begin_inset Formula \( grad(m)=n \)
+\end_inset 
+
+ verlasse Schleife vorzeitig.
+ 
+\layout Description
+
+Nacharbeit: Normiere 
+\begin_inset Formula \( m \)
+\end_inset 
+
+.
+ 
+\layout Description
+
+Ergebnis:
+\protected_separator 
+ 
+\protected_separator 
+
+\begin_deeper 
+\layout Enumerate
+
+Es ist 
+\begin_inset Formula \( m=\kgV (\, ordpol[0],\ldots ,ordpol[n-q]\, ) \)
+\end_inset 
+
+ Also ist 
+\begin_inset Formula \( K[X]m=\bigcap _{i=0}^{n}{O(v_{i})}=A(V_{\tau })\:  \)
+\end_inset 
+
+ nach den Sätzen 1 und 2 .
+ Damit ist 
+\begin_inset Formula \( m \)
+\end_inset 
+
+ das Minimalpolynom von 
+\begin_inset Formula \( \tau  \)
+\end_inset 
+
+ nach der Definition 1.
+ 
+\layout Enumerate
+
+Es ist 
+\begin_inset Formula \( O(v)=\bigcap _{i=0}^{n}{O(v_{i})}=K[X]m \)
+\end_inset 
+
+ nach Satz 4.
+ Also hat 
+\begin_inset Formula \( v \)
+\end_inset 
+
+ das Polynom 
+\begin_inset Formula \( m \)
+\end_inset 
+
+ als Ordnungspolynom.
+ 
+\the_end

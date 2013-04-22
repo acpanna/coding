@@ -1,0 +1,1164 @@
+<HTML
+><HEAD
+><TITLE
+>read und write</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Zeichen-Treiber"
+HREF="char.html"><LINK
+REL="PREVIOUS"
+TITLE="Ein kurze Einführung in Race Conditions"
+HREF="charrace.html"><LINK
+REL="NEXT"
+TITLE="Die neuen Geräte ausprobieren"
+HREF="x3593.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="charrace.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 3. Zeichen-Treiber</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x3593.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="CHARRDWR"
+>read und write</A
+></H1
+><P
+>&#62;
+&#62;
+&#62;
+&#62;
+
+
+
+
+
+
+
+
+&#13;</P
+><P
+>Die Methoden <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>
+führen eine ähnliche Aufgabe durch, sie kopieren also Daten aus dem
+und in den Applikationscode. Ihre Prototypen sind daher sehr ähnlich
+und können gleichzeitig eingeführt werden:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; ssize_t read(struct file *filp, char *buff,
+     size_t count, loff_t *offp);
+ ssize_t write(struct file *filp, const char *buff,
+     size_t count, loff_t *offp);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Bei beiden Methoden ist <TT
+CLASS="LITERAL"
+>filp</TT
+> der file-Zeiger und
+<TT
+CLASS="LITERAL"
+>count</TT
+> die Größe der angeforderten
+Datenübertragung. Das Argument <TT
+CLASS="LITERAL"
+>buff</TT
+> zeigt auf den
+Benutzer-Puffer, der die zu schreibenden Daten enthält, oder auf den
+leeren Puffer, in den die gelesenen Daten hineingeschrieben werden
+sollen. <TT
+CLASS="LITERAL"
+>offp</TT
+> ist schließlich ein Zeiger auf ein
+Objekt mit &#8220;langem Offset&#8221;, das die Dateiposition angibt, auf die der
+Benutzer zugreifen will. Der Rückgabewert ist ein
+&#8220;vorzeichenbehafteter Größentyp&#8221;, dessen Verwendung wir später
+behandeln.</P
+><P
+>Was den Datentransfer angeht, besteht die Hauptschwierigkeit der
+beiden Geräte-Methoden darin, die Daten zwischen dem Adreßraum des
+Kernels und dem des Benutzers hin- und herzutransportieren. Die
+Operation kann nicht auf die übliche Weise mittels Zeigern oder
+<SPAN
+><I
+CLASS="EMPHASIS"
+>memcpy</I
+></SPAN
+> durchgeführt werden. User-Space-Adressen
+können aus einer Reihe von Gründen nicht direkt im Kernel-Space
+verwendet werden.</P
+><P
+>Ein großer Unterschied zwischen Adressen im Kernel-Space und Adressen
+im User-Space besteht darin, daß Speicher im User-Space ausgelagert
+werden kann. Wenn der Kernel auf einen Zeiger im User-Space zugreift,
+ist die zugehörige Seite möglicherweise nicht im Speicher vorhanden,
+und es wird ein Seitenfehler(<SPAN
+><I
+CLASS="EMPHASIS"
+>Page Fault</I
+></SPAN
+>) erzeugt. Die in diesem Abschnitt und im Abschnitt
+<A
+HREF="extra.html#EXIOCTLSW"
+>the Section called <I
+>Das Argument von ioctl benutzen</I
+> in Kapitel 5</A
+> in <A
+HREF="extra.html"
+>Kapitel 5</A
+> eingeführten
+Funktionen verwenden ein paar versteckte Zaubertricks, um auch dann
+noch korrekt mit Seitenfehlern umzugehen, wenn die CPU sich gerade im
+Kernel-Space befindet.</P
+><P
+>Interessanterweise verwendete die x86-Version von Linux 2.0 völlig
+unterschiedliche Speichertabellen im User-Space und im Kernel-Space. User
+Space-Zeiger konnten überhaupt nicht vom Kernel-Space aus
+dereferenziert werden.</P
+><P
+>Wenn das Ziel-Gerät eine Erweiterungskarte anstelle von RAM ist,
+entsteht das gleiche Problem, weil der Treiber trotzdem noch Daten
+zwischen Benutzer-Puffern und dem Kernel-Space (sowie möglicherweise
+zwischen dem Kernel-Space und dem I/O-Speicher) übertragen muß.</P
+><P
+>&#13;
+
+
+Das Kopieren zwischen Spaces geschieht in Linux mit speziellen
+      Funktionen, die in <TT
+CLASS="LITERAL"
+>&#60;asm/uaccess.h&#62;</TT
+>
+      definiert sind. Eine solche Kopie wird entweder durch eine
+      generische (<SPAN
+><I
+CLASS="EMPHASIS"
+>memcpy</I
+></SPAN
+>&#8201;-artige) Funktion
+      oder durch Funktionen, die für eine bestimmte Datengröße
+(<TT
+CLASS="LITERAL"
+>char</TT
+>, <TT
+CLASS="LITERAL"
+>short</TT
+>,
+<TT
+CLASS="LITERAL"
+>int</TT
+>, <TT
+CLASS="LITERAL"
+>long</TT
+>) optimiert sind,
+      durchgeführt; die meisten davon werden im Abschnitt <A
+HREF="extra.html#EXIOCTLSW"
+>the Section called <I
+>Das Argument von ioctl benutzen</I
+> in Kapitel 5</A
+>&#62; in <A
+HREF="extra.html"
+>Kapitel 5</A
+>&#62; erklärt.</P
+><P
+>&#13;
+Der Code für <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>
+in <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> muß ein gesamtes Datensegment in
+den Benutzer-Adreßraum oder aus ihm heraus kopieren. Diese Fähigkeit
+wird durch die folgenden Kernel-Funktionen bereitgestellt, die ein
+beliebiges Array von Bytes kopieren und das Herzstück jeder
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>- und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>-Implementation sind:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; unsigned long copy_to_user(void *to, const void *from,
+        unsigned long count);
+ unsigned long copy_from_user(void *to, const void *from,
+        unsigned long count);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Obwohl sich diese Funktionen wie normale
+<SPAN
+><I
+CLASS="EMPHASIS"
+>memcpy</I
+></SPAN
+>-Funktionen verhalten, müssen Sie ein wenig
+zusätzliche Vorsicht walten lassen, wenn Sie von Kernel-Code aus auf den
+User-Space zugreifen wollen.  Die angesprochenen Seiten im User
+Space sind möglicherweise nicht im Speicher vorhanden, und der Page
+Fault-Handler kann den Prozeß schlafen legen, während die Seite geholt
+wird. Dies passiert beispielsweise, wenn die Seite aus dem Swap-Space
+geholt werden muß. Daraus folgt für den Treiberautor, daß jede
+Funktion, die auf den User-Space zugreift, reentrant sein muß und
+gleichzeitig mit anderen Treiberfunktionen laufen können muß (siehe
+auch Abschnitt <A
+HREF="exblocking.html#EXREENTER"
+>the Section called <I
+>Reentranten Code schreiben</I
+> in Kapitel 5</A
+>&#62; in <A
+HREF="extra.html"
+>Kapitel 5</A
+>&#62;). Deswegen verwenden wir Semaphore, um den
+nebenläufigen Zugriff zu steuern.</P
+><P
+>Die Rolle der beiden Funktionen ist nicht darauf beschränkt, Daten in den
+oder aus dem User-Space zu kopieren: Sie überprüfen auch, ob der
+Zeiger in den User-Space gültig ist. Wenn das nicht der Fall ist, wird
+auch nicht kopiert; wenn aber während des Kopierens eine ungültige
+Adresse vorgefunden wird, werden nur Teile der Daten kopiert. In
+beiden Fällen ist der Rückgabewert die verbleibende Menge zu
+kopierender Daten. Der Code in <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>
+überprüft diesen Wert und gibt <TT
+CLASS="LITERAL"
+>-EFAULT</TT
+> zurück, wenn
+es sich nicht um 0 handelt.</P
+><P
+>&#13;
+Das Thema des Zugriffs auf den User-Space sowie ungültiger User
+Space-Zeiger ist etwas komplizierter und wird im Abschnitt <A
+HREF="extra.html#EXIOCTLSW"
+>the Section called <I
+>Das Argument von ioctl benutzen</I
+> in Kapitel 5</A
+>&#62; in <A
+HREF="extra.html"
+>Kapitel 5</A
+>&#62; besprochen. Es lohnt
+sich aber zu wissen, daß Sie
+<SPAN
+><I
+CLASS="EMPHASIS"
+>_&#8201;_copy_to_user</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>_&#8201;_copy_from_user</I
+></SPAN
+> verwenden können, wenn
+Sie sicher sind, den User-Space-Zeiger nicht überprüfen zu müssen,
+etwa, wenn Sie diesen bereits überprüft haben.</P
+><P
+>Was die eigentlichen Gerätemethoden angeht, so ist es die Aufgabe der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>-Methode, Daten vom Gerät (unter Verwendung
+von <SPAN
+><I
+CLASS="EMPHASIS"
+>copy_to_user</I
+></SPAN
+>) in den User-Space zu kopieren,
+während <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+> Daten vom User-Space auf das Gerät
+kopieren muß (mittels <SPAN
+><I
+CLASS="EMPHASIS"
+>copy_from_user</I
+></SPAN
+>). Jeder
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>- und <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>-Systemaufruf
+überträgt eine bestimmte Anzahl von Bytes, aber es ist dem Treiber
+freigestellt, weniger Daten zu übertragen &#8212; die genauen Regeln
+dafür unterscheiden sich beim Lesen und beim Schreiben etwas und
+werden weiter hinten in diesem Kapitel beschrieben.</P
+><P
+>&#13;
+Wie viele Daten die Methoden auch immer transportieren; sie sollten
+im allgemeinen die Dateiposition an <TT
+CLASS="LITERAL"
+>*offp</TT
+>
+aktualisieren, so daß diese die aktuelle Dateiposition nach
+einer erfolgreichen Beendigung des Systemaufrufs wiedergibt. Meistens ist
+das Argument <TT
+CLASS="LITERAL"
+>offp</TT
+> nur ein Zeiger auf
+<TT
+CLASS="LITERAL"
+>filp-&#62;f_pos</TT
+>, aber zur Unterstützung der
+Systemaufrufe <SPAN
+><I
+CLASS="EMPHASIS"
+>pread</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>pwrite</I
+></SPAN
+>, die das Gegenstück zu
+<SPAN
+><I
+CLASS="EMPHASIS"
+>lseek</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> oder
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+> in einer einzigen atomaren Operation
+ausführen, wird ein anderer Zeiger verwendet.</P
+><P
+>Die Aufgabe der verschiedenen Argumente von <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>
+ist in <A
+HREF="charrdwr.html#FIG3-READ"
+>Abbildung 3-2</A
+> wiedergegeben.
+
+     </P
+><DIV
+CLASS="FIGURE"
+><A
+NAME="FIG3-READ"
+></A
+><P
+><B
+>Abbildung 3-2. Die Argumente von read</B
+></P
+><P
+><IMG
+SRC="ldr_0302.jpg"></P
+><P
+>&#13;Sowohl die Methode <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> als auch die Methode
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+> gibt einen negativen Wert zurück, wenn ein
+Fehler auftritt. Ein Rückgabewert größer oder gleich 0 teilt dem
+aufrufenden Programm mit, wie viele Bytes erfolgreich übertragen worden
+sind. Wenn einige Daten korrekt transportiert wurden und dann ein
+Fehler auftritt, ist der Rückgabewert trotzdem noch die Anzahl der
+erfolgreich übertragenen Bytes; der Fehler wird nicht vor dem nächsten
+Funktionsaufruf gemeldet.</P
+><P
+>Obwohl Kernel-Funktionen eine negative Zahl zurückgeben, um einen
+Fehler zu melden, und der Betrag dieser Zahl angibt, welcher Fehler
+aufgetreten ist (wie in <A
+HREF="building.html"
+>Kapitel 2</A
+> im Abschnitt <A
+HREF="buiini.html#BUIERR"
+>the Section called <I
+>Fehlerbehandlung in init_module</I
+> in Kapitel 2</A
+> beschrieben), sehen Programme im User-Space
+immer nur -1 als Fehlercode. Diese Programme müssen auf die Variable
+<TT
+CLASS="LITERAL"
+>errno</TT
+> zugreifen, um herauszufinden, was passiert
+ist. Dieser Unterschied liegt zum einen am POSIX-Aufrufstandard für
+Systemaufrufe und
+zum anderen am Vorteil, im Kernel nicht mit <TT
+CLASS="LITERAL"
+>errno</TT
+>
+umgehen zu müssen.</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN3458"
+>Die Methode read</A
+></H2
+><P
+>Der Rückgabewert von <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> wird vom aufrufenden
+Programm folgendermaßen interpretiert:&#13;</P
+><P
+></P
+><UL
+><LI
+STYLE="list-style-type: disc"
+><P
+>Wenn der Wert gleich dem Argument <TT
+CLASS="LITERAL"
+>count</TT
+>  ist, dann
+ist die angeforderte Zahl von Bytes übertragen worden. Dies ist der
+optimale Fall.</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>&#13;Wenn der Wert positiv, aber kleiner als <TT
+CLASS="LITERAL"
+>count</TT
+> ist,
+ist nur ein Teil der Daten übertragen worden. Das kann aus einer Reihe
+von Gründen passieren, die vom jeweiligen Gerät abhängen. Meistens
+wird das Programm noch einmal versuchen, die Daten zu lesen. Wenn Sie
+beispielsweise die Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>fread</I
+></SPAN
+> verwenden, dann
+ruft die Bibliotheksfunktion den Systemaufruf noch einmal auf, um die
+angeforderte Datenübertragung noch einmal durchzuführen.</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>Wenn der Wert Null ist, wird das als Erreichen des
+Dateiendes interpretiert.</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>Ein negativer Wert weist auf einen Fehler hin. Der
+Wert gibt an, was für ein Fehler das war; die Werte stehen in
+<TT
+CLASS="LITERAL"
+>&#60;linux/errno.h&#62;</TT
+>. Diese Fehler sehen aus
+wie <TT
+CLASS="LITERAL"
+>-EINTR</TT
+> (unterbrochener Systemaufruf) oder
+<TT
+CLASS="LITERAL"
+>-EFAULT</TT
+> (fehlerhafte Adresse).</P
+></LI
+></UL
+>ark=bullet&#62;<P
+>In der obenstehenden Liste fehlt noch der Fall, daß keine
+Daten vorliegen, aber später eintreffen könnten. In diesem Fall sollte
+der Systemaufruf <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> blockiert werden. Wir
+behandeln blockierendes Lesen erst im Abschnitt <A
+HREF="exblocking.html"
+>the Section called <I
+>Blockierende I/O</I
+> in Kapitel 5</A
+> in <A
+HREF="extra.html"
+>Kapitel 5</A
+>.&#13;</P
+><P
+>Der Code von <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> macht von diesen Regeln
+Gebrauch, insbesondere vom partiellen Lesen. Jeder Aufruf von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>scull_read</I
+></SPAN
+> behandelt nur ein einziges
+Daten-Quantum; es gibt keine Schleife, um alle Daten auszulesen. Damit
+ist der Code kürzer und leichter zu lesen. Wenn das lesende Programm
+mehr Daten benötigt, kann es den Systemaufruf wiederholen. Wenn
+die Standardbibliothek (also <SPAN
+><I
+CLASS="EMPHASIS"
+>fread</I
+></SPAN
+> und Konsorten)
+zum Lesen verwendet wird, wird die Applikation
+nicht einmal bemerken, daß der Datentransfer in Schüben erfolgt.&#13;</P
+><P
+>Wenn die aktuelle Leseposition größer als die Größe des Gerätes ist,
+gibt die <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>-Methode von
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> 0 zurück, um mitzuteilen, daß keine
+Daten vorliegen (daß wir also mit anderen Worten am Dateiende sind). Diese
+Situation kann auftreten, wenn ein Prozeß A von dem Gerät liest, während
+Prozeß B das Gerät zum Schreiben öffnet und damit das Gerät auf eine
+Länge von 0 verkürzt. Prozeß A findet sich selbst auf einmal jenseits
+des Dateiendes wieder, und der nächste
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>-Aufruf gibt 0 zurück.&#13;</P
+><P
+>Der Code von <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> sieht wie folgt aus:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+ssize_t scull_read(struct file *filp, char *buf, size_t count,
+    loff_t *f_pos)
+{
+ Scull_Dev *dev = filp-&#62;private_data; /* das erste Listenelement */
+ Scull_Dev *dptr;
+ int quantum = dev-&#62;quantum;
+ int qset = dev-&#62;qset;
+ int itemsize = quantum * qset; /* wie viele Bytes sind im Listenelement */
+ int item, s_pos, q_pos, rest;
+ ssize_t ret = 0;
+
+ if (down_interruptible(&#38;dev-&#62;sem))
+   return -ERESTARTSYS;
+ if (*f_pos &#62;= dev-&#62;size)
+  goto out;
+ if (*f_pos + count &#62; dev-&#62;size)
+  count = dev-&#62;size - *f_pos;
+ /* Listenelement, qset-Index und Offset im Quantum suchen */
+ item = (long)*f_pos / itemsize;
+ rest = (long)*f_pos % itemsize;
+ s_pos = rest / quantum; q_pos = rest % quantum;
+
+ /* der Liste bis zur richtigen Position (anderenorts definiert) folgen */
+ dptr = scull_follow(dev, item);
+
+ if (!dptr-&#62;data)
+  goto out; /* Loecher nicht füllen */
+ if (!dptr-&#62;data[s_pos])
+  goto out;
+ /* nur bis zum Ende dieses Quantums lesen */
+ if (count &#62; quantum - q_pos)
+  count = quantum - q_pos;
+
+ if (copy_to_user(buf, dptr-&#62;data[s_pos]+q_pos, count)) {
+  ret = -EFAULT;
+        goto out;
+ }
+ *f_pos += count;
+ ret = count;
+
+ out:
+ up(&#38;dev-&#62;sem);
+ return ret;
+}&#13;</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN3496"
+>Die Methode write</A
+></H2
+><P
+>&#13;
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+> kann wie <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> weniger
+Daten übertragen, als angefordert waren. Die folgenden Regeln gelten für
+den Rückgabewert:&#13;</P
+><P
+></P
+><UL
+><LI
+STYLE="list-style-type: disc"
+><P
+>Wenn der Wert gleich <TT
+CLASS="LITERAL"
+>count</TT
+> ist, ist
+die angeforderte Anzahl von Bytes übertragen worden.</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>Wenn der Wert positiv, aber kleiner als <TT
+CLASS="LITERAL"
+>count</TT
+> ist,
+dann wurde nur ein Teil der Daten übertragen. Das
+Anwendungsprogramm wird wahrscheinlich versuchen, auch den Rest der Daten
+zu schreiben.</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>Wenn der Wert 0 ist, ist nichts geschrieben worden. Dieses Ergebnis
+ist kein Fehler, weswegen auch kein Fehlercode zurückgegeben
+wird. Auch hier wird die Standardbibliothek <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>
+erneut aufrufen. Wir werden die Bedeutung dieses Falls im Abschnitt <A
+HREF="exblocking.html"
+>the Section called <I
+>Blockierende I/O</I
+> in Kapitel 5</A
+> in <A
+HREF="extra.html"
+>Kapitel 5</A
+> untersuchen, wenn wir
+auf blockierendes Schreiben eingehen.</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>Ein negativer Wert weist auf einen aufgetretenen Fehler hin. Wie bei
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> sind die möglichen Fehlerwerte in
+<TT
+CLASS="LITERAL"
+>&#60;linux/errno.h&#62;</TT
+> definiert.</P
+></LI
+></UL
+>ark=bullet&#62;<P
+>&#13;Unglücklicherweise gibt es einige schlecht geschriebene Programme, die
+eine Fehlermeldung ausgeben und abbrechen, wenn Daten nur partiell
+übertragen worden sind. Das passiert, weil es manche Programmierer
+gewohnt sind, <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>-Aufrufe entweder ganz oder
+gar nicht gelingen zu sehen, was auch meistens passiert und von den
+Geräten ebenfalls unterstützt werden sollte. Diese Einschränkung in
+der Implementation von <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> könnte behoben
+werden, aber wir wollten den Code nicht komplizierter als notwendig
+machen.&#13;</P
+><P
+>Der Code von <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>
+in <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> behandelt wie der von
+<SPAN
+CLASS="APPLICATION"
+>read</SPAN
+> jeweils nur ein Quantum:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;ssize_t scull_write(struct file *filp, const char *buf, size_t count,
+    loff_t *f_pos)
+{
+ Scull_Dev *dev = filp-&#62;private_data;
+ Scull_Dev *dptr;
+ int quantum = dev-&#62;quantum;
+ int qset = dev-&#62;qset;
+ int itemsize = quantum * qset;
+ int item, s_pos, q_pos, rest;
+ ssize_t ret = -ENOMEM; /* der Wert wird in "goto out"-Anweisungen verwendet */
+
+ if (down_interruptible(&#38;dev-&#62;sem))
+   return -ERESTARTSYS;
+
+ /* Listenelement, qset-Index und Offset suchen */
+ item = (long)*f_pos / itemsize;
+ rest = (long)*f_pos % itemsize;
+ s_pos = rest / quantum; q_pos = rest % quantum;
+
+ /* der Liste bis zur richtigen Position folgen */
+ dptr = scull_follow(dev, item);
+ if (!dptr-&#62;data) {
+  dptr-&#62;data = kmalloc(qset * sizeof(char *), GFP_KERNEL);
+  if (!dptr-&#62;data)
+   goto out;
+  memset(dptr-&#62;data, 0, qset * sizeof(char *));
+ }
+ if (!dptr-&#62;data[s_pos]) {
+  dptr-&#62;data[s_pos] = kmalloc(quantum, GFP_KERNEL);
+  if (!dptr-&#62;data[s_pos])
+   goto out;
+ }
+ /* nur bis zum Ende dieses Quantums schreiben */
+ if (count &#62; quantum - q_pos)
+  count = quantum - q_pos;
+
+ if (copy_from_user(dptr-&#62;data[s_pos]+q_pos, buf, count)) {
+  ret = -EFAULT;
+        goto out;
+ }
+ *f_pos += count;
+ ret = count;
+
+ /* die Groeße aktualisieren */
+ if (dev-&#62;size &#60; *f_pos)
+  dev-&#62; size = *f_pos;
+
+ out:
+ up(&#38;dev-&#62;sem);
+ return ret;
+}</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN3537"
+>readv und writev</A
+></H2
+><P
+>&#13;
+
+Unix-Systeme unterstützen seit langem zwei alternative Systemaufrufe
+namens <SPAN
+><I
+CLASS="EMPHASIS"
+>readv</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>writev</I
+></SPAN
+>. Diese &#8220;Vektorversionen&#8221; erwarten ein
+Array von Strukturen, die jeweils einen Zeiger auf einen Puffer und
+einen Längenwert enthalten. Ein <SPAN
+><I
+CLASS="EMPHASIS"
+>readv</I
+></SPAN
+>-Aufruf
+liest dann der Reihe nach die angegebene Menge in jeden
+Puffer. <SPAN
+><I
+CLASS="EMPHASIS"
+>writev</I
+></SPAN
+> dagegen sammelt die Inhalte der
+Puffer und schreibt sie in einer einzigen Schreiboperation heraus.</P
+><P
+>Bis zur Kernel-Version 2.3.44 emulierte Linux allerdings
+<SPAN
+><I
+CLASS="EMPHASIS"
+>readv</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>writev</I
+></SPAN
+> immer durch
+mehrfache <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>- und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>-Aufrufe. Wenn Ihr Treiber keine Methoden
+für Vektoroperationen bereitstellt, dann ist das auch immer noch der
+Fall. In vielen Situationen erreicht man aber eine größere Effizienz, wenn man
+<SPAN
+><I
+CLASS="EMPHASIS"
+>readv</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>writev</I
+></SPAN
+> direkt im
+Treiber implementiert.</P
+><P
+>Die Prototypen der Vektoroperationen lauten:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; ssize_t (*readv) (struct file *filp, const struct iovec *iov,
+      unsigned long count, loff_t *ppos);
+ ssize_t (*writev) (struct file *filp, const struct iovec *iov,
+      unsigned long count, loff_t *ppos);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+
+Hier sind die Argumente <TT
+CLASS="LITERAL"
+>filp</TT
+> und
+<TT
+CLASS="LITERAL"
+>ppos</TT
+> die gleichen wie bei <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>
+und <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>. Die in
+<TT
+CLASS="LITERAL"
+>&#60;linux/uio.h&#62;</TT
+> definierte Struktur
+<TT
+CLASS="LITERAL"
+>iovec</TT
+> sieht folgendermaßen aus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; struct iovec
+ {
+  void *iov_base;
+  _&#38;thinsp;_kernel_size_t iov_len;
+ };</PRE
+></TD
+></TR
+></TABLE
+><P
+>Jedes <TT
+CLASS="LITERAL"
+>iovec</TT
+> beschreibt einen zu übertragenden
+Datenblock, der bei <TT
+CLASS="LITERAL"
+>iov_base</TT
+> (im User-Space)
+beginnt und <TT
+CLASS="LITERAL"
+>iov_len</TT
+> Bytes lang ist. Der Parameter
+<TT
+CLASS="LITERAL"
+>count</TT
+> gibt an, wie viele
+<TT
+CLASS="LITERAL"
+>iovec</TT
+>-Strukturen es gibt. Diese Strukturen werden
+von der Applikation erzeugt, aber der Kernel kopiert sie vor dem Aufruf
+des Treibers in den Kernel-Space.</P
+><P
+>Die einfachste Implementation der Vektoroperationen ist eine einfache
+Schleife, die einfach die Adresse und Länge jedes
+<TT
+CLASS="LITERAL"
+>iovec</TT
+>-Blocks an die <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>- oder
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>-Funktion des Treibers übergibt. Oft muß der
+Treiber für ein effizientes und korrektes Verhalten etwas schlauer
+sein. Beispielsweise sollte ein <SPAN
+><I
+CLASS="EMPHASIS"
+>writev</I
+></SPAN
+> auf einem
+Bandlaufwerk sämtliche Daten aus den
+<TT
+CLASS="LITERAL"
+>iovec</TT
+>-Strukturen in einem einzigen Datensatz auf
+das Band schreiben.</P
+><P
+>&#13;
+
+
+Viele Treiber haben aber keinen Vorteil darin, diese Methoden selbst
+zu implementieren. Daher werden sie in
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> einfach weggelassen. Der Kernel
+emuliert sie mit <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>, und das Ergebnis ist das gleiche.
+&#13;</P
+></DIV
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="charrace.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x3593.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Ein kurze Einführung in Race Conditions</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="char.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Die neuen Geräte ausprobieren</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

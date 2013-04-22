@@ -1,0 +1,13 @@
+#### Desktopeintrag im Startmenue erstellen ####
+#kexample.desktop Datei erstellen und in $KDEDIR/share/applnk kopieren
+
+#### Uebersetzungsdatei erzeugen ####
+#Herausfiltern der Text-Strings
+  xgettext -C -ki18n -x $KDEDIR/include/kde.pot kexample.cpp
+#messages.po bearbeiten und uebersetzte Strings einfuegen
+#messages.po in kexample.mo umwandeln
+  msgfmt messages.po -o kexample.mo
+#kexample.mo ins Verzeichnis $KDEDIR/share/locale/de/LC_MESSAGES kopieren
+
+#### Online Hilfe erstellen ####
+# Unter $KDEDIR/share/doc/HTML/de/kexample/index.html 

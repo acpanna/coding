@@ -1,0 +1,732 @@
+<HTML
+><HEAD
+><TITLE
+>Speicher ergattern</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="PREVIOUS"
+TITLE="Schnellreferenz"
+HREF="x8972.html"><LINK
+REL="NEXT"
+TITLE="Lookaside-Caches"
+HREF="getcache.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x8972.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="getcache.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="GET"
+>Kapitel 7. Speicher ergattern</A
+></H1
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Inhalt</B
+></DT
+><DT
+><A
+HREF="get.html#GETKMAL"
+>Die ganze Wahrheit über kmalloc</A
+></DT
+><DT
+><A
+HREF="getcache.html"
+>Lookaside-Caches</A
+></DT
+><DT
+><A
+HREF="getgfp.html"
+>get_&#8201;free_&#8201;page und Freunde</A
+></DT
+><DT
+><A
+HREF="getvmalloc.html"
+>vmalloc und Freunde</A
+></DT
+><DT
+><A
+HREF="getboot.html"
+>Allozierung während des Bootens</A
+></DT
+><DT
+><A
+HREF="getdep.html"
+>Abwärtskompatibilität</A
+></DT
+><DT
+><A
+HREF="x9938.html"
+>Schnellreferenz</A
+></DT
+></DL
+></DIV
+><P
+>Bisher haben wir immer <SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kfree</I
+></SPAN
+> zur Speicherverwaltung verwendet. Im
+Linux-Kernel gibt es aber noch viele weitere Funktionen zum Allozieren von
+Speicher. In diesem Kapitel schauen wir uns andere Möglichkeiten an,
+Speicher in Gerätetreibern zu verwenden, und betrachten, wie man die
+Speicherressourcen seines Systems am besten nutzt. Dabei interessiert es
+uns noch nicht, wie die verschiedenen Architekturen den Speicher dann
+tatsächlich verwalten. Module haben mit Fragen der Segmentierung,
+Seitenaufteilung usw. nichts zu tun, denn der Kernel stellt für die
+Treiber ein einheitliches Interface zur Speicherverwaltung
+bereit. Außerdem werden wir in diesem Kapitel auch nicht die internen
+Details der Speicherverwaltung beschreiben, sondern uns das für den
+Abschnitt &#8220;<A
+HREF="mem.html#MEMMAN"
+>the Section called <I
+>Speicherverwaltung in Linux</I
+> in Kapitel 13</A
+>&#8221; in <A
+HREF="mem.html"
+>Kapitel 13</A
+> aufheben.
+&#13;</P
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="GETKMAL"
+>Die ganze Wahrheit über kmalloc</A
+></H1
+><P
+>&#13;
+
+Der Allokationsmechanismus von <SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> ist ein
+mächtiges Werkzeug, das wegen seiner Ähnlichkeit zu
+<SPAN
+><I
+CLASS="EMPHASIS"
+>malloc</I
+></SPAN
+> leicht erlernt werden kann. Die Funktion
+ist schnell &#8212; sofern sie nicht blockiert &#8212; und leert den
+erworbenen Speicher nicht; der allozierte Bereich enthält immer noch
+den vorherigen Inhalt. Er ist auch im
+physikalischen Speicher zusammenhängend. In den nächsten Abschnitten
+werden wir uns
+detailliert mit <SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> auseinandersetzen, damit
+Sie diese Funktion mit den anderen Speicherallokationstechniken
+vergleichen können, die später vorgestellt werden.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="GETKMALPRI"
+>Das Argument flags</A
+></H2
+><P
+>&#13;Das erste Argument von <SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> ist die Größe des
+zu allozierenden Blocks. Das zweite
+Argument, die Allozierungs-Flags, ist viel interessanter, da es das
+Verhalten
+von <SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> in vielerlei Hinsicht beeinflußt.&#13;</P
+><P
+>&#13;
+Das am häufigsten verwendete Flag
+<TT
+CLASS="LITERAL"
+>GFP_KERNEL</TT
+> bedeutet, daß die Allokation (die
+intern von <SPAN
+><I
+CLASS="EMPHASIS"
+>get_free_pages</I
+></SPAN
+>
+ausgeführt wird, daher das Präfix <TT
+CLASS="LITERAL"
+>GFP_</TT
+>) im
+Namen eines Prozesses ausgeführt
+wird, der im Kernel-Space läuft. Mit anderen Worten: Die
+aufrufende Funktion führt einen Systemaufruf im Namen eines Prozesses
+aus. Wenn <TT
+CLASS="LITERAL"
+>GFP_KERNEL</TT
+> verwendet wird, kann
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> den aufrufenden Prozeß schlafen legen,
+wenn der Speicher knapp geworden ist. Eine Funktion, die Speicher mit
+<TT
+CLASS="LITERAL"
+>GFP_KERNEL</TT
+> alloziert, muß daher reentrant
+sein. Während der aktuelle Prozeß schläft, unternimmt der Kernel alles
+Notwendige, um eine Speicherseite zu organisieren, entweder durch
+Entleeren von Puffern (&#8220;flushen&#8221;) oder durch Auslagern
+von Speicher eines Benutzer-Prozesses.&#13;</P
+><P
+><TT
+CLASS="LITERAL"
+>GFP_KERNEL</TT
+> ist nicht immer die richtige Wahl,
+denn mitunter wird <SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> außerhalb von
+Prozeß-Kontexten aufgerufen, beispielsweise aus Interrupt-Handlern,
+Task-Schlangen und Kernel-Timern. In diesem Fall sollte der
+<TT
+CLASS="LITERAL"
+>current</TT
+>-Prozeß nicht schlafen gelegt werden. Hier
+muß <TT
+CLASS="LITERAL"
+>GFP_ATOMIC</TT
+> als Flag verwendet
+werden. Der Kernel versucht normalerweise, einige freie Seiten
+beiseite zu legen, um eine atomare Allokation zu ermöglichen. Wenn
+<TT
+CLASS="LITERAL"
+>GFP_ATOMIC</TT
+> verwendet wird, kann
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> auch noch die letzte freie Seite
+verwenden. Wenn diese aber auch bereits vergeben ist, schlägt die Allokation fehl.</P
+><P
+>Neben oder zusätzlich zu <TT
+CLASS="LITERAL"
+>GFP_KERNEL</TT
+> und
+<TT
+CLASS="LITERAL"
+>GFP_ATOMIC</TT
+> können auch noch andere Flags
+verwendet werden, auch wenn diese beiden die Bedürfnisse der meisten
+Gerätetreiber bereits abdecken. Die Flags sind alle in
+<TT
+CLASS="LITERAL"
+>&#60;linux/mm&#62;</TT
+> aufgelistet: Einzelnen Flags
+ist ein doppelter Unterstrich vorangestellt wie bei
+<TT
+CLASS="LITERAL"
+>__GFP_DMA</TT
+>. Gruppen von
+Flags fehlt dieses Präfix; diese werden manchmal auch
+Allokationsprioritäten genannt.</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>GFP_KERNEL</TT
+></DT
+><DD
+><P
+>Normale Allokation von Kernel-Speicher. Kann schlafen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>GFP_BUFFER</TT
+></DT
+><DD
+><P
+>&#13;Wird zur Verwaltung des Buffer-Caches verwendet; mit dieser Priorität
+kann der Allozierer schlafen. Sie unterscheidet sich von
+<TT
+CLASS="LITERAL"
+>GFP_KERNEL</TT
+> dadurch, daß weniger Versuche
+gemacht werden, Speicher durch das Herausschreiben von Seiten auf die
+Festplatte freizumachen. Dadurch sollen Deadlocks vermieden werden,
+wenn die I/O-Subsysteme selbst Speicher benötigen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>GFP_ATOMIC</TT
+></DT
+><DD
+><P
+>Wird dazu verwendet, Speicher aus Interrupt-Handlern und anderem Code
+außerhalb von Prozeß-Kontexten zu allozieren. Schläft nie.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>GFP_USER</TT
+></DT
+><DD
+><P
+>&#13;Kann Speicher für den Benutzer allozieren. Kann schlafen und hat eine
+niedrige Priorität.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>GFP_HIGHUSER</TT
+></DT
+><DD
+><P
+>&#13;Wie <TT
+CLASS="LITERAL"
+>GFP_USER</TT
+>, alloziert aber aus dem hohen
+Speicher, sofern es einen solchen gibt. Hoher Speicher wird im nächsten
+Unterabschnitt besprochen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>_&#8201;_GFP_DMA</TT
+></DT
+><DD
+><P
+>&#13;
+
+Dieses Flag fordert Speicher an, der für DMA-Übertragungen von oder zu
+Geräten geeignet ist. Die genaue Bedeutung ist plattformabhängig; das
+Flag kann mit <TT
+CLASS="LITERAL"
+>GFP_KERNEL</TT
+> oder
+<TT
+CLASS="LITERAL"
+>GFP_ATOMIC</TT
+> ODER-verknüpft werden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>_&#8201;_GFP_HIGHMEM</TT
+></DT
+><DD
+><P
+>&#13;Dieses Flag fordert hohen Speicher an, ein plattformabhängiges
+Feature, das auf Plattformen, die es nicht unterstützen, ignoriert
+wird. Es ist ein Bestandteil von
+<TT
+CLASS="LITERAL"
+>GFP_HIGHUSER</TT
+> und wird selten woanders
+verwendet.</P
+></DD
+></DL
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="GETZONES"
+>Speicherzonen</A
+></H3
+><P
+>&#13;Sowohl <TT
+CLASS="LITERAL"
+>_&#8201;_GFP_DMA</TT
+> als auch
+<TT
+CLASS="LITERAL"
+>_&#8201;_GFP_HIGHMEM</TT
+> sind plattformabhängig, auch wenn
+man sie auf allen Plattformen verwenden kann.</P
+><P
+>&#13;
+
+Die Version 2.4 des Kernels kennt drei
+<I
+CLASS="FIRSTTERM"
+>Speicherzonen</I
+>: DMA-fähigen Speicher, normalen
+Speicher und hohen Speicher. Die Allokation geschieht normalerweise in
+der <SPAN
+><I
+CLASS="EMPHASIS"
+>normalen</I
+></SPAN
+> Zone, aber das Setzen eines der
+genannten Bits führt dazu, daß Speicher aus einer anderen Zone
+alloziert wird. Dahinter steht der Gedanke, daß diese Abstraktion auf
+alle Computer-Plattformen paßt, die spezielle Speicherbereiche kennen
+(anstatt das gesamte RAM gleich zu behandeln).</P
+><P
+><SPAN
+><I
+CLASS="EMPHASIS"
+>DMA-fähiger Speicher</I
+></SPAN
+> ist der einzige Speicher,
+der bei DMA-Datenübertragungen mit Peripherie-Geräten verwendet werden
+kann. Diese Einschränkung tritt auf, wenn der Adreß-Bus, mit dem
+Peripherie-Geräte mit dem Prozessor verbunden werden, gegenüber dem
+Adreß-Bus, mit dem auf das RAM zugegriffen wird, eingeschränkt
+ist. Auf der x86-Plattform können Geräte auf dem ISA-Bus
+beispielsweise nur auf den Speicherbereich von 0 bis 16 MByte
+zugreifen. Andere Plattformen haben ähnliche Bedürfnisse, wenn auch
+meist weniger zwingende als der ISA-Bus.<A
+NAME="AEN9330"
+HREF="#FTN.AEN9330"
+>[1]</A
+></P
+><P
+>&#13;<SPAN
+><I
+CLASS="EMPHASIS"
+>Hoher Speicher</I
+></SPAN
+> benötigt bei der
+Adressierung eine Sonderbehandlung. Er wurde in die
+Speicherverwaltung des Kernels eingeführt, als während der
+2.3-Entwicklung die Unterstützung für die Pentium II Virtual Memory
+Extension implementiert wurde, um auf bis zu 64 GByte Speicher zugreifen
+zu können. Hoher Speicher ist ein Konzept, das es nur auf den x86- und
+SPARC-Plattformen gibt; die beiden Implementationen sind
+grundverschieden.</P
+><P
+>&#13;
+Immer wenn eine neue Seite alloziert wird, um die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+>-Anfrage abzudecken, baut der Kernel eine
+Liste der Zonen auf, die zur Suche verwendet werden können. Wenn
+<TT
+CLASS="LITERAL"
+>__GFP_DMA</TT
+> angegeben wird, wird
+nur die DMA-Zone durchsucht: Wenn kein Speicher in den unteren Adressen
+zur Verfügung steht, schlägt die Allokation fehl. Ist kein spezielles
+Flag angegeben, wird sowohl normaler als auch DMA-Speicher
+durchsucht; wenn <TT
+CLASS="LITERAL"
+>__GFP_HIGHMEM</TT
+>
+angegeben wird, dann werden alle drei Zonen nach einer freien Seite
+durchsucht.</P
+><P
+>Kennt die Plattform keinen hohen Speicher oder ist dieser in der
+Kernel-Konfiguration abgeschaltet worden, dann wird
+<TT
+CLASS="LITERAL"
+>__GFP_HIGHMEM</TT
+> als
+<TT
+CLASS="LITERAL"
+>0</TT
+> definiert und hat keine Wirkung.</P
+><P
+>&#62;
+Der Mechanismus der Speicherzonen ist in
+<TT
+CLASS="FILENAME"
+>mm/page_alloc.c</TT
+> implementiert, während die
+          Initialisierung der Zonen in plattformspezifischen Dateien
+          geschieht, normalerweise in
+<TT
+CLASS="FILENAME"
+>mm/init.c</TT
+> im <TT
+CLASS="FILENAME"
+>arch</TT
+>-Baum. Wir
+        kommen auf diese Themen noch in <A
+HREF="mem.html"
+>Kapitel 13</A
+>&#62; zurück.</P
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN9356"
+>Das Argument size</A
+></H2
+><P
+>Der Kernel verwaltet den <SPAN
+><I
+CLASS="EMPHASIS"
+>physikalischen</I
+></SPAN
+> Speicher
+des Systems, der nur in Einheiten von Speicherseiten verfügbar ist. Als Folge
+davon sieht <SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> ziemlich anders aus als eine
+typische User-Space-<SPAN
+><I
+CLASS="EMPHASIS"
+>malloc</I
+></SPAN
+>-Implementation. Eine einfache, Heap-orientierte
+Allokationstechnik würde schnell in Schwierigkeiten geraten; es wäre
+schwierig, um die Seitengrenzen herumzuarbeiten. Daher verwendet der
+Kernel spezielle seitenorientierte Allokationstechniken, um das
+System-RAM bestmöglich auszunutzen.</P
+><P
+>Linux bearbeitet Speicherallokationen indem es eine Menge von
+Pools von Speicherobjekten fester Größe erzeugt. Allokationsanforderungen
+werden bearbeitet, indem ein Pool gesucht wird, der entsprechend große
+Objekte enthält, und dann wird ein ganzes Speicherstück zurückgegeben. Das Speicherverwaltungsverfahren ist reichlich komplex und seine
+Details sind normalerweise für Autoren von Gerätetreibern überhaupt
+nicht von Interesse. Schließlich kann sich die Implementation ändern
+&#8212; wie das im Kernel 2.1.38 der Fall gewesen ist &#8212;, ohne
+daß sich dadurch die Schnittstelle, die der Rest des Kernels sieht,
+ändert.</P
+><P
+>Treiberentwickler sollten aber im Hinterkopf behalten, daß der Kernel
+nur bestimmte vordefinierte Byte-Arrays fester Größe allozieren
+kann. Wenn Sie nach einer beliebigen Speichermenge fragen,
+bekommen Sie wahrscheinlich etwas mehr, als Sie wollten,
+möglicherweise sogar doppelt soviel. Außerdem darf man nicht
+vergessen, daß die kleinste Speichermenge, mit der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> umgehen kann, 32 oder 64 ist, je nach
+Seitengröße der jeweiligen Architektur.</P
+><P
+>Die verfügbaren Datengrößen sind im Regelfall Zweierpotenzen. Im 2.0-Kernel
+waren die verfügbaren Größen aufgrund der vom Verwaltungssystem
+hinzugefügten Steuer-Flags etwas kleiner als die Zweierpotenzen. Wenn
+Sie dies im Kopf behalten, werden Sie Ihren Speicher effizienter
+ausnutzen. Wenn Sie beispielsweise einen Puffer von etwa 2000 Bytes
+benötigen und Linux 2.0 verwenden, dann fordern Sie besser 2000 als
+2048 Bytes an. Das Anfordern einer exakten Zweierpotenz ist das
+Schlimmste, was in Kerneln vor 2.1.38 passieren kann: Der Kernel wird
+doppelt soviel wie angefordert allozieren. Deswegen verwendet
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> 4000 Bytes per Quantum und nicht
+4096.</P
+><P
+></P
+><P
+>&#13;
+
+
+Sie finden die genauen Werte für die Allokationsblocks in
+<TT
+CLASS="FILENAME"
+>mm/kmalloc.c</TT
+> (im Kernel 2.0) oder in
+<TT
+CLASS="FILENAME"
+>mm/slab.c</TT
+> (in neueren Kerneln), aber denken
+Sie daran, daß sich
+diese ohne Vorwarnung ändern können. Der Trick, etwas weniger als 4 KByte
+zu allozieren, funktioniert bei <SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> in
+allen 2.<SPAN
+><I
+CLASS="EMPHASIS"
+>x</I
+></SPAN
+>-Kerneln, muß
+aber in der Zukunft nicht notwendigerweise optimal sein.&#13;</P
+><P
+>Auf jeden Fall kann <SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> maximal 128 KByte allozieren, bei 2.0-Kerneln geringfügig weniger. Wenn Sie mehr als
+ein paar Kilobytes benötigen, gibt es aber bessere Möglichkeiten,
+den Speicher anzufordern. Diese werden unten beschrieben.
+
+&#13;</P
+></DIV
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN9330"
+HREF="get.html#AEN9330"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Interessanterweise gilt diese Grenze nur für den
+ISA-Bus; ein x86-Gerät, das an den PCI-Bus angeschlossen wird, kann
+DMA-Transfers mit dem gesamten Speicher durchführen.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x8972.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="getcache.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Schnellreferenz</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Lookaside-Caches</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

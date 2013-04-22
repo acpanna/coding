@@ -1,0 +1,455 @@
+<HTML
+><HEAD
+><TITLE
+>Debugging durch Beobachten</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Debugging-Techniken"
+HREF="debug.html"><LINK
+REL="PREVIOUS"
+TITLE="Debugging mit Abfragen"
+HREF="x4562.html"><LINK
+REL="NEXT"
+TITLE="Debuggen von Systemfehlern"
+HREF="debfaults.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x4562.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 4. Debugging-Techniken</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="debfaults.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN4834"
+>Debugging durch Beobachten</A
+></H1
+><P
+>&#13;
+
+
+Manchmal können kleinere Probleme im Gerätetreiber durch die Beobachtung einer Anwendung im User-Space eingekreist werden. Diese Beobachtung kann auch dabei helfen sich davon zu überzeugen, daß der Treiber korrekt arbeitet. Beispielsweise waren wir von
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> überzeugt, nachdem wir uns angeschaut
+hatten, wie die <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>-Implementation auf
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>-Anforderungen mit verschiedenen Datenmengen
+reagierte.&#13;</P
+><P
+>Es gibt verschiedene Möglichkeiten, ein User-Space-Programm zu
+beobachten. Sie können es im Debugger starten und die Funktionen
+schrittweise durchlaufen, Ausgabeanweisungen hinzufügen oder das
+Programm unter <SPAN
+CLASS="APPLICATION"
+>strace</SPAN
+> laufen lassen. Hier
+besprechen wir nur diese
+letzte Technik, die besonders interessant ist, wenn das eigentliche Ziel
+die Untersuchung von Kernel-Code ist.&#13;</P
+><P
+>&#13;
+Der Befehl <SPAN
+CLASS="APPLICATION"
+>strace</SPAN
+> ist ein mächtiges
+Werkzeug, das alle Systemaufrufe anzeigt, die von einem User-Space-Programm ausgeführt werden. Dabei werden nicht die Aufrufe
+allein, sondern auch die Argumente und die Rückgabewerte in
+symbolischer Form angezeigt. Wenn ein Systemaufruf fehlschlägt, wird
+sowohl der symbolische Wert des Fehlers
+(z. B. <TT
+CLASS="LITERAL"
+>ENOMEM</TT
+>) als auch der zugehörige String
+(<TT
+CLASS="LITERAL"
+>Out of memory</TT
+>)
+angezeigt. <SPAN
+CLASS="APPLICATION"
+>strace</SPAN
+> hat viele
+Kommandozeilenoptionen, von denen die wichtigsten folgende sind:
+<SPAN
+><I
+CLASS="EMPHASIS"
+>&#8211;t</I
+></SPAN
+>, um die Zeit anzuzeigen, zu der ein
+Systemaufruf ausgeführt wird, <SPAN
+><I
+CLASS="EMPHASIS"
+>&#8211;T</I
+></SPAN
+>, um die
+Zeit anzuzeigen, die im Systemaufruf verbraucht wurde,
+<SPAN
+><I
+CLASS="EMPHASIS"
+>&#8211;e</I
+></SPAN
+>, um die verfolgten Aufrufe einzugrenzen, und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>&#8211;o</I
+></SPAN
+>, um die Ausgabe in eine Datei
+umzuleiten. Per Default gibt <SPAN
+><I
+CLASS="EMPHASIS"
+>strace</I
+></SPAN
+> die
+Informationen auf <TT
+CLASS="LITERAL"
+>stderr</TT
+> aus.&#13;</P
+><P
+><SPAN
+CLASS="APPLICATION"
+>strace</SPAN
+> bekommt die Informationen aus dem
+Kernel. Das bedeutet, daß ein Programm mit
+<SPAN
+CLASS="APPLICATION"
+>strace</SPAN
+> unabhängig davon beobachtet werden
+kann, ob es mit Debugging-Unterstützung (der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>&#8211;g</I
+></SPAN
+>-Option des <SPAN
+><I
+CLASS="EMPHASIS"
+>gcc</I
+></SPAN
+>)
+übersetzt wurde oder nicht oder vielleicht sogar gestrippt worden
+ist. Außerdem
+können Sie <SPAN
+CLASS="APPLICATION"
+>strace</SPAN
+> auf einen bereits
+laufenden Prozeß ansetzen, ähnlich wie sich auch ein Debugger mit
+einem laufenden Prozeß verbinden und diesen kontrollieren kann.&#13;</P
+><P
+>Die Informationen von <SPAN
+CLASS="APPLICATION"
+>strace</SPAN
+> werden oft
+verwendet, um Fehlerberichte an Applikationsprogrammierer zu schicken.
+Aber <SPAN
+CLASS="APPLICATION"
+>strace</SPAN
+> ist auch sehr wertvoll für Kernel-Programmierer. Wir haben
+schon gesehen, wie Treiber-Code durch die Ausführung von
+Systemaufrufen ausgeführt wird, und mit
+<SPAN
+CLASS="APPLICATION"
+>strace</SPAN
+> können wir die Konsistenz der
+Eingabe- und Ausgabedaten jedes Aufrufs überprüfen.&#13;</P
+><P
+>Ein Beispiel: Die folgende Ausgabe zeigt die letzten Zeilen eines
+<SPAN
+CLASS="APPLICATION"
+>strace</SPAN
+>-Protokolls mit <SPAN
+><I
+CLASS="EMPHASIS"
+>strace ls /dev
+&#62; /dev/scull0</I
+></SPAN
+>:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>&#13;
+
+[...]
+open("/dev", O_RDONLY|O_NONBLOCK)     = 4
+fcntl(4, F_SETFD, FD_CLOEXEC)         = 0
+brk(0x8055000)                        = 0x8055000
+lseek(4, 0, SEEK_CUR)                 = 0
+getdents(4, /* 70 entries */, 3933)   = 1260
+[...]
+getdents(4, /* 0 entries */, 3933)    = 0
+close(4)                              = 0
+fstat(1, {st_mode=S_IFCHR|0664, st_rdev=makedev(253, 0), ...}) = 0
+ioctl(1, TCGETS, 0xbffffa5c)          = -1 ENOTTY (Inappropriate ioctl
+                                                     for device)
+write(1, "MAKEDEV\natibm\naudio\naudio1\na"..., 4096) = 4000
+write(1, "d2\nsdd3\nsdd4\nsdd5\nsdd6\nsdd7"..., 96) = 96
+write(1, "4\nsde5\nsde6\nsde7\nsde8\nsde9\n"..., 3325) = 3325
+close(1)                              = 0
+_exit(0)                              = ?</PRE
+></TD
+></TR
+></TABLE
+><P
+>Offensichtlich hat der erste <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>-Systemaufruf,
+nachdem <SPAN
+CLASS="APPLICATION"
+>ls</SPAN
+> das Zielverzeichnis fertig
+gelesen hat, versucht, 4 KByte zu schreiben. Merkwürdigerweise (aus Sicht
+von <SPAN
+CLASS="APPLICATION"
+>ls</SPAN
+>) wurden jedoch nur viertausend Bytes
+geschrieben und die Operation erneut gestartet. Wir wissen jedoch, daß
+die Implementation von <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+> in
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+> nur ein Quantum zur gleichen Zeit schreibt, so
+daß wir mit dem partiellen Schreiben hätten rechnen können. Nach
+einigen Schritten läuft dann aber alles durch, und das Programm beendet
+sich erfolgreich.&#13;</P
+><P
+>Lassen wir jetzt als weiteres Beispiel <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> vom
+<SPAN
+CLASS="APPLICATION"
+>scull</SPAN
+>-Gerät lesen (mit dem Befehl
+<B
+CLASS="COMMAND"
+>wc</B
+>):&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+
+[...]
+open("/dev/scull0", O_RDONLY)           = 4
+fstat(4, {st_mode=S_IFCHR|0664, st_rdev=makedev(253, 0), ...}) = 0
+read(4, "MAKEDEV\natibm\naudio\naudio1\na"..., 16384) = 4000
+read(4, "d2\nsdd3\nsdd4\nsdd5\nsdd6\nsdd7"..., 16384) = 3421
+read(4, "", 16384)                      = 0
+fstat(1, {st_mode=S_IFCHR|0600, st_rdev=makedev(3, 7), ...}) = 0
+ioctl(1, TCGETS, {B38400 opost isig icanon echo ...}) = 0
+write(1, "   7421 /dev/scull0\n", 20)   = 20
+close(4)                                = 0
+_exit(0)                                = ?</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wie erwartet, kann <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> nur viertausend Bytes zur
+gleichen Zeit lesen, aber die totale Datenmenge ist die gleiche wie im
+vorigen Beispiel. Es ist
+interessant zu sehen, wie die zusätzlichen Versuche in diesem Beispiel
+im Gegensatz zum letzten angeordnet
+sind. <SPAN
+CLASS="APPLICATION"
+>wc</SPAN
+> ist dafür optimiert, möglichst
+schnell zu lesen, umgeht deshalb die Standardbibliothek und versucht,
+in einem Systemaufruf mehr Daten zu lesen. Sie können an den
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>-Zeilen im Protokoll sehen, daß
+<SPAN
+CLASS="APPLICATION"
+>wc</SPAN
+> versucht hat, 16 KByte pro Aufruf zu lesen.&#13;</P
+><P
+>Linux-Experten finden in der Ausgabe von
+<SPAN
+CLASS="APPLICATION"
+>strace</SPAN
+> noch mehr nützliche
+Informationen. Wenn die ganzen Symbole Sie abschrecken, dann können
+Sie sich auch darauf beschränken zu beobachten, wie die Dateimethoden
+(<SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>, <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> usw.) arbeiten.&#13;</P
+><P
+>&#13;
+
+Wir persönlich finden <SPAN
+><I
+CLASS="EMPHASIS"
+>strace</I
+></SPAN
+> besonders nützlich,
+um Laufzeitfehler in Systemaufrufen zu entdecken. Oft ist ein Aufruf
+von <SPAN
+><I
+CLASS="EMPHASIS"
+>perror</I
+></SPAN
+> in Applikationen oder Demo-Programmen
+nicht ausführlich genug, um zum Debuggen nützlich zu sein. Es kann
+eine große Hilfe sein, wenn man genau sagen kann, welche Argumente in
+welchem Systemaufruf einen Fehler ausgelöst haben.
+
+
+&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x4562.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="debfaults.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Debugging mit Abfragen</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="debug.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Debuggen von Systemfehlern</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

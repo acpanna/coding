@@ -1,0 +1,218 @@
+<HTML
+><HEAD
+><TITLE
+>Änderungen im Verbindungszustand</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Netzwerk-Treiber"
+HREF="net.html"><LINK
+REL="PREVIOUS"
+TITLE="Der Interrupt-Handler"
+HREF="netirq.html"><LINK
+REL="NEXT"
+TITLE="Die Socket-Buffer"
+HREF="netskb.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="netirq.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 14. Netzwerk-Treiber</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="netskb.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN20332"
+>Änderungen im Verbindungszustand</A
+></H1
+><P
+>&#13;
+Netzwerkverbindungen haben es von Haus aus mit der Welt außerhalb des
+lokalen Systems zu tun. Sie sind daher auch oft durch äußere
+Ereignisse betroffen und bestehen eventuell nur vorübergehend. Das
+Netzwerk-Subsystem muß Bescheid wissen, wenn Netzwerkverbindungen
+entstehen und verschwinden, und stellt einige Funktionen zur Verfügung, die
+der Treiber verwenden kann, um diese Informationen zu melden.</P
+><P
+>&#13;
+
+Die meisten Netzwerktechnologien, bei denen es eine tatsächliche
+physikalische Verbindung gibt, liefern einen
+<I
+CLASS="FIRSTTERM"
+>Carrier</I
+>-Zustand; die Anwesenheit des Carriers
+bedeutet, daß die Hardware vorhanden und betriebsbereit
+ist. Ethernet-Karten können das Carrier-Signal beispielsweise auf der
+Leitung feststellen; wenn ein Benutzer über das Kabel stolpert,
+verschwindet der Carrier und die Verbindung damit
+ebenfalls. Default-mäßig wird angenommen, daß Netzwerk-Geräte ein
+Carrier-Signal haben. Der Treiber kann diesen Zustand aber mit den
+folgenden Funktionen explizit verändern:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;void netif_carrier_off(struct net_device *dev);
+void netif_carrier_on(struct net_device *dev);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wenn Ihr Treiber feststellt, daß der Carrier auf einem der Geräte
+fehlt, sollte er
+<SPAN
+><I
+CLASS="EMPHASIS"
+>netif_carrier_off</I
+></SPAN
+> aufrufen, um den
+Kernel davon zu informieren. Wenn der Carrier wiederkommt, sollte
+<SPAN
+><I
+CLASS="EMPHASIS"
+>netif_carrier_on</I
+></SPAN
+> aufgerufen
+werden. Manche Treiber rufen auch
+<SPAN
+><I
+CLASS="EMPHASIS"
+>netif_carrier_off</I
+></SPAN
+> auf, wenn größere
+Konfigurationsänderungen (wie etwa des Medientyps) vorgenommen werden;
+wenn die Karte mit den Änderungen ist fertig, wird der neue Carrier
+vorgefunden, und die Übertragung kann fortgesetzt werden.</P
+><P
+>&#13;Es gibt auch eine Integer-Funktion:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;int netif_carrier_ok(struct net_device *dev);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Sie kann verwendet werden, um den aktuellen Carrier-Zustand (wie er
+in der Geräte-Struktur steht) abzufragen.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="netirq.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="netskb.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Der Interrupt-Handler</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="net.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Die Socket-Buffer</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

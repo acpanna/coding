@@ -1,0 +1,252 @@
+<HTML>
+ <HEAD>
+   <TITLE>
+     &Uuml;bungsblatt 09, 06.07.1999
+   </TITLE>
+ </HEAD>
+ <BODY>
+
+  <H1>
+     &Uuml;bungsblatt 09, 06.07.1999
+   </H1>
+   <H2>
+     Abgabetermin: Di, 13.07.1999, 10<SUP>00</SUP> Uhr
+   </H2>
+
+<DIV ALIGN="right">
+  <A HREF="mailto:Robert.Baier@uni-bayreuth.de">R. Baier</A> <BR>
+  <A HREF="mailto:Anton.Betten@uni-bayreuth.de">A. Betten</A> <BR>
+  <A HREF="mailto:hiwi511@btcipmatx1.cip.uni-bayreuth.de">M. Kohl</A> <BR>
+  <A HREF="mailto:hiwi502@btcipmatx1.cip.uni-bayreuth.de">B. Seifert</A>
+  <BR CLEAR="all">
+</DIV>
+<P>
+
+Das &Uuml;bungsblatt besteht aus den Aufgaben <A HREF="#A_25">25</A>,
+<A HREF="#A_26">26</A> und <A HREF="#A_27">27</A>.
+Das &Uuml;bungsblatt inkl. aller Sourcecodes, Bilder, HTML-Seiten, ... kann auch
+als
+<UL>
+  <LI><A HREF="blatt_09.tar.gz"><TT>gzip</TT>'tes <TT>tar</TT>-Archive</A>
+  </LI>
+  <LI>
+      <A HREF="blatt_09.zip"><TT>ZIP</TT>-Archive</A>
+  </LI>
+</UL>
+heruntergeladen werden. <BR>
+
+<EM>Beachten Sie die <A HREF="../allgemein/hinweise.html">allgemeinen Abgabehinweise</A>!!</EM>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A_25">&nbsp;</A>
+
+   <H2>
+     Aufgabe 25
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi502@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Bernd Seifert)
+   </H3>
+
+Schreiben Sie eine kleine Sammlung an n&uuml;tzlichen Matrixroutinen:
+
+<dl COMPACT>
+  <dt>
+    (i)
+  </dt>
+
+  <dd>
+    Berechnung der Matrixaddition <TT>Erg = A + B</TT> f&uuml;r
+    beliebige (nicht notwendig quadratische) Matrizen:
+
+    <blockquote>
+      <tt>void matrix_add(int zeilen, int spalten, 
+                          double * A, double * B, double * Erg);</tt>
+    </blockquote>
+  </dd>
+
+  <dt>
+    (ii)
+  </dt>
+
+  <dd>
+    Berechnung der Multiplikation <TT>erg = A * x</TT>  einer Matrix mit
+    einem Vektor, wobei die Matrix <TT>A</TT> nicht notwendig quadratisch ist, 
+    die Vektorl&auml;nge von <TT>x</TT> aber mit der 
+    Spaltenzahl <TT>spalten</TT> der 
+    Matrix <TT>A</TT> &uuml;bereinstimmen mu&szlig;. Der Ergebnisvektor
+    <TT>erg</TT> hat daher die L&auml;nge <TT>zeilen</TT>.
+
+    <blockquote>
+      <tt>void matrix_mult_vektor(int zeilen, int spalten, 
+                                  double * A, double * x, double * erg);</tt>
+    </blockquote>
+  </dd>
+
+  <dt>
+    (iii)
+  </dt>
+
+  <dd>
+    Berechnung der Multiplikation <TT>Erg = A * B</TT> zweier Matrizen,
+    wobei <TT>A</TT> die Dimension <TT>m x n</TT> und <TT>B</TT> die
+    Dimension <TT>n x p</TT> haben sollen. Die Ergebnismatrix <TT>Erg</TT>
+    hat daher die Dimension <TT>m x p</TT>.
+    
+    <blockquote>
+      <tt>void matrix_mult(int m, int n, int p,
+                           double * A, double * B, double * Erg);</tt>
+    </blockquote>
+    
+  </dd>
+</dl>
+
+In allen F&auml;llen sollen die Matrizen durch ihre Anfangsadresse
+&uuml;bergeben werden und innerhalb der Funktion als langer Vektor
+interpretiert werden. Man nutzt dabei aus, da&szlig; alle Matrixelemente
+hintereinander im Speicher abgelegt sind. Allerdings mu&szlig; man dann
+den Indexzugriff auf die Matrixkomponenten selbst vornehmen (siehe 
+Vorlesung).
+
+<P>
+Zur Erleichterung k&ouml;nnen Sie das <A HREF="aufg_25.c">vorgegebene
+C-Programm</A> ohne <TT>main()</TT>-Funktion verwenden, das alle drei 
+Funktionen f&uuml;r den pseudo-dynamischen Fall (Nutzung eines Teilbereichs 
+einer statischen Matrix, vgl. Vorlesung) bereits beinhaltet. Diese 
+C-Funktionen m&uuml;ssen dann nur noch auf die &Uuml;bergabe eines
+langen Vektors umgeschrieben werden.
+
+<P>
+Abzugeben ist das C-/C++-Programm mit den Funktionen 
+und zwei Beispielaufrufen der Funktionen f&uuml;r jeweils verschieden
+gro&szlig; angelegte Matrizen/Vektoren.                                       
+
+<P>
+
+<HR SIZE=5 WIDTH="100%">
+
+<A NAME="A_26">&nbsp;</A>
+
+   <H2>
+     Aufgabe 26
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi511@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Matthias Kohl)
+   </H3>
+
+In dem C-Sourcefile "<A HREF="aufg_26.c"><TT>aufg_26.c</TT></A>" sind
+einige (wenige, aber &auml;rgerliche) Fehler passiert. In dem Programm
+soll eine Matrix und eine Strukturvariable besetzt werden, was jedoch nur
+teilweise gelingt. Anschlie&szlig;end sollen die Spalten der Matrix
+rotiert werden, was aber auch nicht ganz funktioniert.
+
+<P>
+Erkl&auml;ren Sie die Fehler, verbessern Sie diese und f&uuml;hren Sie aus,
+warum manches gelingt und manches nicht. Zum Auffinden der
+Fehler sollte man weitere Ausgaben der Matrizen und der Strukturvariablen
+durchf&uuml;hren und sich die Anfangsadressen der Matrix- und Strukturelemente
+au&szlig;erhalb und innerhalb der Funktion ansehen.
+
+<P>
+Abzugeben ist das verbesserte C-Programm mit den oben erw&auml;hnten
+Erkl&auml;rungen.
+
+<P>
+<HR SIZE=5 WIDTH="100%">
+
+<A NAME="A_27">&nbsp;</A>
+
+   <H2>
+     Aufgabe 27
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi511@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Matthias Kohl)
+   </H3>
+
+Rudi Ratlos soll f&uuml;r den B&ouml;rsenmakler Marius Kwick-Manni ein
+Programm zur Berechnung des CAX (Computer-Aktien-Index) schreiben.
+Zur Berechnung des CAX wird einfach der Mittelwert der Tagesschlu&szlig;kurse 
+der Aktien von
+
+<BLOCKQUOTE>
+   Apple, Compaq, HP, IBM, Intel, Microsoft, Novell, SAP, Sun und Yahoo
+</BLOCKQUOTE>
+
+herangezogen. Die Daten finden Sie in den Files
+
+<BLOCKQUOTE>
+  "<A HREF="apple_kurs.dat"><TT>apple_kurs.dat</TT></A>" <BR>
+  "<A HREF="compaq_kurs.dat"><TT>compaq_kurs.dat</TT></A>" <BR>
+  "<A HREF="hp_kurs.dat"><TT>hp_kurs.dat</TT></A>" <BR>
+  "<A HREF="ibm_kurs.dat"><TT>ibm_kurs.dat</TT></A>" <BR>
+  "<A HREF="intel_kurs.dat"><TT>intel_kurs.dat</TT></A>" <BR>
+  "<A HREF="microsoft_kurs.dat"><TT>microsoft_kurs.dat</TT></A>" <BR>
+  "<A HREF="novell_kurs.dat"><TT>novell_kurs.dat</TT></A>" <BR>
+  "<A HREF="sap_kurs.dat"><TT>sap_kurs.dat</TT></A>" <BR>
+  "<A HREF="sun_kurs.dat"><TT>sun_kurs.dat</TT></A>" <BR>
+  "<A HREF="yahoo_kurs.dat"><TT>yahoo_kurs.dat</TT></A>" <BR>
+</BLOCKQUOTE>
+
+Die Struktur ist dabei wie folgt: <BR>
+Jedes Datenfile enth&auml;lt f&uuml;r 360 Tage (zur Vereinfachung habe jeder
+Monat 30 Tage) in jeder Zeile die Werte
+
+<BLOCKQUOTE>
+  Tagesschlu&szlig;wert <BR>
+  Tagestiefststand <BR>
+  Tagesh&ouml;chststand
+</BLOCKQUOTE>
+
+der Aktie jeweils in Euro. 
+
+<P>
+Lesen Sie die Daten aller Files in eine dreidimensionale Matrix <TT>Kurs</TT>
+ein. Dabei soll <TT>Kurs[i][j][k]</TT> folgendes bedeuten:
+
+<BLOCKQUOTE>
+  <TT>Kurs[i][j][0]</TT>: Tagesschlu&szlig;wert f&uuml;r die <TT>i</TT>. Aktie
+    am Tag <TT>j</TT> <BR>
+  <TT>Kurs[i][j][1]</TT>: Tagestiefststand f&uuml;r die <TT>i</TT>. Aktie
+    am Tag <TT>j</TT> <BR>
+  <TT>Kurs[i][j][2]</TT>: Tagesh&ouml;chststand f&uuml;r die <TT>i</TT>. Aktie
+    am Tag <TT>j</TT>
+</BLOCKQUOTE>
+
+Zum Einlesen kann Rudi Ratlos das <A HREF="aufg_27.c">folgende 
+C-Fragment</A> benutzen, das davon ausgeht, da&szlig; Sie in <TT>files[i]</TT>
+den <TT>i</TT>. Filenamen als String abgespeichert haben. 
+
+<P>
+Schreiben Sie drei Funktionen, die f&uuml;r die <TT>i</TT>. Aktie jeweils
+den Jahrestiefststand und den Jahresh&ouml;chststand berechnet sowie
+den kurzfristigen Mittelwert des Tagesschlu&szlig;kurses &uuml;ber die 
+letzten 30 Tage des Datensatzes (einschlie&szlig;lich des letzten Tages). <BR>
+
+Als letztes sollen Sie eine Funktion schreiben, die den CAX f&uuml;r 
+jeden der 360 Tage berechnet und die CAX-Werte in einem geeigneten Array
+ablegt.
+
+<P>
+Abgesehen von einigen Vereinfachungen und Mittelungen entspricht der
+Tagesschlu&szlig;wert der jeweiligen Aktie dem zugeh&ouml;rigen
+Aktienkurs zwischen Anfang Juli 1998 und Ende Juni 1999. Die Daten wurden
+aus der grafischen Anzeige der Wertpapier-Charts der BANK 24 in 
+Zusammenarbeit mit MULTICHART ermittelt 
+(WWW-Adresse: 
+<A HREF="http://www.bank24.de/markt_info/charts/index.html"><TT>http://www.bank24.de/markt_info/charts/index.html</TT></A>). Die Tagestiefst- und
+h&ouml;chstst&auml;nde sind dagegen fiktiv und per Zufallszahlen erzeugt
+worden.
+
+<P>
+Jetzt k&ouml;nnen Sie Rudi Ratlos sicher verraten, welche Aktie er im
+Juli 1998 h&auml;tte kaufen sollen, welche besser nicht und welche die 
+h&ouml;chsten Schwankungen hatte.
+
+<P>
+Abzugeben ist das C-/C++-Programm mit der Ausgabe der zu berechnenden Werte
+f&uuml;r alle 10 Aktien bzw. des CAX-Wertes f&uuml;r jeden Tag.
+
+ </BODY>
+</HTML>

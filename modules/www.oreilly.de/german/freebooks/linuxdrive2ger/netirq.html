@@ -1,0 +1,254 @@
+<HTML
+><HEAD
+><TITLE
+>Der Interrupt-Handler</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Netzwerk-Treiber"
+HREF="net.html"><LINK
+REL="PREVIOUS"
+TITLE="Paket-Empfang"
+HREF="netrx.html"><LINK
+REL="NEXT"
+TITLE="Änderungen im Verbindungszustand"
+HREF="x20332.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="netrx.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 14. Netzwerk-Treiber</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x20332.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="NETIRQ"
+>Der Interrupt-Handler</A
+></H1
+><P
+>&#13;
+Die meisten Hardware-Schnittstellen werden mit Hilfe eines
+Interrupt-Handlers gesteuert. Die Schnittstelle unterbricht den
+Prozessor, um eines von zwei möglichen Ereignissen mitzuteilen:
+Entweder ist ein neues Paket angekommen, oder die Übertragung eines
+ausgehenden Paketes wurde abgeschlossen. Diese Generalisierung ist
+nicht immer ganz richtig, trifft aber bei allen Problemen der
+asynchronen Paket-Übertragung zu. Das Parallel Line Internet Protocol (PLIP)
+und das Point-to-Point Protocol (PPP) sind Beispiele für
+Schnittstellen, die nicht in diese Generalisierung passen. Sie
+haben es mit den gleichen Ereignissen zu tun, aber die
+Interrupt-Verarbeitung auf der unteren Ebene ist geringfügig anders.&#13;</P
+><P
+>Die normale Interrupt-Routine kann den Unterschied zwischen einem
+Interrupt wegen eines neu eingetroffenen Paketes und einem Interrupt wegen einer
+vollständig durchgeführten Übertragung anhand eines Status-Registers
+auf dem physikalischen Gerät selbst
+feststellen. <SPAN
+CLASS="APPLICATION"
+>snull</SPAN
+> arbeitet ähnlich, wenn
+auch dieser Zustandswert in der Software implementiert wird und in
+<TT
+CLASS="LITERAL"
+>dev-&#62;priv</TT
+> steht. Der
+Interrupt-Handler für eine Netzwerk-Schnittstelle sieht folgendermaßen
+aus:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+void snull_interrupt(int irq, void *dev_id, struct pt_regs *regs)
+{
+    int statusword;
+    struct snull_priv *priv;
+    /*
+     * Wie ueblich den "Geraete"-Zeiger auf gemeinsam genutzte Handler
+     * ueberpruefen, dann "struct net_device* dev" zuweisen.
+     */
+    struct net_device *dev = (struct net_device *)dev_id;
+    /* ... und bei der Hardware ueberpruefen, ob das unser Geraet ist */
+
+    if (!dev /*paranoid*/ ) return;
+
+    /* Das Geraet sperren */
+    priv = (struct snull_priv *) dev-&#62;priv;
+    spin_lock(&#38;priv-&#62;lock);
+
+    /* Statuswert holen: richtige Geraete verwenden I/O-Anweisungen */
+    statusword = priv-&#62;status;
+    if (statusword &#38; SNULL_RX_INTR) {
+        /* an snull_rx zur Bearbeitung senden */
+        snull_rx(dev, priv-&#62;rx_packetlen, priv-&#62;rx_packetdata);
+    }
+    if (statusword &#38; SNULL_TX_INTR) {
+        /* eine Uebertragung ist erledigt: den skb freigeben */
+        priv-&#62;stats.tx_packets++;
+        priv-&#62;stats.tx_bytes += priv-&#62;tx_packetlen;
+        dev_kfree_skb(priv-&#62;skb);
+    }
+
+    /* Das Geraet freigeben und fertig */
+    spin_unlock(&#38;priv-&#62;lock);
+    return;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die erste Aufgabe des Handlers ist es, den Zeiger auf die
+richtige <TT
+CLASS="LITERAL"
+>net_device</TT
+>-Struktur zu finden. Dieser Zeiger
+stammt normalerweise aus dem Zeiger <TT
+CLASS="LITERAL"
+>dev_id</TT
+>,
+der als Argument übergeben wird.&#13;</P
+><P
+>Der interessante Teil des Handlers behandelt abgeschlossene
+Übertragungen. In diesem Fall wird die Statistik aktualisiert und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>dev_kfree_skb</I
+></SPAN
+> aufgerufen, um den
+(nicht mehr benötigten) Socket-Buffer an das System zurückzugeben. Wenn
+Ihr Treiber die Übertragungswarteschlange vorübergehend angehalten
+hat, ist dies auch die richtige Stelle, um sie mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>netif_wake_queue</I
+></SPAN
+> wieder in Gang zu
+bringen.&#13;</P
+><P
+>Zum Empfangen der Pakete ist dagegen keine besondere
+Interrupt-Behandlung notwendig.  Es muß lediglich
+<SPAN
+><I
+CLASS="EMPHASIS"
+>snull_rx</I
+></SPAN
+> aufgerufen werden.
+
+&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="netrx.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x20332.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Paket-Empfang</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="net.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Änderungen im Verbindungszustand</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

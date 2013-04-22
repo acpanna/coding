@@ -1,0 +1,39 @@
+/*
+========================================================================
+
+
+    Vorname       : Heiko 
+    Name          : Vogel
+    Matrikelnummer: 0854794
+    Uebungsgruppe : dienstags
+
+    Benutzernummer: oop38
+    e-mail-Adresse: heiko.vogel@stud.uni-bayreuth.de
+
+    Blatt Nr.     : 9
+    Aufgabennr.   : 23
+    Teilaufgabe   : --
+
+    verwendeter
+      Compiler
+      m. Version  : JDK 1.2.1 javac
+                     
+    verwendetes
+      Betriebs-
+      sytem       : Linux
+
+*/
+
+/*
+------------------------------------------------------------------------
+    Java-Programm oder HTML-Programm als Textfile nach Kommentar einfuegen:
+
+    ist an Datei rangehaengt in Form eines zip-Files
+    
+------------------------------------------------------------------------
+    ggf. Beantwortung der Fragen/Resultate hier im Kommentar einfuegen:
+
+    ist an Datei rangehaengt in Form eines zip-Files
+
+========================================================================
+*/

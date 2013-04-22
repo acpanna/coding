@@ -1,0 +1,308 @@
+<HTML>
+ <HEAD>
+   <TITLE>
+     &Uuml;bungsblatt 07, 22.06.1999
+   </TITLE>
+ </HEAD>
+ <BODY>
+
+  <H1>
+     &Uuml;bungsblatt 07, 22.06.1999
+   </H1>
+   <H2>
+     Abgabetermin: Di, 29.06.1999, 10<SUP>00</SUP> Uhr
+   </H2>
+
+<DIV ALIGN="right">
+  <A HREF="mailto:Robert.Baier@uni-bayreuth.de">R. Baier</A> <BR>
+  <A HREF="mailto:Anton.Betten@uni-bayreuth.de">A. Betten</A> <BR>
+  <A HREF="mailto:hiwi511@btcipmatx1.cip.uni-bayreuth.de">M. Kohl</A> <BR>
+  <A HREF="mailto:hiwi502@btcipmatx1.cip.uni-bayreuth.de">B. Seifert</A>
+  <BR CLEAR=&auml;ll">
+</DIV>
+<P>
+
+Das &Uuml;bungsblatt besteht aus den Aufgaben <A HREF="#A_19">19</A>,
+<A HREF="#A_20">20</A> und <A HREF="#A_21">21</A>.
+Das &Uuml;bungsblatt inkl. aller Sourcecodes, Bilder, HTML-Seiten, ... kann auch
+als
+<UL>
+  <LI><A HREF="blatt_07.tar.gz"><TT>gzip</TT>'tes <TT>tar</TT>-Archive</A>
+  </LI>
+  <LI>
+      <A HREF="blatt_07.zip"><TT>ZIP</TT>-Archive</A>
+  </LI>
+</UL>
+heruntergeladen werden. <BR>
+
+<EM>Beachten Sie die <A HREF="../allgemein/hinweise.html">allgemeinen Abgabehinweise</A>!!</EM>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A_19">&nbsp;</A>
+
+   <H2>
+     Aufgabe 19
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi502@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Bernd Seifert)
+   </H3>
+
+Rudi Ratlos sitzt vor dem C-Buch "C im Hauruck-Verfahren in 72 Stunden"
+und liest gerade den Abschnitt &uuml;ber die Wiederholungsanweisungen.
+Der Autor besch&auml;ftigt sich mit dem Problem, die Summe
+
+<CENTER>
+  <!-- MATH: $\sum\limits_{k=1}^n k =\frac{n(n+1)}{2}$ -->
+  <IMG WIDTH="95" HEIGHT="48" ALIGN="MIDDLE" BORDER="0"
+       SRC="summe.gif" ALT="$\sum\limits_{k=1}^n k =\frac{n(n+1)}{2}$">
+</CENTER>
+
+f&uuml;r <I>n</I> = 100 zu berechnen.
+
+<P>
+Der Autor bietet 7 Varianten an mit dem Nachsatz "Ein Test, da&szlig; diese
+Varianten auch das Richtige berechnen, wird dem Leser &uuml;berlassen.".
+
+<PRE>
+    /* in allen Varianten vorher definiert: */
+    int m, n, sum;
+
+    1)  n=1;
+        sum=0;
+        while (n<=100)
+             n++;
+             sum += n;
+
+    2)  n=1;
+        sum=0;
+        do {
+             sum += n;
+             n++;
+           } while (n<=101);
+                                                              
+    3)  sum=0;
+        for (n=1; n<=100; n++) {
+             sum += n;
+             n++;
+        }
+
+    4)  n=1;
+        sum=0;
+        for (n=1; n<=m; n++) {
+          m=100;
+          sum += n;
+        }
+                                                              
+    5)  for (n=1, sum=0; n<101; sum += ++n);                  
+                                                              
+    6)  for (n=1, sum=0; n<101; sum += n++);                  
+                                                              
+    7)  for (n=1, sum=0; n<101; sum += n, n++);               
+</PRE>                                                        
+
+Rudi Ratlos ist sich da gar nicht so sicher und beschlie&szlig;t, alles 
+auszutesten und m&ouml;glichen Fehlern im Buch auf die Spur zu kommen.
+Bei den fehlerhaften Varianten will er herausfinden, was die Anweisungen
+stattdessen berechnen, um dem Autor eine e-mail mit den gefundenen Fehlern
+zu schreiben.
+
+<P>
+Abzugeben sind die Ausgaben der Summenberechnungen der Textangabe, eine
+Begr&uuml;ndung f&uuml;r die Resultate sowie das C-/C++-Programm mit den
+korrigierten Fassungen.                                       
+
+<P>
+
+<HR SIZE=5 WIDTH="100%">
+
+<A NAME="A_20">&nbsp;</A>
+
+   <H2>
+     Aufgabe 20
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi511@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Matthias Kohl)
+   </H3>
+
+Hans Hoppel ist leidenschaftlicher Hasenz&uuml;chter und ein guter Freund von
+Rudi Ratlos. Als dieser ihn besucht und die vielen Hasen sieht, m&ouml;chte er
+wissen, wie sich die Anzahl der M&uuml;mmelm&auml;nner im Lauf der Zeit 
+entwickelt. <BR>
+Um die Sache zu vereinfachen, trifft er folgende wirklichkeitsnahe Annahmen:
+
+<OL>
+  <LI> 
+       Er startet mit einem Hasen im Jahr 1.
+  </LI> 
+  <LI> 
+       Alle Hasen sind unsterblich.
+  </LI> 
+  <LI> 
+       Ein Hase vermehrt sich erstmals im Alter von 2 Jahren und dann in
+       jedem folgenden Jahr. Dabei bekommt er immer nur zwei Junge.
+  </LI> 
+</OL>
+
+Rudi beginnt zu rechnen und findet heraus:
+
+<P>
+<TABLE ALIGN="center" BORDER=1>
+  <TR>
+    <TH>
+      Jahr
+    </TH>
+    <TH>
+      Zahl der Hasen
+    </TH>
+  </TR>
+
+  <TR>
+    <TD ALIGN="center">
+      0
+    </TD>
+    <TD ALIGN="center">
+      1
+    </TD>
+  </TR>
+
+  <TR>
+    <TD ALIGN="center">
+      1
+    </TD>
+    <TD ALIGN="center">
+      1
+    </TD>
+  </TR>
+
+  <TR>
+    <TD ALIGN="center">
+      2
+    </TD>
+    <TD ALIGN="center">
+      3
+    </TD>
+  </TR>
+
+  <TR>
+    <TD ALIGN="center">
+      3
+    </TD>
+    <TD ALIGN="center">
+      5
+    </TD>
+  </TR>
+ 
+  <TR>
+    <TD ALIGN="center">
+      4
+    </TD>
+    <TD ALIGN="center">
+      11
+    </TD>
+  </TR>
+</TABLE>
+</P>
+
+Aber dann wird ihm die Sache zu kompliziert. Er findet aber die
+Gesetzm&auml;&szlig;igkeit
+
+<BLOCKQUOTE>
+   <I>g<SUB>n</SUB> = g<SUB>n-1</SUB> + 2g<SUB>n-2</SUB></I>
+   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<I>n</I> >= 2),
+</BLOCKQUOTE>
+
+wobei <I>g<SUB>n</SUB></I> die Anzahl der Hasen in der <I>n</I>. Generation 
+sind.
+
+<OL TYPE=a>
+  <LI> 
+    K&ouml;nnen Sie ihm helfen und ihm ein Programm schreiben, das beantwortet, 
+    wieviele Hasen Hans in einem vorgegebenen Jahr besitzt?
+  <LI> 
+    Danach &auml;nderen Sie Ihr Programm so ab, da&szlig; Hans zus&auml;tzlich
+    erf&auml;hrt, wieviel Jahre er z&uuml;chten mu&szlig;, um mindestens eine 
+    vorgegebene Anzahl von Hasen zu besitzen!
+  <LI> 
+    Wie mu&szlig; das Programm erg&auml;nzt werden, damit Hans erf&auml;hrt,
+    wieviel Jahre er maximal z&uuml;chten darf, um h&ouml;chstens eine
+    vorgegebene Anzahl von Hasen zu besitzen?
+</OL>
+
+Versuchen Sie, f&uuml;r die jeweilige Teilaufgabe diejenige der Alternativen
+<TT>for</TT>-, <TT>while</TT>- odeoder
+<TT>do-while</TT>-Schleife zu w&auml;hlen, die am naheliegendsten ist.
+
+<P>
+Abzugeben ist das C-/C++-Programm mit einer Ausgabe der Ergebnisse der drei
+Schleifen f&uuml;r von Ihnen gew&auml;hlte Eingabewerte.
+
+<P>
+<HR SIZE=5 WIDTH="100%">
+
+<A NAME="A_21">&nbsp;</A>
+
+   <H2>
+     Aufgabe 21
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi511@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Matthias Kohl)
+   </H3>
+
+Das vorliegende <A HREF="aufg_21.c">C-Programm "<TT>aufg_21.c</TT>"</A> 
+ist von einem Programmierer der alten Schule geschrieben worden und wimmelt
+nur so von <TT>goto</TT>-Befehlen. Schreiben Sie das Programm um, indem Sie
+alle <TT>goto</TT>-Befehle durch bessere Alternativen ersetzen.
+
+<P>
+Das Programm berechnet folgendes: 
+
+<P>
+Die nichtlineare Gleichung <I>x=exp(-x)</I> hat im Intervall <I>[0.5,0.69]</I>
+eine eindeutige L&ouml;sung <I>s</I>, d.h. die Funktion <I>F(x)=exp(-x)</I> hat in 
+<I>s</I> einen Fixpunkt. Numerisch kann <I>s</I> mit einer Fixpunktiteration 
+wie folgt gen&auml;hert werden:
+
+<OL>
+    <LI> 
+      W&auml;hlen Sie einen Startwert <I>x<SUP>(0)</SUP></I> und 
+      setzen Sie <I>k=0</I>.
+    </LI> 
+    <LI>  
+      Berechnen Sie <I>x<SUP>(k+1)</SUP>=F(x<SUP>(k)</SUP>)</I> und
+      setzen Sie <I>k=k+1</I>.
+    </LI> 
+    <LI> 
+      Falls die Abbruchbedingung nicht erf&uuml;llt ist, gehen Sie zu 2.
+    </LI> 
+</OL>
+
+Das Verfahren bricht genau dann ab, wenn f&uuml;r den Fehler des berechneten
+Fixpunkts
+
+<CENTER>
+  <I> |x-exp(-x)| &lt;= 10<SUP>-8</SUP> </I> 
+</CENTER>
+
+gilt oder die Anzahl der Iterationen den Wert <I>30</I> &uuml;bersteigt. 
+
+<P>
+In dem C-Programm k&ouml;nnen entweder verschiedene vorgegebene Startwerte
+<I>x<SUP>(0)</SUP></I> 
+<IMG WIDTH="14" HEIGHT="27" ALIGN="MIDDLE" BORDER="0"
+     SRC="element.gif" ALT="$\in$">
+<I>{-10.0, 0.0, 0.5, 0.55, 1.0, 100.0 }</I>&nbsp; 
+oder ein selbst eingegebener Startwert gew&auml;hlt werden.
+Das Programm erzeugt eine Ausgabe, die die Iterierte <I>x<SUP>(k)</SUP></I>, 
+den Fehler <I>| x<SUP>(k)</SUP> - F(x<SUP>(k)</SUP>) |</I> und die Zahl der
+durchgef&uuml;hrten Iterationen anzeigt.
+
+<P>
+Abzugeben ist das umgeschriebene C-/C++-Programm mit selber 
+Funktionalit&auml;t, das ohne <TT>goto</TT>-Befehle
+auskommt.
+
+ </BODY>
+</HTML>

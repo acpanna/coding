@@ -1,0 +1,1013 @@
+<HTML
+><HEAD
+><TITLE
+>Module erstellen und starten</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="PREVIOUS"
+TITLE="Übersicht über dieses Buch"
+HREF="x392.html"><LINK
+REL="NEXT"
+TITLE="Kompilieren und Laden"
+HREF="x666.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x392.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x666.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="BUILDING"
+>Kapitel 2. Module erstellen und starten</A
+></H1
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Inhalt</B
+></DT
+><DT
+><A
+HREF="building.html#BUIAPP"
+>Module versus Applikationen</A
+></DT
+><DT
+><A
+HREF="x666.html"
+>Kompilieren und Laden</A
+></DT
+><DT
+><A
+HREF="x956.html"
+>Die Symboltabelle des Kernels</A
+></DT
+><DT
+><A
+HREF="buiini.html"
+>Initialisierung und Beendigung</A
+></DT
+><DT
+><A
+HREF="buiresource.html"
+>Ressourcen verwenden</A
+></DT
+><DT
+><A
+HREF="buiconf.html"
+>Automatische und manuelle
+Konfiguration</A
+></DT
+><DT
+><A
+HREF="x1670.html"
+>Im User-Space arbeiten</A
+></DT
+><DT
+><A
+HREF="x1736.html"
+>Abwärtskompatibilität</A
+></DT
+><DT
+><A
+HREF="x1916.html"
+>Schnellreferenz</A
+></DT
+></DL
+></DIV
+><P
+>Es ist allerhöchste Zeit, daß wir mit dem Programmieren anfangen. In
+diesem Kapitel lernen Sie alle notwendigen Konzepte aus dem Bereich
+Modul- und Kernel-Programmierung kennen. Auf diesen wenigen Seiten werden wir
+ein vollständiges Modul programmieren. Das dabei erworbene Wissen ist
+grundlegend für jede Art von modularisiertem Treiber. Um nicht zu
+viele Konzepte auf einmal einzuführen, reden wir in diesem Kapitel nur
+über Module und beziehen uns dabei nicht auf irgendwelche
+Geräte-Klassen.&#13;</P
+><P
+>Alle Bestandteile des Kernels (Funktionen, Variablen, Header-Dateien
+und Makros), die hier eingeführt werden, werden in der Zusammenfassung
+am Ende des Kapitels beschrieben.&#13;</P
+><P
+>Für ungeduldige Leser enthält der folgende Code ein vollständiges
+&#8220;Hallo Welt&#8221;-Modul (das nichts Besonderes macht). Dieser
+Code läßt sich unter den Kernel-Versionen 2.0 bis 2.4 übersetzen:<A
+NAME="AEN427"
+HREF="#FTN.AEN427"
+>[1]</A
+>&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+#define MODULE
+#include &#60;linux/module.h&#62;
+
+int init_module(void)      { printk("&#60;1&#62;Hallo, Welt\n"); return 0; }
+void cleanup_module(void)  { printk("&#60;1&#62;Ade, du grausame Welt\n"); }
+
+&#13;</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Die Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+> ist im Linux-Kernel definiert
+und funktioniert ähnlich wie <TT
+CLASS="LITERAL"
+>printf</TT
+> aus der
+Standard-C-Bibliothek. Der Kernel braucht eine eigene
+Ausgabefunktion, da er nicht auf die C-Bibliothek zurückgreifen
+kann. Das Modul kann
+<SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+> aufrufen, denn nachdem es mit
+<SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+> geladen worden ist, ist das Modul zum Kernel
+hinzugelinkt und kann auf dessen öffentliche Symbole (Funktionen und Variablen,
+siehe den nächsten Abschnitt) zugreifen.
+
+
+Der String <TT
+CLASS="LITERAL"
+>&#60;1&#62;</TT
+> gibt die Priorität der
+Meldung an. Wir haben in diesem Modul eine hohe Priorität (eine kleine Zahl) verwendet,
+weil eine Meldung mit der Default-Priorität eventuell &#8212; je nach verwendeter Kernel-Version, der
+Version und der Konfiguration des <SPAN
+><I
+CLASS="EMPHASIS"
+>klogd</I
+></SPAN
+>-Daemons &#8212; auf der Konsole nicht zu sehen sein könnte. Sie können das aber fürs erste ignorieren, wir gehen darauf im
+Abschnitt &#8220;<A
+HREF="debug.html#DEBPRINTK"
+>the Section called <I
+>printk</I
+> in Kapitel 4</A
+>&#8221; in <A
+HREF="debug.html"
+>Kapitel 4</A
+> näher ein.&#13;</P
+><P
+>Sie können das Modul testen, indem Sie <SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+> und
+<SPAN
+CLASS="APPLICATION"
+>rmmod</SPAN
+> wie im nächsten Abschnitt gezeigt
+aufrufen. Beachten Sie, daß nur der Superuser ein Modul laden und
+wieder entfernen kann.</P
+><P
+>Die oben gezeigte Quelldatei kann nur dann wie gezeigt geladen und
+entladen werden, wenn die Unterstützung für Modul-Versionen im Kernel
+abgeschaltet ist; die meisten Distributionen installieren aber Kernel
+mit Versionsunterstützung (das Thema Versionsunterstützung behandeln wir
+in <A
+HREF="kerneld.html"
+>Kapitel 11</A
+>). Ältere Versionen der
+<SPAN
+CLASS="APPLICATION"
+>modutils</SPAN
+> erlauben zwar das Laden von
+Modulen ohne Versionsinformationen in Kernel mit
+Versionsunterstützung, aber das ist nicht länger möglich. Um dieses
+Problem mit <TT
+CLASS="FILENAME"
+>hello.c</TT
+> zu lösen, enthalten die Quellen im
+Verzeichnis <TT
+CLASS="FILENAME"
+>misc-modules</TT
+> des Beispiel-Codes
+einige weitere Zeilen, mit denen der Code sowohl in Kerneln mit als
+auch ohne Versionsunterstützung funktioniert. Wir empfehlen Ihnen
+aber dringend, einen eigenen Kernel (ohne Versionsunterstützung) zu
+bauen und zu installieren, bevor Sie den Beispiel-Code
+ausführen.<A
+NAME="AEN457"
+HREF="#FTN.AEN457"
+>[2]</A
+></P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>&#13;
+root# <TT
+CLASS="USERINPUT"
+><B
+>gcc -c hello.c</B
+></TT
+>
+root# <TT
+CLASS="USERINPUT"
+><B
+>insmod hello.o</B
+></TT
+>
+Hallo, Welt
+root# <TT
+CLASS="USERINPUT"
+><B
+>rmmod hello.o</B
+></TT
+>
+Ade, du grausame Welt
+root#</PRE
+></TD
+></TR
+></TABLE
+><P
+>Je nach Verfahren, das Ihr System verwendet, um die Meldungen
+auszugeben, kann die Ausgabe unterschiedlich aussehen. Die
+obenstehende Ausgabe stammt aus einer Text-Konsole; wenn Sie
+<B
+CLASS="COMMAND"
+>insmod</B
+> und <B
+CLASS="COMMAND"
+>rmmod</B
+> aus einem
+<SPAN
+CLASS="APPLICATION"
+>xterm</SPAN
+> heraus ausführen, werden Sie nichts
+in Ihrem Terminal sehen. Suchen Sie statt dessen in den
+System-Protokolldateien wie <TT
+CLASS="FILENAME"
+>/var/log/message</TT
+> (der
+Name kann sich von Distribution zu Distribution unterscheiden). Der
+Mechanismus, mit dem Kernel-Meldungen ausgegeben oder aufgezeichnet
+werden, wird in &#8220;Protokollierung von Meldungen&#8221; in <A
+HREF="debug.html"
+>Kapitel 4</A
+> beschrieben.</P
+><P
+>Wie Sie sehen, ist es gar nicht so schwierig, ein Modul zu
+schreiben. Schwierig ist es vor allem, Ihr Gerät zu verstehen und die
+Performance zu maximieren. Wir werden die Modularisierung in diesem
+Kapitel immer weiter vertiefen und die gerätespezifischen Fragen für
+die anderen Kapitel aufheben.
+&#13;</P
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="BUIAPP"
+>Module versus Applikationen</A
+></H1
+><P
+>&#13;
+Bevor wir weitermachen, sollten wir noch die diversen
+Unterschiede zwischen einem Kernel-Modul und einer Applikation hervorheben.&#13;</P
+><P
+>Während eine Applikation eine einzige Aufgabe vom Anfang bis zum Ende
+durchführt, registriert sich ein Modul, um zukünftige Anfragen zu
+bedienen; seine <SPAN
+><I
+CLASS="EMPHASIS"
+>main</I
+></SPAN
+>-Funktion beendet sich sofort
+wieder.
+
+Mit anderen Worten: Es ist die Aufgabe von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>init_module</I
+></SPAN
+> (dem Einsprungpunkt in das
+Modul), den späteren Aufruf der Funktionen des Moduls
+vorzubereiten. Das ist, als würde das Modul sagen: &#8220;Hier bin
+ich, und das kann ich.&#8221;
+
+
+
+Der zweite Einsprungpunkt eines Moduls,
+<SPAN
+><I
+CLASS="EMPHASIS"
+>cleanup_module</I
+></SPAN
+>, wird unmittelbar, bevor das
+Modul entladen wird, aufgerufen. Die Funktion sollte dem Kernel
+folgendes mitteilen: &#8220;ich bin nicht mehr da, bitte mich nicht mehr, etwas
+zu tun.&#8221; Die Fähigkeit, ein Modul zu entladen, ist eines der
+Merkmale der Modularisierung, die Sie besonders schätzen lernen
+werden, da es die Entwicklungszeit deutlich herabsetzt. Dadurch
+können Sie neue Versionen Ihres Treibers testen, ohne den Rechner erst
+lange herunterfahren und neu starten zu müssen.&#13;</P
+><P
+>&#13;Als Programmierer wissen Sie, daß eine Applikation Funktionen aufrufen
+kann, die sie nicht selbst definiert: Beim Linken werden externe
+Referenzen mit Hilfe der passenden Funktionsbibliothek
+aufgelöst. <SPAN
+><I
+CLASS="EMPHASIS"
+>printf</I
+></SPAN
+> ist eine dieser aufrufbaren
+Funktionen, die in <SPAN
+CLASS="APPLICATION"
+>libc</SPAN
+> definiert ist. Ein Modul
+ist andererseits nur gegen den Kernel gelinkt. Die einzigen
+Funktionen, die es aufrufen kann, sind die, die der Kernel
+exportiert; es gibt keine Bibliotheken, gegen die gelinkt wird. Die
+Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+> beispielsweise,
+die wir in <TT
+CLASS="FILENAME"
+>hello.c</TT
+> oben verwendet haben, ist die
+Version von <SPAN
+><I
+CLASS="EMPHASIS"
+>printf</I
+></SPAN
+>, die im Kernel definiert ist
+und für die Module exportiert wird. Sie verhält sich mit wenigen
+Ausnahmen (so hat sie beispielsweise keine Unterstützung für Fließkomma-Ausgaben)
+genauso wie die originale Funktion.&#13;</P
+><P
+><A
+HREF="building.html#FIG2-1"
+>Abbildung 2-1</A
+> zeigt, wie Funktionsaufrufe und
+Funktionszeiger in einem Modul verwendet werden, um neue
+Funktionalität zu einem laufenden Kernel hinzuzufügen.
+
+    </P
+><DIV
+CLASS="FIGURE"
+><A
+NAME="FIG2-1"
+></A
+><P
+><B
+>Abbildung 2-1. Ein Modul zum Kernel linken</B
+></P
+><P
+><IMG
+SRC="ldr_0201.jpg"></P
+><P
+>&#13;
+
+
+Weil keine Bibliothek zu den Modulen gelinkt wird, sollten
+Quelldateien <SPAN
+><I
+CLASS="EMPHASIS"
+>nie</I
+></SPAN
+> die üblichen Header-Dateien
+einbinden. Nur Funktionen, die zum Kernel selbst gehören, dürfen in
+Kernel-Modulen verwendet werden.
+
+
+
+
+
+Alles, was zum Kernel gehört, ist in den Header-Dateien in
+<TT
+CLASS="FILENAME"
+>include/linux</TT
+> und
+<TT
+CLASS="FILENAME"
+>include/asm</TT
+> (normalerweise unterhalb von
+<TT
+CLASS="FILENAME"
+>/usr/src/linux</TT
+>) definiert. Ältere Distributionen
+(die auf der <TT
+CLASS="FILENAME"
+>libc</TT
+>-Version 5 oder früher basieren) hatten oft symbolische Links von
+<TT
+CLASS="FILENAME"
+>/usr/include/linux</TT
+> und
+<TT
+CLASS="FILENAME"
+>/usr/include/asm</TT
+> auf die eigentlichen
+Kernel-Quellen, so daß der Include-Baum der <TT
+CLASS="FILENAME"
+>libc</TT
+>
+auf die Header-Dateien der installierten Kernel-Quellen verweisen
+konnte. Diese symbolischen Links machten es User-Space-Anwendungen
+einfach, Kernel-Header-Dateien einzubinden, was ab und zu einmal nötig
+ist.</P
+><P
+>Auch wenn die User-Space-Header-Dateien jetzt von den
+Kernel-Space-Header-Dateien getrennt sind, müssen manche Applikationen
+doch noch Kernel-Header-Dateien einbinden &#8212; entweder bevor eine alte
+Bibliothek verwendet wird oder bevor neue Informationen benötigt
+werden, die nicht in User-Space-Header-Dateien zur Verfügung
+stehen. Viele der Deklarationen in den Kernel-Header-Dateien sind aber
+nur für den Kernel relevant und sollten für User-Space-Applikationen
+gar nicht zu sehen sein. Diese Deklarationen sind aus diesem Grund von
+<TT
+CLASS="LITERAL"
+>#ifdef __KERNEL__</TT
+>-Blöcken geschützt. Deswegen
+muß Ihr Treiber, wie jeder andere Kernel-Code, mit dem definierten
+Präprozessor-Symbol <TT
+CLASS="LITERAL"
+>__KERNEL__</TT
+> kompiliert werden.&#13;</P
+><P
+>Wir erklären die Aufgabe der einzelnen Kernel-Header-Dateien später,
+wenn sie benötigt werden.&#13;</P
+><P
+>&#13;
+Entwickler, die an einem großen Software-System (wie dem Kernel)
+arbeiten, müssen sich über das Problem der <I
+CLASS="FIRSTTERM"
+>Namespace
+Pollution</I
+> im klaren sein und es vermeiden. Unter
+Namespace Pollution versteht man das Problem, daß es viele Funktionen
+und globale Variablen gibt, deren Namen nicht eindeutig genug sind, um
+sie einfach voneinander zu unterscheiden. Ein Programmierer, der
+gezwungen ist, sich mit so einer Applikation zu beschäftigen,
+verschwendet viel Zeit und Energie darauf, sich die
+reservierten Namen zu merken und eindeutige Namen für
+neue Symbole zu finden. Namensraum-Kollisionen können
+verschiedenartige Probleme verursachen, von Problemen beim Laden des
+Moduls bis hin zu bizarren Fehlern, die vielleicht nur dann auftreten, wenn ein
+anderer Benutzer Ihres Codes einen Kernel mit einer anderen Konfiguration
+baut.&#13;</P
+><P
+>Einen solchen Fehler können sich Programmierer von Kernel-Code
+nicht leisten, denn selbst das kleinste Modul wird mit dem gesamten
+Kernel verlinkt. Die beste Lösung, um Namespace Pollution zu
+vermeiden, besteht darin,
+
+
+alle Ihre Symbole als <TT
+CLASS="LITERAL"
+>static</TT
+> zu deklarieren und für
+die Symbole, die global bleiben müssen, ein wohldefiniertes, im ganzen
+Kernel eindeutiges Präfix zu verwenden.
+
+
+
+Alternativ dazu können Sie als Modul-Programmierer die externe Sichtbarkeit Ihrer Symbole steuern (wie in &#8220;&#8221;
+weiter unten in diesem Kapitel beschrieben).<A
+NAME="AEN565"
+HREF="#FTN.AEN565"
+>[3]</A
+></P
+><P
+>Es kann
+manchmal beim Debuggen helfen, wenn Sie das einmal gewählte Präfix
+auch für private Symbole in einem Modul verwenden. Beim Testen Ihres
+Treibers könnten Sie alle Symbole exportieren, ohne Ihren Namensraum
+zu verschmutzen. Die im Kernel
+verwendeten Präfixe bestehen per Konvention nur aus Kleinbuchstaben;
+wir werden uns ebenfalls an diese Konvention halten.&#13;</P
+><P
+>&#13;
+Der letzte Unterschied zwischen der Kernel- und der
+Anwendungsprogrammierung besteht darin, wie Fehler behandelt werden:
+Während ein Segmentation Fault bei der Anwendungsentwicklung
+harmlos ist und man immer einen Debugger verwenden kann, um auf die
+Ursache im Quellcode zu kommen, ist ein Kernel-Fehler zumindest für den
+aktuellen Prozeß fatal, wenn nicht sogar für das ganze System. Sie
+werden im Abschnitt &#8220;<A
+HREF="debfaults.html"
+>the Section called <I
+>Debuggen von Systemfehlern</I
+> in Kapitel 4</A
+>&#8221; in <A
+HREF="debug.html"
+>Kapitel 4</A
+> noch lernen, wie man Kernel-Fehler zurückverfolgt.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="BUISPACE"
+>User-Space und Kernel-Space</A
+></H2
+><P
+>&#13;
+Wir können unsere Diskussion zusammenfassen, indem wir sagen, daß
+Module im sogenannten <I
+CLASS="FIRSTTERM"
+>Kernel-Space</I
+> laufen, während
+Applikationen im <I
+CLASS="FIRSTTERM"
+>User-Space</I
+> ablaufen. Dieses Konzept ist
+ein grundlegendes Prinzip der Betriebssystemtheorie.&#13;</P
+><P
+>Die Rolle des Betriebssystems in der Praxis ist es, den Programmen eine einheitliche Sicht auf die Hardware des Computers zu verschaffen. Außerdem muß das
+Betriebssystem dafür sorgen, daß Programme unabhängig voneinander
+laufen und daß ein unerlaubter Zugriff auf Ressourcen verhindert
+wird. Diese nicht ganz einfache Aufgabe ist nur möglich, wenn die CPU
+eine Trennung der Systemsoftware von den Applikationen erzwingt.&#13;</P
+><P
+>&#13;
+
+Jeder moderne Prozessor ist in der Lage, dieses Verhalten zu
+erzwingen. Das wird erreicht, indem verschiedene Betriebsmodalitäten
+(oder Ebenen) in der CPU selbst implementiert werden. Die Ebenen haben
+verschiedene Aufgaben, und manche Operationen sind auf den niedrigeren
+Ebenen nicht erlaubt. Programmcode kann von einer Ebene auf eine
+andere nur durch eine begrenzte Anzahl von <SPAN
+><I
+CLASS="EMPHASIS"
+>Toren</I
+></SPAN
+>
+gelangen. Unix-Systeme werden so entworfen, daß sie von diesem
+Hardware-Feature Gebrauch machen, verwenden aber nur zwei dieser
+Ebenen. Alle aktuellen Prozessoren haben mindestens zwei solcher
+Ebenen, manche, wie die x86-Familie, haben mehr. Wenn mehrere Ebenen
+vorhanden sind, werden die niedrigste und die höchste benutzt.
+
+
+Unter Unix wird der Kernel auf der höchsten Ebene (im sogenannten
+<I
+CLASS="FIRSTTERM"
+>Supervisor-Modus</I
+>), auf der alles erlaubt ist,
+ausgeführt, während Anwendungen auf der niedrigsten Ebene (dem
+sogenannten <I
+CLASS="FIRSTTERM"
+>User-Modus</I
+>) ausgeführt werden, auf der der
+Prozessor einen direkten Zugriff auf die Hardware und einen unerlaubten Zugriff
+auf den Speicher verhindert.&#13;</P
+><P
+>&#13;Wie bereits erwähnt, nennen wir die Ausführungsmodi im Zusammenhang
+mit Software <I
+CLASS="FIRSTTERM"
+>Kernel-Space</I
+> und <I
+CLASS="FIRSTTERM"
+>User
+Space</I
+> und beziehen uns dabei nicht nur auf die
+verschiedenen Zugriffsrechte in den beiden Modi, sondern auch darauf,
+daß jeder Modus eine eigene Speicherabbildung, seinen eigenen
+Adreßraum, hat.
+&#13;</P
+><P
+>Unix wechselt bei Systemaufrufen und Hardware-Interrupts vom User-Space in den Kernel-Space. Der Kernel-Code, der in einem Systemaufruf
+ausgeführt wird, läuft im Kontext eines Prozesses &#8212; er arbeitet
+im Auftrag des aufrufenden Prozesses und kann auf Daten im Adreßbereich
+des Prozesses zugreifen. Code, der Interrupts behandelt, ist dagegen
+asynchron zu Prozessen und nicht mit irgendeinem bestimmten Prozeß
+verbunden.&#13;</P
+><P
+>Die Rolle eines Moduls ist es, die Kernel-Funktionalität zu erweitern;
+modularisierter Code läuft im Kernel-Space. Normalerweise führt ein
+Treiber beide obengenannten Aufgaben aus: Manche Funktionen im Modul
+werden als Teil eines Systemaufrufs ausgeführt, andere sind für die
+Bedienung von Interrupts zuständig.&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN611"
+>Nebenläufigkeit im Kernel</A
+></H2
+><P
+>&#13;
+
+Die Programmierung von Gerätetreibern unterscheidet sich von der
+Programmierung der meisten Applikationen besonders im Bereich der
+Nebenläufigkeit. Eine Applikation läuft normalerweise sequentiell vom
+Anfang zum Ende, ohne sich darum Gedanken machen zu müssen, was
+in der Zwischenzeit passiert, was die Umgebung der Applikation ändern
+könnte. Kernel-Code läuft nicht in einer derart einfachen Welt und
+muß immer mit Rücksicht auf die Tatsache geschrieben werden, daß
+viele Dinge gleichzeitig passieren können.</P
+><P
+>Es gibt einige Quellen für die Nebenläufigkeit in der
+Kernel-Programmierung. Natürlich können Linux-Systeme mehrere
+Prozesse ausführen, von denen mehr als einer zur gleichen Zeit
+versuchen kann, Ihren Treiber zu verwenden. Die meisten Geräte können
+den Prozessor unterbrechen, Interrupt-Handler laufen asynchron und
+können zur gleichen Zeit aufgerufen werden, zu der Ihr Treiber versucht,
+etwas anderes zu tun. Mehrere Software-Abstraktionen (wie die in <A
+HREF="flow.html"
+>Kapitel 6</A
+> eingeführten Kernel-Timer) laufen ebenfalls
+asynchron. Außerdem kann Linux natürlich auf symmetrischen
+Multiprozessorsystemen (SMP-Systemen) laufen, mit der Folge, daß Ihr
+Treiber gleichzeitig von mehr als einer CPU ausgeführt werden könnte.</P
+><P
+>Als Folge daraus muß Linux-Kernel-Code einschließlich des
+Treiber-Codes <I
+CLASS="FIRSTTERM"
+>reentrant</I
+> sein, d.h. er muß in
+mehr als einem Kontext gleichzeitig lauffähig
+sein. Datenstrukturen müssen sorgfältig entworfen werden, um mehrere
+Ausführungs-Threads auseinanderzuhalten, und der Code muß dafür
+sorgen, daß auf gemeinsam genutzte Daten auf eine Weise zugegriffen
+wird, die verhindert, daß die Daten durcheinandergeraten. Das
+Schreiben von Code, der mit Nebenläufigkeit umgehen kann und Race
+Conditions (Situationen, in denen eine unglückliche
+Ausführungsreihenfolge unerwünschtes Verhalten verursacht) vermeidet,
+verlangt einiges an Nachdenken und kann schwierig sein. Jeder
+Beispiel-Treiber in diesem Buch wurde unter Berücksichtigung der
+Nebenläufigkeit geschrieben; wir werden die notwendigen Techniken
+jeweils an passender Stelle erläutern.</P
+><P
+>Ein von Treiber-Programmierern häufig gemachter Fehler ist die
+Annahme, daß Nebenläufigkeit so lange kein Problem ist, wie ein
+bestimmtes Code-Segment nicht schlafen gelegt wird (nicht
+"blockiert"). Es stimmt zwar, daß der Linux-Kernel nicht präemptiv
+ist; mit der wichtigen Ausnahme der Bedienung von Interrupts wird
+einem Kernel-Code, der das nicht will, der Prozessor nicht entzogen. Früher
+war das meistens schon ausreichend, um unerwünschte Nebenläufigkeit zu
+vermeiden. Auf SMP-Systemen ist aber keine Präemption notwendig, damit
+es zu einer nebenläufigen Ausführung kommen kann.</P
+><P
+>Wenn Ihr Code davon ausgeht, daß ihm der Prozessor nicht entzogen
+wird, dann wird er in SMP-Systemen nicht vernünftig
+funktionieren. Auch wenn Sie selbst nicht über so ein System
+verfügen, können ja durchaus andere, die Ihren Code benutzen, ein
+SMP-System haben. Es ist auch möglich, daß sich der Kernel in Zukunft
+zu einer präemptiven Arbeitsweise hinbewegt, wobei es dann selbst auf Einprozessorsystemen
+überall zu Nebenläufigkeit kommen kann (in manchen Varianten des
+Kernels ist das bereits der Fall). Ein vorsichtiger Programmierer wird
+sich also immer so verhalten, als würde er auf einem SMP-System
+arbeiten.&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN632"
+>Der aktuelle Prozeß</A
+></H2
+><P
+>Obwohl Kernel-Module nicht wie Applikationen sequentiell
+ausgeführt werden, gehören die meisten vom Kernel durchgeführten
+Aktionen doch zu einem bestimmten Prozeß. Kernel-Code kann den
+aktuellen Prozeß, der den Code aufgerufen hat, über
+<TT
+CLASS="LITERAL"
+>current</TT
+> erfahren, einen globalen Zeiger auf eine
+<TT
+CLASS="LITERAL"
+>struct task_struct</TT
+>-Stuktur, die in der Version 2.4
+des Kernels in <TT
+CLASS="LITERAL"
+>&#60;asm/current.h&#62;</TT
+> deklariert
+ist, was wiederum von <TT
+CLASS="LITERAL"
+>&#60;linux/sched.h&#62;</TT
+>
+eingebunden wird. Der
+<TT
+CLASS="LITERAL"
+>current</TT
+>-Zeiger verweist auf den gerade ausgeführten
+User-Prozeß. Während der Ausführung eines Systemaufrufs wie
+<SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> oder <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> ist der
+aktuelle Prozeß derjenige, der den Systemaufruf durchgeführt
+hat. Kernel-Code kann prozeßspezifische Informationen mit Hilfe von
+<TT
+CLASS="LITERAL"
+>current</TT
+> benutzen, wenn es nötig ist. Ein Beispiel
+für diese Technik finden Sie in
+&#8220;<A
+HREF="exaccess.html"
+>the Section called <I
+>Zugriffskontrolle auf Gerätedateien</I
+> in Kapitel 5</A
+>&#8221; in <A
+HREF="extra.html"
+>Kapitel 5</A
+>.</P
+><P
+>Inzwischen ist <TT
+CLASS="LITERAL"
+>current</TT
+> keine echte globale
+Variable mehr, wie das noch in den ersten Kernel-Versionen der Fall
+war. Die Entwickler haben den Zugriff auf die Struktur, die den
+aktuellen Prozeß beschreibt, optimiert, indem sie die Struktur in der
+Stack-Seite versteckt haben. Sie können sich die Details von
+<TT
+CLASS="LITERAL"
+>current</TT
+> in <TT
+CLASS="LITERAL"
+>&#60;asm/current.h&#62;</TT
+>
+anschauen. Dieser Code sieht vielleicht haarig aus, aber Sie dürfen
+nicht vergessen, daß Linux ein SMP-fähiges System ist und eine globale
+Variable einfach nicht funktioniert, wenn mehrere CPUs im Spiel
+sind. Die Details der Implementation bleiben aber vor anderen
+Kernel-Subsystemen verborgen, und ein Gerätetreiber kann einfach
+<TT
+CLASS="LITERAL"
+>&#60;linux/sched.h&#62;</TT
+> einbinden und
+<TT
+CLASS="LITERAL"
+>current</TT
+> verwenden.</P
+><P
+>Aus Sicht eines Moduls ist
+<TT
+CLASS="LITERAL"
+>current</TT
+> genau wie die
+externe Referenz <SPAN
+><I
+CLASS="EMPHASIS"
+>printk</I
+></SPAN
+>. Ein Modul kann
+<TT
+CLASS="LITERAL"
+>current</TT
+> verwenden, wann immer es will; all diese
+Referenzen werden von <SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+> beim Laden des Moduls
+aufgelöst. Die folgende Anweisung gibt beispielsweise die Prozeß-ID
+und den Befehlsnamen des aktuellen Prozesses durch Zugriff auf
+bestimmte Felder in <TT
+CLASS="LITERAL"
+>struct task_struct</TT
+> aus:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+
+printk("Befehlsname: \"%s\" (Prozess-ID %i)\n",
+        current-&#62;comm, current-&#62;pid);
+&#13;</PRE
+></TD
+></TR
+></TABLE
+><P
+>Der Befehlsname, der in <TT
+CLASS="LITERAL"
+>current-&#62;comm</TT
+> abgelegt
+ist, ist der Basisname der Programmdatei, die gerade vom
+aktuellen Prozeß ausgeführt wird.</P
+></DIV
+></DIV
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN427"
+HREF="building.html#AEN427"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Dieses Beispiel ist genau wie alle anderen in diesem
+                Buch vom O'Reilly-FTP-Server, wie in <A
+HREF="anintro.html"
+>Kapitel 1</A
+>
+                beschrieben, erhältlich.</P
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN457"
+HREF="building.html#AEN457"
+>[2]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Wenn Sie noch keine eigenen Kernel gebaut haben, können
+Sie unter <SPAN
+CLASS="SYSTEMITEM"
+>http://www.linux.it/kerneldocs/kconf</SPAN
+> einen
+einführenden Artikel von Alessandro zu diesem Thema lesen.</P
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN565"
+HREF="building.html#AEN565"
+>[3]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Die meisten Versionen von <B
+CLASS="COMMAND"
+>insmod</B
+>
+(aber nicht alle) exportieren alle nicht-statischen Symbole, wenn sie
+keine besonderen Anweisungen im Modul finden; deswegen ist es
+ratsam, alle Symbole, die Sie nicht exportieren wollen, als
+<TT
+CLASS="LITERAL"
+>static</TT
+> zu deklarieren.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x392.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x666.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Übersicht über dieses Buch</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Kompilieren und Laden</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

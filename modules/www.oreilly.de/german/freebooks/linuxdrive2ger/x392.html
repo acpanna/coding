@@ -1,0 +1,272 @@
+<HTML
+><HEAD
+><TITLE
+>Übersicht über dieses Buch</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Eine Einführung in den Linux-Kernel"
+HREF="anintro.html"><LINK
+REL="PREVIOUS"
+TITLE="Selbst in der Kernel-Entwicklergemeinde tätig werden"
+HREF="x385.html"><LINK
+REL="NEXT"
+TITLE="Module erstellen und starten"
+HREF="building.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x385.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 1. Eine Einführung in den Linux-Kernel</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="building.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN392"
+>Übersicht über dieses Buch</A
+></H1
+><P
+>An dieser Stelle betreten wir die Welt der Kernel-Programmierung.
+<A
+HREF="building.html"
+>Kapitel 2</A
+> führt das Thema Modularisierung ein, erklärt
+die dahinterstehenden Geheimnisse und zeigt den Code zum Starten von
+Modulen. <A
+HREF="char.html"
+>Kapitel 3</A
+> erläutert Zeichen-Treiber und enthält den
+vollständigen Code eines speicherbasierten Gerätetreibers, der zum
+Spaß gelesen und geschrieben werden kann. Die Verwendung von Speicher
+als Hardware-Basis erlaubt es jedem, die Beispielprogramme laufen zu
+lassen, ohne spezielle Hardware beschaffen zu müssen.
+
+ </P
+><P
+>Für jeden Programmierer sind Debugging-Techniken äußerst wichtig; sie
+werden in <A
+HREF="debug.html"
+>Kapitel 4</A
+> eingeführt. Mit unseren neu erworbenen
+Debugging-Fähigkeiten gehen wir dann auf fortgeschrittenere Merkmale
+von Zeichen-Treibern ein, darunter auf blockierende Operationen, die
+Verwendung von <SPAN
+><I
+CLASS="EMPHASIS"
+>select</I
+></SPAN
+> und den wichtigen
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+>-Aufruf; diese Themen sind der Inhalt von
+<A
+HREF="extra.html"
+>Kapitel 5</A
+>.
+&#13;</P
+><P
+>Bevor wir zur Verwaltung von Hardware kommen, werden wir noch einige
+weitere Software-Schnittstellen des Kernels auseinandernehmen:
+<A
+HREF="flow.html"
+>Kapitel 6</A
+> erklärt, wie Zeit im Kernel verwaltet wird, und
+<A
+HREF="get.html"
+>Kapitel 7</A
+> beschreibt die Anforderung und Vergabe von
+Speicher.
+&#13;</P
+><P
+>Anschließend konzentrieren wir uns auf die Hardware:
+<A
+HREF="hard.html"
+>Kapitel 8</A
+> beschreibt die Verwaltung von I/O-Ports und
+Speicher-Puffern, die sich im Gerät befinden; danach gehen wir dann in
+<A
+HREF="irq.html"
+>Kapitel 9</A
+> zur Behandlung von Interrupts
+über. Unglücklicherweise wird nicht jeder in der Lage sein, die
+Beispielprogramme aus diesen Kapiteln auszuprobieren, weil ein wenig
+Hardware-Unterstützung notwendig ist, um die
+Software-Schnittstelle zu den Interrupts zu testen. Wir haben uns
+bemüht, die benötigte Hardware so gering wie möglich zu halten, aber
+trotzdem werden Sie zum Lötkolben greifen müssen, um Ihr
+&#8220;Gerät&#8221; zu bauen. Das Gerät ist ein einziges Stück Draht,
+das in den parallelen Port gesteckt wird. Wir hoffen also, daß das kein
+Problem ist.
+&#13;</P
+><P
+><A
+HREF="judas.html"
+>Kapitel 10</A
+> enthält einige weitere Hinweise zum
+Schreiben von Kernel-Software und zu Portabilitätsfragen.
+&#13;</P
+><P
+>Im zweiten Teil dieses Buches werden wir etwas ambitionierter,
+weswegen <A
+HREF="kerneld.html"
+>Kapitel 11</A
+> noch einmal auf die Modularisierung zu
+sprechen kommt und dabei tiefer in das Thema einsteigt.
+&#13;</P
+><P
+><A
+HREF="lock.html"
+>Kapitel 12</A
+> beschreibt dann, wie Block-Treiber
+implementiert werden, und erläutert die Punkte, an denen sich diese von
+Zeichen-Treibern unterscheiden. Anschließend erklärt <A
+HREF="mem.html"
+>Kapitel 13</A
+>, was wir bei unserer bisherigen Behandlung der
+Speicherverwaltung ausgelassen haben:
+<SPAN
+><I
+CLASS="EMPHASIS"
+>mmap</I
+></SPAN
+> und DMA. Nach diesen Kapiteln sollten Sie
+alles über Zeichen- und Block-Treiber wissen.
+&#13;</P
+><P
+>Als nächstes folgt die dritte große Klasse der Treiber:
+In <A
+HREF="net.html"
+>Kapitel 14</A
+> besprechen wir detailliert, wie
+Netzwerk-Interfaces aussehen, und zerlegen den Code eines Beispiel-Netzwerktreibers.&#13;</P
+><P
+>Einige wenige Merkmale von Gerätetreibern hängen direkt von dem Bus ab, an
+dem das Peripherie-Gerät hängt, daher enthält <A
+HREF="pci.html"
+>Kapitel 15</A
+> einen
+Überblick über die heutzutage gängigsten Bus-Implementationen, wobei
+besonders auf die PCI-Unterstützung im Kernel eingegangen wird.&#13;</P
+><P
+>Schließlich ist <A
+HREF="tour.html"
+>Kapitel 16</A
+> eine Art Rundreise durch
+die Kernel-Quellen. Dieses Kapitel ist als Ausgangspunkt für Leute
+gedacht, die das allgemeine Design verstehen wollen, aber die sich
+vielleicht durch den riesigen Berg an Quellcode, aus dem Linux
+besteht, abgeschreckt fühlen.&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x385.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="building.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Selbst in der Kernel-Entwicklergemeinde tätig werden</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="anintro.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Module erstellen und starten</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

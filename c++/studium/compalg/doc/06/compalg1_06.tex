@@ -1,0 +1,130 @@
+\documentclass{article}
+\usepackage[latin1] {inputenc}
+\usepackage{amsmath, amsfonts ,amssymb, ngerman}
+\pagestyle{myheadings}
+
+\markright{Seminar Computeralgebra 1, Thema 6, Tobias Kreisel}
+
+\newtheorem{Sat}{Satz}
+
+\newtheorem{Bem}{Bemerkung}
+
+\newtheorem{Fol}{Folgerung}
+
+\newcommand{\ggt}[2]{\ensuremath{\mathrm{ggT}(#1,#2)}}
+\newcommand{\Kern}[1]{\ensuremath{\mathrm{Kern}(#1)}}
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section*{Berechnung ganzzahliger Determinanten}
+
+\begin{Sat}[Der chinesische Restsatz]
+Seien $R$ ein euklidischer Bereich, \\
+$m_0,\dots,m_{r-1}$ paarweise teilerfremd (also insbesondere $\ggt{m_i}{m_j}=1 \\
+\forall i \ne j$). Definiere Ringhomomorphismus:
+$$ \pi_i : R \longrightarrow R / (m_i), \quad f \longmapsto f\bmod m_i .$$
+Kombiniert f"ur alle i ergibt dies:
+\begin{equation*}
+	\begin{split}
+		\chi = \pi_0 \times \dots \times \pi_{r-1} : R& \longrightarrow R / (m_0) \times \dots \times R / 	(m_{r-1}),\\
+		f& \longmapsto (f \bmod m_0, \dots , f \bmod m_{r-1}).
+	\end{split}
+\end{equation*}
+Behauptung: $\chi$ ist surjektiv mit $\Kern{\chi}=(m)$, wobei $m := m_0 \cdot \dotso \cdot m_{r-1}$.
+\end{Sat}
+Beweis:
+\begin{description}
+	\item[\textmd{Kern:}] Sei $f \in \Kern{\chi}$ \\
+		$\Longleftrightarrow \chi(f) = (f \bmod m_0,\dots,f \bmod m_{r-1}) = (0,\dots,0)$ \\
+		$\Longleftrightarrow m_i \mid f \; \forall i: 0 \le i < r$ \\
+		$\Longleftrightarrow m \mid f \Rightarrow \Kern{\chi}=(m).$
+	\item[\textmd{Surjektivit"at:}]
+	Zeige: Es existiert $l_i \in R$ mit $\chi(l_i)=e_i \; (0 \le i < r)$, wobei $e_i=(0,\dots,0, 1, 0,\dots, 0) \in R/(m_0) \times \dots \times R/(m_{r-1})$. \\
+	Dies gen"ugt, da: Sei $v=(v_0 \bmod m_0,\dots,v_{r-1} \bmod m_{r-1}) \in R/(m_0) \times \dots \times R/(m_{r-1})$ beliebig, $v_0, \dots, v_{r-1} \in R$. Dann gilt:
+	\begin{equation*}
+		\begin{split}
+			\chi(\sum_{i=0}^{r-1} v_i l_i) \stackrel{\chi \; Hom.}{=}& \sum_{i=0}^{r-1} \chi(v_i) \chi(l_i) = \sum_{i=0}^{r-1} (v_i \bmod m_0, \dots, v_i \bmod m_{r-1}) \cdot e_i \\
+			=& \sum_{i=0}^{r-1} (0, \dots, 0, v_i \bmod m_i, 0, \dots, 0) = v
+		\end{split}
+	\end{equation*}
+	\underline{oBdA $i=0$:}\\
+	Der erweiterte euklidische Algorithmus (EEA) angewandt auf $m_1 \cdot \dotso \cdot m_{r-1} = \frac{m}{m_0}$
+	und $m_0$ liefert $s, t \in R$ mit $s \cdot \frac{m}{m_0} + t \cdot m_0 = 1$ (m"oglich, da $m_i$ teilerfremd). \\
+	Setze also $l_0 = s \cdot \frac{m}{m_0}$, dieses hat die gew"unschte Eigenschaft:
+	\begin{equation*}
+		\begin{split}
+			l_0 = s \cdot \frac{m}{m_0} \equiv s \cdot \frac{m}{m_0} + t \cdot m_0 \equiv& 1 \pmod {m_0}\\
+			\equiv& 0 \pmod {m_j} \; (j=1,\dots,r-1).
+		\end{split}
+	\end{equation*}
+	Somit folgt: $\chi(l_0) = e_0$.
+	\begin{flushright}
+		$\square$
+	\end{flushright}
+\end{description}
+
+\begin{Fol}
+Da wir $\Kern{\chi}$ kennen, k"onnen wir folgenden Ringisomorphismus definieren:
+\begin{equation*}
+	\begin{split}
+		\tilde{\chi} : R/(m)& \longrightarrow R/(m_0) \times \dots \times R/(m_{r-1}), \\
+		f \bmod m& \longmapsto (f \bmod m_0, \dots , f \bmod m_{r-1}).
+	\end{split}
+\end{equation*}
+\end{Fol}
+
+\subsection*{Algorithmus chinese1}
+\begin{description}
+		\item[\underline{input:}] $m_0, \dots, m_{r-1} \in R$ paarw. teilerfremd; $v_0, \dots, v_{r-1} \in R$.
+		\item[\underline{output:}] $f \in R$ mit $f \equiv v_i \pmod m_i \quad (0 \le i < r)$
+		\item[Schritt 1:] $m \longleftarrow m_0 \cdot \dotso \cdot m_{r-1}$
+		\item[Schritt 2:] Berechne $s_i, t_i \in R$ mit $$s_i \cdot \frac{m}{m_i} + t_i \cdot m_i = 1 \quad \mbox{(EEA)}$$ $c_i \longleftarrow v_i \cdot s_i \bmod m_i$
+		\item[Schritt 3:] $\text{Ausgabe von} \; \sum_{i=0}^{r-1} c_i \cdot \frac{m}{m_i}$
+\end{description}
+Da obenstehender Algorithmus in jedem Schritt auf die explizite Berechnung von $m := m_0 \cdot \dotso \cdot m_{r-1}$ angewiesen ist, erzeugt man unn"otig gro\ss e Werte. Deshalb konstruieren wir noch folgenden Algorithmus:
+\subsection*{Algorithmus chinese2}
+\begin{description}
+	\item[\underline{input/output:}] siehe chinese1
+	\item[Schritt 0:] Setze $f_0 := v_0 \qquad n_0 := m_0$
+	\item[Schritt i:] F"ur $i=1, \dots, r-1$ berechne $a \cdot n_{i-1} + b \cdot m_i = 1.$ Setze: \\
+		$z := (v_i - f_{i-1}) \cdot a \pmod {m_i} \\
+		f_i := f_{i-1} + z \cdot n_{i-1} \\
+		n_i := n_{i-1} \cdot m_i$
+\end{description}
+Beweis (per Induktion):
+\begin{description}
+	\item[\underline{$i=0:$}] $f_0 \equiv v_0 \bmod m_0 \qquad \surd$
+	\item[\underline{$i\!-\!1 \rightarrow i:$}] Zeige \\
+		a) f"ur $j=i: \; f_i \equiv v_i \pmod {m_i}.$ \\
+		b) f"ur $j<i: \; f_i \equiv v_j \pmod {m_j}.$
+	\begin{equation*}
+		\begin{split}
+			\text{zu a) Es gilt:} \quad & a \cdot n_{i-1} + b \cdot m_i = 1 \Rightarrow a \cdot n_{i-1} \equiv 1 \pmod {m_i} \\
+						& \Longrightarrow z \cdot n_{i-1} = (v_i - f_{i-1}) \cdot \underbrace{a \cdot n_{i-1}}_{\equiv 1 \pmod {m_i}} \\
+						& \Longrightarrow f_i = f_{i-1} + \underbrace{z \cdot n_{i-1}}_{\equiv (v_i - f_{i-1}) \pmod {m_i}} \equiv v_i \pmod {m_i} \\
+			\text{zu b) Es gilt:} \quad & n_{i-1} = m_0 \cdot \dotso \cdot m_{i-1} \equiv 0 \pmod {m_j} \\
+						& \Longrightarrow f_i = f_{i-1} + \underbrace{z \cdot n_{i-1}}_{\equiv 0 \pmod {m_j}} \equiv f_{i-1} \equiv v_j \pmod {m_j} \\
+		\end{split}
+	\end{equation*}
+	\begin{flushright}
+		$\square$
+	\end{flushright}
+\end{description}
+
+\subsection*{Algorithmus Modulare Determinatenberechnung}
+\begin{description}
+	\item[\underline{input:}] $A \in \mathbb{Z}^{n \times n}$, mit $|a_{ij}| \le B \quad \forall i,j.$
+	\item[\underline{output:}] $\det(A) \in \mathbb{Z}.$
+	\item[Schritt 1:] $C \longleftarrow n^{\frac{n}{2}} \cdot B^n$ (Hadamard Absch"atzung von $\det(A)$ nach oben) \\
+		W"ahle $r$ Primzahlen $m_i$, sodass: $\prod_{i=0}^{r-1} m_i > C$. Hierdurch "'vergr"o"sert"' man gewisserma"sen
+		den eingangs erw"ahnten $\Kern{\chi}$ und stellt somit sicher, dass $\chi$ Isomorphismus ist
+		(f"ur den gesuchten Wert von $\det(A)$).
+	\item[Schritt 2:] Berechne $\overline{A} \equiv A \pmod {m_i}$ f"ur $i=0, \dots, r-1.$ \\
+		Dies lie"se sich sehr bequem parallelisieren.
+	\item[Schritt 3:] Berechne $v_i \in \lbrace 0, \dots, m_{i-1} \rbrace$, sodass $v_i \equiv \det(A) \pmod {m_i}$
+	\item[Schritt 4:] Berechne $d \equiv v_i \pmod {m_i}$ mit Hilfe von chinese1/2. Gebe $d$ aus.
+\end{description}
+
+\end{document}

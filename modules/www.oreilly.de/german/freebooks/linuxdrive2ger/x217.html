@@ -1,0 +1,330 @@
+<HTML
+><HEAD
+><TITLE
+>Organisation des Kernels</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Eine Einführung in den Linux-Kernel"
+HREF="anintro.html"><LINK
+REL="PREVIOUS"
+TITLE="Eine Einführung in den Linux-Kernel"
+HREF="anintro.html"><LINK
+REL="NEXT"
+TITLE="Klassen von Geräten und Modulen"
+HREF="anclass.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="anintro.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 1. Eine Einführung in den Linux-Kernel</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="anclass.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN217"
+>Organisation des Kernels</A
+></H1
+><P
+>Auf einem UNIX-System beschäftigen sich mehrere gleichzeitig laufende
+<I
+CLASS="FIRSTTERM"
+>Prozesse</I
+> mit verschiedenen Aufgaben. Jeder
+Prozeß fordert Systemressourcen an. Das können Rechenzeit, Speicher,
+Netzwerkverbindungen oder andere Ressourcen sein. Der
+<I
+CLASS="FIRSTTERM"
+>Kernel</I
+> ist der
+große Haufen ausführbaren Codes, der all diese Anforderungen
+bearbeitet. Obwohl die einzelnen Aufgaben des Kernels nicht klar
+voneinander getrennt sind, kann die Rolle des Kernels, wie in
+<A
+HREF="x217.html#FIGSPLITK"
+>Abbildung 1-1</A
+> gezeigt, in die folgenden Teile aufgeteilt
+werden:
+        </P
+><DIV
+CLASS="FIGURE"
+><A
+NAME="FIGSPLITK"
+></A
+><P
+><B
+>Abbildung 1-1. Ein Blick auf die Aufgabenblöcke des Kernels</B
+></P
+><P
+><IMG
+SRC="ldr_0101.jpg"></P
+></DIV
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><SPAN
+><I
+CLASS="EMPHASIS"
+>Prozeßverwaltung</I
+></SPAN
+></DT
+><DD
+><P
+>Der Kernel ist für das Erzeugen und Zerstören von Prozessen und das
+Verwalten ihrer Verbindung zur Außenwelt (Input und Output)
+zuständig. Die Kommunikation zwischen den verschiedenen Prozessen (mit
+Signalen, Pipes und Primitiven zur Interprozeß-Kommunikation) gehört
+zur grundlegenden Systemfunktionalität und wird ebenfalls vom Kernel
+übernommen. Außerdem gehört der Scheduler, der steuert, wie Prozesse
+sich die CPU teilen, zur
+Prozeßverwaltung. Allgemein gesprochen, besteht die Prozeßverwaltung
+des Kernels darin, die Abstraktion mehrerer Prozesse auf einer
+einzigen CPU (oder auch mehreren) zu implementieren.</P
+></DD
+><DT
+><SPAN
+><I
+CLASS="EMPHASIS"
+>Speicherverwaltung</I
+></SPAN
+></DT
+><DD
+><P
+>Der Speicher des Computers ist eine wichtige Ressource, und die
+Verfahren, nach denen sie verteilt wird, sind für die
+Performance des Systems entscheidend. Der Kernel erzeugt den virtuellen Adreßraum
+für jeden einzelnen Prozeß aus den vorhandenen beschränkten
+Ressourcen. Die einzelnen Teile des Kernels interagieren mit dem
+Subsystem zur Speicherverwaltung über eine Reihe von
+Funktionsaufrufen, die von einfachen
+<SPAN
+><I
+CLASS="EMPHASIS"
+>malloc</I
+></SPAN
+>/<SPAN
+><I
+CLASS="EMPHASIS"
+>free</I
+></SPAN
+>-Paaren bis hin zu
+exotischeren Funktionalitäten reichen.</P
+></DD
+><DT
+><SPAN
+><I
+CLASS="EMPHASIS"
+>Dateisysteme</I
+></SPAN
+></DT
+><DD
+><P
+>UNIX basiert ganz grundsätzlich auf dem Konzept der Dateisysteme; so
+ziemlich alles kann unter UNIX als Datei angesehen werden. Der Kernel
+legt ein strukturiertes Dateisystem über unstrukturierte Hardware, und
+die daraus resultierende Datei-Abstraktion wird überall im gesamten
+System verwendet. Linux unterstützt darüber hinaus verschiedene Typen
+von Dateisystemen, also verschiedene Möglichkeiten, Daten auf dem
+physikalischen Medium zu organisieren. Beispielsweise können Disketten
+entweder mit dem Linux-Standarddateisystem ext2 oder mit dem oft
+verwendeten FAT-Dateisystem formatiert werden.</P
+></DD
+><DT
+><SPAN
+><I
+CLASS="EMPHASIS"
+>Gerätesteuerung</I
+></SPAN
+></DT
+><DD
+><P
+>So ziemlich jede Systemoperation wird am Ende auf ein physikalisches
+Gerät zurückgeführt. Mit Ausnahme des Prozessors, des Speichers und
+einiger weniger anderer Dinge werden sämtliche
+Gerätesteuerungsoperationen durch Code ausgeführt, der für
+das jeweilige Gerät spezifisch ist. Dieser Code wird
+<I
+CLASS="FIRSTTERM"
+>Gerätetreiber</I
+> genannt. Der Kernel muß einen
+Gerätetreiber für jedes Peripheriegerät im System enthalten, von der
+Festplatte über die Tastatur bis hin zum Bandlaufwerk. Um diesen Aspekt
+der Kernel-Funktionen wird es uns in diesem Buch hauptsächlich gehen.</P
+></DD
+><DT
+><SPAN
+><I
+CLASS="EMPHASIS"
+>Netzwerkbetrieb</I
+></SPAN
+></DT
+><DD
+><P
+>Der Netzwerkbetrieb muß vom Betriebssystem verwaltet werden, da die
+meisten Netzwerkoperationen nicht für einen Prozeß spezifisch sind:
+Eingehende Pakete sind asynchrone Ereignisse. Diese Pakete müssen
+gesammelt, identifiziert und weitergeleitet werden, bevor sich ein
+Prozeß darum kümmern kann. Es ist die Aufgabe des Systems, Datenpakete
+über Programm- und Netzwerkschnittstellen hinweg
+auszuliefern und die Ausführung von Programmen passend zu ihrer
+Netzwerkaktivität zu steuern. Außerdem sind alle Belange des Routings und der
+Adreßauflösung im Kernel angesiedelt.</P
+></DD
+></DL
+></DIV
+><P
+>Ziemlich weit hinten in diesem Buch, in <A
+HREF="tour.html"
+>Kapitel 16</A
+>, finden
+Sie eine Übersichtskarte über den Linux-Kernel, aber fürs erste
+sollten diese wenigen Absätze genügen.&#13;</P
+><P
+>Eine der guten Eigenschaften von Linux ist die Fähigkeit, den Kernel-Code
+dynamisch zur Laufzeit zu erweitern. Das bedeutet, daß Sie Funktionen
+zum Kernel hinzufügen können, während das System läuft.&#13;</P
+><P
+>Jedes Code-Stück, das zum Kernel hinzugefügt werden kann, wird ein
+<I
+CLASS="FIRSTTERM"
+>Modul</I
+> genannt. Der Linux-Kernel unterstützt
+eine Reihe verschiedener Modul-Typen (auch Klassen
+genannt), darunter auch Gerätetreiber. Jedes Modul besteht aus
+Objekt-Code, der nicht zu einem vollständigen ausführbaren Programm
+gelinkt ist und dynamisch mit dem Programm <SPAN
+CLASS="APPLICATION"
+>insmod</SPAN
+>
+zum laufenden Kernel hinzugelinkt sowie mit <SPAN
+CLASS="APPLICATION"
+>rmmod</SPAN
+>
+daraus wieder entfernt werden kann.&#13;</P
+><P
+>In <A
+HREF="x217.html#FIGSPLITK"
+>Abbildung 1-1</A
+> können Sie die verschiedenen
+Klassen von Modulen sehen, die jeweils eine bestimmte Aufgabe
+haben. Die Zugehörigkeit eines Moduls zu einer bestimmten Klasse wird
+anhand seiner Funktionalität bestimmt. Die Module in <A
+HREF="x217.html#FIGSPLITK"
+>Abbildung 1-1</A
+> umfassen die wichtigsten Klassen, sind aber lange
+nicht vollständig, weil immer mehr Funktionalität im Linux-Kernel
+modularisiert wird.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="anintro.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="anclass.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Eine Einführung in den Linux-Kernel</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="anintro.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Klassen von Geräten und Modulen</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

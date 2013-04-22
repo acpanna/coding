@@ -1,0 +1,19 @@
+<html>
+<body>
+<pre>
+<h1>Erstellungsprotokoll</h1>
+<h3>
+--------------------Konfiguration: Serialize - Win32 Debug--------------------
+</h3>
+<h3>Befehlszeilen</h3>
+Erstellen der Befehlzeile "link.exe /nologo /subsystem:console /incremental:yes /pdb:"Debug/Serialization.pdb" /debug /machine:I386 /out:"Debug/Serialization.exe" /pdbtype:sept  .\Debug\save.obj "
+<h3>Ausgabefenster</h3>
+Linker-Vorgang läuft...
+
+
+
+<h3>Ergebnisse</h3>
+Serialization.exe - 0 Fehler, 0 Warnung(en)
+</pre>
+</body>
+</html>

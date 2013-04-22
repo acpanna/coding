@@ -1,0 +1,346 @@
+<HTML
+><HEAD
+><TITLE
+>Das Verzeichnis net</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Der physikalische Aufbau der Kernel-Quellen"
+HREF="tour.html"><LINK
+REL="PREVIOUS"
+TITLE="Das Verzeichnis mm"
+HREF="x22924.html"><LINK
+REL="NEXT"
+TITLE="ipc und lib"
+HREF="x23105.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x22924.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 16. Der physikalische Aufbau der Kernel-Quellen</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x23105.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN23036"
+>Das Verzeichnis net</A
+></H1
+><P
+>&#13;
+
+Das Verzeichnis <TT
+CLASS="FILENAME"
+>net</TT
+> in der Linux-Dateihierarchie
+ist das Repository für die Socket-Abstraktion und die
+Netzwerkprotokolle; diese Features enthalten eine Menge Code, weil
+Linux mehrere verschiedene Netzwerk-Protokolle unterstützt. Jedes
+Protokoll (IP, IPX und so weiter) befindet sich in einem eigenen
+Unterverzeichnis; das Verzeichnis für IP heißt
+<TT
+CLASS="FILENAME"
+>ipv4</TT
+>, weil es die Version 4 dieses Protokolls
+repräsentiert. Der neue Standard (der derzeit noch nicht besonders
+weit verbreitet ist) heißt <TT
+CLASS="FILENAME"
+>ipv6</TT
+> und ist in Linux
+ebenfalls implementiert. Unix-Domänen-Sockets werden als ein weiteres
+Netzwerk-Protokoll behandelt; die Implementation finden Sie im
+Unterverzeichnis <TT
+CLASS="FILENAME"
+>unix</TT
+>.</P
+><P
+>&#13;
+Die Netzwerk-Implementation in Linux basiert auf den gleichen
+Datei-Operationen wie bei Gerätedateien. Dies ist nur natürlich, weil
+Netzwerk-Verbindungen (Sockets) von normalen Dateideskriptoren
+repräsentiert werden. Die Datei <TT
+CLASS="FILENAME"
+>socket.c</TT
+> ist das
+Zuhause der Socket-Datei-Operationen. Sie verteilt die Systemaufrufe
+über eine <TT
+CLASS="LITERAL"
+>struct proto_ops</TT
+>-Struktur an eines
+der Netzwerk-Protokolle. Diese Struktur wird von jedem
+Netzwerk-Protokoll definiert, um Systemaufrufe auf die jeweiligen
+Datenverarbeitungsoperationen auf niedriger Ebene abzubilden.</P
+><P
+>Nicht jedes Unterverzeichnis in <TT
+CLASS="FILENAME"
+>net</TT
+> dient zur
+Definition einer Protokollfamilie. Es gibt einige Ausnahmen:
+<TT
+CLASS="FILENAME"
+>core</TT
+>, <TT
+CLASS="FILENAME"
+>bridge</TT
+>,
+<TT
+CLASS="FILENAME"
+>ethernet</TT
+>, <TT
+CLASS="FILENAME"
+>sunrpc</TT
+> und
+<TT
+CLASS="FILENAME"
+>khttpd</TT
+>.</P
+><P
+>&#13;Die Dateien in <TT
+CLASS="FILENAME"
+>core</TT
+> implementieren generische
+Netzwerk-Funktionen wie den Umgang mit Geräten, Firewalls,
+Multicasting und Aliasnamen; dazu gehören auch die Verwaltung von
+Socket-Buffern (<TT
+CLASS="FILENAME"
+>core/skbuff.c</TT
+>) und die
+Socket-Operationen, die unabhängig vom zugrundeliegenden Protokoll
+sind (<TT
+CLASS="FILENAME"
+>core/sock.c</TT
+>). Die geräteunabhängige
+Datenverwaltung, die dem gerätespezifischen Code nahesteht, ist in
+<TT
+CLASS="FILENAME"
+>core/dev.c</TT
+> definiert.</P
+><P
+>&#13;
+Die Verzeichnisse <TT
+CLASS="FILENAME"
+>ethernet</TT
+> und
+<TT
+CLASS="FILENAME"
+>bridge</TT
+> implementieren bestimmte Funktionalitäten
+niedriger Ebene, konkret die Ethernet-Hilfsfunktionen, die in <A
+HREF="net.html"
+>Kapitel 14</A
+> beschrieben wurden, sowie das Bridging.</P
+><P
+>&#13;
+<TT
+CLASS="FILENAME"
+>sunrpc</TT
+> und <TT
+CLASS="FILENAME"
+>khttpd</TT
+> sind
+merkwürdig, weil sie auf der Kernel-Ebene Implementationen von Aufgaben
+enthalten, die normalerweise im User-Space ausgeführt werden.</P
+><P
+>In <TT
+CLASS="FILENAME"
+>sunrpc</TT
+> finden Sie Hilfsfunktionen für den
+Kernel-NFS-Server (der RPC-basiert ist), während
+<TT
+CLASS="FILENAME"
+>khttpd</TT
+> einen Kernel-Space-Webserver
+implementiert. Diese Dienste sind in den Kernel-Space verlegt worden,
+um den zusätzlichen Aufwand durch Systemaufrufe und Kontextwechsel
+während zeitkritischer Aufgaben zu vermeiden. Beide haben in diesem
+Modus gute Performance bewiesen. Das
+<SPAN
+CLASS="APPLICATION"
+>khttpd</SPAN
+>-Subsystem ist allerdings durch
+<SPAN
+CLASS="APPLICATION"
+>TUX</SPAN
+> abgelöst worden, einen Webserver, der
+derzeit den Rekord als schnellster Webserver der Welt
+hält. <SPAN
+CLASS="APPLICATION"
+>TUX</SPAN
+> wird voraussichtlich in die
+2.5-Kernel-Reihe integriert werden.</P
+><P
+>&#13;
+Die beiden verbleibenden Quelldateien in <TT
+CLASS="FILENAME"
+>net</TT
+>
+heißen <TT
+CLASS="FILENAME"
+>sysctl_net.c</TT
+> und
+<TT
+CLASS="FILENAME"
+>netsyms.c</TT
+>. Erstere ist das Backend des
+<SPAN
+><I
+CLASS="EMPHASIS"
+>sysctl</I
+></SPAN
+>-Mechanismus<A
+NAME="AEN23100"
+HREF="#FTN.AEN23100"
+>[1]</A
+>, letztere ist lediglich eine Liste von
+      <TT
+CLASS="LITERAL"
+>EXPORT_SYMBOL</TT
+>-Deklarationen. Es gibt
+      mehrere solcher Dateien im Kernel, üblicherweise eine je
+      Hauptverzeichnis.&#13;</P
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN23100"
+HREF="x23036.html#AEN23100"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+><SPAN
+><I
+CLASS="EMPHASIS"
+>sysctl</I
+></SPAN
+> ist in diesem Buch
+nicht beschrieben worden; interessierte Leser können sich Alessandros
+Beschreibung dieses Mechanismus unter <SPAN
+CLASS="SYSTEMITEM"
+>http://www.linux.it/kerneldocs/sysctl</SPAN
+> anschauen.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x22924.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x23105.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Das Verzeichnis mm</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="tour.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>ipc und lib</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

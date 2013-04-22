@@ -1,0 +1,16 @@
+System.out.println(1.0/3.0); funktioniert, weil die println() - Methode eine Methode des PrintStream - Objekts out
+ist und auﬂerdem fuer double - Werte "ueberladen" ist, d.h. ein double - Wert kann ohne explizites
+Casten direkt ausgegeben werden.
+
+System.out.flush(); funktioniert, da die Methode flush() ebenfalls eine Methode des PrintStream Objekts out darstellt 
+und deshalb auch aufgerufen werden kann.
+
+System.println(1.0/3.0); funktioniert nicht, da die Methode println() keine Methode der Klasse System ist, sondern eine
+Methode des PrintStream - Objekts out, welches ein "Datenelement" der Klasse System ist.
+ 
+System.in.println(1.0/3.0); funktioniert nicht, da das InputStream - Objekt in, keine solche Methode besitzt.
+
+String s = System.in.readLine(); funktioniert nicht, da das InputStream - Objekt in, ebenfalls keine solche Methode besitzt. 
+
+int n = Integer.intValue(); funktioniert nicht, da die Methode intValue() objektabhaengig ist (nicht statisch), und somit
+nur in Verbindung mit einem vorher erzeugtem Integer - Objekt angewendet werden kann.

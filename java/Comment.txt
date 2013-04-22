@@ -1,0 +1,184 @@
+Ausgabe:
+
+Quadrat q = new Quadrat();
+Quadrat(double x, double y, double seite) - Konstruktor wurde aufgerufen ...
+Aktuelle Quadrat - Objekt - ID : 1
+Quadrat() - Konstruktor wurde aufgerufen ...
+Aktuelle Quadrat - Objekt - ID : 1
+Quadrat q: Ecke = (0.0,0.0), Seitenlõnge: 0.0
+
+Kommentierung:
+
+Neues Quadrat - Objekt wurde erstellt durch DefaultKonstruktor - Aufruf
+von Quadrat, in welchem der allgemeine Quadrat - Konstruktor mit den
+Argumenten (0.0, 0.0, 0.0) aufgerufen wurde.
+Dieses Objekt besitzt auch nur eine (private) ID (die der Klasse Quadrat).
+
+Ausgabe: 
+
+Quadrat q2 = new Quadrat(-2.0, 3.0, 4.0);
+Quadrat(double x, double y, double seite) - Konstruktor wurde aufgerufen ...
+Aktuelle Quadrat - Objekt - ID : 2
+Quadrat q2: Ecke = (-2.0,3.0), Seitenlõnge: 4.0
+
+Kommentierung:
+
+Quadrat - Objekt wurde erzeugt durch allgemeinen Quadrat - Konstruktor Aufruf,
+mit den Argumenten (-2.0, 3.0, 4.0).
+
+Ausgabe:
+
+Rechteck r = new Rechteck();
+Quadrat(double x, double y, double seite) - Konstruktor wurde aufgerufen ...
+Aktuelle Quadrat - Objekt - ID : 3
+Rechteck(double x, double y, double br, double h) - Konstruktor wurde aufgerufen  ...
+Aktuelle Rechteck - Objekt - ID : 1
+Rechteck() - Konstruktor wurde aufgerufen ...
+Aktuelle Rechteck - Objekt - ID : 1
+Rechteck r: Ecke = (0.0,0.0), Breite: 0.0, H÷he: 0.0 
+
+Kommentierung:
+
+Rechteck - Objekt wurde erzeugt, durch DefaultKonstruktor Aufruf von Rechteck.
+Dieser ruft den allgemeinen Rechteck - Konstruktor auf, welcher seinerseits den allgem.
+Konstruktor der Superklasse (Quadrat) aufruft, damit erhaelt das Rechteck als erstes eine
+Quadrat - ID zugewiesen und das erste konstruierte Objekte ist also ein Quadrat.
+Danach wird der allgem. Rechtecks - Konstruktor aufgerufen, wo dem Rechteck noch zusaetzlich
+eine von Quadrat unabhaengige Rechtecks - ID zugewiesen wird, und erst im Anschluss daran 
+wird der Rest, der im DefaultKonstruktor von Rechteck steht ausgefuehrt (Ausgabe: Rechteck() - 
+Konstruktor wurde aufgerufen).
+
+ Ausgabe:
+
+Rechteck r2 = new Rechteck(q2, 5.0);
+Quadrat(Quadrat q) - Konstruktor wurde aufgerufen ...
+Aktuelle Quadrat - Objekt - ID : 4
+Rechteck(Quadrat q, double h) - Konstruktor wurde aufgerufen ...
+Aktuelle Rechteck - Objekt - ID : 2
+Rechteck r2: Ecke = (-2.0,3.0), Breite: 4.0, H÷he: 5.0
+
+Kommentierung:
+
+Neues Rechteck - Objekt wird erzeugt, durch Rechteck(Quadrat q, double h) - Konstruktor
+Aufruf. Dieser ruft den Quadrat - Copy - Konstruktor auf, es wird also als erstes wieder
+ein Quadrat - Objekt erzeugt, mit einer eigenen Quadrat - ID. Im Anschluss daran wird
+der Rest, der im Rechteck(Quadrat q, double h) - Konstruktor steht ausgefuehrt und das
+Rechteck - Objekt erhaelt wieder eine zusaetzliche Rechteck - ID (von der Quadrat - ID 
+unabhaengig).
+
+Ausgabe:
+
+Rechteck r3 = new Rechteck(-2.0, 3.0, 4.0, 5.0);
+Quadrat(double x, double y, double seite) - Konstruktor wurde aufgerufen ...
+Aktuelle Quadrat - Objekt - ID : 5
+Rechteck(double x, double y, double br, double h) - Konstruktor wurde aufgerufen ...
+Aktuelle Rechteck - Objekt - ID : 3
+Rechteck r3: Ecke = (-2.0,3.0), Breite: 4.0, H÷he: 5.0
+
+Kommentierung:
+
+Rechteck - Objekt wird erzeugt, durch allgem. Rechtecks - Konstruktor -
+Aufruf. Dieser ruft den allgem. Quadrat - Konstruktor auf. Man erhaelt
+also als erstes wieder ein Quadrat - Objekt mit eigener Quadrat - ID.
+Danach wird wieder der Rest ausgefuehrt, der im allgem. Rechtecks -
+Konstruktor steht (Ausgabe: Rechteck (...,...,...,..) Konstruktor aufgerufen;
+Zuweisung einer zusaetzlichen, von der Quadrat - ID unabhaengigen,
+Rechtecks - ID).
+
+Ausgabe:
+
+Rechteck2 rr = new Rechteck2();
+Quadrat(double x, double y, double seite) - Konstruktor wurde aufgerufen ...
+Aktuelle Quadrat - Objekt - ID : 6
+Quadrat() - Konstruktor wurde aufgerufen ...
+Aktuelle Quadrat - Objekt - ID : 6
+Rechteck2 rr: Ecke = (0.0,0.0), Breite: 0.0, H÷he: 0.0
+
+Kommentierung:
+
+Rechteck2 - Objekt erzeugt, durch Aufruf von DefaultKonstruktor von Rechteck2.
+Dieser ruft den DefaultKonstruktor von Quadrat auf, welcher den allgem. Quadrat - Konstruktor
+mit den Argumenten (0.0,0.0,0.0) aufruft. Man hat also wieder als erstes ein Quadrat - Objekt
+mit Quadrat - ID. Danach wird der Rest, der im Quadrat() Konstruktor steht, und anschliessend 
+der Rest, der im Rechteck2() Konstruktor steht ausgefuehrt. Diesmal wird dem Rechteck2 - Objekt 
+keine zusaetzliche Rechtecks - ID zugewiesen, das Objekt besitzt also nur eine Quadrat - ID.
+
+Ausgabe:
+
+Rechteck3 rrr = new Rechteck3(1.0, 2.0, 4.0, 5.0);
+Quadrat(double x, double y, double seite) - Konstruktor wurde aufgerufen ...
+Aktuelle Quadrat - Objekt - ID : 7
+Quadrat() - Konstruktor wurde aufgerufen ...
+Aktuelle Quadrat - Objekt - ID : 7
+Rechteck3(double x, double y, double br, double h) - Konstruktor wurde aufgerufen ...
+Rechteck rrr: Ecke = (1.0,2.0), Breite: 4.0, H÷he: 5.0
+
+Kommentierung:
+
+Rechteck3 - Objekt wurde erzeugt, durch allgem. Rechteck3 - Konstruktor - Aufruf,
+welcher den DefaultQuadrat - Konstruktor aufruft, welcher wiederum den allgem. 
+Quadrat - Konstruktor mit den Argumenten (0.0,0.0,0.0) aufruft.
+Man hat also wieder als erstes ein Quadrat - Objekt mit Quadrat - ID.
+Danach wird der Rest, der im allgem. Quadrat - Konstruktor, DefaultQuadrat - Konstruktor
+und schliesslich im allgem. Rechteck3 - Konstruktor steht  (d.h. p.x = 1.0, p.y = 2.0, breite = br,
+hoehe = h) ausgefuehrt. Das Objekt erhaelt diesmal auch keine zusaetzliche Rechteck - ID,
+besitzt also auch nur eine Quadrat - ID.
+
+Ausgabe:
+
+Garbage collection angefordert
+Quadrat - finalize() - Methode wurde aufgerufen,
+Quadrat - Objekt mit ID : 1 wird freigegeben ...
+Quadrat - finalize() - Methode wurde aufgerufen,
+Quadrat - Objekt mit ID : 2 wird freigegeben ...
+
+Kommentierung:
+
+Die zuerst erzeugten Quadrat - Objekte werden zerstoert.
+
+Ausgabe:
+
+Quadrat - finalize() - Methode wurde aufgerufen,
+Quadrat - Objekt mit ID : 3 wird freigegeben ...
+Quadrat - finalize() - Methode wurde aufgerufen,
+Quadrat - Objekt mit ID : 4 wird freigegeben ...
+Rechteck - finalize() - Methode wurde aufgerufen,
+Rechteck - Objekt mit ID : 1 wird freigegeben ...
+Rechteck - finalize() - Methode wurde aufgerufen,
+Rechteck - Objekt mit ID : 2 wird freigegeben ...
+
+Kommentierung:
+
+Rechteck - Objekte werden zerstoert. Da in der Rechteck - finalize() -
+Methode als erstes die Quadrat - finalize() - Methode aufgerufen wird,
+erfolgt zuerst die Zerstoerung der Quadrat - Objekte und danach die
+Zerstoerung der Rechtecke.
+
+Ausgabe:
+
+Quadrat - finalize() - Methode wurde aufgerufen,
+Quadrat - Objekt mit ID : 5 wird freigegeben ...
+Quadrat - finalize() - Methode wurde aufgerufen,
+Quadrat - Objekt mit ID : 6 wird freigegeben ...
+Rechteck - finalize() - Methode wurde aufgerufen,
+Rechteck - Objekt mit ID : 3 wird freigegeben ...
+Rechteck2 - finalize() - Methode wurde aufgerufen ...
+
+Kommentierung:
+
+Rechteck bzw. Rechteck2 - Objekt wird zerstoert. Da in der Rechteck, bzw.
+Rechteck2 - finalize() - Methode als erstes die Quadrat - finalize() - Methode 
+aufgerufen wird, erfolgt zuerst die Zerstoerung der Quadrat - Objekte und danach die
+Zerstoerung der Rechtecke.
+
+Ausgabe:
+
+Quadrat - finalize() - Methode wurde aufgerufen,
+Quadrat - Objekt mit ID : 7 wird freigegeben ...
+Rechteck3 - finalize() - Methode wurde aufgerufen ...
+
+Kommentierung:
+
+Rechteck3 - Objekt wird zerstoert, durch Aufruf der Rechteck3 - finalize() - Methode,
+welche die Quadrat - finalize() - Methode aufruft. D.h. zuerst Zerstoerung des Quadrats,
+danach Zerstoerung des Rechtecks.

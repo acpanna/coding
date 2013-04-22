@@ -1,0 +1,37 @@
+a)  Das geht nicht so einfach : Zuerst muﬂ man einen String-Array mit drei Komponenten anlegen.
+                                                      Dann muss man den einzelnen Stringkomponenten jeweils die    
+                                                      Referenz auf ein neues String Objekt zuweisen, welches man                                                          
+                                                      vorher mit dem passenden Konstruktoren - Aufruf erzeugt hat. 
+
+b)  Die Funktionen muessen so angelegt werden, das kein neues Objekt erzeugt wird,
+     sondern lediglich das uebergebene Objekt geaendert wird (erzeugt man naemlich ein
+     neues Objekt, so wird dies nach Funktionsende vom Garbage-Collector entsorgt
+     und der gewuenschte Aenderungseffekt wird nicht erzielt).
+     Dies geht jedoch nicht im Fall einer Stringuebergabe, da der Inhalt eines String -
+     Objekts nicht geandert werden kann (geht nur mit StringBuffer).
+     Man koennte lediglich ein neues String - Objekt anlegen, aber dann haette man 
+     wieder das vorher geschilderte Problem mit dem Garbage - Collector.
+
+c) Man koennte sich behelfen, indem man den Rueckgabetyp der String - reverse() -
+    Funktion von void in String aendert. Denn nun kann man in der Funktion ein
+    neues Objekt erzeugen und dies mittels return an die aufrufende Funktion (main)
+    zurueckgeben; man muss den Funktionsaufruf dann lediglich in 'frage = reverse(frage);'
+    umaendern 
+    Beim StringArray reicht es dann aus wenn man je nach Anzahl der Array Komponenten,
+    die String - reverse() - Funktion aufruft (d.h. komponentenweise) und in der StringArray -
+    reverse() - Funktion, dann den Funktionsaufruf der String - reverse() - Funktion imple-
+    mentiert ( z.B. alleWoerter[0] = reverse(alleWoerter[0]); )
+
+    2. Alternative zur Invertierung eines Strings : 
+    
+    StringBuffer Objekt mit String im Konstruktor anlegen 
+    StringBuffer reverse() - Funktion aufrufen, 
+    String Objekt mit "invertiertem" StringBuffer anlegen
+    und dem altem String Objekt zuweisen.
+    
+    Bsp:
+    
+    String str = new String("streawkceur");
+    StringBuffer strbuf = new StringBuffer(str);
+    reverse(strbuf);
+    str = new String(strbuf);

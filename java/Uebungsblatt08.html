@@ -1,0 +1,304 @@
+<HTML>
+ <HEAD>
+   <TITLE>
+     &Uuml;bungsblatt 08, 11.01.2000
+   </TITLE>
+ </HEAD>
+ <BODY>
+   <H1>
+     &Uuml;bungsblatt 08, 11.01.2000
+   </H1>
+   <H2>
+     Abgabetermin: Mo, 17.01.2000, 23:59 Uhr
+   </H2>
+
+<P>
+<DIV ALIGN="right">
+  <A HREF="mailto:Robert.Baier@uni-bayreuth.de">R. Baier</A> <BR>
+  <A HREF="mailto:hiwi512@btcipmatx1.cip.uni-bayreuth.de">M. Butscher</A> <BR>
+  <A HREF="mailto:hiwi501@btcipmatx1.cip.uni-bayreuth.de">P. Lerner</A>
+  <BR CLEAR="all">
+</DIV>
+</P>
+
+Das &Uuml;bungsblatt besteht aus der Aufgabe <A HREF="#A19">19</A>
+und der Teamaufgabe <A HREF="#A20">20</A> mit jeweils 5 Punkten. <BR>
+Das &Uuml;bungsblatt inkl. aller Sourcecodes, Bilder, HTML-Seiten, ... kann auch
+als
+
+<UL>
+  <LI><A HREF="blatt_08.tar.gz"><TT>gzip</TT>'tes <TT>tar</TT>-Archive</A>
+  </LI>
+  <LI>
+      <A HREF="blatt_08.zip"><TT>ZIP</TT>-Archive</A>
+  </LI>
+</UL>
+heruntergeladen werden. <BR>
+<EM>Beachten Sie die <A HREF="http://www.uni-bayreuth.de/departments/math/~rbaier/lectures/java/uebung/allgemein/hinweise.html">allgemeinen Abgabehinweise</A>!!</EM>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A19">&nbsp;</A>
+
+   <H2>
+     Aufgabe 19 (5 Punkte)
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi501@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Peter Lerner)
+   </H3>
+
+<P>
+  Betrachten Sie den folgenden
+  <A HREF="Zugriff/ZugriffTest.java">Sourcecode einer Java-Applikation</A>, die den
+  Zugriff der Klassen <A HREF="Zugriff/Reich/HerrscherSohn.java"><TT>HerrscherSohn</TT></A>, 
+  <A HREF="Zugriff/HerrscherTochter.java"><TT>HerrscherTochter</TT></A>, 
+  <A HREF="Zugriff/Reich/Minister.java"><TT>Minister</TT></A> und 
+  <A HREF="Zugriff/Beherrschter.java"><TT>Beherrschter</TT></A> 
+  auf verschieden gesch&uuml;tzte 
+  Datenelemente der Klasse 
+  <A HREF="Zugriff/Reich/Herrscher.java"><TT>Herrscher</TT></A> testet.
+</P>
+
+<P>
+  Entpacken Sie das Archiv (&auml;ndern Sie nichts an der Verzeichnisstruktur,
+  es entstehen die Unterverzeichnisse "<TT>Zugriff</TT>" und "<TT>Zugriff\Reich</TT>")
+  und compilieren Sie das Testprogramm im Unterverzeichnis "<TT>Zugriff</TT>"
+  mit der Anweisung
+  
+  <BLOCKQUOTE>
+    <TT>javac ZugriffTest.java</TT>
+  </BLOCKQUOTE>
+  
+  U.U. kann es wegen der Verwendung des veralteten Zugriffsniveaus
+  "<TT>private protected</TT>" zu Warnungen kommen. <BR>
+  
+  Korrigieren Sie die noch vorhandenen Fehler, die auf unberechtigte Zugriffe auf
+  Datenelemente zur&uuml;ckgehen und beantworten Sie die folgenden Fragen:
+  
+  <OL>
+    <LI>
+      <P>
+        Von welchen Sourcefiles werden bei erfolgreicher Compilierung
+        automatisch Bytecodes erstellt?
+      </P>
+    </LI>
+    
+    <LI>
+      <P>
+        Zeigen Sie auf, welche Klassen von welchen abgeleitet wurden und
+        welche Klassen zum selben Package geh&ouml;ren.
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        Begr&uuml;nden Sie detailliert, warum die Zugriffe, die zu
+        Compilierfehlern f&uuml;hren, unberechtigt sind.
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        Welche der folgenden Anweisungen f&uuml;hrt zur richtigen
+        Einzel&uuml;bersetzung des Java-Sourcefiles "<TT>Minister.java</TT>"
+        (die durch die Compilierung wie oben beschrieben jedoch 
+        &uuml;berfl&uuml;ssig ist)?
+        
+        <P>
+        <OL TYPE=a>
+          <LI>
+            <P>
+              <TT>cd Zugriff\Reich</TT> <BR>
+              <TT>javac Minister.java</TT>
+            </P>
+          </LI>
+
+          <LI>
+            <P>
+              <TT>cd Zugriff</TT> <BR>
+              <TT>javac Minister.java</TT>
+            </P>
+          </LI>
+
+          <LI>
+            <P>
+              <TT>cd Zugriff</TT> <BR>
+              <TT>javac Reich\Minister.java</TT>
+            </P>
+          </LI>
+        </OL>
+        </P>
+        
+        Kommentieren Sie die ggf. auftretenden Fehlermeldungen.
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        Wie m&uuml;&szlig;te man die Java-Applikation "<TT>Minister.java</TT>"
+        starten, wenn die Klassendefinition eine g&uuml;ltige <TT>main()</TT>-Methode
+        enthalten w&uuml;rde?
+        
+        <P>
+        <OL TYPE=a>
+          <LI>
+            <P>
+              <TT>cd Zugriff\Reich</TT> <BR>
+              <TT>java Minister</TT>
+            </P>
+          </LI>
+
+          <LI>
+            <P>
+              <TT>cd Zugriff</TT> <BR>
+              <TT>java Minister</TT>
+            </P>
+          </LI>
+
+          <LI>
+            <P>
+              <TT>cd Zugriff</TT> <BR>
+              <TT>java Reich\Minister</TT>
+            </P>
+          </LI>
+
+          <LI>
+            <P>
+              <TT>cd Zugriff</TT> <BR>
+              <TT>java Reich.Minister</TT>
+            </P>
+          </LI>
+        </OL>
+        </P>
+        
+        Kommentieren Sie die ggf. auftretenden Fehlermeldungen.
+      </P>
+    </LI>
+  </OL>
+  Ersetzen Sie unter Unix den Backslash "<TT>\</TT>" durch den Slash
+  "<TT>/</TT>".
+</P>
+
+<P>
+  <B>Abzugeben</B> sind die korrigierten Java-Sourcefiles und die
+  zugeh&ouml;rigen Bytefiles mit der richtigen
+  Verzeichnisstruktur sowie die ausf&uuml;hrliche Beantwortung der Fragen 1-5. 
+</P>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A20">&nbsp;</A>
+
+   <H2>
+     Teamaufgabe 20 (5 Punkte) <BR>
+     (Abgabe von bis zu 2 Leuten gemeinsam m&ouml;glich und erw&uuml;nscht)
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi512@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Michael Butscher)
+   </H3>
+
+<P>
+  Grafische Objekte sind ein Hauptbeispiel f&uuml;r objektorientierte
+  Programmierung und Vererbung. Man beginnt mit einfachen Objekten und setzt
+  aus diesen kompliziertere Objekte zusammen. Die genaue Vorgehensweise
+  ist durchaus verschieden und zeigt verschiedene Konzepte in der
+  objektorientierten Programmierung auf. 
+</P>
+
+<P>
+  Ein Punkt im <B>R</B><SUP>2</SUP> ist durch die x- und y-Koordinate gegeben,
+  eine Strecke besitzt neben einem Punkt <I>(p<SUB>x</SUB>&nbsp;, p<SUB>y</SUB>)</I>, 
+  den man z.B. als Anfangspunkt der
+  Strecke interpretieren kann, dar&uuml;ber hinaus einen Endpunkt
+  <I>(q<SUB>x</SUB>&nbsp;, q<SUB>y</SUB>)</I>. Damit kann man
+  also die Strecke als Ableitung/Spezialisierung eines Punktes interpretieren
+  und durch Vererbung diese beiden Klassen realisieren. <BR>
+  
+  Jedes einfache Grafikobjekt hat eine Art Symmetriezentrum, 
+  beim Punkt ist es der Punkt selbst, bei der Strecke der Mittelpunkt 
+  <I>((p<SUB>x</SUB> + q<SUB>x</SUB>)/2, (p<SUB>y</SUB> + q<SUB>y</SUB>)/2)</I>. 
+</P>
+  
+<P>
+  Soll eine Strecke um den Vektor <I>(v<SUB>x</SUB>&nbsp;, v<SUB>y</SUB>)</I>
+  verschoben werden, kann man dies auf die Verschiebung des Anfangs- und des
+  Endpunktes zur&uuml;ckf&uuml;hren. Damit nutzt die Methode zum Verschieben einer
+  Strecke die Methode zum Verschieben eines Punktes, also eine Methode der Oberklasse.
+</P>
+
+<P>
+  Analog zum Verschieben kann man das Skalieren einer Strecke
+  (d.h. das Multiplizieren aller Punkte der Strecke mit einer reellen Zahl) 
+  und das Dehnen/Stauchen (d.h. das Multiplizieren aller Abst&auml;nde des
+  Randes der Strecke vom Symmetriezentrum <I>(z<SUB>x</SUB>&nbsp;,
+  z<SUB>y</SUB>)</I> mit einem positiven Faktor > 1 bzw. < 1) 
+  auf vergleichbare Transformationen des Punktes zur&uuml;ckf&uuml;hren. 
+  Eine Dehnung ist also ein Skalieren des um <I>(-z<SUB>x</SUB>&nbsp;,
+  -z<SUB>y</SUB>)</I>
+  verschobenen Grafikobjektes, wobei dieses Resultat anschlie&szlig;end wieder um 
+  <I>(z<SUB>x</SUB>&nbsp;, z<SUB>y</SUB>)</I> verschoben wird.
+</P>
+
+<P>
+  <B>Beispiel:</B> <BR>
+  So ergibt das Skalieren des Punktes (1, 1) um den Faktor 2 den Punkt (2, 2),
+  das Dehnen des Punktes (1, 1) um den Faktor 2 dagegen wieder den Punkt (1, 1),
+  da das Symmetriezentrum der Punkt selbst ist und daher die Abst&auml;nde alle Null
+  sind. <BR>
+  
+  Das Skalieren der Strecke (2, 2) -> (4, 4) um den Faktor 2 ergibt die Strecke
+  (4, 4) -> (8, 8), das Dehnen dieser Strecke um den Faktor 2 dagegen 
+  die Strecke (1, 1) -> (5, 5), die Stauchung (Faktor 0.5) die Strecke
+  (2.5, 2.5) -> (3.5, 3.5).
+</P>
+
+<P>
+  <OL TYPE=a>
+    <LI>
+      <P>
+        Programmieren Sie die Klasse <TT>Punkt</TT> und &uuml;berlegen Sie sich
+        passende Datenelemente und Methoden. W&auml;hlen Sie einen f&uuml;r die Vererbung 
+        geeigneten Zugriffsschutz f&uuml;r die Datenelemente.
+      </P>
+    </LI>
+    
+    <LI>
+      <P>
+        Legen Sie schriftlich dar, wie man eine Strecke, einen Kreis und ein Quadrat
+        von der Klasse Punkt ableiten kann. Insbesondere sollen Sie erkl&auml;ren,
+        welche neuen Datenelemente diese 3 abgeleiteten Klassen besitzen sollen
+        und wie man die von Punkt geerbten Datenelemente in der abgeleiteten
+        Klassen interpretieren soll (z.B. werden bei einer Strecke zwei
+        geerbte Datenelemente als Koordinaten des Anfangspunktes interpretiert).
+        Eine Realisierung der abgeleiteten Klassen durch eine Klassendefinition
+        in Java ist nicht erforderlich.
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+        Legen Sie schriftlich dar, wie man Verschiebung, Skalierung und 
+        Dehnung/Stauchung bei den 3 abgeleiteten Klassen auf entsprechende
+        Operationen von Punkt zur&uuml;ckf&uuml;hren kann. Eine Realisierung
+        der Operationen durch Methodendefinitionen in Java ist nicht
+        erforderlich.
+      </P>
+    </LI>
+  </OL>
+</P>
+
+<P>
+  Bei der Klassenimplementierung von Punkt kann man sich zwar an die
+  Definition der Klasse <TT>java.awt.Point</TT> orientieren, soll diese aber
+  nicht verwenden. Die Aufgabe wird auf dem n&auml;chsten &Uuml;bungsblatt
+  fortgesetzt.
+</P>
+
+<P>
+  <B>Abzugeben</B> sind der Java-Sourcecode und der Java-Bytecode
+  der Klasse Punkt sowie eine ausf&uuml;hrliche Erkl&auml;rung zu den
+  Punkten b) und c).
+</P>
+
+ </BODY>
+</HTML>

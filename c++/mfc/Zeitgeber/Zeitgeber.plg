@@ -1,0 +1,54 @@
+<html>
+<body>
+<pre>
+<h1>Erstellungsprotokoll</h1>
+<h3>
+--------------------Konfiguration: Zeitgeber - Win32 Debug--------------------
+</h3>
+<h3>Befehlszeilen</h3>
+Creating command line "rc.exe /l 0x407 /fo"Debug/Zeitgeber.res" /d "_DEBUG" /d "_AFXDLL" "C:\MyFiles\C\Projekte\Zeitgeber\Zeitgeber.rc"" 
+Erstellen der temporären Datei  "c:\temp\RSP81C4.TMP" mit Inhalten
+[
+/nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_AFXDLL" /D "_MBCS" /Fp"Debug/Zeitgeber.pch" /Yu"stdafx.h" /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"C:\MyFiles\C\Projekte\Zeitgeber\MainFrm.cpp"
+"C:\MyFiles\C\Projekte\Zeitgeber\Zeitgeber.cpp"
+"C:\MyFiles\C\Projekte\Zeitgeber\ZeitgeberDoc.cpp"
+"C:\MyFiles\C\Projekte\Zeitgeber\ZeitgeberView.cpp"
+]
+Creating command line "cl.exe @c:\temp\RSP81C4.TMP" 
+Erstellen der temporären Datei  "c:\temp\RSP81C5.TMP" mit Inhalten
+[
+/nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_AFXDLL" /D "_MBCS" /Fp"Debug/Zeitgeber.pch" /Yc"stdafx.h" /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"C:\MyFiles\C\Projekte\Zeitgeber\StdAfx.cpp"
+]
+Creating command line "cl.exe @c:\temp\RSP81C5.TMP" 
+Erstellen der temporären Datei  "c:\temp\RSP81C6.TMP" mit Inhalten
+[
+/nologo /subsystem:windows /incremental:yes /pdb:"Debug/Zeitgeber.pdb" /debug /machine:I386 /out:"Debug/Zeitgeber.exe" /pdbtype:sept 
+.\Debug\MainFrm.obj
+.\Debug\StdAfx.obj
+.\Debug\Zeitgeber.obj
+.\Debug\ZeitgeberDoc.obj
+.\Debug\ZeitgeberView.obj
+.\Debug\Zeitgeber.res
+]
+Erstellen der Befehlzeile "link.exe @c:\temp\RSP81C6.TMP"
+<h3>Ausgabefenster</h3>
+Ressourcen werden kompiliert...
+Kompilierung läuft...
+StdAfx.cpp
+Kompilierung läuft...
+MainFrm.cpp
+Zeitgeber.cpp
+ZeitgeberDoc.cpp
+ZeitgeberView.cpp
+Generieren von Code...
+Linker-Vorgang läuft...
+
+
+
+<h3>Ergebnisse</h3>
+Zeitgeber.exe - 0 Fehler, 0 Warnung(en)
+</pre>
+</body>
+</html>

@@ -1,0 +1,2448 @@
+<HTML
+><HEAD
+><TITLE
+>Direct Memory Access und Bus Mastering</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="mmap und DMA"
+HREF="mem.html"><LINK
+REL="PREVIOUS"
+TITLE="Die kiobuf-Schnittstelle"
+HREF="memkiobuf.html"><LINK
+REL="NEXT"
+TITLE="Abwärtskompatibilität"
+HREF="membc.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="memkiobuf.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 13. mmap und DMA</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="membc.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="MEMDMA"
+>Direct Memory Access und Bus Mastering</A
+></H1
+><P
+>&#13;
+
+
+
+
+Direct Memory Access oder DMA ist ein fortgeschrittenes Thema, mit dem
+wir unseren Rundgang durch Speicherfragen beenden. Es handelt sich
+dabei um den Hardware-Mechanismus, mit dem Peripherie-Geräte ihre
+I/O-Daten direkt in den oder aus dem Hauptspeicher transportieren
+können, ohne daß der Systemprozessor an der Übertragung beteiligt sein
+muß. Die Verwendung dieses Mechanismus kann den Durchsatz vom und zum
+Gerät deutlich verbessern, weil ein großer Teil des
+Verarbeitungsaufwandes eliminiert wird.&#13;</P
+><P
+>Um die DMA-Fähigkeiten seiner Hardware ausnutzen zu können, muß der
+Gerätetreiber in der Lage sein, die DMA-Übertragung korrekt
+einzurichten und mit der Hardware zu synchronisieren. Wegen seiner
+Hardware-nahen Natur ist DMA aber leider sehr systemabhängig. Jede
+Architektur hat ihre eigenen Techniken, um DMA-Übertragungen zu
+verwalten, und die Programmierschnittstellen sind jedesmal
+anders. Der Kernel kann keine einheitliche Schnittstelle anbieten,
+weil ein Treiber nicht genug von der zugrundeliegenden Hardware
+abstrahieren kann. Einige Schritte in dieser Richtung sind aber in den
+neuesten Kerneln schon unternommen worden.&#13;</P
+><P
+>Dieses Kapitel konzentriert sich hauptsächlich auf den PCI-Bus, weil
+er der verbreitetste Peripherie-Bus ist. Viele der Konzepte lassen
+sich jedoch auch auf andere Bus-Systeme übertragen. Wir werden
+außerdem kurz behandeln, wie andere Bus-Systeme wie ISA und SBus mit
+DMA umgehen.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="MEMDMAOVER"
+>Überblick über eine DMA-Datenübertragung</A
+></H2
+><P
+>Bevor wir die Details der Programmierung erklären, schauen wir uns
+zunächst einmal an, wie eine DMA-Übertragung stattfindet. Dabei
+beschränken wir uns der Einfachheit halber auf Eingaben.&#13;</P
+><P
+>Datenübertragungen können auf zwei Arten ausgelöst werden: Entweder
+fragt die Software nach Daten (über eine Funktion wie
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>), oder die Hardware schiebt die Daten
+asynchron ins System.&#13;</P
+><P
+>Im ersten Fall können die Schritte folgendermaßen zusammengefaßt
+werden:&#13;</P
+><P
+></P
+><UL
+><LI
+STYLE="list-style-type: disc"
+><P
+>Wenn ein Prozeß <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> aufruft,
+alloziert der Treiber einen DMA-Puffer und fordert die Hardware auf,
+ihre Daten zu übertragen. Dann wird der Prozeß schlafen gelegt.</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>Die Hardware schreibt die Daten in den DMA-Puffer und
+löst anschließend einen Interrupt aus.</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>Der Interrupt-Handler holt die Daten, bestätigt den
+Interrupt und weckt den Prozeß auf, der jetzt die Daten lesen kann.</P
+></LI
+></UL
+>ark=bullet&#62;<P
+>&#13;Der zweite Fall tritt ein, wenn DMA asynchron verwendet wird. Das passiert
+beispielsweise bei Datenerfassungsgeräten, die selbst dann Daten
+erzeugen, wenn niemand diese liest. In diesem Fall sollte der Treiber
+einen Puffer verwalten, so daß ein späteres  <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>
+alle angesammelten Daten in den User-Space überträgt. Dabei sind die
+folgenden Schritte notwendig:</P
+><P
+></P
+><UL
+><LI
+STYLE="list-style-type: disc"
+><P
+>Die Hardware löst einen Interrupt aus, um das
+Eintreffen neuer Daten mitzuteilen.</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>Der Interrupt-Handler alloziert einen Puffer und teilt
+der Hardware mit, wohin sie die Daten transportieren soll.</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>Das Peripherie-Gerät schreibt die Daten in den Puffer
+und löst anschließend einen weiteren Interrupt aus.</P
+></LI
+><LI
+STYLE="list-style-type: disc"
+><P
+>Der Handler leitet die neuen Daten weiter, weckt alle
+in Frage kommenden Prozesse und übernimmt das Aufräumen.</P
+></LI
+></UL
+>ark=bullet&#62;
+
+        <P
+>Bei Netzwerkkarten sieht man oft eine Variante des asynchronen
+Ansatzes. Diese Karten erwarten oft einen Ring-Puffer (den sogenannten
+<SPAN
+><I
+CLASS="EMPHASIS"
+>DMA-Ring-Puffer</I
+></SPAN
+>), der in Speicher untergebracht
+wird, der zusammen mit dem Prozessor benutzt wird; jedes eingehende
+Paket wird in den nächsten freien Puffer im Ring gestellt und dann wird ein
+Interrupt gemeldet. Der Treiber übergibt die Netzwerkpakete dann an den
+Rest des Kernels und stellt einen neuen DMA-Puffer in den Ring.</P
+><P
+>Anhand der für beide Fälle erforderlichen Arbeitsschritte sehen Sie schon, daß eine effiziente
+DMA-Behandlung Interrupts benötigt. Es wäre zwar möglich, DMA mit
+einem ständig nach Daten fragenden Treiber zu implementieren, würde
+aber keinen Sinn ergeben, weil ein solcher Treiber die
+Performance-Gewinne von DMA gegenüber herkömmlicher und einfacherer
+prozessorgesteuerter I/O wieder verschenken würde.&#13;</P
+><P
+>Ein weiteres wichtiges Element, das hier eingeführt wurde, ist der
+DMA-Puffer. Um von DMA Gebrauch machen zu können, muß der Treiber
+einen speziellen Puffer allozieren können, der für DMA geeignet ist. Die meisten Treiber allozieren ihren Puffer übrigens bei der
+Initialisierung und verwenden ihn bis zum Entladen des Treibers
+&#8212; in der obigen Beschreibung bedeutet <SPAN
+><I
+CLASS="EMPHASIS"
+>allozieren</I
+></SPAN
+> also
+&#8220;auf einen schon allozierten Puffer zugreifen&#8221;.&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="MEMDMABUFFER"
+>Allozieren der DMA-Puffer</A
+></H2
+><P
+>&#13;
+Dieser Abschnitt behandelt die Allokation von DMA-Puffern auf einer
+niedrigen Ebene; wir führen die Schnittstelle auf höherer Ebene in
+Kürze ein, aber Sie sollten das hier Beschriebene trotzdem wissen.</P
+><P
+>Es ist das Hauptproblem des DMA-Puffers, daß dieser zusammenhängende
+Seiten im Speicher belegen muß, wenn er mehr als eine Seite braucht.
+Die Speicherseiten müssen deswegen nebeneinander liegen, weil das Gerät die Daten über den ISA- oder den PCI-Bus transportiert,
+die mit der physikalischen Adresse arbeiten. Diese Einschränkung gilt
+übrigens interessanterweise nicht für den Bus (siehe &#8220;<A
+HREF="pcisbus.html"
+>the Section called <I
+>SBus</I
+> in Kapitel 15</A
+>&#8221; in <A
+HREF="pci.html"
+>Kapitel 15</A
+>), der virtuelle Adressen benutzt. Manche Architekturen <SPAN
+><I
+CLASS="EMPHASIS"
+>können</I
+></SPAN
+>
+auch virtuelle Adressen auf dem PCI-Bus verwenden, aber ein portabler
+Treiber kann sich darauf nicht verlassen.&#13;</P
+><P
+>DMA-Puffer können entweder beim Hochfahren des Systems oder zur
+Laufzeit alloziert werden, Module können  das nur zur Laufzeit
+tun. In <A
+HREF="get.html"
+>Kapitel 7</A
+> wurden diese Techniken eingeführt:
+&#8220;&#8221; beschrieb die Allokation zur
+Boot-Zeit, während &#8220;&#8221; und
+&#8220;<A
+HREF="getgfp.html"
+>the Section called <I
+>get_&#8201;free_&#8201;page und Freunde</I
+> in Kapitel 7</A
+>&#8221; die Allokation zur Laufzeit
+erläuterten. Autoren von Gerätetreibern müssen aufpassen, daß sie die richtige Art
+von Speicher allozieren, wenn der Speicher für DMA-Operationen
+verwendet werden soll, denn nicht alle Zonen sind
+geeignet. Insbesondere funktioniert hoher Speicher auf den meisten
+Systemen nicht für DMA &#8212; die Peripherie-Geräte können einfach
+nicht mit so hohen Adressen umgehen.</P
+><P
+>&#13;Die meisten Geräte auf modernen Bus-Systemen können mit
+32-Bit-Adressen umgehen, weswegen normale Speicher-Allokationen dafür
+problemlos funktionieren. Manche PCI-Geräte implementieren den
+PCI-Standard aber nicht korrekt oder nicht vollständig und können
+nicht mit 32-Bit-Adressen arbeiten. Und ISA-Geräte sind natürlich
+ohnehin auf 16-Bit-Adressen beschränkt.</P
+><P
+>Für Geräte mit solchen Einschränkungen sollte der Speicher aus der
+DMA-Zone alloziert werden, indem das Flag <TT
+CLASS="LITERAL"
+>GFP_DMA</TT
+> an <SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> oder <SPAN
+><I
+CLASS="EMPHASIS"
+>get_free_pages</I
+></SPAN
+> übergeben wird. Wenn dieses Flag
+angegeben wird, wird nur Speicher alloziert, der mit 16 Bit adressiert
+werden kann.
+&#13;</P
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN17998"
+>Selbstgemachte Allokation</A
+></H3
+><P
+>Sie haben schon gelernt, daß
+<SPAN
+><I
+CLASS="EMPHASIS"
+>get_free_pages</I
+></SPAN
+> (und damit auch
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+>) nicht mehr als 128 KByte (oder allgemeiner
+gesprochen 32 Seiten) zusammenhängenden Speichers zurückgeben
+können. Die Speicheranforderung kann aber auch fehlschlagen, wenn
+weniger als 128 KByte alloziert werden, weil der Systemspeicher mit der
+Zeit fragmentiert wird.<A
+NAME="AEN18003"
+HREF="#FTN.AEN18003"
+>[1]</A
+>
+
+&#13;</P
+><P
+>Wenn der Kernel nicht die gewünschte Speichermenge zurückgeben kann
+oder Sie mehr als 128 KByte benötigen (was beispielsweise häufig bei
+PCI-Framegrabbern der Fall ist), dann kann man auch den Speicher zur
+Boot-Zeit allozieren oder das obere Ende des physikalischen RAMs für
+den eigenen Puffer reservieren, anstelle <TT
+CLASS="LITERAL"
+>-ENOMEM</TT
+>
+zurückzugeben. Wir haben die Allokation zur Boot-Zeit in &#8220;&#8221; in  beschrieben, aber
+Modulen steht diese Technik nicht zur Verfügung. Das Reservieren des
+oberen RAMs geschieht durch Übergabe des
+<TT
+CLASS="LITERAL"
+>mem=</TT
+>-Arguments an den Kernel. Wenn Sie zum
+Beispiel 32 MByte haben, können Sie den Kernel mit dem Argument
+<TT
+CLASS="LITERAL"
+>mem=31MB</TT
+> davon abhalten, das obere MByte zu
+benutzen. Ihr Modul könnte dann später den folgenden Code verwenden,
+um auf diesen Speicher zuzugreifen:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+
+dmabuf = ioremap( 0x1F00000 /* 31MB */, 0x100000 /* 1MB */);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Es gibt auch noch eine andere Möglichkeit, DMA-Speicher zu allozieren:
+Sie können aggressive Allokationen durchführen, bis Sie genügend zusammenhängende
+Seiten bekommen haben, um einen Puffer zu bilden. Wir raten von dieser
+Allokationstechnik aber dringend ab, wenn es noch irgendeine andere
+Möglichkeit gibt, Ihr Ziel zu erreichen. Die aggressive Allokation führt zu
+einer hohen Systemlast und möglicherweise zu einem Einfrieren des
+Systems, wenn der Grad der Aggressivität nicht richtig angepaßt
+ist. Andererseits gibt es manchmal aber keine andere Möglichkeit.</P
+><P
+>In der Praxis ruft der Code
+<TT
+CLASS="LITERAL"
+>kmalloc(GFP_ATOMIC)</TT
+> auf, bis der Aufruf
+fehlschlägt. Dann wartet der Code, bis der Kernel einige Seiten
+freigegeben hat, und alloziert alles noch einmal.</P
+><P
+>Wenn Sie den Pool allozierter Seiten im Auge behalten, werden Sie
+feststellen, daß früher oder später Ihr DMA-Puffer mit
+zusammenhängenden Seiten erschienen ist. Dann können Sie alle Seiten
+außer dem ausgewählten Puffer wieder freigeben. Dieses Verhalten ist
+aber etwas riskant, weil es zu einem Deadlock führen kann. Wir
+empfehlen Ihnen, einen Kernel-Timer zu verwenden, um alle Seiten
+freizugeben, falls die Allokation vor dem Ablauf eines bestimmten Timeouts
+nicht erfolgreich war.</P
+><P
+>Wir zeigen den Code hier nicht; Sie finden ihn aber in
+<TT
+CLASS="FILENAME"
+>misc-modules/allocator.c</TT
+>. Der Code ist gründlich
+kommentiert und dafür gedacht, von anderen Modulen aufgerufen zu
+werden. Im Gegensatz zu allem anderen Code dieses Buches steht der Allocator unter
+der GPL. Dazu haben wir uns entschlossen, weil der Code weder besonders schön noch besonders schlau
+ist, und wenn jemand den Allocator verwenden will, dann sollte der Quelle-Code
+auf jeden Fall mit dabei sein.</P
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="MEMDMABUS"
+>Bus-Adressen</A
+></H2
+><P
+>&#13;Wenn man mit DMA arbeitet, muß der Gerätetreiber sich mit der an den
+Bus angeschlossenen Hardware unterhalten, die physikalische Adressen
+benutzt. Der Programmcode aber verwendet virtuelle Adressen.&#13;</P
+><P
+>Tatsächlich ist die Situation noch ein bißchen
+komplizierter. DMA-basierte Hardware verwendet keine
+<SPAN
+><I
+CLASS="EMPHASIS"
+>physikalischen</I
+></SPAN
+>, sondern
+<SPAN
+><I
+CLASS="EMPHASIS"
+>Bus-</I
+></SPAN
+>Adressen. Auf dem PC sind zwar ISA- und
+PCI-Adressen mit den physikalischen Adressen identisch, aber das gilt
+nicht für jede Plattform. Manchmal ist der Bus über einen
+Brückenschaltkreis angebunden, der die I/O-Adressen auf
+verschiedene physikalische Adressen abbildet. Manche Systeme haben
+sogar ein Seiteneinblendungssystem, bei dem beliebige Seiten auf dem
+Peripherie-Bus als zusammenhängend erscheinen können.&#13;</P
+><P
+>Auf der niedrigsten Ebene (wir werden uns eine Lösung höherer Ebene in
+Kürze anschauen), stellt
+der Linux-Kernel eine portable Lösung durch Exportieren der
+folgenden in <TT
+CLASS="LITERAL"
+>&#60;asm/io.h&#62;</TT
+> definierten
+Funktionen bereit:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+
+unsigned long virt_to_bus(volatile void * address);
+void * bus_to_virt(unsigned long address);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+
+Die <SPAN
+><I
+CLASS="EMPHASIS"
+>virt_to_bus</I
+></SPAN
+>-Konvertierung muß
+verwendet werden, wenn der Treiber eine Adreßinformation an ein
+I/O-Gerät (wie eine Erweiterungskarte oder den DMA-Controller)
+schickt, während <SPAN
+><I
+CLASS="EMPHASIS"
+>bus_to_virt</I
+></SPAN
+>
+benutzt werden muß, wenn Adreßinformationen von an den Bus
+angeschlossener Hardware ausgelesen wird.&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN18048"
+>DMA auf dem PCI-Bus</A
+></H2
+><P
+>&#13;
+Der 2.4-Kernel enthält einen flexiblen Mechanismus, der PCI-DMA (das auch
+als <SPAN
+><I
+CLASS="EMPHASIS"
+>Bus Mastering</I
+></SPAN
+> bezeichnet wird) unterstützt. Dieser
+kümmert sich um die Details der Puffer-Allokation und kann
+Bus-Hardware auch für Übertragungen mehrerer Seiten auf einmal
+einrichten, wenn die Hardware das unterstützt. Dieser Code kümmert
+sich auch um Situationen, in denen sich ein Puffer in einer
+nicht-DMA-fähigen Zone des Speichers befindet &#8212; wenn auch nur auf
+manchen Plattformen und mit dem Nachteil zusätzlichen Berechnungsaufwandes
+(wie wir noch sehen werden).</P
+><P
+>&#13;Die Funktionen in diesem Abschnitt benötigen eine <TT
+CLASS="LITERAL"
+>struct
+pci_dev</TT
+>-Struktur für Ihr Gerät. Die Details zur
+Einrichtung eines PCI-Geräts werden in <A
+HREF="pci.html"
+>Kapitel 15</A
+> behandelt.
+Die hier beschriebenen Routinen können aber auch für ISA-Geräte
+verwendet werden; in diesem Fall sollte der <TT
+CLASS="LITERAL"
+>struct
+pci_dev</TT
+>-Zeiger einfach als <TT
+CLASS="LITERAL"
+>NULL</TT
+>
+übergeben werden.</P
+><P
+>&#13;
+Treiber, die die folgenden Funktionen verwenden, sollten
+<TT
+CLASS="LITERAL"
+>&#60;linux/pci.h&#62;</TT
+> einbinden.</P
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN18071"
+>Mit schwieriger Hardware umgehen</A
+></H3
+><P
+>&#13;
+Die erste Frage, die man vor einer DMA-Übertragung beantworten muß,
+ist die, ob das jeweilige Gerät eine solche Operation auf dem aktuellen Rechner auch
+unterstützt. Viele PCI-Geräte implementieren den vollständigen
+32-Bit-Bus-Adreßraum nicht, oft, weil sie nur modifizierte Versionen
+alter ISA-Hardware sind. Der Linux-Kernel versucht zwar, mit solchen
+Geräten zu arbeiten, aber immer ist das nicht möglich.</P
+><P
+>&#13;Die Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>pci_dma_supported</I
+></SPAN
+> sollte bei allen
+Geräten mit Adreß-Einschränkungen aufgerufen werden:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;int pci_dma_supported(struct pci_dev *pdev, dma_addr_t mask);</PRE
+></TD
+></TR
+></TABLE
+><P
+><TT
+CLASS="LITERAL"
+>mask</TT
+> ist hier eine einfache Bitmaske, die
+beschreibt, welche Adreß-Bits das Gerät benutzen kann. Wenn der Rückgabewert von 0 verschieden ist, dann ist DMA
+möglich, und Ihr Treiber sollte das
+<TT
+CLASS="LITERAL"
+>dma_mask</TT
+>-Feld in der PCI-Gerätestruktur auf
+den Maskenwert setzen. Bei einem Gerät, das nur mit 16-Bit-Adressen
+umgehen kann, könnten Sie etwa folgenden Code verwenden:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;if (pci_dma_supported (pdev, 0xffff))
+    pdev-&#62;dma_mask = 0xffff;
+else {
+    card-&#62;use_dma = 0;   /* Wir muessen ohne DMA leben */
+    printk (KERN_WARN, "mydev: DMA not supported\n");
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Ab Kernel 2.4.3 gibt es eine neue Funktion namens
+<SPAN
+><I
+CLASS="EMPHASIS"
+>pci_set_dma_mask</I
+></SPAN
+>. Diese
+Funktion hat folgenden Prototyp:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;int pci_set_dma_mask(struct pci_dev *pdev, dma_addr_t mask);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Wenn DMA mit der angegebenen Maske unterstützt werden kann, gibt diese
+Funktion 0 zurück und setzt das Feld
+<TT
+CLASS="LITERAL"
+>dma_mask</TT
+>, ansonsten wird
+<TT
+CLASS="LITERAL"
+>-EIO</TT
+> zurückgegeben.</P
+><P
+>Bei Geräten, die mit 32-Bit-Adressen umgehen können, ist es nicht
+sinnvoll, <SPAN
+><I
+CLASS="EMPHASIS"
+>pci_dma_supported</I
+></SPAN
+>
+aufzurufen.</P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN18101"
+>DMA-Einblendungen</A
+></H3
+><P
+>&#13;
+
+
+
+Eine <I
+CLASS="FIRSTTERM"
+>DMA-Einblendung</I
+> ist eine Kombination aus
+der Allokation eines DMA-Puffers und dem Erzeugen einer Adresse für
+diesen Puffer, auf den das Gerät zugreifen kann. In vielen Fällen
+bekommt man diese Adresse einfach mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>virt_to_bus</I
+></SPAN
+>, manche Hardware
+benötigt aber das Einrichten von
+<I
+CLASS="FIRSTTERM"
+>Einblendungsregistern</I
+> in der
+Bus-Hardware. Diese Register sind das Peripherie-Äquivalent zu
+virtuellem Speicher. Auf Systemen, auf denen diese Register verwendet
+werden, haben die Peripherie-Geräte einen relativ kleinen,
+reservierten Adreßbereich, in dem sie DMA durchführen können. Diese
+Adressen werden über die Einblendungsregister auf das System-RAM
+abgebildet. Einblendungsregister haben einige nette Merkmale;
+darunter können sie mehrere nicht zusammenhängende Seiten im Adreßraum
+des Geräts als zusammenhängend erscheinen lassen. Nicht alle
+Architekturen haben aber Einblendungsregister, insbesondere die
+beliebte PC-Plattform nicht.</P
+><P
+>&#13;Das Einrichten einer nützlichen Adresse für das Gerät erforert in
+manchen Fällen auch die Einrichtung eines
+<I
+CLASS="FIRSTTERM"
+>Bounce-Buffers</I
+>. Bounce-Buffer werden erzeugt,
+wenn ein Treiber versucht, DMA mit einer Adresse durchzuführen, die
+für das Peripherie-Gerät nicht erreichbar ist &#8212; etwa mit einer
+Adresse im hohen Speicher. Dann werden Daten nach Bedarf in und aus
+dem Bounce-Buffer kopiert. Damit der Code korrekt mit Bounce-Buffern
+zusammenarbeitet, muß man einigen Regeln folgen, wie wir noch sehen
+werden.</P
+><P
+>&#13;
+Die DMA-Einblendung führt einen neuen Typ namens
+<TT
+CLASS="LITERAL"
+>dma_addr_t</TT
+> ein, um Bus-Adressen zu
+repräsentieren. Variablen des Typs
+<TT
+CLASS="LITERAL"
+>dma_addr_t</TT
+> sollten vom Treiber als
+opak betrachtet werden; die einzigen zulässigen Operationen sind die
+Übergabe an die DMA-Hilfsroutinen und das Gerät selbst.</P
+><P
+>Der PCI-Code unterscheidet zwischen zwei Typen von DMA-Abbildungen, je
+nachdem, wie lange der DMA-Puffer vorgehalten werden soll:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+>Konsistente DMA-Einblendungen</DT
+><DD
+><P
+>&#13;
+Diese Einblendungen existieren während der Lebenszeit des
+Treibers. Ein konsistent eingeblendeter Treiber muß gleichzeitig
+sowohl der CPU als auch dem Peripherie-Gerät zur Verfügung stehen
+(andere Arten von Abbildungen, die wir später anschauen werden, können
+nur jeweils einem von beiden zur Verfügung stehen). Der Puffer sollte
+auch, wenn möglich, keine Caching-Probleme haben, die dazu führen
+könnten, daß Aktualisierungen der einen Partie von der jeweils anderen nicht gesehen werden
+können.</P
+></DD
+><DT
+>Streaming-DMA-Einblendungen</DT
+><DD
+><P
+>&#13;
+Diese Einblendungen werden für eine einzelne Operation
+eingerichtet. Manche Architekturen ermöglichen in diesem Fall
+nennenswerte Optimierungen, wie wir noch sehen werden, aber diese
+Einblendungen unterliegen auch strengeren Zugriffsregeln. Die
+Kernel-Entwickler empfehlen, die Verwendung von Streaming-Einblendungen
+gegenüber konsistenten Einblendungen zu bevorzugen, wo immer das möglich ist. Dafür
+gibt es zwei Gründe: Zunächst verwendet jede DMA-Einblendung auf
+Systemen, die Einblendungsregister unterstützen, eines oder mehrere
+dieser Register. Konsistente Einblendungen mit ihrer langen
+Lebensdauer können diese Register lange Zeit belegen, selbst wenn sie
+diese gerade nicht brauchen. Der zweite Grund besteht darin, daß
+Streaming-Einblendungen auf mancher Hardware auf eine Weise optimiert
+werden können, wie das mit konsistenten Einblendungen nicht möglich ist.</P
+></DD
+></DL
+></DIV
+><P
+>Die beiden Einblendungstypen müssen unterschiedlich manipuliert
+werden; schauen wir uns jetzt die Details an.</P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN18157"
+>Konsistente DMA-Einblendungen einrichten</A
+></H3
+><P
+>&#13;
+
+Ein Treiber kann eine konsistente Einblendung durch Aufrufen von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>pci_alloc_consistent</I
+></SPAN
+> einrichten:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;void *pci_alloc_consistent(struct pci_dev *pdev, size_t size,
+                           dma_addr_t *bus_addr);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Diese Funktion erledigt sowohl die Allokation als auch die Einblendung
+des Puffers. Die ersten beiden Argumente sind unsere
+PCI-Gerätestruktur und die Größe des benötigten Puffers. Die Funktion
+gibt das Ergebnis der DMA-Einblendung an zwei Stellen zurück. Der
+Rückgabewert ist eine virtuelle Kernel-Adresse des Puffers, die vom
+Treiber verwendet werden kann. Die zugehörige Bus-Adresse wird dagegen
+in <TT
+CLASS="LITERAL"
+>bus_addr</TT
+> zurückgegeben. Die Allokation
+wird in dieser Funktion erledigt, damit der Puffer an einer Stelle eingerichtet wird, die mit DMA funktioniert; normalerweise wird der
+Speicher einfach mit <SPAN
+><I
+CLASS="EMPHASIS"
+>get_free_pages</I
+></SPAN
+>
+alloziert (beachten Sie aber, daß die Größe in Bytes und nicht in
+einer Größenordnung (Zweierpotenz) angegeben wird).</P
+><P
+>Die meisten Architekturen, die PCI unterstützen, führen die
+Allokation mit der Priorität <TT
+CLASS="LITERAL"
+>GFP_ATOMIC</TT
+>
+durch und schlafen daher nicht. Die ARM-Portierung ist die Ausnahme
+von dieser Regel.</P
+><P
+>&#13;Wenn der Puffer nicht mehr benötigt wird (was normalerweise beim
+Entladen des Moduls der Fall ist), sollte er mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>pci_free_consistent</I
+></SPAN
+> an das System
+zurückgegeben werden:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;void pci_free_consistent(struct pci_dev *pdev, size_t size,
+                         void *cpu_addr, dma_handle_t bus_addr);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Beachten Sie, daß diese Funktion sowohl die CPU-Adresse als auch die
+Bus-Adresse benötigt.</P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN18182"
+>Streaming-DMA-Einblendungen einrichten</A
+></H3
+><P
+>&#13;
+Streaming-Einblendungen haben eine kompliziertere Schnittstelle als
+ihr konsistenes Gegenstück. Dafür gibt es eine Reihe von
+Gründen. Diese Einblendungen erwarten, es mit einem Puffer zu tun zu
+haben, der bereits von einem Treiber alloziert worden ist, und haben
+es daher mit Adressen zu tun, die sie nicht selbst gewählt haben. Auf
+manchen Architekturen können Streaming-Abbildungen auch mehrere, nicht
+zusammenhängende Seiten und mehrteilige &#8220;Scatter-Gather-Buffer&#8221; haben.</P
+><P
+>Wenn Sie eine Streaming-Einblendung einrichten, müssen Sie dem Kernel
+mitteilen, in welcher Richtung sich die Daten bewegen sollen. Dafür
+sind einige Symbole definiert worden:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>PCI_DMA_TODEVICE</TT
+>, <TT
+CLASS="LITERAL"
+>PCI_DMA_FROMDEVICE</TT
+></DT
+><DD
+><P
+>&#13;
+Diese beiden Symbole sollten einigermaßen selbsterklärend sein. Wenn
+Daten an das Gerät geschickt werden (vielleicht als Antwort auf einen
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>-Systemaufruf), dann sollte
+<TT
+CLASS="LITERAL"
+>PCI_DMA_TODEVICE</TT
+> verwendet werden;
+bei Daten zur CPU verwenden Sie statt dessen
+<TT
+CLASS="LITERAL"
+>PCI_DMA_FROMDEVICE</TT
+>.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>PCI_DMA_BIDIRECTIONAL</TT
+></DT
+><DD
+><P
+>&#13;Wenn sich die Daten in beide Richtungen bewegen können, dann verwenden
+Sie <TT
+CLASS="LITERAL"
+>PCI_DMA_BIDIRECTIONAL</TT
+>.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>PCI_DMA_NONE</TT
+></DT
+><DD
+><P
+>&#13;Dieses Symbol steht nur als Debugging-Hilfe zur Verfügung. Wenn man
+versucht, Puffer mit dieser &#8220;Richtung&#8221; anzulegen, bekommt man eine
+Kernel-Panik.</P
+></DD
+></DL
+></DIV
+><P
+>Aus einer Reihe von Gründen, die wir gleich kurz ansprechen werden,
+ist es wichtig, den richtigen Wert für die Richtung einer
+Streaming-DMA-Einblendung zu wählen. Es kann verlockend sein, immer
+einfach <TT
+CLASS="LITERAL"
+>PCI_DMA_BIDIRECTIONAL</TT
+> zu
+wählen, aber auf manchen Plattformen wird diese Wahl mit einem
+Performance-Verlust bestraft.</P
+><P
+>&#13;Wenn Sie nur einen einzigen Puffer übertragen wollen, dann blenden Sie
+diesen mit <SPAN
+><I
+CLASS="EMPHASIS"
+>pci_map_single</I
+></SPAN
+> ein:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;dma_addr_t pci_map_single(struct pci_dev *pdev, void *buffer,
+                          size_t size, int direction);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Der Rückgabewert ist die Bus-Adresse, die Sie an das Gerät übergeben
+können, oder <TT
+CLASS="LITERAL"
+>NULL</TT
+>, wenn etwas schiefgegangen ist.</P
+><P
+>&#13;Wenn die Übertragung abgeschlossen ist, sollte die Einblendung mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>pci_unmap_single</I
+></SPAN
+> wieder gelöscht
+werden:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;void pci_unmap_single(struct pci_dev *pdev, dma_addr_t bus_addr,
+                      size_t size, int direction);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die Argumente <TT
+CLASS="LITERAL"
+>size</TT
+> und <TT
+CLASS="LITERAL"
+>direction</TT
+>
+müssen identisch mit den zuvor bei
+<SPAN
+><I
+CLASS="EMPHASIS"
+>pci_map_single</I
+></SPAN
+> verwendeten sein.</P
+><P
+>Bei der Verwendung von Streaming-DMA-Einblendungen gelten die
+folgenden wichtigen Regeln:</P
+><P
+></P
+><UL
+><LI
+><P
+>Der Puffer darf nur für Übertragungen verwendet werden, die mit der
+bei der Einblendung angegebenen Richtung übereinstimmen.</P
+></LI
+><LI
+><P
+>Wenn ein Puffer eingeblendet worden ist, gehört er dem Gerät, nicht
+dem Prozessor. Bis der Puffer wieder ausgeblendet worden ist, sollte
+der Treiber den Inhalt in keiner Weise anfassen. Erst nach dem
+Aufruf von <SPAN
+><I
+CLASS="EMPHASIS"
+>pci_unmap_single</I
+></SPAN
+> kann
+der Treiber gefahrlos auf den Inhalt des Puffers zugreifen (mit einer
+Ausnahme, die wir gleich sehen werden). Diese Regel impliziert unter
+anderem, daß ein Puffer, der auf das Gerät geschrieben wird, nicht
+eingeblendet werden kann, bevor nicht alle zu schreibenden Daten
+vorliegen.</P
+></LI
+><LI
+><P
+>Der Puffer darf nicht ausgeblendet werden, solange die DMA-Übertragung
+noch in Gang ist, ansonsten ist eine ernsthafte Systeminstabilität
+geradezu garantiert.</P
+></LI
+></UL
+><P
+>Sie fragen sich vielleicht, warum der Treiber nicht mehr mit dem Puffer
+arbeiten darf, nachdem dieser eingeblendet worden ist. Dafür gibt es
+sogar zwei Gründe: Zunächst einmal muß der Kernel sicherstellen, daß
+alle Daten in diesem Puffer wirklich in den Speicher geschrieben
+worden sind, wenn ein Puffer für DMA eingeblendet wird. Es ist
+wahrscheinlich, daß noch Daten im Cache des Prozessors stehen und
+explizit herausgeschrieben werden müssen. Daten, die vom Prozessor
+nach dem Herausschreiben in den Puffer geschrieben werden, sind für
+das Gerät möglicherweise nicht sichtbar.</P
+><P
+>&#13;
+
+Zweitens sollten Sie sich überlegen, was passiert, wenn sich der
+einzublendende Puffer in einem Speicherbereich befindet, der für das
+Gerät nicht erreichbar ist. Manche Architekturen geben in diesem Fall
+einfach auf, andere erzeugen aber einen Bounce-Buffer. Der
+Bounce-Buffer ist einfach ein separater Speicherbereich, der für das
+Gerät garantiert erreichbar ist. Wenn ein Puffer mit der Richtung
+<TT
+CLASS="LITERAL"
+>PCI_DMA_TODEVICE</TT
+> eingeblendet wird
+und ein Bounce-Buffer notwendig ist, dann wird der Inhalt des
+ursprünglichen Puffers als Teil der Einblendung kopiert. Natürlich
+sind Änderungen am ursprünglichen Puffer nach dem Kopieren nicht für
+das Gerät sichtbar. Entsprechend werden
+<TT
+CLASS="LITERAL"
+>PCI_DMA_FROMDEVICE</TT
+>-Bounce-Buffer von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>pci_unmap_single</I
+></SPAN
+> in den
+ursprünglichen Puffer zurückkopiert; die Daten vom Gerät stehen nicht
+zur Verfügung, bevor diese Operation nicht abgeschlossen ist.</P
+><P
+>Bounce-Buffer sind einer der Gründe, warum es wichtig ist, die
+richtige Richtung zu
+wählen.
+<TT
+CLASS="LITERAL"
+>PCI_DMA_BIDIRECTIONAL</TT
+>-Bounce-Buffer
+werden vor und nach der Operation kopiert, was oft eine Verschwendung
+von CPU-Taktzyklen ist.</P
+><P
+>&#13;Manchmal braucht ein Treiber Zugriff auf den Inhalt eines
+Streaming-DMA-Puffers, ohne diesen ausblenden zu wollen. Dafür steht
+eine Funktion bereit:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;void pci_sync_single(struct pci_dev *pdev, dma_handle_t bus_addr,
+                     size_t size, int direction);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#62;
+&#62;
+Diese Funktion sollte aufgerufen werden, <SPAN
+><I
+CLASS="EMPHASIS"
+>bevor</I
+></SPAN
+>
+der Prozessor auf einen
+<TT
+CLASS="LITERAL"
+>PCI_DMA_FROMDEVICE</TT
+>-Buffer zugreift
+sowie <SPAN
+><I
+CLASS="EMPHASIS"
+>nach</I
+></SPAN
+> einem Zugriff auf einen <TT
+CLASS="LITERAL"
+>PCI_DMA_TODEVICE</TT
+>-Buffer.</P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN18277"
+>Scatter-Gather-Einblendungen</A
+></H3
+><P
+>&#13;
+Scatter-Gather-Einblendungen sind ein Sonderfall vom
+Streaming-DMA-Einblendungen. Angenommen, Sie haben mehrere Puffer, die
+alle zum oder vom Gerät transportiert werden müssen. Dies kann aus
+verschiedenen Gründen der Fall sein, etwa als Folge eines
+<SPAN
+><I
+CLASS="EMPHASIS"
+>readv</I
+></SPAN
+>- oder
+<SPAN
+><I
+CLASS="EMPHASIS"
+>writev</I
+></SPAN
+>-Systemaufrufs, einer Cluster-I/O-Anfrage
+oder einer Liste von Seiten in einem eingeblendeten
+Kernel-I/O-Puffer. Sie könnten natürlich einen Puffer nach dem anderen
+einblenden und die gewünschte Operation ausführen, aber es hat seine
+Vorteile, die gesamte Liste auf einmal einzublenden.</P
+><P
+>&#13;
+
+Manche schlauen Geräte können eine
+<I
+CLASS="FIRSTTERM"
+>Scatter-Liste</I
+> von Array-Zeigern und -Längen
+entgegennehmen und alle in einer einzigen DMA-Operation übertragen;
+"kopierlose" Netzwerkfunktionen sind beispielsweise einfacher, wenn
+Pakete aus mehreren Stücken zusammengebaut werden können. Linux wird
+von solchen Geräten in der Zukunft wahrscheinlich viel besser
+Gebrauch machen. Ein weiterer Grund dafür, Scatter-Listen als Ganzes
+einzublenden, besteht darin, daß man Systeme besser ausnutzen kann,
+die Einblendungsregister in der Bus-Hardware haben. Auf solchen
+Systemen können physikalisch nicht zusammenhängende Seiten aus Sicht
+des Geräts zu einem einzigen zusammenhängenden Array zusammengebaut
+werden. Diese Technik funktioniert nur dann, wenn die Länge der
+Einträge in der Scatter-Liste gleich der Seitengröße ist (mit Ausnahme
+der ersten und letzten Seite), aber wenn das der Fall ist, dann können
+mehrere Operationen zu einer einzigen DMA-Operation zusammengefaßt und
+die Übertragung so deutlich beschleunigt werden.</P
+><P
+>Wenn schließlich ein Bounce-Buffer verwendet werden muß, dann macht es
+Sinn, die ganze Liste in einen einzigen Puffer zu zwingen (weil sie
+ohnehin kopiert wird).</P
+><P
+>&#13;
+
+Sie sind jetzt sicherlich überzeugt, daß das Einblenden von
+Scatter-Listen in manchen Situationen die Mühe lohnt. Der erste
+Schritt dazu besteht darin, ein Array von <TT
+CLASS="LITERAL"
+>struct
+scatterlist</TT
+>-Strukturen zu erzeugen und aufzufüllen. Dieses
+Array beschreibt die zu übertragenden Puffer. Diese Struktur ist
+architekturabhängig und wird in
+<TT
+CLASS="LITERAL"
+>&#60;linux/scatterlist.h&#62;</TT
+> beschrieben. Sie
+enthält aber immer die beiden folgenden Felder:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>char *address;</TT
+></DT
+><DD
+><P
+>Die Adresse eines Puffers, der in der Scatter-Gather-Operation
+verwendet wird</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned int length;</TT
+></DT
+><DD
+><P
+>Die Länge dieses Puffers</P
+></DD
+></DL
+></DIV
+><P
+>&#13;Um eine Scatter-Gather-DMA-Operation einzublenden, sollte Ihr Treiber
+für jeden zu übertragenden Puffer die Felder
+<TT
+CLASS="LITERAL"
+>address</TT
+> und <TT
+CLASS="LITERAL"
+>length</TT
+> in einem
+<TT
+CLASS="LITERAL"
+>struct scatterlist</TT
+>-Eintrag füllen und dann folgende
+Funktion aufrufen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;int pci_map_sg(struct pci_dev *pdev, struct scatterlist *list,
+               int nents, int direction);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Der Rückgabewert ist die Anzahl der zu übertragenden DMA-Puffer. Dies
+kann weniger als <TT
+CLASS="LITERAL"
+>nents</TT
+>, die Anzahl der übergebenen
+Scatter-List-Einträge sein.</P
+><P
+>Ihr Treiber sollte jeden von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>pci_map_sg</I
+></SPAN
+> zurückgegebenen Puffer
+übertragen. Die Bus-Adresse und die Länge werden in den
+<TT
+CLASS="LITERAL"
+>struct scatterlist</TT
+>-Einträgen gespeichert, aber
+deren Lage in der Struktur unterscheidet sich von einer Architektur
+zur nächsten. Zwei Makros sind definiert worden, um portablen Code
+schreiben zu können:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>dma_addr_t sg_dma_address(struct scatterlist *sg);</TT
+></DT
+><DD
+><P
+>&#13;Gibt die Bus-(DMA-)Adresse dieses Scatter-Listen-Eintrags zurück.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned int sg_dma_len(struct scatterlist *sg);</TT
+></DT
+><DD
+><P
+>&#13;Gibt die Länge dieses Puffers zurück.</P
+></DD
+></DL
+></DIV
+><P
+>Denken Sie wieder daran, daß sich die Adressen und Längen der zu
+übertragenden Puffer von denen unterscheiden können, die an
+<SPAN
+><I
+CLASS="EMPHASIS"
+>pci_map_sg</I
+></SPAN
+> übergeben wurde.
+
+
+
+
+
+
+
+
+&#13;</P
+><P
+>&#13;Wenn die Übertragung abgeschlossen ist, wird eine
+Scatter-Gather-Einblendung durch Aufruf von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>pci_unmap_sg</I
+></SPAN
+> ausgeblendet:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;void pci_unmap_sg(struct pci_dev *pdev, struct scatterlist *list,
+                  int nents, int direction);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Beachten Sie, daß <TT
+CLASS="LITERAL"
+>nents</TT
+> die Anzahl der ursprünglich
+an <SPAN
+><I
+CLASS="EMPHASIS"
+>pci_map_sg</I
+></SPAN
+> übergebenen Einträge
+und nicht die Anzahl der von dieser Funktion zurückgegebenen
+DMA-Puffer sein muß.</P
+><P
+>&#62;
+
+Scatter-Gather-Abbildungen sind Streaming-DMA-Abbildungen, und es
+gelten auch die gleichen Zugriffsregeln. Wenn Sie auf eine
+eingeblendete Scatter-Gather-Liste zugreifen müssen, müssen Sie diese
+zunächst synchronisieren:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;void pci_dma_sync_sg(struct pci_dev *pdev, struct scatterlist *sg,
+                     int nents, int direction);</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN18361"
+>So unterstützen die einzelnen Architekturen PCI-DMA</A
+></H3
+><P
+>&#13;
+Wie wir bereits zu Beginn dieses Abschnitts erwähnt haben, ist DMA
+eine sehr Hardware-spezifische Operation. Die PCI-DMA-Schnittstelle,
+die wir gerade beschrieben haben, versucht, so viele
+Hardware-Abhängigkeiten wie möglich zu verstecken. Es scheint aber
+immer noch einiges hindurch.</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><SPAN
+><I
+CLASS="EMPHASIS"
+>M68K</I
+></SPAN
+>, <SPAN
+><I
+CLASS="EMPHASIS"
+>S/390</I
+></SPAN
+>, <SPAN
+><I
+CLASS="EMPHASIS"
+>Super-H</I
+></SPAN
+></DT
+><DD
+><P
+>&#13;
+
+Diese Architekturen unterstützen den PCI-Bus in Version 2.4.0 nicht.</P
+></DD
+><DT
+><SPAN
+><I
+CLASS="EMPHASIS"
+>IA-32 (x86)</I
+></SPAN
+>, <SPAN
+><I
+CLASS="EMPHASIS"
+>MIPS</I
+></SPAN
+>, <SPAN
+><I
+CLASS="EMPHASIS"
+>PowerPC</I
+></SPAN
+>, <SPAN
+><I
+CLASS="EMPHASIS"
+>ARM</I
+></SPAN
+></DT
+><DD
+><P
+>&#13;
+
+
+
+Diese Plattformen unterstützen die PCI-DMA-Schnittstelle, aber dies
+ist hauptsächlich Fassade. Es gibt keine Einblendungsregister in der
+Bus-Schnittstelle, weswegen keine Scatter-Listen kombiniert und keine
+virtuellen Adressen verwendet werden können. Es gibt keine
+Unterstützung für Bounce-Buffer, weswegen keine Adressen im hohen
+Speicher eingeblendet werden können. Die Einblendungsfunktionen der
+ARM-Architektur können schlafen, die der anderen Plattformen nicht.</P
+></DD
+><DT
+><SPAN
+><I
+CLASS="EMPHASIS"
+>IA-64</I
+></SPAN
+></DT
+><DD
+><P
+>&#13;
+Auch die Itanium-Architektur hat keine Einblendungsregister. Diese
+64-Bit-Architektur kann aber einfach Adressen erzeugen, auf die
+PCI-Peripherie-Geräte nicht zugreifen können. Daher implementiert die
+PCI-Schnittstelle auf dieser Plattform Bounce-Buffer und erlaubt damit,
+(scheinbar) jede Adresse für DMA-Operationen zu verwenden.</P
+></DD
+><DT
+><SPAN
+><I
+CLASS="EMPHASIS"
+>Alpha</I
+></SPAN
+>, <SPAN
+><I
+CLASS="EMPHASIS"
+>MIPS64</I
+></SPAN
+>, <SPAN
+><I
+CLASS="EMPHASIS"
+>SPARC</I
+></SPAN
+></DT
+><DD
+><P
+>&#13;
+
+Diese Architekturen unterstützen eine
+I/O-Speicherverwaltungseinheit. In der kernel-Version 2.4.0 verwendet die
+MIPS64-Portierung diese Fähigkeit nicht, weswegen die
+PCI-DMA-Implementation hier wie auf IA-32 aussieht. Die Alpha- und
+SPARC-Portierungen können aber Puffer vollständig ein- und ausblenden
+und unterstützen Scatter-Gather-Einblendungen vollständig.</P
+></DD
+></DL
+></DIV
+><P
+>Die hier genannten Unterschiede sind für die meisten Treiber-Autoren
+kein Problem, solange die Schnittstellen-Richtlinien befolgt werden.</P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN18446"
+>Ein einfaches PCI-DMA-Beispiel</A
+></H3
+><P
+>&#13;
+Die eigentliche Form der DMA-Operationen auf dem PCI-Bus hängt stark
+vom jeweils angesteuerten Gerät ab. Daher geht es in diesem Beispiel
+nicht um ein tatsächlich existierendes Gerät. Es handelt sich vielmehr
+um einen Bestandteil eines hypothetischen Treibers namens
+<SPAN
+CLASS="APPLICATION"
+>dad</SPAN
+> (DMA Acquisition Device). Ein Treiber
+für dieses Gerät könnte folgende Übertragungsfunktion definieren:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;int dad_transfer(struct dad_dev *dev, int write, void *buffer,
+                 size_t count)
+{
+    dma_addr_t bus_addr;
+    unsigned long flags;
+
+    /* Den Puffer für DMA einblenden */
+    dev-&#62;dma_dir = (write ? PCI_DMA_TODEVICE : PCI_DMA_FROMDEVICE);
+    dev-&#62;dma_size = count;
+    bus_addr = pci_map_single(dev-&#62;pci_dev, buffer, count,
+                              dev-&#62;dma_dir);
+    dev-&#62;dma_addr = bus_addr;
+
+    /* Das Geraet einrichten */
+    writeb(dev-&#62;registers.command, DAD_CMD_DISABLEDMA);
+    writeb(dev-&#62;registers.command, write ? DAD_CMD_WR : DAD_CMD_RD);
+    writel(dev-&#62;registers.addr, cpu_to_le32(bus_addr));
+    writel(dev-&#62;registers.len, cpu_to_le32(count));
+
+    /* Die Operation beginnen */
+    writeb(dev-&#62;registers.command, DAD_CMD_ENABLEDMA);
+    return 0;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Diese Funktion blendet den zu übertragenden Puffer ein und beginnt die
+Geräteoperation. Die andere Hälfte der Arbeit muß in der
+Interrupt-Routine erledigt werden, die etwa so aussehen würde:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;void dad_interrupt(int irq, void *dev_id, struct pt_regs *regs)
+{
+    struct dad_dev *dev = (struct dad_dev *) dev_id;
+
+    /* Sicherstellen, daß der Interrupt wirklich von unserem Geraet kommt */
+
+    /* Den DMA-Puffer ausblenden */
+    pci_unmap_single(dev-&#62;pci_dev, dev-&#62;dma_addr, dev-&#62;dma_size,
+                         dev-&#62;dma_dir);
+
+    /* Erst jetzt ist es sicher, auf den Puffer zuzugreifen, ihn in
+       den User-Space zu kopieren usw. */
+    ...
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Natürlich haben wir hier viele Details weggelassen, darunter auch, wie Sie verhindern, daß mehrere simultane DMA-Operationen ausgelöst werden.&#13;</P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN18462"
+>Kleiner SBus-Exkurs</A
+></H3
+><P
+>&#62;
+&#62;
+
+
+
+
+SPARC-basierte Systeme enthalten traditionell einen von Sun
+          entworfenen Bus namens SBus. Die Behandlung dieses
+Bus-Systems würde den Rahmen dieses Kapitels sprengen, aber es lohnt
+sich, ihn kurz zu erwähnen. Es gibt eine Reihe von in
+<TT
+CLASS="LITERAL"
+>&#60;asm/sbus.h&#62;</TT
+> deklarierten Funktionen für
+          DMA-Einblendungen auf dem SBus; diese haben Namen wie
+<SPAN
+><I
+CLASS="EMPHASIS"
+>sbus_alloc_consistent</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>sbus_map_sg</I
+></SPAN
+>. Die SBus-DMA-API sieht
+also mit anderen Worten der PCI-Schnittstelle sehr ähnlich. Bevor Sie
+anfangen, mit DMA auf dem SBus zu arbeiten, müssen Sie sich die
+Funktionsdefinitionen genau anschauen, aber die Konzepte entsprechen
+den hier zum PCI-Bus genannten.</P
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="MEMDMAISA"
+>DMA bei ISA-Geräten</A
+></H2
+><P
+>&#13;
+
+Der ISA-Bus kennt zwei Arten von DMA-Übertragungen:
+native DMA und ISA-Busmaster-DMA. Native DMA verwendet den
+Standard-DMA-Controller-Schaltkreis auf der Hauptplatine, um die
+Signalleitungen des ISA-Busses anzusteuern. ISA-Busmaster-DMA wird
+dagegen vollständig vom Peripherie-Gerät gesteuert. Diese Art von DMA
+wird selten verwendet und ist es nicht wert, hier besprochen zu werden,
+weil sie der DMA von PCI-Geräten sehr ähnlich ist, zumindest aus Sicht
+des Treibers. Ein Beispiel eines ISA-Busmasters ist der
+1542-SCSI-Controller, dessen Treiber als
+<TT
+CLASS="FILENAME"
+>drivers/scsi/aha1542.c</TT
+> in den Kernel-Quellen
+steht.
+&#13;</P
+><P
+>Bei nativer DMA sind drei Dinge an einer
+DMA-Übertragung auf dem ISA-Bus beteiligt:&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+>Der 8237-DMA-Controller (DMAC)</DT
+><DD
+><P
+>&#13;Der Controller verwaltet die Informationen über die DMA-Übertragung,
+also beispielsweise die Richtung, die Speicheradresse und die Größe
+der übertragenen Daten. Außerdem enthält er einen Zähler, in dem der
+Zustand der gerade laufenden Übertragung mitgeführt wird. Wenn der
+Controller ein DMA-Anforderungssignal bekommt, fordert er die
+Kontrolle über den Bus an und steuert die Signalleitungen, so daß das
+Gerät seine Daten lesen oder schreiben kann.</P
+></DD
+><DT
+>Das Peripheriegerät</DT
+><DD
+><P
+>Das Gerät muß das DMA-Anforderungssignal
+        aktivieren, wenn es bereit ist, Daten zu übertragen. Die
+        eigentliche Übertragung wird vom DMAC gesteuert; das
+        Hardware-Gerät liest oder schreibt Daten sequentiell vom oder auf
+        den Bus, wenn der Controller dem Gerät Bescheid gibt. Es wird
+        üblicherweise einen Interrupt auslösen, wenn die Übertragung
+        beendet ist.</P
+></DD
+><DT
+>Der Gerätetreiber</DT
+><DD
+><P
+>Der Treiber hat nur wenig zu tun: Er teilt dem
+        DMA-Controller die Richtung, die Bus-Adresse und die Größe der zu
+        übertragenden Daten mit. Außerdem kommuniziert er mit seinem
+        Peripherie-Gerät, um es für die Übertragung der Daten vorzubereiten,
+        und beantwortet den Interrupt, wenn die DMA-Übertragung beendet ist.</P
+></DD
+></DL
+></DIV
+><P
+>&#13;Der ursprünglich im PC verwendete DMA-Controller konnte vier
+&#8220;Kanäle&#8221; verwalten. Zu jedem Kanal gehört ein Satz
+DMA-Register, so daß vier Geräte ihre DMA-Information gleichzeitig im Controller ablegen können. Neuere PCs enthalten das Äquivalent zu
+zwei DMAC-Geräten:<A
+NAME="AEN18514"
+HREF="#FTN.AEN18514"
+>[2]</A
+>
+Der zweite Controller (der Master) ist mit dem Systemprozessor
+verbunden, der erste (der Slave) mit dem Kanal 0 des zweiten
+Controllers.<A
+NAME="AEN18516"
+HREF="#FTN.AEN18516"
+>[3]</A
+>&#13;</P
+><P
+>Die Kanäle sind von 0 bis 7 durchnumeriert; der Kanal 4 steht
+ISA-Geräten nicht zur Verfügung, weil er intern verwendet wird, um den
+Slave-Controller mit dem Master-Controller zu kaskadieren. Damit
+stehen die 8-Bit-Kanäle 0-3 (auf dem Slave) und die 16-Bit-Kanäle
+5-7 auf dem Master zur Verfügung. Die Größe einer DMA-Übertragung wird
+im Controller als 16-Bit-Wert abgelegt und gibt die Anzahl der
+Bus-Zyklen an. Die maximale Transfergröße beträgt also 64 KByte beim
+Slave-Controller und 128 KByte beim Master.&#13;</P
+><P
+>Weil der DMA-Controller eine systemweite Ressource ist, übernimmt der
+Kernel die Verwaltung. Er verwendet eine DMA-Registratur, um einen
+Mechanismus zum Anfordern und Freigeben von DMA-Kanälen sowie eine
+Menge von Funktionen zur Konfiguration der Kanal-Informationen im
+DMA-Controller bereitstellen zu können.&#13;</P
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN18520"
+>DMA-Kanäle registrieren</A
+></H3
+><P
+>&#13;
+Sie sollten Kernel-Registraturen inzwischen kennen &#8212; wir haben
+sie schon bei I/O-Ports und Interrupt-Leitungen gesehen. Die
+Registratur für DMA-Kanäle ist den anderen ähnlich. Nach dem Einbinden von
+<TT
+CLASS="LITERAL"
+>&#60;asm/dma.h&#62;</TT
+> stehen die beiden folgenden
+Funktionen zur Verfügung, mit denen die Zuweisung eines DMA-Kanals
+angefordert und der Kanal später wieder freigegeben werden kann:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+
+int request_dma(unsigned int channel, const char *name);
+void free_dma(unsigned int channel);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+Das Argument <TT
+CLASS="LITERAL"
+>channel</TT
+> ist eine Zahl zwischen 0 und
+7, oder genauer gesagt eine positive ganze Zahl, die kleiner als
+<TT
+CLASS="LITERAL"
+>MAX_DMA_CHANNELS</TT
+> ist. Auf dem PC ist
+<TT
+CLASS="LITERAL"
+>MAX_DMA_CHANNELS</TT
+> als 8 definiert,
+damit es zur Hardware paßt. Das Argument <TT
+CLASS="LITERAL"
+>name</TT
+> ist
+ein String, der das Gerät identifiziert. Dieser Name erscheint in
+<TT
+CLASS="FILENAME"
+>/proc/dma</TT
+> und kann dort von
+Anwenderprogrammen ausgelesen werden.&#13;</P
+><P
+>Der Rückgabewert von <SPAN
+><I
+CLASS="EMPHASIS"
+>request_dma</I
+></SPAN
+> ist 0 im
+Erfolgsfall und <TT
+CLASS="LITERAL"
+>-EINVAL</TT
+> oder
+<TT
+CLASS="LITERAL"
+>-EBUSY</TT
+>, wenn ein Fehler aufgetreten ist. Der erste
+Fehlercode bedeutet, daß der angeforderte Kanal außerhalb des
+zulässigen Bereichs ist, der zweite, daß bereits ein anderes Gerät den
+Kanal verwendet.&#13;</P
+><P
+>Wir empfehlen Ihnen, bei DMA-Kanälen die gleiche Vorsicht wie bei
+I/O-Ports und Interrupt-Leitungen walten zu lassen. Es ist sehr viel
+besser, den Kanal beim <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> anzufordern, als ihn
+schon in der Initialisierungsfunktion zu blockieren. Durch
+das Verzögern der Anforderung ist eine gewisse gemeinsame Nutzung der
+DMA-Kanäle möglich; so können sich Ihre Soundkarte und Ihre analoge
+I/O-Schnittstelle einen DMA-Kanal teilen, solange sie ihn nicht
+zur gleichen Zeit benutzen wollen.&#13;</P
+><P
+>Außerdem sollten Sie den DMA-Kanal anfordern,
+<SPAN
+><I
+CLASS="EMPHASIS"
+>nachdem</I
+></SPAN
+> Sie die Interrupt-Leitung angefordert
+haben, und ihn wieder freigeben, <SPAN
+><I
+CLASS="EMPHASIS"
+>bevor</I
+></SPAN
+> Sie die
+Interrupt-Leitung freigeben. Dies ist die
+gewöhnliche Reihenfolge für das Anfordern der beiden Ressourcen; wenn
+Sie dieser Konvention folgen, vermeiden Sie Deadlocks. Beachten Sie,
+daß jedes Gerät, das DMA verwendet, auch eine IRQ-Leitung benötigt,
+weil es sonst nicht den Abschluß der Datenübertragung melden könnte.&#13;</P
+><P
+>Typischerweise sieht der Code von <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> etwa wie
+der folgende aus, der sich auf ein hypothetisches Modul
+<TT
+CLASS="LITERAL"
+>dad</TT
+> (DMA Acquisition Device) bezieht. Das gezeigte
+<TT
+CLASS="LITERAL"
+>dad</TT
+>-Gerät verwendet einen schnellen
+Interrupt-Handler, der keine gemeinsam genutzten IRQ-Leitungen
+unterstützt.&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+
+int dad_open (struct inode *inode, struct file *filp)
+{
+    struct dad_device *my_device;
+
+    /* ... */
+    if ( (error = request_irq(my_device.irq, dad_interrupt,
+                              SA_INTERRUPT, "dad", NULL)) )
+        return error; /* oder blockierendes open implementieren */
+
+    if ( (error = request_dma(my_device.dma, "dad")) ) {
+        free_irq(my_device.irq, NULL);
+        return error; /* oder blockierendes open implementieren */
+    }
+    /* ... */
+    return 0;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die dazu passende Implementation von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>close</I
+></SPAN
+> sieht folgendermaßen aus:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+
+void dad_close (struct inode *inode, struct file *filp)
+{
+    struct dad_device *my_device;
+
+    /* ... */
+    free_dma(my_device.dma);
+    free_irq(my_device.irq, NULL);
+    /* ... */
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+><TT
+CLASS="FILENAME"
+>/proc/dma</TT
+> sieht in einem System mit einer
+installierten Soundkarte so aus:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>&#13;
+merlino% <TT
+CLASS="USERINPUT"
+><B
+>cat /proc/dma</B
+></TT
+>
+ 1: Sound Blaster8
+ 4: cascade</PRE
+></TD
+></TR
+></TABLE
+><P
+>Interessanterweise bekommt der Default-Soundtreiber den DMA-Kanal
+beim Hochfahren und gibt ihn nie wieder frei. Der Eintrag
+<SPAN
+><I
+CLASS="EMPHASIS"
+>cascade</I
+></SPAN
+> ist ein Platzhalter und zeigt an, daß der
+Kanal 4 wie erläutert Treibern nicht zur Verfügung steht.
+&#13;</P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN18565"
+>Mit dem DMA-Controller kommunizieren</A
+></H3
+><P
+>&#13;
+Nach der Registrierung ist es die Hauptaufgabe des Treibers, den
+DMA-Controller entsprechend zu konfigurieren. Diese Aufgabe ist nicht
+trivial, aber glücklicherweise exportiert der Kernel alle Funktionen,
+die ein typischer Treiber benötigt.&#13;</P
+><P
+>Der Treiber muß den DMA-Controller konfigurieren, wenn entweder
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+> oder <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+> aufgerufen
+wird oder wenn asynchrone Übertragungen vorbereitet werden. Das
+geschieht entweder beim <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> oder als Antwort auf
+einen <TT
+CLASS="LITERAL"
+>ioctl</TT
+>-Befehl, je nach Treiber und der von ihm
+implementierten Policy. Der hier gezeigte Code wird typischerweise von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>- und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>-Gerätemethoden verwendet.&#13;</P
+><P
+>Dieser Abschnitt enthält einen schnellen Überblick über die Interna
+des DMA-Controllers, damit Sie den hier eingeführten Code verstehen
+können. Wenn Sie mehr wissen wollen, sollten Sie
+<TT
+CLASS="LITERAL"
+>&#60;asm/dma.h&#62;</TT
+> und Literatur über
+PC-Hardware lesen. Insbesondere gehen wir hier nicht auf den
+Unterschied zwischen 8-Bit- und 16-Bit-Übertragungen ein. Wenn Sie
+einen Gerätetreiber für ISA-Karten schreiben, werden Sie die relevante
+Information in den Hardware-Handbüchern des Gerätes finden.
+
+&#13;</P
+><P
+>&#13;
+Der DMA-Controller ist eine gemeinsam genutzte Ressource, weswegen es
+zu Verwirrung kommen könnte, wenn mehr als ein Prozessor gleichzeitig
+versuchen würde, diesen zu programmieren. Aus diesem Grund ist der
+Controller mit einem Spinlock namens
+<TT
+CLASS="LITERAL"
+>dma_spin_lock</TT
+> geschützt. Treiber
+sollten diese Sperre aber nicht direkt manipulieren; dafür gibt es
+zwei Funktionen:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned long claim_dma_lock();</TT
+></DT
+><DD
+><P
+>&#13;Holt die DMA-Sperre. Diese Funktion sperrt außerdem die Interrupts auf
+dem lokalen Prozessor, weswegen der Rückgabewert die üblichen &#8220;Flags&#8221;
+sind, die zum Wiedereinschalten der Interrupts verwendet werden müssen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void release_dma_lock(unsigned long flags);</TT
+></DT
+><DD
+><P
+>&#13;Gibt das DMA-Spinlock zurück und restauriert den vorherigen
+Interrupt-Status.</P
+></DD
+></DL
+></DIV
+><P
+>Das Spinlock sollte gehalten werden, wenn die im Folgenden
+beschriebenen Funktionen verwendet werden, aber
+<SPAN
+><I
+CLASS="EMPHASIS"
+>nicht</I
+></SPAN
+> während der eigentlichen I/O-Operation
+selbst. Ein Treiber sollte nie schlafen, während er ein Spinlock
+hält.</P
+><P
+>Die Information, die in den Controller geladen werden muß, besteht aus
+drei Teilen: der RAM-Adresse, der Anzahl der atomaren Elemente, die
+übertragen werden sollen (in Bytes oder Worten), und der Richtung der
+Übertragung. Dazu werden von <TT
+CLASS="LITERAL"
+>&#60;asm/dma.h&#62;</TT
+>
+die folgenden Funktionen exportiert:&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>void set_dma_mode(unsigned int channel, char mode);</TT
+></DT
+><DD
+><P
+>&#13;Gibt an, ob der Kanal vom Gerät lesen
+(<TT
+CLASS="LITERAL"
+>DMA_MODE_READ</TT
+>) oder darauf schreiben
+(<TT
+CLASS="LITERAL"
+>DMA_MODE_WRITE</TT
+>) soll. Es gibt noch
+einen dritten Modus namens
+<TT
+CLASS="LITERAL"
+>DMA_MODE_CASCADE</TT
+>, der verwendet wird,
+um die Kontrolle über den Bus aufzugeben. Über Kaskadierung ist der
+erste Controller mit dem zweiten verbunden; diese Technik kann aber
+auch von echten ISA-Busmaster-Geräten verwendet werden. Wir werden hier
+nicht auf das Busmastering eingehen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void set_dma_addr(unsigned int channel, unsigned int addr);</TT
+></DT
+><DD
+><P
+>&#13;Weist die Adresse des DMA-Puffers zu. Diese Funktion speichert die 24
+niedrigstwertigen Bits von <TT
+CLASS="LITERAL"
+>addr</TT
+> im Controller. Das
+Argument <TT
+CLASS="LITERAL"
+>addr</TT
+> muß eine
+<SPAN
+><I
+CLASS="EMPHASIS"
+>Bus</I
+></SPAN
+>-Adresse sein (siehe &#8220;<A
+HREF="memdma.html#MEMDMABUS"
+>the Section called <I
+>Bus-Adressen</I
+></A
+>&#8221;).</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void set_dma_count(unsigned int channel, unsigned int count);</TT
+></DT
+><DD
+><P
+>&#13;Legt die Anzahl der zu übertragenden Daten fest. Das Argument
+<TT
+CLASS="LITERAL"
+>count</TT
+> bezeichnet auch bei 16-Bit-Kanälen Bytes; in
+diesem Fall <SPAN
+><I
+CLASS="EMPHASIS"
+>muß</I
+></SPAN
+> der Wert gerade sein.</P
+></DD
+></DL
+></DIV
+><P
+>Außer diesen drei Funktionen gibt es eine Reihe von
+Verwaltungsfunktionen, die bei der Verwendung von DMA-Geräten
+eingesetzt werden müssen:&#13;</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>void disable_dma(unsigned int channel);</TT
+></DT
+><DD
+><P
+>&#13;Ein DMA-Kanal kann im Controller abgeschaltet werden. Das sollte
+geschehen, bevor der Kanal konfiguriert wird, um einen unzulässigen
+Betrieb zu verhindern (der Controller wird über 8-Bit-Datenübertragungen programmiert, daher wird keine der obigen
+Funktionen atomar ausgeführt).</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void enable_dma(unsigned int channel);</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion teilt dem Controller mit, daß der DMA-Kanal gültige
+Daten enthält.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int get_dma_residue(unsigned int channel);</TT
+></DT
+><DD
+><P
+>&#13;Der Treiber muß manchmal wissen, ob eine DMA-Übertragung schon beendet
+ist. Diese Funktion gibt die Anzahl der Bytes zurück, die noch
+übertragen werden müssen. Der Rückgabewert nach einer erfolgreichen
+Übertragung ist 0, und er ist nicht vorhersagbar (aber sicher nicht 0), wenn
+der Controller noch arbeitet. Diese Nichtvorhersagbarkeit resultiert
+daraus, daß die verbleibende Anzahl von Bytes ein 16-Bit-Wert ist, der
+aus zwei 8-Bit-Werten zusammengesetzt wird.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void clear_dma_ff(unsigned int channel)</TT
+></DT
+><DD
+><P
+>&#13;Diese Funktion setzt das DMA-Flip-Flop zurück. Mit dem Flip-Flop wird
+der Zugriff auf die 16-Bit-Register gesteuert. Auf die Register wird
+mit zwei aufeinanderfolgenden 8-Bit-Operationen zugegriffen, und mit
+dem Flip-Flop wird das niedrigstwertige Byte (bei nicht gesetztem
+Flip-Flop) beziehungsweise das höchstwertige Byte (bei gesetztem
+Flip-Flop) ausgewählt. Das Flip-Flop wechselt seinen Zustand
+automatisch nach einer Übertragung von 8 Bits; der Programmierer muß es nur
+einmal vor dem Zugriff auf die DMA-Register zurücksetzen.</P
+></DD
+></DL
+></DIV
+><P
+>Mit diesen Funktionen kann ein Treiber die folgende Funktion
+implementieren, mit der eine DMA-Übertragung vorbereitet wird:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+
+int dad_dma_prepare(int channel, int mode, unsigned int buf,
+                    unsigned int count)
+{
+    unsigned long flags;
+
+    flags = claim_dma_lock();
+    disable_dma(channel);
+    clear_dma_ff(channel);
+    set_dma_mode(channel, mode);
+    set_dma_addr(channel, virt_to_bus(buf));
+    set_dma_count(channel, count);
+    enable_dma(channel);
+    release_dma_lock(flags);
+    return 0;</PRE
+></TD
+></TR
+></TABLE
+><P
+>Mit der folgenden Funktion kann dann abgefragt werden, ob die
+DMA-Übertragung erfolgreich beendet wurde:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+
+int dad_dma_isdone(int channel)
+{
+    int residue;
+    unsigned long flags = claim_dma_lock ();
+    residue = get_dma_residue(channel);
+    release_dma_lock(flags);
+    return (residue == 0);
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Damit muß nur noch die Gerätekarte selbst konfiguriert werden. Diese
+gerätespezifische Aufgabe wird meistens durch Lesen oder Schreiben
+einiger weniger I/O-Ports erledigt. Die Geräte unterscheiden sich
+dabei ziemlich. Beispielsweise erwarten manche Geräte, daß der
+Programmierer ihnen mitteilt, wie groß der DMA-Puffer ist. Bei anderen
+wiederum muß der Treiber einen im Gerät fest verdrahteten Wert
+auslesen. Das Hardware-Handbuch ist beim Konfigurieren des Geräts Ihr
+einziger Freund.
+&#13;</P
+></DIV
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN18003"
+HREF="memdma.html#AEN18003"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Der Ausdruck <I
+CLASS="FIRSTTERM"
+>Fragmentierung</I
+>
+                        wird normalerweise im Zusammenhang mit Festplatten verwendet und meint
+                        dort, daß Dateien nicht in aufeinanderfolgenden Blocks
+                        auf dem magnetischen Medium abgelegt werden. Das gleiche
+                        Konzept gibt es aber auch im Speicher, wo jeder virtuelle
+                        Adreßraum über das gesamte physikalische RAM verteilt
+                        werden kann und es schwierig wird, aufeinanderfolgende
+                        physikalische Seiten zu bekommen, wenn ein DMA-Puffer
+                        angefordert wird.</P
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN18514"
+HREF="memdma.html#AEN18514"
+>[2]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Die Schaltkreise sind heute ein Teil des Chipsatzes
+                  auf der Hauptplatine, aber noch vor ein paar Jahren waren
+                  das zwei separate 8237-Chips.</P
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN18516"
+HREF="memdma.html#AEN18516"
+>[3]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Die ursprünglichen PCs hatten nur einen Controller,
+                  der zweite wurde in den Rechnern hinzugefügt, die mit einem 286er Prozessor arbeiten. Dieser zweite Controller ist aber als Master
+                  verdrahtet, weil er die 16-Bit-Übertragungen erledigt,
+                  während der erste nur 8 Bit auf einmal überträgt und vor allem
+                  für die Abwärtskompatibilität da ist.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="memkiobuf.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="membc.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Die kiobuf-Schnittstelle</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="mem.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Abwärtskompatibilität</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

@@ -1,0 +1,942 @@
+<HTML
+><HEAD
+><TITLE
+>Ressourcen verwenden</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Module erstellen und starten"
+HREF="building.html"><LINK
+REL="PREVIOUS"
+TITLE="Initialisierung und Beendigung"
+HREF="buiini.html"><LINK
+REL="NEXT"
+TITLE="Automatische und manuelle
+Konfiguration"
+HREF="buiconf.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="buiini.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 2. Module erstellen und starten</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="buiconf.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="BUIRESOURCE"
+>Ressourcen verwenden</A
+></H1
+><P
+>&#13;
+
+Ein Modul kann ohne die Verwendung von Systemressourcen wie Speicher,
+I/O-Ports, I/O-Speicher, Interrupt-Leitungen und DMA-Kanälen (falls Sie
+altmodische DMA-Controller wie den aus der Industry Standard
+Architecture (ISA) verwenden) nicht viel bewerkstelligen.&#13;</P
+><P
+>&#13;
+Als Programmierer kennen Sie sich bereits mit der Speicherverwaltung aus,
+und Kernel-Code unterscheidet sich in dieser Hinsicht nicht von
+normalem Code.
+
+
+
+Ihr Programm kann einen Speicherbereich mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> anfordern und mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kfree</I
+></SPAN
+> wieder freigeben. Diese Funktionen
+verhalten sich wie <SPAN
+><I
+CLASS="EMPHASIS"
+>malloc</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>free</I
+></SPAN
+> mit der Ausnahme, daß
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> ein zusätzliches Argument, die Priorität,
+erwartet. Meistens verwendet man die Priorität
+<TT
+CLASS="LITERAL"
+>GFP_KERNEL</TT
+>. Das Kürzel
+<TT
+CLASS="LITERAL"
+>GFP</TT
+> steht dabei übrigens für &#8220;Get Free
+Page&#8221;. (Die Allokation von Speicher wird in <A
+HREF="get.html"
+>Kapitel 7</A
+>
+beschrieben.)
+&#13;</P
+><P
+>Anfänger in der Treiberprogrammierung sind anfangs oft überrascht, daß
+I/O-Ports, I/O-Speicher<A
+NAME="AEN1372"
+HREF="#FTN.AEN1372"
+>[1]</A
+> und Interrupt-Leitungen explizit alloziert
+werden müssen. Schließlich kann ein Kernel-Modul einfach auf diese
+Ressourcen zugreifen, ohne dem Betriebssystem Bescheid sagen zu
+müssen. Obwohl Systemspeicher anonym ist und an beliebiger Stelle
+alloziert werden kann, haben I/O-Speicher, Ports und Interrupts sehr
+spezifische Rollen. Beispielsweise muß ein Treiber in der Lage sein,
+genau die gewünschten Ports zu allozieren, nicht einfach
+<SPAN
+><I
+CLASS="EMPHASIS"
+>irgendwelche</I
+></SPAN
+> Ports. Aber Treiber können auch
+nicht einfach diese Systemressourcen verwenden, ohne zunächst
+sicherzustellen, daß diese nicht noch irgendwo anders verwendet
+werden.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="BUIPROBE"
+>I/O-Ports und I/O-Speicher</A
+></H2
+><P
+>&#13;
+
+
+Ein typischer Treiber ist die meiste Zeit damit beschäftigt, I/O-Ports
+und I/O-Speicher
+auszulesen und zu beschreiben. Der Zugriff auf I/O-Ports und
+I/O-Speicher (die oft unter dem Begriff <SPAN
+><I
+CLASS="EMPHASIS"
+>I/O-Bereiche</I
+></SPAN
+>
+zusammengefaßt werden) geschieht sowohl während der Initialisierung als auch im
+Normalbetrieb.</P
+><P
+>Leider gibt es nicht in allen Bus-Architekturen eine saubere
+Möglichkeit, die I/O-Bereiche zu identifizieren, die zu einem
+bestimmten Gerät gehören; manchmal muß der Treiber raten, wo sich die
+eigenen I/O-Bereiche befinden, oder sogar nach Geräten suchen, indem
+er &#8220;mögliche&#8221; Adreßbereiche liest und beschreibt. Das trifft besonders
+auf den ISA-Bus zu, der immer noch für einfache Geräte verwendet wird,
+die in einen PC eingebaut werden können, und der in der Form seiner
+PC/104-Implementation und PC/104+-Implementation(siehe <A
+HREF="pci.html"
+>Kapitel 15</A
+>) in der Industrie
+noch sehr beliebt ist.</P
+><P
+>Trotz der Features (oder deren Fehlen) des von einem Hardware-Gerät
+verwendeten Bus sollte der Gerätetreiber exklusiven Zugriff auf
+seine I/O-Bereiche bekommen können, um Störungen von anderen Geräten
+zu vermeiden. Wenn beispielsweise ein Modul beim Suchen nach seiner
+Hardware auf Ports schreibt, die anderen Geräten gehören, können alle
+möglichen merkwürdigen Dinge passieren.</P
+><P
+>&#13;
+
+
+Die Entwickler von Linux haben einen
+Anfordern/Freigeben-Mechanismus für I/O-Bereiche gewählt, um
+Kollisionen zwischen
+verschiedenen Geräten zu vermeiden. Dieser Mechanismus wurde schon
+lange für I/O-Ports verwendet und ist kürzlich auf
+Ressourcen-Allokation im Allgemeinen ausgeweitet worden. Beachten
+Sie, daß dies nur eine Software-Abstraktion ist, die dem System bei
+der Verwaltung hilft und nicht durch die Hardware unterstützt werden
+kann. Beispielsweise führt ein unerlaubter
+Zugriff auf einen Port nicht zu einem Fehler wie etwa einem
+Segmentation Fault &#8212; die Hardware kann die
+Registrierung von Ports nicht erzwingen.&#13;</P
+><P
+>&#13;Die Dateien <TT
+CLASS="FILENAME"
+>/proc/ioports</TT
+> und
+<TT
+CLASS="FILENAME"
+>/proc/iomem</TT
+> enthalten
+Informationen über die registrierten Ressourcen in Textform, wobei
+letztere erst während der 2.3-Entwicklung eingeführt wurde. Wir
+besprechen hier die Version 2.4 und behandeln Portabilitätsfragen am
+Ende des Kapitels.</P
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN1411"
+>Ports</A
+></H3
+><P
+>Eine typische
+<TT
+CLASS="FILENAME"
+>/proc/ioports</TT
+>-Datei auf einem neueren PC, auf dem ein 2.4-Kernel läuft, sieht etwa so aus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 0000-001f : dma1
+ 0020-003f : pic1
+ 0040-005f : timer
+ 0060-006f : keyboard
+ 0080-008f : dma page reg
+ 00a0-00bf : pic2
+ 00c0-00df : dma2
+ 00f0-00ff : fpu
+ 0170-0177 : ide1
+ 01f0-01f7 : ide0
+ 02f8-02ff : serial(set)
+ 0300-031f : NE2000
+ 0376-0376 : ide1
+ 03c0-03df : vga+
+ 03f6-03f6 : ide0
+ 03f8-03ff : serial(set)
+ 1000-103f : Intel Corporation 82371AB PIIX4 ACPI
+  1000-1003 : acpi
+  1004-1005 : acpi
+  1008-100b : acpi
+  100c-100f : acpi
+ 1100-110f : Intel Corporation 82371AB PIIX4 IDE
+ 1300-131f : pcnet_cs
+ 1400-141f : Intel Corporation 82371AB PIIX4 ACPI
+ 1800-18ff : PCI CardBus #02
+ 1c00-1cff : PCI CardBus #04
+ 5800-581f : Intel Corporation 82371AB PIIX4 USB
+ d000-dfff : PCI Bus #01
+  d000-d0ff : ATI Technologies Inc 3D Rage LT Pro AGP-133</PRE
+></TD
+></TR
+></TABLE
+><P
+>Jeder Eintrag in dieser Datei gibt (in hexadezimaler Darstellung)
+einen Bereich von Ports an, der von einem Treiber blockiert wird oder
+einem Hardware-Gerät gehört. In früheren Versionen des Kernels hatte
+die Datei das gleiche Format, allerdings ohne die &#8220;geschichtete&#8221;
+Struktur, die durch die Einrückungen angegeben wird.</P
+><P
+>&#13;Diese Datei kann dazu verwendet werden, Port-Kollisionen zu vermeiden,
+wenn ein neues Gerät zum System hinzugefügt wird und ein I/O-Bereich
+durch Umstecken von Jumpern ausgewählt werden muß: Der Benutzer kann
+kontrollieren, welche Ports bereits verwendet werden, und das neue
+Gerät auf einen verfügbaren I/O-Bereich einstellen. Sie werden
+vielleicht einwenden, daß die meiste moderne Hardware keine Jumper
+mehr verwendet, aber das Problem ist für kundenspezifische Geräte und
+Industriekomponenten immer noch aktuell.</P
+><P
+>&#13;Noch wichtiger als die Datei <TT
+CLASS="FILENAME"
+>ioports</TT
+> selbst ist
+die Datenstruktur dahinter. Wenn sich der Software-Treiber für ein Gerät selbst initialisiert, kann er die bereits belegten Port-Bereiche
+herausfinden; wenn der Treiber I/O-Ports suchen muß, um das neue Gerät
+zu finden, kann er das Ausprobieren bereits von anderen Treibern
+belegter Ports ebenfalls vermeiden.</P
+><P
+>&#13;Das Suchen von ISA-Geräten ("Probing") ist in der Tat eine riskante
+Aufgabe, und einige Treiber, die mit dem offiziellen Linux-Kernel
+ausgeliefert werden, verweigern die Suche, wenn sie als Module geladen
+werden. Sie wollen dadurch vermeiden, ein laufendes System instabil zu machen oder zu zerstören, indem sie Ports manipulieren, an denen sich unbekannte
+Hardware befinden kann. Glücklicherweise sind moderne (und ältere,
+aber gut durchdachte) Bus-Architekturen gegen all diese Probleme immun.</P
+><P
+>&#13;
+
+
+Die Programmierschnittstelle für den Zugriff auf das I/O-Register
+besteht aus drei Funktionen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; int check_region(unsigned long start, unsigned long len);
+ struct resource *request_region(unsigned long start,
+ unsigned long len, char *name);
+ void release_region(unsigned long start, unsigned long len);</PRE
+></TD
+></TR
+></TABLE
+><P
+><SPAN
+><I
+CLASS="EMPHASIS"
+>check_region</I
+></SPAN
+> kann aufgerufen werden, um
+festzustellen, ob ein Bereich von Ports zur Allokation bereitsteht;
+wenn das nicht der Fall ist, wird ein negativer Code (wie
+<TT
+CLASS="LITERAL"
+>-EBUSY</TT
+> oder <TT
+CLASS="LITERAL"
+>-EINVAL</TT
+>
+zurückgegeben). <SPAN
+><I
+CLASS="EMPHASIS"
+>request_region</I
+></SPAN
+> alloziert den
+Port-Bereich und gibt einen von <TT
+CLASS="LITERAL"
+>NULL</TT
+> verschiedenen
+Zeiger-Wert zurück, wenn die Allokation erfolgreich ist. Treiber
+müssen den zurückgegebenen Zeiger nicht verwenden oder speichern, der
+Test auf <TT
+CLASS="LITERAL"
+>NULL</TT
+> ist völlig ausreichend.<A
+NAME="AEN1449"
+HREF="#FTN.AEN1449"
+>[2]</A
+>Code, der nur mit 2.4-Kerneln funktionieren muß,
+muß <SPAN
+><I
+CLASS="EMPHASIS"
+>check_region</I
+></SPAN
+> gar nicht aufrufen; das ist sogar
+besser so, weil sich zwischen den Aufrufen von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>check_region</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request_region</I
+></SPAN
+> etwas ändern kann. Wenn Sie
+portabel zu älteren Kerneln sein wollen, müssen Sie aber
+<SPAN
+><I
+CLASS="EMPHASIS"
+>check_region</I
+></SPAN
+> verwenden, weil
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request_region</I
+></SPAN
+> vor 2.4 <TT
+CLASS="LITERAL"
+>void</TT
+>
+zurückgegeben hat. Ihr Treiber sollte selbstverständlich
+<SPAN
+><I
+CLASS="EMPHASIS"
+>release_region</I
+></SPAN
+> aufrufen, um die Ports
+freizugeben, wenn sie nicht mehr gebraucht werden.&#13;</P
+><P
+>&#13;
+Die drei Funktionen sind in Wirklichkeit Makros und werden in
+<TT
+CLASS="LITERAL"
+>&#60;linux/ioport.h&#62;</TT
+> deklariert.</P
+><P
+>&#13;Das Registrieren von Ports sieht typischerweise folgendermaßen aus
+(die Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>skull_probe_hw</I
+></SPAN
+>
+enthält den gerätespezifischen Code und ist hier deswegen nicht enthalten):&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+#include &#60;linux/ioport.h&#62;
+#include &#60;linux/errno.h&#62;
+static int skull_detect(unsigned int port, unsigned int range)
+{
+    int err;
+
+    if ((err=check_region(port,range)) &#60; 0) return err; /* besetzt */
+    if (skull_probe_hw(port,range) != 0) return -ENODEV; /* nicht gefunden */
+    request_region(port,range,"skull"); /* funktioniert immer */
+    return 0;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Dieser Code versucht zuerst herauszufinden, ob der
+gewünschte Bereich von Ports verfügbar ist; wenn die Ports nicht
+alloziert werden können, macht es auch keinen Sinn, nach der Hardware
+zu suchen. Die eigentliche Allokation der Ports wird erst vorgenommen,
+wenn sichergestellt ist, daß das Gerät auch
+existiert. <SPAN
+><I
+CLASS="EMPHASIS"
+>request_region</I
+></SPAN
+> sollte nie
+fehlschlagen; der Kernel lädt nur jeweils ein Modul, so daß es keine
+Probleme mit anderen Modulen geben kann, die in der Zwischenzeit Ports
+wegnehmen könnten. Paranoider Code kann den Rückgabewert trotzdem
+abfragen; denken Sie aber daran, daß
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request_region</I
+></SPAN
+> in Kerneln vor 2.4
+<TT
+CLASS="LITERAL"
+>void</TT
+> zurückgab.</P
+><P
+>&#13;Alle vom Treiber allozierten Ports müssen irgendwann freigegeben
+werden; <SPAN
+CLASS="APPLICATION"
+>skull</SPAN
+> macht das aus
+<SPAN
+><I
+CLASS="EMPHASIS"
+>cleanup_module</I
+></SPAN
+> heraus:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+static void skull_release(unsigned int port, unsigned int range)
+{
+    release_region(port,range);
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Der Ansatz, Ressourcen anzufordern und wieder freizugeben, ähnelt
+der Folge von Registrierung und Deregistrierung, die wir weiter oben für
+Fähigkeiten beschrieben haben, und paßt gut in das
+<TT
+CLASS="LITERAL"
+>goto</TT
+>-basierte Implementationsschema, das wir schon
+erwähnt haben.</P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="BUIMEMALLOC"
+>Speicher</A
+></H3
+><P
+>&#13;
+
+Ähnlich wie bei I/O-Ports steht auch die Information über I/O-Speicher
+in einer Datei, <TT
+CLASS="FILENAME"
+>/proc/iomem</TT
+>, zur Verfügung. Hier
+ist ein Ausschnitt der Datei auf einem typischen PC:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 00000000-0009fbff : System RAM
+ 0009fc00-0009ffff : reserved
+ 000a0000-000bffff : Video RAM area
+ 000c0000-000c7fff : Video ROM
+ 000f0000-000fffff : System ROM
+ 00100000-03feffff : System RAM
+  00100000-0022c557 : Kernel code
+  0022c558-0024455f : Kernel data
+ 20000000-2fffffff : Intel Corporation 440BX/ZX - 82443BX/ZX Host bridge
+ 68000000-68000fff : Texas Instruments PCI1225
+ 68001000-68001fff : Texas Instruments PCI1225 (#2)
+ e0000000-e3ffffff : PCI Bus #01
+ e4000000-e7ffffff : PCI Bus #01
+  e4000000-e4ffffff : ATI Technologies Inc 3D Rage LT Pro AGP-133
+  e6000000-e6000fff : ATI Technologies Inc 3D Rage LT Pro AGP-133
+ fffc0000-ffffffff : reserved</PRE
+></TD
+></TR
+></TABLE
+><P
+>Auch hier werden die Werte hexadezimal angezeigt, der String nach dem
+Doppelpunkt ist der Name des &#8220;Besitzers&#8221; des I/O-Bereiches.</P
+><P
+>Was den Treiber angeht, wird auf das Verzeichnis für I/O-Speicher auf die
+gleiche Weise wie auf das Verzeichnis für I/O-Ports zugegriffen; beide
+basieren auf dem gleichen internen Mechanismus.</P
+><P
+>&#13;
+
+Um Zugriff auf einen bestimmten I/O-Speicherbereich zu bekommen und
+diesen wieder freizugeben, sollten die folgenden Funktionen verwendet
+werden:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; int check_mem_region(unsigned long start, unsigned long len);
+ int request_mem_region(unsigned long start, unsigned long len,
+    char *name);
+ int release_mem_region(unsigned long start, unsigned long len);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Ein typischer Treiber kennt seinen I/O-Speicherbereich schon; die für
+I/O-Ports gezeigte Folge reduziert sich deswegen auf:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; if (check_mem_region(mem_addr, mem_size)) { printk("drivername:
+  memory already in use\n"); return -EBUSY; }
+  request_mem_region(mem_addr, mem_size, "drivername");
+
+&#13;</PRE
+></TD
+></TR
+></TABLE
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="BUIRES24"
+>Ressourcen-Allokation in Linux 2.4</A
+></H2
+><P
+>&#13;
+
+Der aktuelle Mechanismus zur Allokation von Ressourcen wurde in Linux
+2.3.11 eingeführt und stellt eine flexible Möglichkeit dar,
+Systemressourcen zu steuern. Dieser Abschnitt beschreibt diesen
+Mechanismus kurz. Die grundlegenden Ressourcen-Allokationsfunktionen
+(<TT
+CLASS="FILENAME"
+>request_region</TT
+> usw.) sind immer noch (als
+Makros) implementiert und werden noch viel verwendet, da sie zu
+früheren Kernel-Versionen abwärtskompatibel sind. Die meisten
+Modul-Programmierer müssen nicht wissen, was unter der Haube
+eigentlich passiert, aber diejenigen, die an komplexeren Treibern
+arbeiten, sind vielleicht doch interessiert.</P
+><P
+>Die Ressourcen-Verwaltung in Linux kann beliebige Ressourcen
+hierarchisch kontrollieren. Global bekannte Ressourcen (wie etwa die
+Bereiche von I/O-Ports) können in kleinere Teilmengen aufgeteilt
+werden, wie etwa in die Ressourcen, die zu einem bestimmten Bus-Slot
+gehören. Einzelne Treiber können ihren Bereich dann bei Bedarf noch
+weiter aufteilen.</P
+><P
+>&#13;
+
+
+Ressourcen-Bereiche werden mittels einer
+<TT
+CLASS="FILENAME"
+>resource</TT
+>-Struktur beschrieben, die in
+<TT
+CLASS="LITERAL"
+>&#60;linux/ioport.h&#62;</TT
+> deklariert ist:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; struct resource {
+  const char *name;
+  unsigned long start, end;
+  unsigned long flags;
+  struct resource *parent, *sibling, *child;
+ };</PRE
+></TD
+></TR
+></TABLE
+><P
+>Top-Level-Ressourcen werden beim Booten erzeugt. Beispielsweise wird
+die Ressource, die den I/O-Port-Bereich beschreibt, folgendermaßen
+erzeugt:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; struct resource ioport_resource =
+    { "PCI IO", 0x0000, IO_SPACE_LIMIT, IORESOURCE_IO };</PRE
+></TD
+></TR
+></TABLE
+><P
+>Der Name der Ressource ist also <TT
+CLASS="LITERAL"
+>PCI_IO</TT
+>, und der
+abgedeckte Bereich läuft von 0 bis <TT
+CLASS="LITERAL"
+>IO_SPACE_LIMIT</TT
+> ,
+was je nach Hardware-Plattform
+<TT
+CLASS="LITERAL"
+>0xffff</TT
+> (16 Bits Adreßraum wie unter
+x86, IA-64, Alpha, M68k und MIPS), <TT
+CLASS="LITERAL"
+>0xffffffff</TT
+> (32
+Bits: SPARC, PPC, SH) oder <TT
+CLASS="LITERAL"
+>0xffffffffffffffff</TT
+> (64
+Bits: SPARC64) sein kann.</P
+><P
+>&#13;
+
+Unterbereiche einer bestimmten Ressource können mit
+<TT
+CLASS="FILENAME"
+>allocate_resource</TT
+> erzeugt werden. Während der
+PCI-Initialisierung wird beispielsweise eine neue Ressource für einen
+Bereich erzeugt, der einem physikalischen Gerät tatsächlich zugewiesen
+wird. Wenn der PCI-Code diese Port- oder Speicherzuweisungen liest,
+erzeugt er für genau diese Regionen neue Ressourcen und alloziert
+diese unter <TT
+CLASS="LITERAL"
+>ioport_resource</TT
+> oder
+<TT
+CLASS="LITERAL"
+>iomem_resource</TT
+>.
+&#13;</P
+><P
+>&#13;Ein Treiber kann dann durch den Aufruf von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>__request_region</I
+></SPAN
+> eine Teilmenge einer bestimmten
+Ressource (und damit eine Teilmenge einer globalen Ressource)
+anfordern und als belegt markieren. Diese Funktion gibt einen Zeiger
+auf eine neue <TT
+CLASS="LITERAL"
+>struct resource</TT
+>-Datenstruktur zurück,
+die die angeforderte Ressource beschreibt (oder im Fehlerfall
+<TT
+CLASS="LITERAL"
+>NULL</TT
+> zurückgibt). Die Struktur ist bereits ein
+Bestandteil des globalen Ressourcen-Baums, und der Treiber darf sie
+nicht nach Gutdünken verwenden.</P
+><P
+>Interessierte Leser mögen sich vielleicht die Details im Quellcode in
+<TT
+CLASS="FILENAME"
+>kernel/resource.c</TT
+> und die Verwendung der
+Ressourcen-Verwaltung im Rest des Kernels anschauen. Die meisten
+Treiber-Autoren sind aber mit <SPAN
+><I
+CLASS="EMPHASIS"
+>request_region</I
+></SPAN
+> und
+den anderen im vorigen Abschnitt eingeführten Funktionen mehr als
+bedient.</P
+><P
+>Dieser Schicht-Mechanismus bringt eine Reihe von Vorteilen mit
+sich. Zum einen wird die I/O-Struktur des Systems in den
+Datenstrukturen des Kernels deutlich. Man sieht das Ergebnis etwa in
+<TT
+CLASS="FILENAME"
+>/proc/ioports</TT
+>:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+> e800-e8ff : Adaptec AHA-2940U2/W / 7890
+ e800-e8be : aic7xxx</PRE
+></TD
+></TR
+></TABLE
+><P
+>Der Bereich <TT
+CLASS="LITERAL"
+>e800-e8ff</TT
+> ist von einer Adaptec-Karte
+alloziert worden, die sich selbst gegenüber dem PCI-Bus-Treiber
+identifiziert hat. Der Treiber <TT
+CLASS="FILENAME"
+>aic7xxx</TT
+> hat dann
+den größten Teil dieses Bereiches angefordert: in diesem Fall den
+Teil, der realen Ports auf der Karte entspricht.
+
+&#13;</P
+><P
+>&#62;
+&#62;
+&#62;
+&#62;
+&#62;
+&#62;
+&#62;
+&#62;
+Ein weiterer Vorteil dieser Ressourcen-Kontrolle besteht darin, daß
+der gesamte Port-Raum in bestimmte Unterbereiche aufgeteilt wird, die
+die Hardware des zugrundeliegenden Systems widerspiegeln. Weil der
+Ressourcen-Allokator keine Allokation über Teilbereiche hinweg
+erlaubt, kann ein fehlerhafter Treiber (oder einer, der nach Hardware
+sucht, die im System nicht vorhanden ist), daran gehindert werden,
+Ports zu allozieren, die zu mehr als einem Bereich gehören &#8212;
+selbst wenn einige dieser Ports zu dem Zeitpunkt nicht alloziert
+sind.&#13;</P
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN1372"
+HREF="buiresource.html#AEN1372"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Die Speicherbereiche, die sich in Peripherie-Geräten
+befinden, werden meist <SPAN
+><I
+CLASS="EMPHASIS"
+>I/O-Speicher</I
+></SPAN
+> genannt, um
+sie vom RAM zu unterscheiden, das normalerweise einfach nur Speicher
+genannt wird.</P
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN1449"
+HREF="buiresource.html#AEN1449"
+>[2]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Der Zeiger selbst wird nur verwendet, wenn die
+Funktion intern vom Ressourcenverwaltungssubsystem des Kernels
+aufgerufen wird.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="buiini.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="buiconf.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Initialisierung und Beendigung</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="building.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Automatische und manuelle
+Konfiguration</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

@@ -1,0 +1,810 @@
+<HTML
+><HEAD
+><TITLE
+>Die kiobuf-Schnittstelle</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="mmap und DMA"
+HREF="mem.html"><LINK
+REL="PREVIOUS"
+TITLE="Die Geräteoperation mmap"
+HREF="memmap.html"><LINK
+REL="NEXT"
+TITLE="Direct Memory Access und Bus Mastering"
+HREF="memdma.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="memmap.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 13. mmap und DMA</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="memdma.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="MEMKIOBUF"
+>Die kiobuf-Schnittstelle</A
+></H1
+><P
+>&#13;
+
+
+Ab Version 2.3.12 unterstützt der Linux-Kernel eine I/O-Abstraktion
+namens <SPAN
+><I
+CLASS="EMPHASIS"
+>Kernel-I/O-Puffer</I
+></SPAN
+> oder
+<TT
+CLASS="LITERAL"
+>kiobuf</TT
+>. Die kiobuf-Schnittstelle soll einen großen
+Teil der Komplexität der virtuellen Speicherverwaltung vor den
+Gerätetreibern (und anderen Teilen im System, die I/O betreiben)
+verstecken. Es sind noch viele Features für kiobufs geplant, aber der
+hauptsächliche Verwendungszweck im 2.4-Kernel ist das Erleichtern der
+Einblendung von User-Space-Buffern in den Kernel.</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN17765"
+>Die kiobuf-Struktur</A
+></H2
+><P
+>&#13;
+Sämtlicher Code, der mit kiobufs arbeitet, muß
+<TT
+CLASS="LITERAL"
+>&#60;linux/iobuf.h&#62;</TT
+> einbinden. Diese Datei
+definiert <TT
+CLASS="LITERAL"
+>struct kiobuf</TT
+>, das Herzstück der
+kiobuf-Schnittstelle. Diese Struktur beschreibt ein Array von Seiten,
+die eine I/O-Operation bilden. Dort finden sich unter anderem folgende
+Felder:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>int nr_pages;</TT
+></DT
+><DD
+><P
+>Die Anzahl der Seiten in diesem kiobuf</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int length;</TT
+></DT
+><DD
+><P
+>Die Anzahl der Datenbytes im Puffer</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int offset;</TT
+></DT
+><DD
+><P
+>Der Offset bis zum ersten gültigen Byte im Puffer</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>struct page **maplist;</TT
+></DT
+><DD
+><P
+>&#13;Ein Array von <TT
+CLASS="LITERAL"
+>page</TT
+>-Strukturen; eine je Seite mit
+Daten im kiobuf</P
+></DD
+></DL
+></DIV
+><P
+>Der Schlüssel zur kiobuf-Schnittstelle ist das Array
+<TT
+CLASS="LITERAL"
+>maplist</TT
+>. Funktionen, die auf in einem kiobuf
+gespeicherten Seiten operieren, arbeiten direkt mit den
+<TT
+CLASS="LITERAL"
+>page</TT
+>-Strukturen &#8212; der gesamte Umweg der
+virtuellen Speicherverwaltung ist aus dem Weg geräumt worden. Diese
+Implementation erlaubt es Treibern, unabhängig von den Komplexitäten
+der Speicherverwaltung zu arbeiten, und macht das Leben ganz allgemein
+deutlich einfacher.
+
+
+
+
+
+
+
+
+
+
+&#13;</P
+><P
+>&#13;Ein kiobuf muß vor der Verwendung initialisiert werden. Man
+initialisiert nur selten einen einzelnen kiobuf, aber wenn das
+notwendig ist, dann kann man das mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kiobuf_init</I
+></SPAN
+> machen:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;void kiobuf_init(struct kiobuf *iobuf);
+
+&#13;</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+
+Normalerweise werden kiobufs in Gruppen als Bestandteil eines
+<I
+CLASS="FIRSTTERM"
+>Kernel-I/O-Vektors</I
+>
+(<SPAN
+><I
+CLASS="EMPHASIS"
+>kiovec</I
+></SPAN
+>) alloziert. Ein kiovec kann durch Aufruf
+von <SPAN
+><I
+CLASS="EMPHASIS"
+>alloc_kiovec</I
+></SPAN
+> in einem Schritt
+alloziert und initialisiert werden:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;int alloc_kiovec(int nr, struct kiobuf **iovec);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Der Rückgabewert ist wie üblich 0 oder ein Fehler-Code. Wenn Ihr Code
+die kiovec-Struktur nicht mehr braucht, sollte er sie natürlich an das
+System zurückgeben:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;void free_kiovec(int nr, struct kiobuf **);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+Der Kernel stellt ein Funktionspaar zum Sperren und Entsperren der in
+einem kiovec eingeblendeten Seiten bereit:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;int lock_kiovec(int nr, struct kiobuf *iovec[], int wait);
+int unlock_kiovec(int nr, struct kiobuf *iovec[]);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Für die meisten Anwendungen von kiobufs in Gerätetreibern ist das
+Sperren eines kiovecs aber nicht notwendig.
+&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN17828"
+>Einblenden von User-Space-Buffern und rohe I/O</A
+></H2
+><P
+>&#13;
+
+Unix-Systeme stellen seit langem eine &#8220;rohe&#8221; Schnittstelle zu manchen
+Geräten &#8212; insbesondere zu Block-Geräten &#8212; bereit, die I/O
+direkt aus einem User-Space-Buffer durchführt und das Kopieren der
+Daten durch den Kernel hindurch vermeidet. In manchen Fällen
+verbessert dies die Performance deutlich, insbesondere wenn die
+übertragenen Daten in der nahen Zukunft nicht mehr benötigt
+werden. Beispielsweise lesen Festplatten-Backups einen großen Teil der
+Daten genau einmal und vergessen sie dann. Backups über eine rohe
+Schnittstelle füllen den Puffer Cache des Systems nicht mit nutzlosen
+Daten.</P
+><P
+>Der Linux-Kernel enthielt traditionell keine rohe Schnittstelle. Dafür
+gibt es eine Reihe von Gründen. Aber mit zunehmender Beliebtheit von
+Linux werden immer mehr Applikationen (wie große Datenbanksysteme)
+portiert, die erwarten, rohe I/O durchführen zu können. Daher ist in
+der 2.3-Entwicklungsserie endlich rohe I/O hinzugekommen; dieses
+Bedürfnis war auch die treibende Kraft bei der Entwicklung der
+kiobuf-Schnittstelle.</P
+><P
+>&#13;Rohe I/O bringt nicht immer die gewaltigen Performance-Gewinne mit
+sich, die manche Leute erwarten; Autoren von Gerätetreibern sollten jetzt nicht
+einfach diese Fähigkeit anbieten, nur weil das möglich ist. Es kann
+kompliziert sein, eine rohe Übertragung einzurichten, und die Vorteile
+des Pufferns von Daten im Kernel gehen auch verloren. Denken Sie
+beispielsweise daran, daß rohe I/O-Operationen fast immer synchron
+sein müssen &#8212; der <SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>-Systemaufruf darf
+nicht zurückkehren, bevor die Operation vollständig abgearbeitet
+ist. Linux hat derzeit keine Mechanismen, die es User-Space-Programmen
+erlauben würden, eine sichere asynchrone rohe I/O auf einem User-Buffer
+durchzuführen.</P
+><P
+>&#13;
+In diesem Beispiel fügen wir rohe I/O zum Beispiel-Treiber
+<SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> hinzu. Wenn kiobufs zur Verfügung
+stehen, registriert <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> gleich zwei
+Geräte. Das Block-Gerät <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> haben wir uns
+in <A
+HREF="lock.html"
+>Kapitel 12</A
+> genau angeschaut. Was wir dort aber nicht
+gesehen haben, war ein zweites, zeichenorientiertes Gerät (namens
+<SPAN
+CLASS="APPLICATION"
+>sbullr</SPAN
+>), das rohen Zugriff auf die RAM-Disk
+ermöglicht. Daher greifen <TT
+CLASS="FILENAME"
+>/dev/sbull0</TT
+> und
+        <TT
+CLASS="FILENAME"
+>/dev/sbullr0</TT
+> auf den gleichen Speicher
+        zu, ersteres über den traditionellen, gepufferten Modus,
+        letzteres mit rohem Zugriff über den kiobuf-Mechanismus.</P
+><P
+>Man sollte noch erwähnen, daß Block-Treiber auf Linux-Systemen diese
+Art von Schnittstelle nicht anbieten müssen. Das rohe Gerät in
+<TT
+CLASS="FILENAME"
+>drivers/char/raw.c</TT
+> stellt diese Fähigkeit auf
+eine elegante, allgemeine Art und Weise für alle Block-Geräte
+bereit. Die Block-Treiber müssen nicht einmal wissen, daß sie rohe I/O
+betreiben. Der Code für die rohe I/O in
+<SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> ist im wesentlichen eine
+Vereinfachung des rohen Geräte-Codes zu Demonstrationszwecken.</P
+><P
+>Rohe I/O auf ein Block-Gerät muß immer an Sektorengrenzen ausgerichtet
+und die Länge ein Vielfaches der Sektorgröße sein. Andere Geräte wie
+etwa Bandlaufwerke haben diese Einschränkungen möglicherweise
+nicht. <SPAN
+CLASS="APPLICATION"
+>sbullr</SPAN
+> verhält sich wie ein
+Block-Gerät und erzwingt die Ausrichtungs- und
+Längenanforderungen. Dazu werden einige Symbole definiert:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+#  define SBULLR_SECTOR 512  /* hierauf bestehen */
+#  define SBULLR_SECTOR_MASK (SBULLR_SECTOR - 1)
+#  define SBULLR_SECTOR_SHIFT 9</PRE
+></TD
+></TR
+></TABLE
+><P
+>Das rohe Gerät <SPAN
+CLASS="APPLICATION"
+>sbullr</SPAN
+> wird nur dann
+registriert, wenn die Hardware-Sektorengröße gleich
+<TT
+CLASS="LITERAL"
+>SBULLR_SECTOR</TT
+> ist. Es gibt keinen Grund,
+warum man größere Hardware-Sektoren nicht unterstützen sollte, aber
+das würde den Beispiel-Code nur unnötig verkomplizieren.</P
+><P
+>Die Implementation von <SPAN
+CLASS="APPLICATION"
+>sbullr</SPAN
+> fügt dem
+existierenden <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+>-Code nur wenig
+hinzu. Insbesondere können die <SPAN
+CLASS="APPLICATION"
+>open</SPAN
+>- und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>close</I
+></SPAN
+>-Methoden von
+<SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> ohne Veränderung übernommen
+werden. Weil <SPAN
+CLASS="APPLICATION"
+>sbullr</SPAN
+> ein Zeichen-Gerät ist,
+braucht es aber <SPAN
+><I
+CLASS="EMPHASIS"
+>read</I
+></SPAN
+>- und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>write</I
+></SPAN
+>-Methoden. Beide verwenden eine einzige
+Übertragungsfunktion und sind folgendermaßen definiert:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+ssize_t sbullr_read(struct file *filp, char *buf, size_t size,
+                    loff_t *off)
+{
+    Sbull_Dev *dev = sbull_devices +
+                    MINOR(filp-&#62;f_dentry-&#62;d_inode-&#62;i_rdev);
+    return sbullr_transfer(dev, buf, size, off, READ);
+}
+
+ssize_t sbullr_write(struct file *filp, const char *buf, size_t size,
+                loff_t *off)
+{
+    Sbull_Dev *dev = sbull_devices +
+                    MINOR(filp-&#62;f_dentry-&#62;d_inode-&#62;i_rdev);
+    return sbullr_transfer(dev, (char *) buf, size, off, WRITE);
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Die Funktion <SPAN
+><I
+CLASS="EMPHASIS"
+>sbullr_transfer</I
+></SPAN
+> kümmert sich
+um das gesamte Einrichten und Abbauen und läßt die eigentliche
+Übertragung dann von noch einer weiteren Funktion ausführen. Der Code sieht wie folgt aus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+static int sbullr_transfer (Sbull_Dev *dev, char *buf, size_t count,
+                loff_t *offset, int rw)
+{
+    struct kiobuf *iobuf;
+    int result;
+
+    /* Nur Block-Ausrichtung und -Groeße erlaubt */
+    if ((*offset &#38; SBULLR_SECTOR_MASK) || (count &#38; SBULLR_SECTOR_MASK))
+        return -EINVAL;
+    if ((unsigned long) buf &#38; SBULLR_SECTOR_MASK)
+        return -EINVAL;
+
+    /* Einen I/O-Vektor allozieren */
+    result = alloc_kiovec(1, &#38;iobuf);
+    if (result)
+        return result;
+
+    /* Den User-I/O-Buffer einblenden und die I/O durchführen. */
+    result = map_user_kiobuf(rw, iobuf, (unsigned long) buf, count);
+    if (result) {
+        free_kiovec(1, &#38;iobuf);
+        return result;
+    }
+    spin_lock(&#38;dev-&#62;lock);
+    result = sbullr_rw_iovec(dev, iobuf, rw,
+                    *offset &#62;&#62; SBULLR_SECTOR_SHIFT,
+                    count &#62;&#62; SBULLR_SECTOR_SHIFT);
+    spin_unlock(&#38;dev-&#62;lock);
+
+    /* Aufraeumen und zurueckkehren. */
+    unmap_kiobuf(iobuf);
+    free_kiovec(1, &#38;iobuf);
+    if (result &#62; 0)
+        *offset += result &#60;&#60; SBULLR_SECTOR_SHIFT;
+    return result &#60;&#60; SBULLR_SECTOR_SHIFT;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+Nach einigen Sicherheitsüberprüfungen erzeugt der Code mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>alloc_kiovec</I
+></SPAN
+> einen kiovec (der einen
+einzelnen kiobuf enthält). Dann wird dieser kiovec verwendet, um den
+User-Buffer durch Aufruf von
+<SPAN
+><I
+CLASS="EMPHASIS"
+>map_user_kiobuf</I
+></SPAN
+> einzublenden:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;int map_user_kiobuf(int rw, struct kiobuf *iobuf,
+                    unsigned long address, size_t len);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Das Ergebnis dieses Aufrufs ist, wenn alles gut geht, daß der Puffer
+an der angegebenen (User-virtuellen) Adresse
+<TT
+CLASS="LITERAL"
+>address</TT
+> mit der Länge <TT
+CLASS="LITERAL"
+>len</TT
+> in den
+angegebenen <TT
+CLASS="LITERAL"
+>iobuf</TT
+> eingeblendet worden ist. Diese
+Operation kann schlafen, weil es möglich ist, daß der User-Buffer erst
+in den Speicher geholt werden muß.</P
+><P
+>&#13;Ein auf diese Weise eingeblendeter kiobuf muß irgendwann natürlich
+auch wieder ausgeblendet werden, damit die Referenzzähler der Seiten
+korrekt bleiben. Dies geschieht, wie im Code zu sehen ist, durch
+Übergeben des kiobuf an <SPAN
+><I
+CLASS="EMPHASIS"
+>unmap_kiobuf</I
+></SPAN
+>.</P
+><P
+>Bisher haben wir gesehen, wie man einen kiobuf für I/O vorbereitet,
+aber nicht, wie man die I/O dann am Ende durchführt. Im letzten
+Schritt gehen wir alle Seiten im kiobuf durch und führen die
+gewünschten Datenübertragungen aus; in
+<SPAN
+CLASS="APPLICATION"
+>sbullr</SPAN
+> macht das die Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>sbullr_rw_iovec</I
+></SPAN
+>. Im wesentlichen
+geht diese Funktion alle Seiten nacheinander durch, zerlegt jede Seite
+in sektorengroße Stückchen und übergibt diese mittels einer unechten
+<TT
+CLASS="LITERAL"
+>request</TT
+>-Struktur an
+<SPAN
+><I
+CLASS="EMPHASIS"
+>sbull_transfer</I
+></SPAN
+>:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;
+static int sbullr_rw_iovec(Sbull_Dev *dev, struct kiobuf *iobuf, int rw,
+                int sector, int nsectors)
+{
+    struct request fakereq;
+    struct page *page;
+    int offset = iobuf-&#62;offset, ndone = 0, pageno, result;
+
+    /* I/O auf jedem Sektor durchfuehren */
+    fakereq.sector = sector;
+    fakereq.current_nr_sectors = 1;
+    fakereq.cmd = rw;
+
+    for (pageno = 0; pageno &#60; iobuf-&#62;nr_pages; pageno++) {
+        page = iobuf-&#62;maplist[pageno];
+        while (ndone &#60; nsectors) {
+            /* Eine unechte request-Struktur für die Operation zusammenbasteln */
+            fakereq.buffer = (void *) (kmap(page) + offset);
+            result = sbull_transfer(dev, &#38;fakereq);
+            kunmap(page);
+            if (result == 0)
+                return ndone;
+            /* Und zum naechsten */
+            ndone++;
+            fakereq.sector++;
+            offset += SBULLR_SECTOR;
+            if (offset &#62;= PAGE_SIZE) {
+                offset = 0;
+                break;
+            }
+        }
+    }
+    return ndone;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Das Feld <TT
+CLASS="LITERAL"
+>nr_pages</TT
+> der Struktur
+<TT
+CLASS="LITERAL"
+>kiobuf</TT
+> teilt uns hier mit, wie viele Seiten
+übertragen werden müssen. Über das Array <TT
+CLASS="LITERAL"
+>maplist</TT
+>
+kommen wir dann an die einzelnen Seiten heran und müssen diese nur
+noch durchlaufen. Beachten Sie aber, daß <SPAN
+><I
+CLASS="EMPHASIS"
+>kmap</I
+></SPAN
+>
+verwendet wird, um eine Kernel-virtuelle Adresse für jede Seite zu
+bekommen;. Auf diese Weise funktioniert die Funktion auch dann noch,
+wenn sich der User-Buffer im hohen Speicher befindet.</P
+><P
+>Einige schnelle Tests mit dem Kopieren von Daten zeigen, daß eine Kopie
+von oder aus dem <SPAN
+CLASS="APPLICATION"
+>sbullr</SPAN
+>-Gerät etwa zwei
+Drittel der Systemzeit wie die entsprechende Operation auf dem
+<SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+>-Gerät benötigt. Diese Einsparung
+erzielt man durch das Vermeiden der zusätzlichen Kopie durch den
+Puffer Cache. Wenn die gleichen Daten mehrfach
+gelesen werden, verschwindet die Ersparnis &#8212; insbesondere bei
+echter Hardware. Roher Gerätezugriff ist oft nicht der beste Ansatz,
+kann aber für manche Applikationen eine deutliche Verbesserung
+bedeuten.
+
+
+
+
+
+
+
+
+
+
+
+
+&#13;</P
+><P
+>&#62;
+&#62;
+&#62;
+&#62;
+&#62;
+&#62;
+&#62;
+&#62;
+Obwohl kiobufs in der Kernel-Entwickler-Gemeinde ein kontroverses
+Thema bleiben, besteht ein Interesse daran, sie in einem größeren
+Kontext zu nutzen. Beispielsweise gibt es einen Patch, der Unix-Pipes mit kiobufs
+implementiert &#8212; Daten werden direkt vom Adreßraum eines
+Prozesses in den Adreßraum eines anderen Prozesses kopiert, ohne daß
+im Kernel etwas gepuffert wird. Außerdem gibt es einen Patch, mit dem
+man einen kiobuf leicht dazu verwenden kann, virtuellen
+Kernel-Speicher in den Adreßraum eines Prozesses einzublenden, was die
+oben gezeigte <SPAN
+><I
+CLASS="EMPHASIS"
+>nopage</I
+></SPAN
+>-Implementation unnötig
+machen würde.&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="memmap.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="memdma.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Die Geräteoperation mmap</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="mem.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Direct Memory Access und Bus Mastering</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

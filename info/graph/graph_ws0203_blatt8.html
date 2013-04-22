@@ -1,0 +1,80 @@
+<!DOCTYPE html PUBLIC "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+            
+  <meta http-equiv="Content-Type"
+ content="text/html; charset=iso-8859-1">
+            
+  <meta name="GENERATOR"
+ content="Mozilla/4.74 [en] (X11; U; Linux 2.2.13 i586) [Netscape]">
+  <title>&Uuml;bungsblatt 7</title>
+</head>
+  <body>
+   Prof. Dr. R. Laue&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+ WS0203   
+<center>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+ Graphentheoretische Optimierung <br>
+ </center>
+ 
+<div align="center"> 
+<center> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+ &Uuml;bungsblatt 8 </center>
+ Abgabe: bis Donnerstag 12.12.02 12.00 Raum 736 Mathe NW2   </div>
+ 
+<p>URL:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a
+ href="http://www.mathe2.uni-bayreuth.de/axel/graph_ws0001_blatt8.html">
+http://www.mathe2.uni-bayreuth.de/axel/graph_ws0203_blatt8.html</a>   <br>
+  &nbsp;</p>
+   
+<h2> </h2>
+      
+<h2></h2>
+   
+<h2> </h2>
+      
+<h2> <b>Aufgabe 16- bcc Teil 2 - (6+2 Punkte)</b></h2>
+      
+<p><br>
+Auf unserem Weg zum Algorithmus f&uuml;r bcc beweisen wir zwei weitere Aussagen: 
+</p>
+<p>Sei G=(V,E)&nbsp;ein ungerichteter Graph ohne Schleifen. Seien T,F,B,DFSNUM,FATHER, 
+LOWPR&nbsp;wie in Aufgabe 15 definiert. </p>
+<p>Es gilt: </p>
+<p>1) Sei G'=(V',E')&nbsp;ein bcc von G&nbsp;mit Zentrum v. Dann ist </p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; V'={FATHER[v]&nbsp;<img
+ src="http://www.mathe2.uni-bayreuth.de/axel/union.gif" height="9"
+ width="7" alt="union">
+ w;&nbsp;wobei f&uuml;r w gilt: es ex ein Weg von v nach w mit Kanten aus 
+T und kein Knoten ausser v auf&nbsp; diesem&nbsp; Weg ist Zentrum} <br>
+&nbsp; </p>
+2) Es gilt:&nbsp; LOWPT[v] = min( <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+{ DFSNUM[v] }&nbsp;<img
+ src="http://www.mathe2.uni-bayreuth.de/axel/union.gif" height="9"
+ width="7" alt="union">
+ <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+{ DFSNUM[z] mit (v,z)&nbsp;<img
+ src="http://www.mathe2.uni-bayreuth.de/axel/Element.gif" height="19"
+ width="14" align="middle">
+B}&nbsp;&nbsp;<img
+ src="http://www.mathe2.uni-bayreuth.de/axel/union.gif" height="9"
+ width="7" alt="union">
+ <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+{ LOWPT[u] mit (v,u)&nbsp;<img
+ src="http://www.mathe2.uni-bayreuth.de/axel/Element.gif" height="19"
+ width="14" align="middle">
+T} <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+) <br>
+&nbsp;&nbsp;&nbsp;&nbsp; f&uuml;r alle v aus V <br>
+&nbsp; <br>
+<br>
+<h2> <b>Aufgabe 17 bcc - letzter Teil - (4 + 2 Punkte)</b></h2>
+  <br>
+&Auml;ndern Sie den Algorithmus f&uuml;r die starke Zusammenhangskomponente 
+so ab, dass die Zweifachzusammenhangskomponenten berechnet werden. Warum funktioniert
+der Algorithmus? F&uuml;hren Sie ein instruktives Beispiel vor. <br>
+</body>
+</html>

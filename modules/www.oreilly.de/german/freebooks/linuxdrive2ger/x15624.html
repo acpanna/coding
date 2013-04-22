@@ -1,0 +1,344 @@
+<HTML
+><HEAD
+><TITLE
+>Wie das Einhängen und Aushängen funktioniert</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Das Laden von Block-Treibern"
+HREF="lock.html"><LINK
+REL="PREVIOUS"
+TITLE="Anfragen bearbeiten: Das Ganze noch einmal genauer"
+HREF="x15067.html"><LINK
+REL="NEXT"
+TITLE="Die ioctl-Methode"
+HREF="x15678.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x15067.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 12. Das Laden von Block-Treibern</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x15678.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN15624"
+>Wie das Einhängen und Aushängen funktioniert</A
+></H1
+><P
+>&#13;
+Block-Geräte können im Gegensatz zu Zeichen-Geräten und normalen
+Dateien in das Dateisystem des Rechners eingehängt werden. Das
+Einhängen bringt eine weitere Abstraktionsebene mit sich, die bei
+Zeichen-Geräten nicht bekannt ist, wo der Zugriff über einen
+<TT
+CLASS="LITERAL"
+>struct file</TT
+>-Zeiger erfolgt, der zu einem
+bestimmten Prozeß gehört. Wenn ein Dateisystem eingehängt ist, gibt es
+keinen Prozeß, der einen <TT
+CLASS="LITERAL"
+>filp</TT
+> hält.&#13;</P
+><P
+>&#13;Wenn der Kernel ein Gerät in das Dateisystem einhängt, ruft er die
+normale <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>-Methode auf, um auf den Treiber
+zuzugreifen. In diesem Fall sind aber sowohl das
+<TT
+CLASS="LITERAL"
+>filp</TT
+>-Argument als auch das
+<TT
+CLASS="LITERAL"
+>inode</TT
+>-Argument von <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> nur
+Dummies. In der <TT
+CLASS="LITERAL"
+>file</TT
+>-Struktur haben nur die Felder
+<TT
+CLASS="LITERAL"
+>f_mode</TT
+> und <TT
+CLASS="LITERAL"
+>f_flags</TT
+>
+eine Bedeutung; in der <TT
+CLASS="LITERAL"
+>inode</TT
+>-Struktur darf nur
+<TT
+CLASS="LITERAL"
+>i_rdev</TT
+> benutzt werden. Die anderen Felder
+enthalten
+zufällige Werte und sollten nicht verwendet werden. Der Wert von
+<TT
+CLASS="LITERAL"
+>f_mode</TT
+> teilt dem Treiber mit, ob das Gerät
+nur zum Lesen (<TT
+CLASS="LITERAL"
+>f_mode == FMODE_READ</TT
+>)
+oder zum Lesen und Schreiben (<TT
+CLASS="LITERAL"
+>f_mode ==
+(FMODE_READ|FMODE_WRITE)</TT
+>) eingehängt werden
+soll.</P
+><P
+>Diese Schnittstelle mag etwas merkwürdig aussehen, hat aber zwei
+Gründe. Zunächst kann die <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>-Methode weiterhin
+normal von einem Prozeß aufgerufen werden, der direkt auf das Gerät
+zugreift, wie etwa das Hilfsprogramm
+<SPAN
+CLASS="APPLICATION"
+>mkfs</SPAN
+>. Der andere Grund ist historisch
+bedingt: Block-Geräte benutzten früher die gleiche
+<TT
+CLASS="LITERAL"
+>file_operations</TT
+>-Struktur wie Zeichen-Geräte
+und mußten daher die gleiche Schnittstelle verwenden.</P
+><P
+>&#13;Abgesehen von den Einschränkungen bezüglich der Argumente der
+<SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>-Methode sieht der Treiber nichts Besonderes,
+wenn ein Dateisystem eingehängt wird. Das Gerät wird geöffnet, und die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>request</I
+></SPAN
+>-Methode wird aufgerufen, um Blocks hin- und
+herzutransportieren.  Der Treiber kann den Unterschied zwischen
+Operationen, die als Antwort auf einen individuellen Prozeß (wie etwa
+<SPAN
+CLASS="APPLICATION"
+>fsck</SPAN
+>) gestartet werden, und solchen, die
+aus den Dateisystem-Schichten des Kernels stammen, nicht erkennen.</P
+><P
+><SPAN
+CLASS="APPLICATION"
+>umount</SPAN
+> schreibt lediglich den Buffer-Cache
+heraus und ruft die <SPAN
+><I
+CLASS="EMPHASIS"
+>release</I
+></SPAN
+>-Methode des Treibers
+auf. Weil es keinen sinnvollen <TT
+CLASS="LITERAL"
+>filp</TT
+> gibt, den der
+Kernel an die <SPAN
+><I
+CLASS="EMPHASIS"
+>release</I
+></SPAN
+>-Methode übergeben könnte,
+wird hierfür <TT
+CLASS="LITERAL"
+>NULL</TT
+> verwendet. Da die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>release</I
+></SPAN
+>-Implementation eines Block-Treibers
+<TT
+CLASS="LITERAL"
+>filp-&#62;private_data</TT
+> nicht verwenden kann,
+um auf die Geräte-Informationen zuzugreifen, wird zur Unterscheidung
+der Geräte <TT
+CLASS="LITERAL"
+>inode-&#62;i_rdev</TT
+> verwendet. Die <SPAN
+><I
+CLASS="EMPHASIS"
+>release</I
+></SPAN
+>-Implementation in
+<SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> sieht wie folgt aus:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+int sbull_release (struct inode *inode, struct file *filp)
+{
+    Sbull_Dev *dev = sbull_devices + MINOR(inode-&#62;i_rdev);
+
+    spin_lock(&#38;dev-&#62;lock);
+    dev-&#62;usage--;
+    MOD_DEC_USE_COUNT;
+    spin_unlock(&#38;dev-&#62;lock);
+    return 0;
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Andere Treiberfunktionen sind vom <TT
+CLASS="LITERAL"
+>flip</TT
+>-Problem
+nicht betroffen, weil sie nichts mit dem Ein- oder Aushängen von
+Dateisystemen zu tun haben. Beispielsweise wird
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioctl</I
+></SPAN
+> nur von Prozessen verwendet, die das Gerät
+explizit mit <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> geöffnet haben.
+
+&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x15067.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x15678.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Anfragen bearbeiten: Das Ganze noch einmal genauer</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="lock.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Die ioctl-Methode</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

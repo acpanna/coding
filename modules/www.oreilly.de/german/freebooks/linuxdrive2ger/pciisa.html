@@ -1,0 +1,404 @@
+<HTML
+><HEAD
+><TITLE
+>Ein Blick zurück: ISA</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Ein Überblick über die Peripherie-Busse"
+HREF="pci.html"><LINK
+REL="PREVIOUS"
+TITLE="Ein Überblick über die Peripherie-Busse"
+HREF="pci.html"><LINK
+REL="NEXT"
+TITLE="PC/104 und PC/104+"
+HREF="pci104.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="pci.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 15. Ein Überblick über die Peripherie-Busse</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="pci104.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="PCIISA"
+>Ein Blick zurück: ISA</A
+></H1
+><P
+>&#13;Der ISA-Bus hat ein ziemlich veraltetes Design und eine notorisch
+schlechte Performance, deckt aber immer noch einen bedeutenden Teil des
+Marktes für Erweiterungskarten ab. Wenn es auf die Geschwindigkeit
+nicht so ankommt und Sie alte Hauptplatinen unterstützen wollen, dann
+ist eine ISA-Implementation einer PCI-Implementation vorzuziehen. Ein
+weiterer Vorteil: Wenn Sie Hobby-Elektroniker sind, dann können Sie
+sich leicht eigene Geräte bauen, etwas, was mit PCI definitiv nicht
+möglich ist.&#13;</P
+><P
+>Ein großer Nachteil von ISA ist dagegen die enge Bindung an die
+PC-Architektur. Der Bus hat alle Einschränkungen des 80286-Prozessors
+und verursacht Systemprogrammierern endlose Schmerzen. Das zweite
+große Problem des ISA-Designs (das vom ursprünglichen IBM PC ererbt
+wurde) ist das Fehlen von geographischer Adressierung, was zu endlosen
+Problemen und langwierigen
+Ausstöpseln-Jumper-umstecken-Einstöpseln-Testen-Zyklen beim Einbau
+neuer Geräte geführt
+hat. Interessanterweise benutzten selbst die ältesten Apple
+II-Computer eine geographische Adressierung und verfügten über Jumper-lose
+Erweiterungskarten.</P
+><P
+>Trotz seiner großen Nachteile wird ISA immer noch an mehreren
+unerwarteten Stellen verwendet. Beispielsweise enthält die VR41xx-Serie
+von MIPS-Prozessoren, die in mehreren Palmtops verwendet wird,
+merkwürdigerweise einen ISA-kompatiblen Erweiterungs-Bus. Der Grund
+dafür sind die extrem niedrigen Kosten mancher alter Hardware wie
+8390-basierter Ethernet-Karten, weswegen eine CPU mit elektrischen
+ISA-Signalen leicht die furchtbaren, aber billigen PC-Geräte verwenden
+kann.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN22121"
+>Hardware-Ressourcen</A
+></H2
+><P
+>&#13;Ein ISA-Gerät kann über I/O-Ports, Speicherbereiche und
+Interrupt-Leitungen verfügen.&#13;</P
+><P
+>Auch wenn die x86-Prozessoren 64 KByte an I/O-Port-Speicher unterstützen
+(d. h., der Prozessor verwendet 16 Adreßleitungen), decodiert manche
+alte PC-Hardware nur die unteren zehn Leitungen. Das begrenzt den
+verwendbaren Adreßraum auf 1024 Ports, weil jede Adresse im Bereich
+von 1 KByte bis 64 KByte für eine niedrige Adresse eines Gerätes gehalten
+wird, das nur die unteren Adreßleitungen decodiert. Manche
+Peripherie-Geräte umgehen dies, indem sie nur einen Port in das untere
+Kilobyte abbilden und die hohen Adreßleitungen benutzen, um zwischen
+den verschiedenen Geräteregistern auszuwählen. Beispielsweise kann ein
+an <TT
+CLASS="LITERAL"
+>0x340</TT
+> abgebildetes Gerät auch sicher
+<TT
+CLASS="LITERAL"
+>0x740</TT
+>, <TT
+CLASS="LITERAL"
+>0xB40</TT
+> usw. verwenden.&#13;</P
+><P
+>Kann man die Anzahl der zur Verfügung stehenden I/O-Ports schon
+als beschränkt betrachten, ist es beim Speicherzugriff noch
+schlechter. Ein ISA-Gerät kann nur den Speicherbereich zwischen 640 KByte
+und 1 MByte und den zwischen 15 MByte und 16 MByte verwenden. Der Bereich von 64 KByte bis 1 MByte wird vom PC-BIOS, von VGA-kompatiblen Grafikkarten und
+verschiedenen anderen Geräten benutzt, was nur wenig Platz für andere
+Geräte läßt. Der Speicher ab 15 MByte wird dagegen von Linux nicht direkt
+unterstützt, und das Aufbohren des Kernels, um dies zu unterstützen,
+ist heutzutage Zeitverschwendung.&#13;</P
+><P
+>Die dritte zur Verfügung stehende Ressource von ISA-Karten sind die
+Interrupt-Leitungen. Es gibt nur eine begrenzte Anzahl von
+Interrupt-Leitungen, die auf den ISA-Bus geleitet werden, und diese
+werden auch noch von allen Karten gemeinsam genutzt. Das kann dazu
+führen, daß falsch konfigurierte Geräte auf einmal die gleichen
+Interrupt-Leitungen verwenden.</P
+><P
+>Obwohl die ursprüngliche ISA-Spezifikation das gemeinsame Nutzen von
+Interrupts über Gerätegrenzen hinweg nicht erlaubt, ist das doch mit
+den meisten Geräten möglich.<A
+NAME="AEN22134"
+HREF="#FTN.AEN22134"
+>[1]</A
+>
+Das gemeinsame Nutzen von Interrupts auf der Ebene der Software wurde
+in &#8220;<A
+HREF="irqshare.html"
+>the Section called <I
+>Gemeinsames Nutzen von Interrupts</I
+> in Kapitel 9</A
+>&#8221; in <A
+HREF="irq.html"
+>Kapitel 9</A
+>
+beschrieben.&#13;</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN22138"
+>ISA-Programmierung</A
+></H2
+><P
+>Was die Programmierung angeht, gibt es im Kernel oder im BIOS keine
+direkten Hilfen, die die Verwendung von ISA-Geräten einfacher machen
+(wie etwa bei PCI) &#8212; einmal
+abgesehen davon, daß Sie die Register für I/O-Ports und IRQ-Leitungen
+verwenden können, die in &#8220;<A
+HREF="buiresource.html"
+>the Section called <I
+>Ressourcen verwenden</I
+> in Kapitel 2</A
+>&#8221; (<A
+HREF="building.html"
+>Kapitel 2</A
+>) und in &#8220;<A
+HREF="irqinstall.html"
+>the Section called <I
+>Einen Interrupt-Handler installieren</I
+> in Kapitel 9</A
+>&#8221; (<A
+HREF="irq.html"
+>Kapitel 9</A
+>)
+beschrieben wurden.&#13;</P
+><P
+>Die im ersten Teil des Buches gezeigten Programmiertechniken gelten
+alle für ISA-Geräte; der Treiber kann nach I/O-Ports suchen, und
+die Interrupt-Leitung muß mit einer der in &#8220;<A
+HREF="irqinstall.html#IRQPROBE"
+>the Section called <I
+>Automatische Erkennung der IRQ-Nummer</I
+> in Kapitel 9</A
+>&#8221; in <A
+HREF="irq.html"
+>Kapitel 9</A
+>
+gezeigten Techniken automatisch ermittelt werden.</P
+><P
+>Die Hilfsfunktion <SPAN
+CLASS="APPLICATION"
+>isa_readb</SPAN
+> und
+mit ihr verwandte Funktionen sind in &#8220;<A
+HREF="hardmem.html"
+>the Section called <I
+>I/O-Speicher verwenden</I
+> in Kapitel 8</A
+>&#8221; in <A
+HREF="hard.html"
+>Kapitel 8</A
+> kurz eingeführt worden; mehr gibt es dazu auch nicht
+zu sagen.</P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN22152"
+>Die &#8220;Plug-and-Play&#8221;-Spezifikation</A
+></H2
+><P
+>&#13;
+Einige neuere ISA-Karten folgen merkwürdigen Entwurfsregeln und
+erfordern eine besondere Initialisierungssequenz, die dazu gedacht
+ist, die Installation und Konfiguration von zusätzlichen Karten zu
+vereinfachen. Die Spezifikation dafür wird <I
+CLASS="FIRSTTERM"
+>Plug-and-Play</I
+>
+(PnP) genannt und besteht aus einer unpraktischen Menge an Regeln zum
+Entwerfen und Konfigurieren Jumper-loser ISA-Geräte. PnP-Geräte
+implementieren relozierbare I/O-Regionen, und das PC-BIOS ist für
+die Relozierung zuständig &#8212; ähnlich wie bei PCI.&#13;</P
+><P
+>Das Ziel von PnP ist es also, die gleiche Flexibilität wie bei
+PCI-Geräten zu erreichen, ohne die zugrundeliegende elektrische
+Schnittstelle (den ISA-Bus) zu verändern. Zu diesem Zweck definiert
+die Spezifikation eine Reihe von geräteunabhängigen
+Konfigurationsregistern und eine Möglichkeit, die Karten geografisch
+zu adressieren, auch wenn der physikalische Bus selbst keine Leitungen
+pro Karte (also geographische Leitungen) hat &#8212; jede
+ISA-Signalleitung ist mit jedem verfügbaren Slot verbunden.&#13;</P
+><P
+>&#13;
+
+Die geograpische Adressierung läuft so ab, daß zunächst jedem Peripherie-Gerät im Computer eine kleine ganze Zahl, die <I
+CLASS="FIRSTTERM"
+>Card Select Number (CSN)</I
+> zugewiesen wird. Jedes PnP-Gerät hat eine
+eindeutige 64 Bit breite Seriennummer, die in der Karte hart codiert
+ist. Bei der CSN-Zuweisung wird diese eindeutige Seriennummer
+verwendet, um die PnP-Geräte zu identifizieren. Diese Zuweisung
+funktioniert aber nur beim Hochfahren des Rechners sicher, weswegen
+das BIOS PnP-fähig sein muß. Daher können alte Rechner PnP nur mit
+einer spezifischen Konfigurationsdiskette unterstützen, selbst wenn
+das Gerät PnP-fähig ist.&#13;</P
+><P
+>Die Karten, die der PnP-Spezifikation folgen, sind auf der Hardware-Seite
+sehr komplex, insbesondere komplexer als PCI-Karten, und benötigen
+auch komplexe Software. Schwierigkeiten bei der Installation dieser
+Geräte sind nicht unüblich, und selbst, wenn die Installation glatt
+läuft, gibt es immer noch die Performance-Beschränkungen und den
+begrenzten I/O-Raum auf dem ISA-Bus. Unserer Meinung nach ist es
+viel besser, wo immer möglich PCI-Geräte zu verwenden und die neue
+Technologie zu genießen.
+
+&#13;</P
+><P
+>Wenn Sie sich für die PnP-Konfigurationssoftware interessieren, dann
+können Sie einen Blick in
+<TT
+CLASS="FILENAME"
+>drivers/net/3c509.c</TT
+> werfen, wo die
+Funktion zum Suchen der PnP-Geräte unterstützt wird. In Linux 2.1.33
+wurde auch im Verzeichnis <TT
+CLASS="FILENAME"
+>drivers/pnp</TT
+> einiges
+an Unterstützung für PnP eingebaut.
+
+&#13;</P
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Fußnoten</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN22134"
+HREF="pciisa.html#AEN22134"
+>[1]</A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Das Problem beim gemeinsamen Nutzen von Interrupts
+hat seine Ursache hauptsächlich in der Elektrotechnik. Wenn ein Gerät die
+Signalleitung auf inaktiv legt, indem es eine Spannung niedriger
+Impedanz anlegt, dann kann dieser Interrupt nicht gemeinsam benutzt
+werden. Wenn dagegen das Gerät einen Pull-Up-Widerstand für den
+inaktiven logischen Zustand verwendet, dann ist eine gemeinsame
+Nutzung möglich. Die meisten Karten verwenden den zweiten Ansatz. Es
+kann aber immer noch passieren, daß Interrupts verlorengehen, weil
+ISA-Interrupts an den Flanken und nicht auf den Ebenen ausgelöst
+werden. An den Flanken ausgelöste Interrupts sind in der Hardware
+einfacher zu implementieren, sind aber nicht für sicheres gemeinsames
+Nutzen geeignet.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="pci.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="pci104.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Ein Überblick über die Peripherie-Busse</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="pci.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>PC/104 und PC/104+</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

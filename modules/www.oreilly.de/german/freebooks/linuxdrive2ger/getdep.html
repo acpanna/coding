@@ -1,0 +1,301 @@
+<HTML
+><HEAD
+><TITLE
+>Abwärtskompatibilität</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Speicher ergattern"
+HREF="get.html"><LINK
+REL="PREVIOUS"
+TITLE="Allozierung während des Bootens"
+HREF="getboot.html"><LINK
+REL="NEXT"
+TITLE="Schnellreferenz"
+HREF="x9938.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="getboot.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 7. Speicher ergattern</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x9938.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="GETDEP"
+>Abwärtskompatibilität</A
+></H1
+><P
+>&#13;Das Speicherverwaltungs-Subsystem in Linux hat sich seit der Version
+2.0 drastisch verändert. Glücklicherweise sind die Änderungen an der
+Programmierschnittstelle aber deutlich kleiner und leichter zu
+berücksichtigen.</P
+><P
+><SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>kfree</I
+></SPAN
+> haben sich
+zwischen Linux 2.0 und Linux 2.4 kaum verändert. Der Zugriff auf den
+hohen Speicher und damit das Flag
+<TT
+CLASS="LITERAL"
+>_&#8201;_GFP_HIGHMEM</TT
+> wurde im Kernel 2.3.23
+hinzugefügt; <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> füllt die Lücken und
+ermöglicht die 2.4-Semantik auch in 2.2 und 2.0.</P
+><P
+>&#13;
+Die Lookaside-Cache-Funktionen wurden in Linux 2.1.23 eingeführt und
+standen im 2.0-Kernel einfach nicht zur Verfügung. Code, der portabel
+mit 2.0-Kerneln sein muß, sollte sich einfach auf
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>kfree</I
+></SPAN
+>
+beschränken. Außerdem wurde <SPAN
+><I
+CLASS="EMPHASIS"
+>kmem_destroy_cache</I
+></SPAN
+>
+während der 2.3-Entwicklung eingeführt und ist erst in der Version
+2.2.18 in die 2.2-Serie zurückportiert worden. Aus diesem Grund kann
+<SPAN
+CLASS="APPLICATION"
+>scullc</SPAN
+> nicht mit einem älteren 2.2-Kernel
+kompiliert werden.</P
+><P
+>&#13;<SPAN
+><I
+CLASS="EMPHASIS"
+>_&#8201;_get_free_pages</I
+></SPAN
+> hatte in Linux 2.0 ein
+drittes Integer-Argument namens <TT
+CLASS="LITERAL"
+>dma</TT
+>, das die
+gleiche Funktion wie das Flag <TT
+CLASS="LITERAL"
+>__GFP_DMA</TT
+> in modernen
+Kerneln erfüllte, aber nicht mit dem <TT
+CLASS="LITERAL"
+>flags</TT
+>-Argument
+zusammengefaßt war. Um dieses Problem zu umgehen, übergibt
+<TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> 0 als dritten Parameter an die
+2.0-Funktion. Wenn Sie DMA-Seiten anfordern wollen und
+abwärtskompatibel mit 2.0 sein müssen, dann müssen Sie
+<SPAN
+><I
+CLASS="EMPHASIS"
+>get_dma_pages</I
+></SPAN
+> aufrufen, anstatt
+<TT
+CLASS="LITERAL"
+>__GFP_DMA</TT
+> zu verwenden.</P
+><P
+>&#13;<SPAN
+><I
+CLASS="EMPHASIS"
+>vmalloc</I
+></SPAN
+> und <SPAN
+><I
+CLASS="EMPHASIS"
+>vfree</I
+></SPAN
+> sind in
+allen 2.<SPAN
+><I
+CLASS="EMPHASIS"
+>x</I
+></SPAN
+>-Kerneln unverändert geblieben. Die Funktion
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+> hieß aber zu 2.0-Zeiten
+<SPAN
+><I
+CLASS="EMPHASIS"
+>vremap</I
+></SPAN
+>, und es gab noch kein
+<SPAN
+><I
+CLASS="EMPHASIS"
+>iounmap</I
+></SPAN
+>. Statt dessen wurden mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>vremap</I
+></SPAN
+> angeforderte I/O-Abbildungen mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>vfree</I
+></SPAN
+> wieder freigegeben. Außerdem gab es die
+Header-Datei <TT
+CLASS="FILENAME"
+>linux/vmalloc.h</TT
+> in 2.0 noch nicht;
+die Funktionen waren statt dessen in <TT
+CLASS="FILENAME"
+>linux/mm.h</TT
+>
+deklariert. Wie üblich sorgt <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> dafür, daß
+2.4-Code auch mit früheren Kerneln funktioniert; außerdem wird
+<TT
+CLASS="FILENAME"
+>linux/vmalloc.h</TT
+> eingebunden, wenn
+<TT
+CLASS="FILENAME"
+>linux/mm.h</TT
+> ebenfalls eingebunden wird, so daß
+auch dieser Unterschied nicht sichtbar ist.&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="getboot.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x9938.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Allozierung während des Bootens</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="get.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Schnellreferenz</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

@@ -1,0 +1,475 @@
+<HTML
+><HEAD
+><TITLE
+>Herausnehmbare Geräte</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Das Laden von Block-Treibern"
+HREF="lock.html"><LINK
+REL="PREVIOUS"
+TITLE="Die ioctl-Methode"
+HREF="x15678.html"><LINK
+REL="NEXT"
+TITLE="Partitionierbare Geräte"
+HREF="lockgenhd.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x15678.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 12. Das Laden von Block-Treibern</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="lockgenhd.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="LOCKREMOVE"
+>Herausnehmbare Geräte</A
+></H1
+><P
+>&#13;
+
+
+Als wir über Zeichen-Treiber gesprochen haben, haben wir die letzten
+beiden Datei-Operationen in der
+<TT
+CLASS="LITERAL"
+>block_device_operations</TT
+>-Struktur
+ignoriert, weil sie nur für herausnehmbare Block-Geräte
+existieren. Jetzt ist es an der Zeit, sich damit zu
+beschäftigen. <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> ist eigentlich kein
+herausnehmbares Gerät, tut aber so und implementiert daher diese
+Methoden.&#13;</P
+><P
+>Die Operationen, über die wir hier reden, sind
+<SPAN
+><I
+CLASS="EMPHASIS"
+>check_media_change</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>revalidate</I
+></SPAN
+>. Erstere wird verwendet, um
+herauszufinden, ob sich das Gerät seit dem letzten Zugriff geändert
+hat, letztere reinitialisiert den Zustand des Geräts nach einem
+Wechsel.&#13;</P
+><P
+>Bei <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> wird der Datenbereich des Gerätes
+eine halbe Minute, nachdem der Verwendungszähler auf 0 gefallen ist,
+freigegeben. Wenn das Gerät lange genug ausgehängt (oder
+geschlossen) ist, dann reicht das als Simulation eines
+Diskettenwechsels, und der nächste Zugriff auf das Gerät alloziert
+einen neuen Speicherbereich.&#13;</P
+><P
+>Diese &#8220;verzögerte Freigabe&#8221; wird mit einem Kernel-Timer
+implementiert.&#13;</P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN15862"
+>check_media_change</A
+></H2
+><P
+>&#13;Diese Funktion hat als einziges Argument ein
+<TT
+CLASS="LITERAL"
+>kdev_t</TT
+>, das das Gerät identifiziert. Der
+Rückgabewert ist 1, wenn das Medium gewechselt wurde, und 0 sonst. Ein
+Block-Treiber, der keine herausnehmbaren Geräte unterstützt,
+muß diese Funktion nicht implementieren, wenn er
+<TT
+CLASS="LITERAL"
+>fops-&#62;check_media_change</TT
+> auf
+<TT
+CLASS="LITERAL"
+>NULL</TT
+> setzt.&#13;</P
+><P
+>Wenn es sich um ein Gerät mit herausnehmbaren Medien handelt, aber nicht
+festgestellt werden kann, ob das Medium gewechselt wurde, dann ist es
+immer eine sichere Sache, 1 zurückzugeben. Das ist das Verhalten der
+IDE-Treiber, wenn sie es mit herausnehmbaren Medien zu tun haben.&#13;</P
+><P
+>Die Implementation in <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> gibt 1 zurück,
+wenn das Gerät durch den Ablauf des Timers bereits aus dem Speicher
+entfernt worden ist, und 0, wenn die Daten noch gültig sind. Wenn das
+Debugging eingeschaltet ist, wird auch eine Nachricht in die
+Systemprotokolle ausgegeben; der Benutzer kann also feststellen, wann
+die Methode vom Kernel aufgerufen worden ist.&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+int sbull_check_change(kdev_t i_rdev)
+{
+    int minor = MINOR(i_rdev);
+    Sbull_Dev *dev = sbull_devices + minor;
+
+    PDEBUG("check_change for dev %i\n",minor);
+    if (dev-&#62;data)
+        return 0; /* noch gueltig */
+    return 1; /* nicht mehr gueltig */
+}
+&#13;</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="LOCKREVAL"
+>Revalidierung</A
+></H2
+><P
+>&#13;
+Die Überprüfungsfunktion wird aufgerufen, wenn ein Medienwechsel
+festgestellt wurde. Außerdem wird sie auch von den diversen
+<SPAN
+><I
+CLASS="EMPHASIS"
+>stat</I
+></SPAN
+>-Systemaufrufen der Kernel-Version 2.1 aufgerufen. Der
+Rückgabewert wird derzeit nicht benutzt. Um sicherzugehen, sollte 0 im
+Erfolgsfall und ein negativer Wert im Fehlerfall zurückgegeben
+werden.&#13;</P
+><P
+>Die von <SPAN
+><I
+CLASS="EMPHASIS"
+>revalidate</I
+></SPAN
+> durchgeführte Operation ist
+gerätespezifisch, aber normalerweise aktualisiert die Funktion die
+interne Statusinformation anhand des neuen Mediums.&#13;</P
+><P
+>In <SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+> versucht
+<SPAN
+><I
+CLASS="EMPHASIS"
+>revalidate</I
+></SPAN
+> einen neuen Datenbereich zu
+allozieren, wenn es noch keinen gibt.&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+int sbull_revalidate(kdev_t i_rdev)
+{
+    Sbull_Dev *dev = sbull_devices + MINOR(i_rdev);
+
+    PDEBUG("revalidate for dev %i\n",MINOR(i_rdev));
+    if (dev-&#62;data)
+        return 0;
+    dev-&#62;data = vmalloc(dev-&#62;size);
+    if (!dev-&#62;data)
+        return -ENOMEM;
+    return 0;
+}
+&#13;</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN15889"
+>Zusätzliche Vorsichtsmaßnahmen</A
+></H2
+><P
+>&#13;Treiber für herausnehmbare Geräte sollten auch überprüfen, ob es einen
+Medienwechsel gegeben hat, wenn das Gerät geöffnet wird. Der Kernel
+stellt dafür eine Funktion bereit:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13;int check_disk_change(kdev_t dev);</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;Der Rückgabewert ist von Null verschieden, wenn ein Medienwechsel
+gefunden wurde. Der Kernel ruft
+<SPAN
+><I
+CLASS="EMPHASIS"
+>check_disk_change</I
+></SPAN
+> automatisch beim
+<SPAN
+><I
+CLASS="EMPHASIS"
+>mount</I
+></SPAN
+>, aber nicht beim <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+>
+auf.</P
+><P
+>Manche Programme greifen aber direkt auf die Daten zu, ohne das Gerät
+vorher einzuhängen. Dazu gehören beispielsweise
+<SPAN
+CLASS="APPLICATION"
+>fsck</SPAN
+>, <SPAN
+CLASS="APPLICATION"
+>mcopy</SPAN
+> und
+<SPAN
+CLASS="APPLICATION"
+>fdisk</SPAN
+>. Wenn der Treiber Statusinformationen
+über herausnehmbare Geräte im Speicher hält, sollte er
+<SPAN
+><I
+CLASS="EMPHASIS"
+>check_disk_change</I
+></SPAN
+> aufrufen, wenn
+das Gerät zum erstenmal geöffnet wird. Die Kernel-Funktion ruft die
+normalen Treiber-Methoden
+(<SPAN
+><I
+CLASS="EMPHASIS"
+>check_media_change</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>revalidate</I
+></SPAN
+>) auf, so daß in
+<SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> selbst nichts Besonderes implementiert
+werden muß.&#13;</P
+><P
+>Hier die Implementation von <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> in
+<SPAN
+CLASS="APPLICATION"
+>sbull</SPAN
+>, die sich auch um Medienwechsel
+kümmert:&#13;</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>&#13; 
+int sbull_open (struct inode *inode, struct file *filp)
+{
+    Sbull_Dev *dev; /* Geraeteinformation */
+    int num = MINOR(inode-&#62;i_rdev);
+
+    if (num &#62;= sbull_devs) return -ENODEV;
+    dev = sbull_devices + num;
+
+    spin_lock(&#38;dev-&#62;lock);
+    /* revalidieren beim ersten open, Fehler, wenn keine Daten da sind */
+    if (!dev-&#62;usage) {
+        check_disk_change(inode-&#62;i_rdev);
+        if (!dev-&#62;data)
+        {
+            spin_unlock (&#38;dev-&#62;lock);
+            return -ENOMEM;
+        }
+    }
+    dev-&#62;usage++;
+    spin_unlock(&#38;dev-&#62;lock);
+    MOD_INC_USE_COUNT;
+    return 0;          /* Erfolg */
+}</PRE
+></TD
+></TR
+></TABLE
+><P
+>Im Treiber muß für Medienwechsel nichts weiter implementiert
+werden. Die Daten sind ohnehin beschädigt, wenn ein Medium gewechselt
+wird, während noch ein Prozeß das Gerät geöffnet hat. Ein Treiber kann
+solche Datenbeschädigung nur dann verhindern, wenn anhand des
+Verwendungszählers das Herausnehmen der Medien kontrolliert werden
+kann. In diesem Fall können <SPAN
+><I
+CLASS="EMPHASIS"
+>open</I
+></SPAN
+> und
+<SPAN
+><I
+CLASS="EMPHASIS"
+>close</I
+></SPAN
+> die Sperre entsprechend einschalten
+bzw. freigeben.
+
+
+&#13;</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x15678.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="lockgenhd.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Die ioctl-Methode</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="lock.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Partitionierbare Geräte</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

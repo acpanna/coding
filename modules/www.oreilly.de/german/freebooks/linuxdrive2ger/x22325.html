@@ -1,0 +1,257 @@
+<HTML
+><HEAD
+><TITLE
+>Abwärtskompatibilität</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Ein Überblick über die Peripherie-Busse"
+HREF="pci.html"><LINK
+REL="PREVIOUS"
+TITLE="Externe Bus-Systeme"
+HREF="pciext.html"><LINK
+REL="NEXT"
+TITLE="Schnellreferenz"
+HREF="x22374.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="pciext.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 15. Ein Überblick über die Peripherie-Busse</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x22374.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN22325"
+>Abwärtskompatibilität</A
+></H1
+><P
+>&#13;
+Die derzeitige PCI-Unterstützung stand in der Version 2.0 nicht zur
+Verfügung. Die API war damals deutlich roher, denn sie
+enthielt nicht die diversen in diesem Kapitel beschriebenen Objekte.</P
+><P
+>&#13;
+
+Die sechs Funktionen für den Zugriff auf den Konfigurationsraum
+erwarteten als Argumente den 16-Bit-PCI-Schlüssel des Geräts anstelle
+eines Zeigers auf eine <TT
+CLASS="LITERAL"
+>struct
+pci_dev</TT
+>. Außerdem mußten Sie
+<TT
+CLASS="LITERAL"
+>&#60;asm/pcibios.h&#62;</TT
+> einbinden, bevor Sie in den
+Konfigurationsraum schreiben oder daraus lesen konnten.</P
+><P
+>Glücklicherweise kann man die Unterschiede leicht abhandeln, und wenn
+Sie <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> einbinden, dann können Sie die
+2.4-Semantik auch beim Kompilieren für 2.0
+verwenden. Eine PCI-Unterstützung für Version 2.0 ist in der Header-Datei
+<TT
+CLASS="FILENAME"
+>pci-compat.h</TT
+> enthalten, die automatisch
+von <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+> eingebunden wird, wenn Sie unter 2.0
+kompilieren. Die Header-Datei implementiert die wichtigsten Funktionen
+für die Arbeit mit dem PCI-Bus.</P
+><P
+>Wenn Sie <TT
+CLASS="FILENAME"
+>pci-compat.h</TT
+> verwenden, um Treiber zu
+schreiben, die mit allen Versionen von 2.0 bis 2.4 funktionieren, dann
+müssen Sie <SPAN
+><I
+CLASS="EMPHASIS"
+>pci_release_device</I
+></SPAN
+>
+aufrufen, wenn Sie mit dem <TT
+CLASS="LITERAL"
+>pci_dev</TT
+>-Element
+fertig sind. Dies ist notwendig, weil die von der Header-Datei
+erzeugten falschen <TT
+CLASS="LITERAL"
+>pci_dev</TT
+>-Strukturen mit
+<SPAN
+><I
+CLASS="EMPHASIS"
+>kmalloc</I
+></SPAN
+> alloziert werden, während die echten
+Strukturen aus 2.2 und 2.4 statische Ressourcen im Kernel selbst
+sind. Die zusätzliche Funktion ist in <TT
+CLASS="FILENAME"
+>sysdep.h</TT
+>
+als leer definiert, wenn für 2.2 oder 2.4 kompiliert wird, so daß sie
+keinen Schaden anrichten kann. Wenn Sie portablen Code in Aktion sehen
+wollen, sollten Sie einen Blick auf <TT
+CLASS="FILENAME"
+>pciregions.c</TT
+>
+oder <TT
+CLASS="FILENAME"
+>pcidata.c</TT
+> werfen.</P
+><P
+>&#13;
+Ein weiterer wichtiger Unterschied in 2.0 ist die
+<TT
+CLASS="FILENAME"
+>/proc</TT
+>-Unterstützung für PCI. Es gab keine
+<TT
+CLASS="FILENAME"
+>/proc/bus/pci</TT
+>-Hierarchie (und übrigens überhaupt
+kein <TT
+CLASS="FILENAME"
+>/proc/bus</TT
+>), nur eine einzige Datei namens
+<TT
+CLASS="FILENAME"
+>/proc/pci</TT
+>. Diese war mehr für Menschen als
+Computer gedacht, aber trotzdem nicht besonders lesbar. Unter 2.2
+konnte man beim Kompilieren ein &#8220;abwärtskompatibles
+<TT
+CLASS="FILENAME"
+>/proc/pci</TT
+>&#8221; auswählen, aber in Version 2.4 wurde
+diese veraltete Datei vollständig entfernt.</P
+><P
+>&#13;Das Konzept der Hot-Plug-PCI-Treiber (und <TT
+CLASS="LITERAL"
+>struct
+pci_driver</TT
+>) wurde in Version 2.4 neu eingeführt. Wir
+bieten keine abwärtskompatiblen Makros an, um dieses Feature mit
+älteren Kerneln verwenden zu können.
+
+
+
+
+&#13;</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="pciext.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x22374.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Externe Bus-Systeme</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="pci.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Schnellreferenz</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

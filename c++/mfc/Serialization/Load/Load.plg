@@ -1,0 +1,27 @@
+<html>
+<body>
+<pre>
+<h1>Erstellungsprotokoll</h1>
+<h3>
+--------------------Konfiguration: load - Win32 Debug--------------------
+</h3>
+<h3>Befehlszeilen</h3>
+Erstellen der temporären Datei  "C:\TEMP\RSP62A3.TMP" mit Inhalten
+[
+/nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /D "_AFXDLL" /Fp"Debug/load.pch" /YX /Fo"Debug/" /Fd"Debug/" /FD /GZ  /c 
+"C:\C-Files\Projekte\Serialize2\load\load.cpp"
+]
+Creating command line "cl.exe @C:\TEMP\RSP62A3.TMP" 
+Erstellen der Befehlzeile "link.exe /nologo /subsystem:console /incremental:yes /pdb:"Debug/load.pdb" /debug /machine:I386 /out:"Debug/load.exe" /pdbtype:sept  ".\Debug\load.obj" "
+<h3>Ausgabefenster</h3>
+Kompilierung läuft...
+load.cpp
+Linker-Vorgang läuft...
+
+
+
+<h3>Ergebnisse</h3>
+load.exe - 0 Fehler, 0 Warnung(en)
+</pre>
+</body>
+</html>

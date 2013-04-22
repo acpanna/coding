@@ -1,0 +1,224 @@
+<HTML>
+ <HEAD>
+   <TITLE>
+     &Uuml;bungsblatt 06, 15.06.1999
+   </TITLE>
+ </HEAD>
+ <BODY>
+
+  <H1>
+     &Uuml;bungsblatt 06, 15.06.1999
+   </H1>
+   <H2>
+     Abgabetermin: Di, 22.06.1999, 10<SUP>00</SUP> Uhr
+   </H2>
+
+<DIV ALIGN="right">
+  <A HREF="mailto:Robert.Baier@uni-bayreuth.de">R. Baier</A> <BR>
+  <A HREF="mailto:Anton.Betten@uni-bayreuth.de">A. Betten</A> <BR>
+  <A HREF="mailto:hiwi511@btcipmatx1.cip.uni-bayreuth.de">M. Kohl</A> <BR>
+  <A HREF="mailto:hiwi502@btcipmatx1.cip.uni-bayreuth.de">B. Seifert</A>
+  <BR CLEAR=&auml;ll">
+</DIV>
+<P>
+
+Das &Uuml;bungsblatt besteht aus den Aufgaben <A HREF="#A_16">16</A>,
+<A HREF="#A_17">17</A> und <A HREF="#A_18">18</A>.
+Das &Uuml;bungsblatt inkl. aller Sourcecodes, Bilder, HTML-Seiten, ... kann auch
+als
+<UL>
+  <LI><A HREF="blatt_06.tar.gz"><TT>gzip</TT>'tes <TT>tar</TT>-Archive</A>
+  </LI>
+  <LI>
+      <A HREF="blatt_06.zip"><TT>ZIP</TT>-Archive</A>
+  </LI>
+</UL>
+heruntergeladen werden. <BR>
+
+<EM>Beachten Sie die <A HREF="../allgemein/hinweise.html">allgemeinen Abgabehinweise</A>!!</EM>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A_16">&nbsp;</A>
+
+   <H2>
+     Aufgabe 16
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi502@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Bernd Seifert)
+   </H3>
+
+F&uuml;r bitweise Operationen gibt es die Schiebeoperatoren
+"<TT>&lt;&lt;</TT>" und "<TT>&gt;&gt;</TT>" in C. <BR>
+
+Schreiben Sie ein Programm, das eine tempor&auml;re vorzeichenlose 
+<TT>short</TT>-Zahl von der Tastatur liest, sie einer
+vorzeichenlosen <TT>char</TT>-Variable zuweist und dann
+diesen Wert einmal nach links und einmal nach rechts
+schiebt. Die entstehenden Werte m&uuml;ssen dabei jeweils wieder 
+einer vorzeichenlosen <TT>char</TT>-Variable zugewiesen werden
+und als vorzeichenlose <TT>short</TT>-Zahlen ausgegeben werden.
+
+<P>
+Wiederholen Sie dieses Vorgehen analog mit einer 
+vorzeichenbehafteten <TT>char</TT>-Variable und 
+beantworten Sie folgende Fragen:
+
+<OL TYPE=a>
+  <LI>
+    Gibt es einen Unterschied im Ergebnis, wenn man die Zahl 64 als
+    vorzeichenbehafteten oder als vorzeichenlosen Wert um eine
+    Stelle nach links schiebt?
+    <P>
+  </LI>
+  
+  <LI>
+    Was passiert, wenn man die Dualzahl <TT>10000000</TT>
+    als vorzeichenbehafteten bzw. als vorzeichenlosen Wert 
+    um eine Stelle nach rechts schiebt?
+    <P>
+  </LI>
+  
+  <LI>
+    Mit welchen Grundrechenarten kann man die Operationen
+    "Schieben nach links" bzw. "Schieben nach rechts" am
+    besten vergleichen?
+    <P>
+  </LI>
+  
+  <LI>
+    Haben Sie eine Erkl&auml;rung, warum die beiden Ausgaben
+    derselben Schiebeoperation nicht dasselbe Ergebnis
+    liefern?
+    
+    <PRE>
+  /* C-Code: */
+  signed char s_res = 64 << 1;
+  printf("64 << 1 = %d\n", (int) s_res);
+  printf("64 << 1 = %d\n", 64 << 1);
+
+  // aequivalenter C++-Code:
+  signed char s_res = 64 << 1;
+  cout << "64 << 1 = " << (int) s_res << endl;
+  cout << "64 << 1 = " << (64 << 1) << endl;
+    </PRE>
+  </LI>
+</OL>
+
+<P>
+Abzugeben ist das C-/C++-Programm sowie die Beantwortung 
+der Fragen.
+
+<P>
+
+<HR SIZE=5 WIDTH="100%">
+
+<A NAME="A_17">&nbsp;</A>
+
+   <H2>
+     Aufgabe 17
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi502@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Bernd Seifert)
+   </H3>
+
+Schreiben Sie ein C-/C++-Programm, das
+
+<OL TYPE=a>
+  <LI>
+    zu einem eingelesenen (vorzeichenlosen) Bytewert
+    die zugeh&ouml;rige Dualzahlendarstellung mit
+    Nullen und Einsen als Zeichen ausgibt
+    <P>
+  </LI>
+  
+  <LI>
+    zu einem eingelesenen String der Maximall&auml;nge 8
+    mit Nullen und Einsen den zugeh&ouml;rigen
+    (vorzeichenlosen) Bytewert berechnet
+    <P>
+  </LI>
+</OL>
+
+<P>
+<B>Hinweis:</B>
+
+<UL>
+  <LI>
+    Welche Bitoperation kann man gut zum Test einzelner
+    Bits in a) einsetzen und welche gut zum Setzen 
+    einzelner Bits in b)?
+    <P>
+  </LI>
+
+  <LI>
+    Denken Sie daran, da&szlig; Sie beim Einlesen und bei der 
+    Ausgabe von <TT>unsigned char</TT>-Werten immer den
+    "Umweg" &uuml;ber <TT>unsigned short</TT>- oder
+    <TT>unsigned int</TT>-Werte machen m&uuml;ssen.
+  </LI>  
+</UL>
+
+<P>
+Geben Sie das C-/C++-Programm ab und die Beantwortung der
+Fragen.
+
+<P>
+<HR SIZE=5 WIDTH="100%">
+
+<A NAME="A_18">&nbsp;</A>
+
+   <H2>
+     Aufgabe 18
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi511@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Matthias Kohl)
+   </H3>
+
+Rudi Ratlos mu&szlig; ein Programm zur schnellen Korrektur
+von theoretischen F&uuml;hrerscheinpr&uuml;fungen 
+im Multiple-Choice-Verfahren schreiben. Seine Kollegin 
+Katharina Klein-Speicher hat bereits ein Programm 
+geschrieben, das immer jeweils 8 Antworten auf die zugeh&ouml;rigen
+8 Fragen mit Ja-Nein-Entscheidungen in einem Byte abspeichert. So
+entspricht ein Byte mit dem Wert 211 der Dualzahl
+<TT>11010011</TT> und damit den Entscheidungen
+"Ja-Ja-Nein-Ja-Nein-Nein-Ja-Ja" zu den Fragen 1-8.
+
+<P>
+Rudi Ratlos soll zun&auml;chst nur ein Byte mit 
+8 Antwortergebnissen mit der Musterl&ouml;sung (1 Byte)
+vergleichen.
+Anhand der beiden Bytewerte f&uuml;r die
+Musterl&ouml;sung und f&uuml;r eine von Katharina Klein-Speicher
+abgespeicherte Pr&uuml;fungsantwort soll er dann
+die Anzahl der Fehler (entspricht dem Hamming-Abstand
+der beiden Bytes) bei der Beantwortung der acht Fragen ermitteln.
+
+<P>
+<B>Fragen:</B> <BR>
+<OL TYPE=a>
+  <LI>
+    Welche Bitoperation zwischen Musterl&ouml;sung und
+    Pr&uuml;fungsantwort erlaubt es, die Anzahl der
+    Fehler einfach zu z&auml;hlen?
+    <P>
+  </LI>
+
+  <LI>
+    Nimmt man als Musterl&ouml;sung den Bytewert 106,
+    welche der Strategien "Ja-Nein-Ja-Nein-Ja-Nein-Ja-Nein"
+    bzw. "Nein-Ja-Nein-Ja-Nein-Ja-Nein-Ja" bei der
+    Beantwortung ist besser?
+    <P>
+  </LI>
+</OL>
+
+<P>
+Abzugeben ist das C-/C++-Programm und die Beantwortung 
+der Fragen.
+
+ </BODY>
+</HTML>

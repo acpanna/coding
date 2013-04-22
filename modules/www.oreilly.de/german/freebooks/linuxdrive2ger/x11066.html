@@ -1,0 +1,414 @@
+<HTML
+><HEAD
+><TITLE
+>Schnellreferenz</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.72
+"><LINK
+REL="HOME"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Hardware-Verwaltung"
+HREF="hard.html"><LINK
+REL="PREVIOUS"
+TITLE="Abwärtskompatibilität"
+HREF="hardback.html"><LINK
+REL="NEXT"
+TITLE="Interrupt-Handler"
+HREF="irq.html"></HEAD
+><BODY
+CLASS="SECT1"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+></TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="hardback.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Kapitel 8. Hardware-Verwaltung</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="irq.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN11066"
+>Schnellreferenz</A
+></H1
+><P
+>In diesem Kapitel wurden die folgenden Symbole aus dem Bereich der
+Hardware-Verwaltung eingeführt:</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/kernel.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>void barrier(void)</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+Diese &#8220;Software&#8221;-Speicherbarriere fordert den Compiler auf, während dieser Anweisung allen Speicher als flüchtig zu betrachten.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;asm/system.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>void rmb(void);</TT
+>, <TT
+CLASS="LITERAL"
+>void wmb(void);</TT
+>, <TT
+CLASS="LITERAL"
+>void mb(void);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+
+
+Dies sind Hardware-Speicherbarrieren. Sie fordern die CPU (und den Compiler)
+auf, an dieser Stelle alle Lese- und Schreibzugriffe auf den Speicher
+abzuschließen, bevor neue anfangen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;asm/io.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned inb(unsigned port);</TT
+>, <TT
+CLASS="LITERAL"
+>void outb(unsigned char byte, unsigned port);</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned inw(unsigned port);</TT
+>, <TT
+CLASS="LITERAL"
+>void outw(unsigned short word, unsigned port);</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned inl(unsigned port);</TT
+>, <TT
+CLASS="LITERAL"
+>void outl(unsigned doubleword, unsigned port);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+
+
+
+
+Diese Funktionen werden verwendet, um auf I/O-Ports zu
+        schreiben bzw. von diesen zu lesen. Sie können auch von Programmen
+        aus dem User-Space aufgerufen werden, sofern diese Zugriffsrechte
+        auf die Ports haben.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>unsigned inb_p(unsigned port);</TT
+>, <TT
+CLASS="LITERAL"
+>...</TT
+></DT
+><DD
+><P
+>&#13;
+Die Anweisung <TT
+CLASS="LITERAL"
+>SLOW_DOWN_IO</TT
+>
+        wird manchmal benötigt, um auf der x86-Plattform mit langsamen
+        ISA-Karten klarzukommen. Wenn nach einer I/O_-Operation
+        eine kleine Pause benötigt wird, können Sie die sechs wartenden
+        Gegenstücke zu den oben genannten Funktionen verwenden, deren
+        Namen auf <TT
+CLASS="LITERAL"
+>_p</TT
+> enden.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>void insb(unsigned port, void *addr, unsigned long count);</TT
+>, <TT
+CLASS="LITERAL"
+>void outsb(unsigned port, void *addr, unsigned long count);</TT
+>, <TT
+CLASS="LITERAL"
+>void insw(unsigned port, void *addr, unsigned long count);</TT
+>, <TT
+CLASS="LITERAL"
+>void outsw(unsigned port, void *addr, unsigned long count);</TT
+>, <TT
+CLASS="LITERAL"
+>void insl(unsigned port, void *addr, unsigned long count);</TT
+>, <TT
+CLASS="LITERAL"
+>void outsl(unsigned port, void *addr, unsigned long count);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+
+
+Die &#8220;String-Funktionen&#8221; sind optimiert, um Daten von
+        einem Eingabe-Port in einen Speicherbereich oder in die andere Richtung zu
+        transportieren. Solche Übertragungen werden implementiert, indem
+        ein und derselbe Port so oft ausgelesen oder beschrieben wird, wie in <TT
+CLASS="LITERAL"
+>count</TT
+>
+        angegeben ist.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/ioport.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>int check_region(unsigned long start, unsigned long len);</TT
+>, <TT
+CLASS="LITERAL"
+>void request_region(unsigned long start, unsigned long len, char *name);</TT
+>, <TT
+CLASS="LITERAL"
+>void release_region(unsigned long start, unsigned long len);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+
+Ressourcen-Allokatoren für I/O-Ports. Die
+<SPAN
+><I
+CLASS="EMPHASIS"
+>check</I
+></SPAN
+>-Funktion gibt 0 im Erfolgsfall und einen
+Wert kleiner 0 im Fehlerfall zurück.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>int check_mem_region(unsigned long start, unsigned long len);</TT
+>, <TT
+CLASS="LITERAL"
+>void request_mem_region(unsigned long start, unsigned long len, char *name);</TT
+>, <TT
+CLASS="LITERAL"
+>void release_mem_region(unsigned long start, unsigned long len);</TT
+></DT
+><DD
+><P
+>&#13;
+
+Diese Funktionen erledigen die Ressourcen-Allokation von
+Speicherbereichen.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;asm/io.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>void *ioremap(unsigned long phys_addr, unsigned long size);</TT
+>, <TT
+CLASS="LITERAL"
+>void *ioremap_nocache(unsigned long phys_addr, unsigned long size);</TT
+>, <TT
+CLASS="LITERAL"
+>void iounmap(void *virt_addr);</TT
+></DT
+><DD
+><P
+>&#13;
+
+<SPAN
+><I
+CLASS="EMPHASIS"
+>ioremap</I
+></SPAN
+> bildet einen physikalischen Adreßbereich
+in den virtuellen Adreßraum des Prozessors ab und macht ihn so für den
+Kernel verfügbar. <SPAN
+><I
+CLASS="EMPHASIS"
+>iounmap</I
+></SPAN
+> gibt die Abbildung
+wieder frei, wenn sie nicht mehr benötigt wird.</P
+></DD
+><DT
+><TT
+CLASS="LITERAL"
+>#include &#60;linux/io.h&#62;</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned readb(address);</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned readw(address);</TT
+>, <TT
+CLASS="LITERAL"
+>unsigned readl(address);</TT
+>, <TT
+CLASS="LITERAL"
+>void writeb(unsigned value, address);</TT
+>, <TT
+CLASS="LITERAL"
+>void writew(unsigned value, address);</TT
+>, <TT
+CLASS="LITERAL"
+>void writel(unsigned value, address);</TT
+>, <TT
+CLASS="LITERAL"
+>memset_io(address, value, count);</TT
+>, <TT
+CLASS="LITERAL"
+>memcpy_fromio(dest, source, nbytes);</TT
+>, <TT
+CLASS="LITERAL"
+>memcpy_toio(dest, source, nbytes);</TT
+></DT
+><DD
+><P
+>&#13;
+
+
+
+
+
+
+
+
+
+
+Alle diese Funktionen werden verwendet, um auf
+        I/O-Speicherbereiche zuzugreifen; entweder auf unteren
+        ISA-Speicher oder auf obere PCI-Puffer.</P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="hardback.html"
+ACCESSKEY="P"
+>Zurück</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="irq.html"
+ACCESSKEY="N"
+>Weiter</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Abwärtskompatibilität</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="hard.html"
+ACCESSKEY="U"
+>Hoch</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Interrupt-Handler</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

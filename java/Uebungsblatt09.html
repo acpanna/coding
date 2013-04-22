@@ -1,0 +1,220 @@
+<HTML>
+ <HEAD>
+   <TITLE>
+     &Uuml;bungsblatt 09, 18.01.2000
+   </TITLE>
+ </HEAD>
+ <BODY>
+   <H1>
+     &Uuml;bungsblatt 09, 18.01.2000
+   </H1>
+   <H2>
+     Abgabetermin: Mo, 25.01.2000, 23:59 Uhr
+   </H2>
+
+<P>
+<DIV ALIGN="right">
+  <A HREF="mailto:Robert.Baier@uni-bayreuth.de">R. Baier</A> <BR>
+  <A HREF="mailto:hiwi512@btcipmatx1.cip.uni-bayreuth.de">M. Butscher</A> <BR>
+  <A HREF="mailto:hiwi501@btcipmatx1.cip.uni-bayreuth.de">P. Lerner</A>
+  <BR CLEAR="all">
+</DIV>
+</P>
+
+Das &Uuml;bungsblatt besteht aus der Aufgabe <A HREF="#A21">21</A>,
+<A HREF="#A22">22</A> und der Teamaufgabe <A HREF="#A23">23</A> mit jeweils 4 Punkten. <BR>
+Das &Uuml;bungsblatt inkl. aller Sourcecodes, Bilder, HTML-Seiten, ... kann auch
+als
+
+<UL>
+  <LI><A HREF="blatt_09.tar.gz"><TT>gzip</TT>'tes <TT>tar</TT>-Archive</A>
+  </LI>
+  <LI>
+      <A HREF="blatt_09.zip"><TT>ZIP</TT>-Archive</A>
+  </LI>
+</UL>
+heruntergeladen werden. <BR>
+<EM>Beachten Sie die <A HREF="http://www.uni-bayreuth.de/departments/math/~rbaier/lectures/java/uebung/allgemein/hinweise.html">allgemeinen Abgabehinweise</A>!!</EM>
+
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A21">&nbsp;</A>
+
+   <H2>
+     Aufgabe 21 <BR>
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi512@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Michael Butscher)
+   </H3>
+
+<P>
+  Diese Aufgabe ist die Fortsetzung von <A HREF="../blatt_08/#A20">Blatt 08, 
+  Aufgabe 20</A>. Sie sollen jetzt die Konzepte von b) und c) zum Ableiten der
+  Klassen <TT>Strecke</TT>, <TT>Kreis</TT> und <TT>Quadrat</TT> von der bereits
+  entwickelten Oberklasse <TT>Punkt</TT> in die Praxis umsetzen, d.h. ein
+  lauff&auml;higes Java-Programm schreiben. 
+</P>
+
+<P>
+  Neben den erforderlichen Konstruktoren sollen Sie insbesondere die in
+  <A HREF="../blatt_08/#A20">Blatt 08</A> beschriebenen Operationen
+  Verschiebung, Skalierung und Dehnung/Stauchung bei den drei abgeleiteten 
+  Klassen realisieren (und ggf. auf entsprechende Operationen der Oberklasse 
+  zur&uuml;ckf&uuml;hren). Welche neuen get- und set-Methoden kommen in den
+  drei abgeleiteten Klassen noch zu denen von <TT>Punkt</TT> hinzu?
+</P>
+
+
+<P>
+  <B>Abzugeben</B> sind der Java-Sourcecode und der Java-Bytecode
+  der vier Klassen und eines kurzen Testprogramms.
+</P>
+
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A22">&nbsp;</A>
+
+   <H2>
+     Aufgabe 22 <BR>
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi512@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Michael Butscher)
+   </H3>
+
+<P>
+  Das folgende <A HREF="Konstruktor_Test.java">Java-Programm</A> testet
+  das sogenannte "constructor chaining" bei der Vererbung von Klassen. 
+</P>
+
+<P>
+  F&uuml;gen Sie in alle vorhandenen Konstruktoren so fr&uuml;h wie
+  m&ouml;glich Ausgaben ein, die angeben, welcher Konstruktor welcher 
+  Klasse aufgerufen wurde. Bei den Klassen <TT>Quadrat</TT> und 
+  <TT>Rechteck</TT> soll zus&auml;tzlich noch die ID des aktuellen 
+  Objekts mit ausgeben werden. In den <TT>finalize()</TT>-Methoden soll eine 
+  Ausgabe eingef&uuml;gt werden, f&uuml;r welche Klasse <TT>finalize()</TT>
+  aufgerufen wurde und ggf. welches Objekt in K&uuml;rze freigegeben
+  wird (durch die Ausgabe der ID).
+</P>
+
+<P>
+  &Uuml;bersetzen Sie das Programm und erkl&auml;ren Sie detailliert die Ausgabe
+  anhand des Sourcecodes.
+</P>
+
+
+<P>
+  <B>Abzugeben</B> ist der Java-Sourcecode und der zugeh&ouml;rige Bytecode
+  sowie die detaillierte Kommentierung der Ausgabe per e-mail.
+</P>
+
+<HR SIZE=5 WIDTH="100%">
+<A NAME="A23">&nbsp;</A>
+
+   <H2>
+     Teamaufgabe 23 <BR>
+     (Abgabe von bis zu 2 Leuten gemeinsam m&ouml;glich und erw&uuml;nscht)
+   </H2>
+   <H3>
+     L&ouml;sung per e-mail an <TT>hiwi501@btcipmatx1.cip.uni-bayreuth.de</TT>
+     (Peter Lerner)
+   </H3>
+
+<P>
+  Eine Kurve in <B>R</B><SUP>2</SUP> ist eine Funktion
+  
+  <BLOCKQUOTE>
+    <I>t</I> 
+    <IMG WIDTH="15" HEIGHT="13" ALIGN="BOTTOM" BORDER="0"
+         SRC="mapsto.gif" ALT="$\mapsto$">
+    <I>(x(t), y(t))</I>,
+  </BLOCKQUOTE>
+  
+  die durch zwei Koordinatenfunktionen 
+  <I>x:</I> [<I>t<SUB>0</SUB>&nbsp;, t<SUB>N</SUB></I>] 
+  <IMG WIDTH="15" HEIGHT="13" ALIGN="BOTTOM" BORDER="0"
+       SRC="mapsto.gif" ALT="$\mapsto$">
+  <I><B>R</B></I>
+  und <I>y:</I> [<I>t<SUB>0</SUB>&nbsp;, t<SUB>N</SUB></I>] 
+  <IMG WIDTH="15" HEIGHT="13" ALIGN="BOTTOM" BORDER="0"
+       SRC="mapsto.gif" ALT="$\mapsto$">
+  <I><B>R</B></I> 
+  gegeben ist. <BR>
+  
+  Um eine Kurve zu zeichnen, w&auml;hlt man &auml;quidistante Gitterpunkte
+  <I>t<SUB>i</SUB> = t<SUB>0</SUB> + i*h</I>, <I>i = 0, 1, ..., N</I>, mit der Schrittweite
+  <I>h = (t<SUB>N</SUB> - t<SUB>0</SUB>)/N</I> aus
+  dem Intervall [<I>t<SUB>0</SUB>&nbsp;, t<SUB>N</SUB></I>].
+</P>
+
+<P>
+  <B>Beispiele:</B> <BR>
+  Ein Kreis mit Mittelpunkt <I>(m<SUB>x</SUB>&nbsp;, m<SUB>y</SUB>)</I> und
+  Radius <I>r</I> ist eine Kurve mit
+  
+  <BLOCKQUOTE>
+    <I>x(t) = m<SUB>x</SUB> + r*cos(t),
+       y(t) = m<SUB>y</SUB> + r*sin(t)</I> 
+    &nbsp;&nbsp; mit &nbsp;&nbsp; [<I>t<SUB>0</SUB>&nbsp;, t<SUB>N</SUB></I>]
+    <I>=</I> [<I>0, 2</I> 
+    <IMG WIDTH="13" HEIGHT="13" ALIGN="BOTTOM" BORDER="0"
+         SRC="pi.gif" ALT="$\pi$">
+    ].
+  </BLOCKQUOTE>
+  
+  Eine Strecke mit Anfangspunkt <I>(p<SUB>x</SUB>&nbsp;, p<SUB>y</SUB>)</I>
+  und Endpunkt <I>(q<SUB>x</SUB>&nbsp;, q<SUB>y</SUB>)</I> ist eine Kurve
+  
+  <BLOCKQUOTE>
+    <I>x(t) = p<SUB>x</SUB> + t*(q<SUB>x</SUB> - p<SUB>x</SUB>),
+       y(t) = p<SUB>y</SUB> + t*(q<SUB>y</SUB> - p<SUB>y</SUB>)</I> 
+    &nbsp;&nbsp; mit &nbsp;&nbsp; [<I>t<SUB>0</SUB>&nbsp;, t<SUB>N</SUB></I>]
+    <I>=</I> [<I>0, 1</I>]</I>.
+  </BLOCKQUOTE>
+  
+</P>
+
+<P>
+  <B>erforderliche Datenelemente:</B> <BR>
+  Kurven sollen mit einer abstrakten Klasse <TT>Kurve</TT> realisiert werden,
+  die abgeleiteten Implementierungen durch die Klassen <TT>KreisKurve</TT>
+  und <TT>StreckenKurve</TT>. Die Klasse <TT>Kurve</TT> soll als 
+  Datenelemente mindestens zwei Arrays haben, die die Koordinaten der 
+  Kurvenpunkte
+  
+  <BLOCKQUOTE>
+    <I>(x(t<SUB>i</SUB>), y(t<SUB>i</SUB>))</I>, <I>i = 0, 1, ..., N</I>,
+  </BLOCKQUOTE>
+  
+  aufnehmen. Sobald ein Objekt einer von <TT>Kurve</TT> abgeleiteten Klasse
+  angelegt wird, sollen diese Arrays mit den Kurvenpunkten automatisch besetzt 
+  werden.
+</P>
+
+<P>
+  Entscheiden Sie, ob und welche anderen Datenelemente diese abstrakte Klasse
+  besitzen soll.
+</P>
+
+<P>
+  <B>erforderliche Methoden:</B> <BR>
+  Eine Kurve kann um einen Vektor verschoben oder skaliert werden,
+  d.h. zu ihren Bestimmungsfunktionen <I>x(.)</I> und <I>y(.)</I> wird die
+  Verschiebungskomponente addiert bzw. der Skalierungsfaktor heranmultipliziert.
+</P>
+
+<P>
+  Entscheiden Sie, welche Methoden von <TT>Kurve</TT> abstrakt sind, wie diese
+  in den Ableitungen realisiert werden und welche Methoden bereits in der 
+  abstrakten Klasse implementiert werden k&ouml;nnen.
+</P>
+
+<P>
+  <B>Abzugeben</B> sind der Java-Sourcecode und der Java-Bytecode
+  mit den drei Klassen sowie einem kurzen Testprogramm.
+</P>
+
+ </BODY>
+</HTML>
