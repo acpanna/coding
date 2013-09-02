@@ -30,10 +30,13 @@
     
     NSString *username = [[NSString alloc] initWithString:self.textField.text];
     
-    if (username.length == 0)
-        username = @"World";
+    if (username.length == 0) {
+//      username = @"World";
+        username = NSLocalizedString(@"WORLD", @"The big (and small) world");
+    }
     
-    self.label.text = [[NSString alloc] initWithFormat:@"Hello, %@!", username];
+//  self.label.text = [[NSString alloc] initWithFormat:@"Hello, %@!", username];
+    self.label.text = [[NSString alloc] initWithFormat:NSLocalizedString(@"HELLO", @"Salutation string"), username];
 }
 
 - (BOOL)textFieldShouldReturn:(UITextField *)textField {
