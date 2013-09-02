@@ -1,0 +1,10 @@
+/* 
+  Localizable.strings
+  HelloWorld
+
+  Created by Heiko Vogel on 07.02.13.
+  Copyright (c) 2013 Heiko Vogel. All rights reserved.
+*/
+
+"HELLO" = "哈罗, %@";
+"WORLD" = "世界";
