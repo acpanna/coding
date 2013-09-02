@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="2.0" toolsVersion="3084" systemVersion="12C60" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES" initialViewController="KpN-LR-PXK">
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="2083"/>
+    </dependencies>
+    <scenes>
+        <!--View Controller-->
+        <scene sceneID="Iia-VD-GAc">
+            <objects>
+                <viewController id="KpN-LR-PXK" customClass="ViewController" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="xfS-E3-eA2">
+                        <rect key="frame" x="0.0" y="20" width="768" height="1004"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <subviews>
+                            <webView contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="ANg-Py-MNA">
+                                <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                                <connections>
+                                    <outlet property="delegate" destination="KpN-LR-PXK" id="Myd-2a-MWS"/>
+                                </connections>
+                            </webView>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="jnh-8o-SRS"/>
+                            <activityIndicatorView opaque="NO" contentMode="scaleToFill" style="gray" translatesAutoresizingMaskIntoConstraints="NO" id="uaA-PT-mgN"/>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstItem="jnh-8o-SRS" firstAttribute="leading" secondItem="xfS-E3-eA2" secondAttribute="leading" type="default" id="0tn-G2-r52"/>
+                            <constraint firstItem="jnh-8o-SRS" firstAttribute="top" secondItem="xfS-E3-eA2" secondAttribute="top" type="default" id="G6O-Hz-ECs"/>
+                            <constraint firstItem="uaA-PT-mgN" firstAttribute="centerY" secondItem="ANg-Py-MNA" secondAttribute="centerY" type="default" id="Gw7-hZ-pQ4"/>
+                            <constraint firstItem="jnh-8o-SRS" firstAttribute="bottom" secondItem="xfS-E3-eA2" secondAttribute="bottom" type="default" id="TN3-re-x9d"/>
+                            <constraint firstItem="ANg-Py-MNA" firstAttribute="leading" secondItem="xfS-E3-eA2" secondAttribute="leading" type="default" id="UxW-wn-2qt"/>
+                            <constraint firstItem="jnh-8o-SRS" firstAttribute="trailing" secondItem="xfS-E3-eA2" secondAttribute="trailing" type="default" id="azm-X7-GVK"/>
+                            <constraint firstItem="ANg-Py-MNA" firstAttribute="bottom" secondItem="xfS-E3-eA2" secondAttribute="bottom" type="default" id="cXi-FL-zX6"/>
+                            <constraint firstItem="ANg-Py-MNA" firstAttribute="top" secondItem="xfS-E3-eA2" secondAttribute="top" type="default" id="ehY-V8-OsT"/>
+                            <constraint firstItem="uaA-PT-mgN" firstAttribute="centerX" secondItem="jnh-8o-SRS" secondAttribute="centerX" type="default" id="tMW-GP-D8I"/>
+                            <constraint firstItem="ANg-Py-MNA" firstAttribute="trailing" secondItem="xfS-E3-eA2" secondAttribute="trailing" type="default" id="yPu-kd-aVd"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="act" destination="uaA-PT-mgN" id="elw-3t-hsx"/>
+                        <outlet property="splash" destination="jnh-8o-SRS" id="koq-ir-ytW"/>
+                        <outlet property="webview" destination="ANg-Py-MNA" id="qbo-eh-t9L"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="w0q-ho-Wwa" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-997" y="-1649"/>
+        </scene>
+    </scenes>
+    <simulatedMetricsContainer key="defaultSimulatedMetrics">
+        <simulatedStatusBarMetrics key="statusBar" statusBarStyle="blackTranslucent"/>
+        <simulatedOrientationMetrics key="orientation"/>
+        <simulatedScreenMetrics key="destination"/>
+    </simulatedMetricsContainer>
+</document>
