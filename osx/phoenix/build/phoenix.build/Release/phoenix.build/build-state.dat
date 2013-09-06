@@ -2,14 +2,14 @@ Tphoenix
 v5
 r1
 cCheck dependencies
-cProcessInfoPlistFile /Users/haaner/Apps/phoenix/build/Release/phoenix.kext/Contents/Info.plist phoenix/phoenix-Info.plist
-cProcessPCH /var/folders/7k/jcl_zywn4rbbhp09qdl1wc1m0000gn/C/com.apple.Xcode.501/SharedPrecompiledHeaders/phoenix-Prefix-cdoxysryrimxpcgwvsooqbegptma/phoenix-Prefix.pch.gch phoenix/phoenix-Prefix.pch normal x86_64 c com.apple.compilers.llvmgcc42
-cCompileC build/phoenix.build/Release/phoenix.build/Objects-normal/x86_64/phoenix_info.o /Users/haaner/Apps/phoenix/build/phoenix.build/Release/phoenix.build/DerivedSources/phoenix_info.c normal x86_64 c com.apple.compilers.llvmgcc42
-cCompileC build/phoenix.build/Release/phoenix.build/Objects-normal/x86_64/phoenix.o /Users/haaner/Apps/phoenix/phoenix/phoenix.c normal x86_64 c com.apple.compilers.llvmgcc42
-cLd /Users/haaner/Apps/phoenix/build/Release/phoenix.kext/Contents/MacOS/phoenix normal x86_64
-cGenerateDSYMFile /Users/haaner/Apps/phoenix/build/Release/phoenix.kext.dSYM /Users/haaner/Apps/phoenix/build/Release/phoenix.kext/Contents/MacOS/phoenix
-cCopyStringsFile /Users/haaner/Apps/phoenix/build/Release/phoenix.kext/Contents/Resources/en.lproj/InfoPlist.strings phoenix/en.lproj/InfoPlist.strings
-cTouch /Users/haaner/Apps/phoenix/build/Release/phoenix.kext
+cProcessInfoPlistFile /Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext/Contents/Info.plist phoenix/phoenix-Info.plist
+cProcessPCH /var/folders/7k/jcl_zywn4rbbhp09qdl1wc1m0000gn/C/com.apple.Xcode.501/SharedPrecompiledHeaders/phoenix-Prefix-fqprrrgetufhsxatdotibykxtwwn/phoenix-Prefix.pch.gch phoenix/phoenix-Prefix.pch normal x86_64 c com.apple.compilers.llvmgcc42
+cCompileC build/phoenix.build/Release/phoenix.build/Objects-normal/x86_64/phoenix.o /Users/haaner/Apps/coding/osx/phoenix/phoenix/phoenix.c normal x86_64 c com.apple.compilers.llvmgcc42
+cCompileC build/phoenix.build/Release/phoenix.build/Objects-normal/x86_64/phoenix_info.o /Users/haaner/Apps/coding/osx/phoenix/build/phoenix.build/Release/phoenix.build/DerivedSources/phoenix_info.c normal x86_64 c com.apple.compilers.llvmgcc42
+cLd /Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext/Contents/MacOS/phoenix normal x86_64
+cGenerateDSYMFile /Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext.dSYM /Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext/Contents/MacOS/phoenix
+cCopyStringsFile /Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext/Contents/Resources/en.lproj/InfoPlist.strings phoenix/en.lproj/InfoPlist.strings
+cTouch /Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext
 
 N/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk
 c0000000051C2E4CC00000000000000AA
@@ -51,58 +51,58 @@ c00000000504719A3000000000000F17A
 t1346836899
 s61818
 
-N/Users/haaner/Apps/phoenix/build/Release/phoenix.kext
+N/Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext
 t2
 s0
 
-N/Users/haaner/Apps/phoenix/build/Release/phoenix.kext.dSYM
+N/Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext.dSYM
 t2
 s0
 
-N/Users/haaner/Apps/phoenix/build/Release/phoenix.kext/Contents/Info.plist
+N/Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext/Contents/Info.plist
 t2
 s0
 
-N/Users/haaner/Apps/phoenix/build/Release/phoenix.kext/Contents/MacOS/phoenix
+N/Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext/Contents/MacOS/phoenix
 t2
 s0
 
-N/Users/haaner/Apps/phoenix/build/Release/phoenix.kext/Contents/Resources/en.lproj/InfoPlist.strings
+N/Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext/Contents/Resources/en.lproj/InfoPlist.strings
 t2
 s0
 
-N/Users/haaner/Apps/phoenix/build/phoenix.build/Release/phoenix.build/DerivedSources/phoenix_info.c
-c0000000052204D3A0000000000000241
-t1377848634
+N/Users/haaner/Apps/coding/osx/phoenix/build/phoenix.build/Release/phoenix.build/DerivedSources/phoenix_info.c
+c000000005225AD880000000000000241
+t1378200968
 s577
 
-N/Users/haaner/Apps/phoenix/build/phoenix.build/Release/phoenix.build/Objects-normal/x86_64/phoenix.LinkFileList
-c0000000052204D3A0000000000000065
-t1377848634
-s101
+N/Users/haaner/Apps/coding/osx/phoenix/build/phoenix.build/Release/phoenix.build/Objects-normal/x86_64/phoenix.LinkFileList
+c000000005225AD880000000000000070
+t1378200968
+s112
 
-N/Users/haaner/Apps/phoenix/build/phoenix.build/Release/phoenix.build/Objects-normal/x86_64/phoenix.o
+N/Users/haaner/Apps/coding/osx/phoenix/build/phoenix.build/Release/phoenix.build/Objects-normal/x86_64/phoenix.o
 t2
 s0
 
-N/Users/haaner/Apps/phoenix/build/phoenix.build/Release/phoenix.build/Objects-normal/x86_64/phoenix_info.o
+N/Users/haaner/Apps/coding/osx/phoenix/build/phoenix.build/Release/phoenix.build/Objects-normal/x86_64/phoenix_info.o
 t2
 s0
 
-N/Users/haaner/Apps/phoenix/phoenix/en.lproj/InfoPlist.strings
+N/Users/haaner/Apps/coding/osx/phoenix/phoenix/en.lproj/InfoPlist.strings
 c00000000521D9DC0000000000000002D
 t1377672640
 s45
 
-N/Users/haaner/Apps/phoenix/phoenix/phoenix-Prefix.pch
+N/Users/haaner/Apps/coding/osx/phoenix/phoenix/phoenix-Prefix.pch
 c00000000521D9DC0000000000000005E
 t1377672640
 s94
 
-N/Users/haaner/Apps/phoenix/phoenix/phoenix.c
-c0000000052204D37000000000000378D
-t1377848631
-s14221
+N/Users/haaner/Apps/coding/osx/phoenix/phoenix/phoenix.c
+c000000005220500D0000000000003847
+t1377849357
+s14407
 i<mach-o/loader.h>
 i<mach-o/nlist.h>
 i<sys/fcntl.h>
@@ -111,7 +111,7 @@ i<sys/systm.h>
 i<sys/uio.h>
 i<sys/vnode.h>
 
-N/var/folders/7k/jcl_zywn4rbbhp09qdl1wc1m0000gn/C/com.apple.Xcode.501/SharedPrecompiledHeaders/phoenix-Prefix-cdoxysryrimxpcgwvsooqbegptma/phoenix-Prefix.pch.gch
+N/var/folders/7k/jcl_zywn4rbbhp09qdl1wc1m0000gn/C/com.apple.Xcode.501/SharedPrecompiledHeaders/phoenix-Prefix-fqprrrgetufhsxatdotibykxtwwn/phoenix-Prefix.pch.gch
 t2
 s0
 
@@ -122,89 +122,89 @@ s1025
 
 CCheck dependencies
 r0
-lSLF05#21%IDEActivityLogSection1@2#32"com.apple.dt.IDE.BuildLogSection18"Check dependencies6f67e7ba84d0b741^b309f4ba84d0b741^---0#1#0#--18"Check dependencies36"CAC2D8FE-E2EF-4B68-AFB8-5402ECA8D4C1-
+lSLF05#21%IDEActivityLogSection1@2#32"com.apple.dt.IDE.BuildLogSection18"Check dependenciese1404808e5d5b741^d8f05408e5d5b741^---0#1#0#--18"Check dependencies36"E00DEC54-71FF-43D4-B7CB-1A1536B25D53-
 
-CCompileC build/phoenix.build/Release/phoenix.build/Objects-normal/x86_64/phoenix.o /Users/haaner/Apps/phoenix/phoenix/phoenix.c normal x86_64 c com.apple.compilers.llvmgcc42
-s399541435.008012
-e399541435.078607
+CCompileC build/phoenix.build/Release/phoenix.build/Objects-normal/x86_64/phoenix.o /Users/haaner/Apps/coding/osx/phoenix/phoenix/phoenix.c normal x86_64 c com.apple.compilers.llvmgcc42
+s399893768.438190
+e399893768.531146
 r1
 xCompileC
 xbuild/phoenix.build/Release/phoenix.build/Objects-normal/x86_64/phoenix.o
-x/Users/haaner/Apps/phoenix/phoenix/phoenix.c
+x/Users/haaner/Apps/coding/osx/phoenix/phoenix/phoenix.c
 xnormal
 xx86_64
 xc
 xcom.apple.compilers.llvmgcc42
-lSLF05#21%IDEActivityLogSection1@2#32"com.apple.dt.IDE.BuildLogSection52"Compile /Users/haaner/Apps/phoenix/phoenix/phoenix.c252402bb84d0b741^211f14bb84d0b741^---0#0#0#-19%DVTDocumentLocation2@60"file://localhost/Users/haaner/Apps/phoenix/phoenix/phoenix.c0000000000000000^2236"CompileC build/phoenix.build/Release/phoenix.build/Objects-normal/x86_64/phoenix.o phoenix/phoenix.c normal x86_64 c com.apple.compilers.llvmgcc42    cd /Users/haaner/Apps/phoenix    setenv LANG en_US.US-ASCII    /Applications/Xcode.app/Contents/Developer/usr/bin/llvm-gcc-4.2 -x c -arch x86_64 -fmessage-length=0 -pipe -nostdinc -std=gnu99 -fno-builtin -Wno-trigraphs -force_cpusubtype_ALL -msoft-float -Os -fno-common -mkernel -finline -fno-keep-inline-functions -Wreturn-type -Wunused-variable -Wshorten-64-to-32 -DKERNEL -DKERNEL_PRIVATE -DDRIVER_PRIVATE -DAPPLE -DNeXT -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk -fasm-blocks -mmacosx-version-min=10.8 -gdwarf-2 -iquote /Users/haaner/Apps/phoenix/build/phoenix.build/Release/phoenix.build/phoenix-generated-files.hmap -I/Users/haaner/Apps/phoenix/build/phoenix.build/Release/phoenix.build/phoenix-own-target-headers.hmap -I/Users/haaner/Apps/phoenix/build/phoenix.build/Release/phoenix.build/phoenix-all-target-headers.hmap -iquote /Users/haaner/Apps/phoenix/build/phoenix.build/Release/phoenix.build/phoenix-project-headers.hmap -I/Users/haaner/Apps/phoenix/build/Release/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -I/System/Library/Frameworks/Kernel.framework/PrivateHeaders -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk/System/Library/Frameworks/Kernel.framework/Headers -I/Users/haaner/Apps/phoenix/build/phoenix.build/Release/phoenix.build/DerivedSources/x86_64 -I/Users/haaner/Apps/phoenix/build/phoenix.build/Release/phoenix.build/DerivedSources -F/Users/haaner/Apps/phoenix/build/Release -include /var/folders/7k/jcl_zywn4rbbhp09qdl1wc1m0000gn/C/com.apple.Xcode.501/SharedPrecompiledHeaders/phoenix-Prefix-cdoxysryrimxpcgwvsooqbegptma/phoenix-Prefix.pch -c /Users/haaner/Apps/phoenix/phoenix/phoenix.c -o /Users/haaner/Apps/phoenix/build/phoenix.build/Release/phoenix.build/Objects-normal/x86_64/phoenix.o36"DB994237-1126-49AE-B676-4AF39A5A9BA3-
+lSLF05#21%IDEActivityLogSection1@2#32"com.apple.dt.IDE.BuildLogSection63"Compile /Users/haaner/Apps/coding/osx/phoenix/phoenix/phoenix.cc3477008e5d5b741^cbf88708e5d5b741^---0#0#0#-19%DVTDocumentLocation2@71"file://localhost/Users/haaner/Apps/coding/osx/phoenix/phoenix/phoenix.c0000000000000000^2357"CompileC build/phoenix.build/Release/phoenix.build/Objects-normal/x86_64/phoenix.o phoenix/phoenix.c normal x86_64 c com.apple.compilers.llvmgcc42    cd /Users/haaner/Apps/coding/osx/phoenix    setenv LANG en_US.US-ASCII    /Applications/Xcode.app/Contents/Developer/usr/bin/llvm-gcc-4.2 -x c -arch x86_64 -fmessage-length=0 -pipe -nostdinc -std=gnu99 -fno-builtin -Wno-trigraphs -force_cpusubtype_ALL -msoft-float -Os -fno-common -mkernel -finline -fno-keep-inline-functions -Wreturn-type -Wunused-variable -Wshorten-64-to-32 -DKERNEL -DKERNEL_PRIVATE -DDRIVER_PRIVATE -DAPPLE -DNeXT -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk -fasm-blocks -mmacosx-version-min=10.8 -gdwarf-2 -iquote /Users/haaner/Apps/coding/osx/phoenix/build/phoenix.build/Release/phoenix.build/phoenix-generated-files.hmap -I/Users/haaner/Apps/coding/osx/phoenix/build/phoenix.build/Release/phoenix.build/phoenix-own-target-headers.hmap -I/Users/haaner/Apps/coding/osx/phoenix/build/phoenix.build/Release/phoenix.build/phoenix-all-target-headers.hmap -iquote /Users/haaner/Apps/coding/osx/phoenix/build/phoenix.build/Release/phoenix.build/phoenix-project-headers.hmap -I/Users/haaner/Apps/coding/osx/phoenix/build/Release/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -I/System/Library/Frameworks/Kernel.framework/PrivateHeaders -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk/System/Library/Frameworks/Kernel.framework/Headers -I/Users/haaner/Apps/coding/osx/phoenix/build/phoenix.build/Release/phoenix.build/DerivedSources/x86_64 -I/Users/haaner/Apps/coding/osx/phoenix/build/phoenix.build/Release/phoenix.build/DerivedSources -F/Users/haaner/Apps/coding/osx/phoenix/build/Release -include /var/folders/7k/jcl_zywn4rbbhp09qdl1wc1m0000gn/C/com.apple.Xcode.501/SharedPrecompiledHeaders/phoenix-Prefix-fqprrrgetufhsxatdotibykxtwwn/phoenix-Prefix.pch -c /Users/haaner/Apps/coding/osx/phoenix/phoenix/phoenix.c -o /Users/haaner/Apps/coding/osx/phoenix/build/phoenix.build/Release/phoenix.build/Objects-normal/x86_64/phoenix.o36"A1E3930D-67D4-4AD6-B82C-F2A0AE1C4B3B-
 
-CCompileC build/phoenix.build/Release/phoenix.build/Objects-normal/x86_64/phoenix_info.o /Users/haaner/Apps/phoenix/build/phoenix.build/Release/phoenix.build/DerivedSources/phoenix_info.c normal x86_64 c com.apple.compilers.llvmgcc42
-s399541435.007997
-e399541435.037345
+CCompileC build/phoenix.build/Release/phoenix.build/Objects-normal/x86_64/phoenix_info.o /Users/haaner/Apps/coding/osx/phoenix/build/phoenix.build/Release/phoenix.build/DerivedSources/phoenix_info.c normal x86_64 c com.apple.compilers.llvmgcc42
+s399893768.438193
+e399893768.498394
 r1
 xCompileC
 xbuild/phoenix.build/Release/phoenix.build/Objects-normal/x86_64/phoenix_info.o
-x/Users/haaner/Apps/phoenix/build/phoenix.build/Release/phoenix.build/DerivedSources/phoenix_info.c
+x/Users/haaner/Apps/coding/osx/phoenix/build/phoenix.build/Release/phoenix.build/DerivedSources/phoenix_info.c
 xnormal
 xx86_64
 xc
 xcom.apple.compilers.llvmgcc42
-lSLF05#21%IDEActivityLogSection1@2#32"com.apple.dt.IDE.BuildLogSection106"Compile /Users/haaner/Apps/phoenix/build/phoenix.build/Release/phoenix.build/DerivedSources/phoenix_info.c572402bb84d0b741^2e8f09bb84d0b741^---0#0#0#-19%DVTDocumentLocation2@114"file://localhost/Users/haaner/Apps/phoenix/build/phoenix.build/Release/phoenix.build/DerivedSources/phoenix_info.c0000000000000000^2354"CompileC build/phoenix.build/Release/phoenix.build/Objects-normal/x86_64/phoenix_info.o build/phoenix.build/Release/phoenix.build/DerivedSources/phoenix_info.c normal x86_64 c com.apple.compilers.llvmgcc42    cd /Users/haaner/Apps/phoenix    setenv LANG en_US.US-ASCII    /Applications/Xcode.app/Contents/Developer/usr/bin/llvm-gcc-4.2 -x c -arch x86_64 -fmessage-length=0 -pipe -nostdinc -std=gnu99 -fno-builtin -Wno-trigraphs -force_cpusubtype_ALL -msoft-float -Os -fno-common -mkernel -finline -fno-keep-inline-functions -Wreturn-type -Wunused-variable -Wshorten-64-to-32 -DKERNEL -DKERNEL_PRIVATE -DDRIVER_PRIVATE -DAPPLE -DNeXT -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk -fasm-blocks -mmacosx-version-min=10.8 -gdwarf-2 -iquote /Users/haaner/Apps/phoenix/build/phoenix.build/Release/phoenix.build/phoenix-generated-files.hmap -I/Users/haaner/Apps/phoenix/build/phoenix.build/Release/phoenix.build/phoenix-own-target-headers.hmap -I/Users/haaner/Apps/phoenix/build/phoenix.build/Release/phoenix.build/phoenix-all-target-headers.hmap -iquote /Users/haaner/Apps/phoenix/build/phoenix.build/Release/phoenix.build/phoenix-project-headers.hmap -I/Users/haaner/Apps/phoenix/build/Release/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -I/System/Library/Frameworks/Kernel.framework/PrivateHeaders -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk/System/Library/Frameworks/Kernel.framework/Headers -I/Users/haaner/Apps/phoenix/build/phoenix.build/Release/phoenix.build/DerivedSources/x86_64 -I/Users/haaner/Apps/phoenix/build/phoenix.build/Release/phoenix.build/DerivedSources -F/Users/haaner/Apps/phoenix/build/Release -include /var/folders/7k/jcl_zywn4rbbhp09qdl1wc1m0000gn/C/com.apple.Xcode.501/SharedPrecompiledHeaders/phoenix-Prefix-cdoxysryrimxpcgwvsooqbegptma/phoenix-Prefix.pch -c /Users/haaner/Apps/phoenix/build/phoenix.build/Release/phoenix.build/DerivedSources/phoenix_info.c -o /Users/haaner/Apps/phoenix/build/phoenix.build/Release/phoenix.build/Objects-normal/x86_64/phoenix_info.o36"9E83091C-7187-4B6C-9C5B-3058B37643D0-
+lSLF05#21%IDEActivityLogSection1@2#32"com.apple.dt.IDE.BuildLogSection117"Compile /Users/haaner/Apps/coding/osx/phoenix/build/phoenix.build/Release/phoenix.build/DerivedSources/phoenix_info.c13497008e5d5b741^99ba7f08e5d5b741^---0#0#0#-19%DVTDocumentLocation2@125"file://localhost/Users/haaner/Apps/coding/osx/phoenix/build/phoenix.build/Release/phoenix.build/DerivedSources/phoenix_info.c0000000000000000^2475"CompileC build/phoenix.build/Release/phoenix.build/Objects-normal/x86_64/phoenix_info.o build/phoenix.build/Release/phoenix.build/DerivedSources/phoenix_info.c normal x86_64 c com.apple.compilers.llvmgcc42    cd /Users/haaner/Apps/coding/osx/phoenix    setenv LANG en_US.US-ASCII    /Applications/Xcode.app/Contents/Developer/usr/bin/llvm-gcc-4.2 -x c -arch x86_64 -fmessage-length=0 -pipe -nostdinc -std=gnu99 -fno-builtin -Wno-trigraphs -force_cpusubtype_ALL -msoft-float -Os -fno-common -mkernel -finline -fno-keep-inline-functions -Wreturn-type -Wunused-variable -Wshorten-64-to-32 -DKERNEL -DKERNEL_PRIVATE -DDRIVER_PRIVATE -DAPPLE -DNeXT -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk -fasm-blocks -mmacosx-version-min=10.8 -gdwarf-2 -iquote /Users/haaner/Apps/coding/osx/phoenix/build/phoenix.build/Release/phoenix.build/phoenix-generated-files.hmap -I/Users/haaner/Apps/coding/osx/phoenix/build/phoenix.build/Release/phoenix.build/phoenix-own-target-headers.hmap -I/Users/haaner/Apps/coding/osx/phoenix/build/phoenix.build/Release/phoenix.build/phoenix-all-target-headers.hmap -iquote /Users/haaner/Apps/coding/osx/phoenix/build/phoenix.build/Release/phoenix.build/phoenix-project-headers.hmap -I/Users/haaner/Apps/coding/osx/phoenix/build/Release/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -I/System/Library/Frameworks/Kernel.framework/PrivateHeaders -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk/System/Library/Frameworks/Kernel.framework/Headers -I/Users/haaner/Apps/coding/osx/phoenix/build/phoenix.build/Release/phoenix.build/DerivedSources/x86_64 -I/Users/haaner/Apps/coding/osx/phoenix/build/phoenix.build/Release/phoenix.build/DerivedSources -F/Users/haaner/Apps/coding/osx/phoenix/build/Release -include /var/folders/7k/jcl_zywn4rbbhp09qdl1wc1m0000gn/C/com.apple.Xcode.501/SharedPrecompiledHeaders/phoenix-Prefix-fqprrrgetufhsxatdotibykxtwwn/phoenix-Prefix.pch -c /Users/haaner/Apps/coding/osx/phoenix/build/phoenix.build/Release/phoenix.build/DerivedSources/phoenix_info.c -o /Users/haaner/Apps/coding/osx/phoenix/build/phoenix.build/Release/phoenix.build/Objects-normal/x86_64/phoenix_info.o36"20A3F8B9-0E2E-454B-B10E-BA48B8D234CF-
 
-CCopyStringsFile /Users/haaner/Apps/phoenix/build/Release/phoenix.kext/Contents/Resources/en.lproj/InfoPlist.strings phoenix/en.lproj/InfoPlist.strings
-s399541435.129518
-e399541435.132074
+CCopyStringsFile /Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext/Contents/Resources/en.lproj/InfoPlist.strings phoenix/en.lproj/InfoPlist.strings
+s399893768.721671
+e399893768.753022
 r1
 xCopyStringsFile
-x/Users/haaner/Apps/phoenix/build/Release/phoenix.kext/Contents/Resources/en.lproj/InfoPlist.strings
+x/Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext/Contents/Resources/en.lproj/InfoPlist.strings
 xphoenix/en.lproj/InfoPlist.strings
-lSLF05#21%IDEActivityLogSection1@2#32"com.apple.dt.IDE.BuildLogSection39"Copy phoenix/en.lproj/InfoPlist.stringsb43a21bb84d0b741^cccf21bb84d0b741^---0#0#0#-19%DVTDocumentLocation2@77"file://localhost/Users/haaner/Apps/phoenix/phoenix/en.lproj/InfoPlist.strings0000000000000000^368"CopyStringsFile build/Release/phoenix.kext/Contents/Resources/en.lproj/InfoPlist.strings phoenix/en.lproj/InfoPlist.strings    cd /Users/haaner/Apps/phoenix    builtin-copyStrings --validate --inputencoding utf-8 --outputencoding UTF-16 --outdir /Users/haaner/Apps/phoenix/build/Release/phoenix.kext/Contents/Resources/en.lproj -- phoenix/en.lproj/InfoPlist.strings36"AC1003C7-D2CE-4968-9D15-181005F12A74-
+lSLF05#21%IDEActivityLogSection1@2#32"com.apple.dt.IDE.BuildLogSection39"Copy phoenix/en.lproj/InfoPlist.stringsb3d2b808e5d5b741^1ec6c008e5d5b741^---0#0#0#-19%DVTDocumentLocation2@88"file://localhost/Users/haaner/Apps/coding/osx/phoenix/phoenix/en.lproj/InfoPlist.strings0000000000000000^390"CopyStringsFile build/Release/phoenix.kext/Contents/Resources/en.lproj/InfoPlist.strings phoenix/en.lproj/InfoPlist.strings    cd /Users/haaner/Apps/coding/osx/phoenix    builtin-copyStrings --validate --inputencoding utf-8 --outputencoding UTF-16 --outdir /Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext/Contents/Resources/en.lproj -- phoenix/en.lproj/InfoPlist.strings36"41D11088-D299-45A9-B676-D40DEF183C3A-
 
-CGenerateDSYMFile /Users/haaner/Apps/phoenix/build/Release/phoenix.kext.dSYM /Users/haaner/Apps/phoenix/build/Release/phoenix.kext/Contents/MacOS/phoenix
-s399541435.104526
-e399541435.121400
+CGenerateDSYMFile /Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext.dSYM /Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext/Contents/MacOS/phoenix
+s399893768.681539
+e399893768.713747
 r1
 xGenerateDSYMFile
-x/Users/haaner/Apps/phoenix/build/Release/phoenix.kext.dSYM
-x/Users/haaner/Apps/phoenix/build/Release/phoenix.kext/Contents/MacOS/phoenix
-lSLF05#21%IDEActivityLogSection1@2#32"com.apple.dt.IDE.BuildLogSection67"Generate /Users/haaner/Apps/phoenix/build/Release/phoenix.kext.dSYM6f0e1bbb84d0b741^38131fbb84d0b741^---0#0#0#-19%DVTDocumentLocation2@74"file://localhost/Users/haaner/Apps/phoenix/build/Release/phoenix.kext.dSYM000000000080d041^372"GenerateDSYMFile build/Release/phoenix.kext.dSYM build/Release/phoenix.kext/Contents/MacOS/phoenix    cd /Users/haaner/Apps/phoenix    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/dsymutil /Users/haaner/Apps/phoenix/build/Release/phoenix.kext/Contents/MacOS/phoenix -o /Users/haaner/Apps/phoenix/build/Release/phoenix.kext.dSYM36"0358EA2E-D490-41D5-88BC-0A2FFF2B578B-
+x/Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext.dSYM
+x/Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext/Contents/MacOS/phoenix
+lSLF05#21%IDEActivityLogSection1@2#32"com.apple.dt.IDE.BuildLogSection78"Generate /Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext.dSYMe78eae08e5d5b741^118bc008e5d5b741^---0#0#0#-19%DVTDocumentLocation2@85"file://localhost/Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext.dSYM000000000080d041^405"GenerateDSYMFile build/Release/phoenix.kext.dSYM build/Release/phoenix.kext/Contents/MacOS/phoenix    cd /Users/haaner/Apps/coding/osx/phoenix    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/dsymutil /Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext/Contents/MacOS/phoenix -o /Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext.dSYM36"6364B813-F9FA-4AF7-BDBF-01C0C2FCB4FA-
 
-CLd /Users/haaner/Apps/phoenix/build/Release/phoenix.kext/Contents/MacOS/phoenix normal x86_64
-s399541435.085432
-e399541435.097503
+CLd /Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext/Contents/MacOS/phoenix normal x86_64
+s399893768.537934
+e399893768.674705
 r1
 xLd
-x/Users/haaner/Apps/phoenix/build/Release/phoenix.kext/Contents/MacOS/phoenix
+x/Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext/Contents/MacOS/phoenix
 xnormal
 xx86_64
-lSLF05#21%IDEActivityLogSection1@2#32"com.apple.dt.IDE.BuildLogSection81"Link /Users/haaner/Apps/phoenix/build/Release/phoenix.kext/Contents/MacOS/phoenix98f615bb84d0b741^16f618bb84d0b741^---0#0#0#--804"Ld build/Release/phoenix.kext/Contents/MacOS/phoenix normal x86_64    cd /Users/haaner/Apps/phoenix    setenv MACOSX_DEPLOYMENT_TARGET 10.8    /Applications/Xcode.app/Contents/Developer/usr/bin/llvm-gcc-4.2 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk -L/Users/haaner/Apps/phoenix/build/Release -F/Users/haaner/Apps/phoenix/build/Release -filelist /Users/haaner/Apps/phoenix/build/phoenix.build/Release/phoenix.build/Objects-normal/x86_64/phoenix.LinkFileList -mmacosx-version-min=10.8 -Xlinker -kext -nostdlib -lkmodc++ /Users/haaner/Apps/phoenix/build/phoenix.build/Release/phoenix.build/Objects-normal/x86_64/phoenix_info.o -lkmod -lcc_kext -o /Users/haaner/Apps/phoenix/build/Release/phoenix.kext/Contents/MacOS/phoenix36"2FC52C6B-A3D4-4829-A61D-79B99BF184B1-
+lSLF05#21%IDEActivityLogSection1@2#32"com.apple.dt.IDE.BuildLogSection92"Link /Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext/Contents/MacOS/phoenix4ace8908e5d5b741^67b9ac08e5d5b741^---0#0#0#--870"Ld build/Release/phoenix.kext/Contents/MacOS/phoenix normal x86_64    cd /Users/haaner/Apps/coding/osx/phoenix    setenv MACOSX_DEPLOYMENT_TARGET 10.8    /Applications/Xcode.app/Contents/Developer/usr/bin/llvm-gcc-4.2 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk -L/Users/haaner/Apps/coding/osx/phoenix/build/Release -F/Users/haaner/Apps/coding/osx/phoenix/build/Release -filelist /Users/haaner/Apps/coding/osx/phoenix/build/phoenix.build/Release/phoenix.build/Objects-normal/x86_64/phoenix.LinkFileList -mmacosx-version-min=10.8 -Xlinker -kext -nostdlib -lkmodc++ /Users/haaner/Apps/coding/osx/phoenix/build/phoenix.build/Release/phoenix.build/Objects-normal/x86_64/phoenix_info.o -lkmod -lcc_kext -o /Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext/Contents/MacOS/phoenix36"88CC2223-3F40-4559-B5FE-7CC7A22E36D4-
 
-CProcessInfoPlistFile /Users/haaner/Apps/phoenix/build/Release/phoenix.kext/Contents/Info.plist phoenix/phoenix-Info.plist
-s399541434.959143
-e399541434.961977
+CProcessInfoPlistFile /Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext/Contents/Info.plist phoenix/phoenix-Info.plist
+s399893768.337765
+e399893768.340530
 r1
 xProcessInfoPlistFile
-x/Users/haaner/Apps/phoenix/build/Release/phoenix.kext/Contents/Info.plist
+x/Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext/Contents/Info.plist
 xphoenix/phoenix-Info.plist
-lSLF05#21%IDEActivityLogSection1@2#32"com.apple.dt.IDE.BuildLogSection34"Process phoenix/phoenix-Info.plist6aa0f5ba84d0b741^5244f6ba84d0b741^---0#0#0#-19%DVTDocumentLocation2@69"file://localhost/Users/haaner/Apps/phoenix/phoenix/phoenix-Info.plist0000000000000000^300"ProcessInfoPlistFile build/Release/phoenix.kext/Contents/Info.plist phoenix/phoenix-Info.plist    cd /Users/haaner/Apps/phoenix    builtin-infoPlistUtility phoenix/phoenix-Info.plist -expandbuildsettings -platform macosx -o /Users/haaner/Apps/phoenix/build/Release/phoenix.kext/Contents/Info.plist36"40667F04-3128-40BF-9070-5DAD269F9D0D-
+lSLF05#21%IDEActivityLogSection1@2#32"com.apple.dt.IDE.BuildLogSection34"Process phoenix/phoenix-Info.plista88d5608e5d5b741^d82c5708e5d5b741^---0#0#0#-19%DVTDocumentLocation2@80"file://localhost/Users/haaner/Apps/coding/osx/phoenix/phoenix/phoenix-Info.plist0000000000000000^322"ProcessInfoPlistFile build/Release/phoenix.kext/Contents/Info.plist phoenix/phoenix-Info.plist    cd /Users/haaner/Apps/coding/osx/phoenix    builtin-infoPlistUtility phoenix/phoenix-Info.plist -expandbuildsettings -platform macosx -o /Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext/Contents/Info.plist36"082B13F5-7D2D-4EC6-BFED-177E11850E9B-
 
-CProcessPCH /var/folders/7k/jcl_zywn4rbbhp09qdl1wc1m0000gn/C/com.apple.Xcode.501/SharedPrecompiledHeaders/phoenix-Prefix-cdoxysryrimxpcgwvsooqbegptma/phoenix-Prefix.pch.gch phoenix/phoenix-Prefix.pch normal x86_64 c com.apple.compilers.llvmgcc42
-s399541434.969863
-e399541435.001287
+CProcessPCH /var/folders/7k/jcl_zywn4rbbhp09qdl1wc1m0000gn/C/com.apple.Xcode.501/SharedPrecompiledHeaders/phoenix-Prefix-fqprrrgetufhsxatdotibykxtwwn/phoenix-Prefix.pch.gch phoenix/phoenix-Prefix.pch normal x86_64 c com.apple.compilers.llvmgcc42
+s399893768.348181
+e399893768.431346
 r1
 xProcessPCH
-x/var/folders/7k/jcl_zywn4rbbhp09qdl1wc1m0000gn/C/com.apple.Xcode.501/SharedPrecompiledHeaders/phoenix-Prefix-cdoxysryrimxpcgwvsooqbegptma/phoenix-Prefix.pch.gch
+x/var/folders/7k/jcl_zywn4rbbhp09qdl1wc1m0000gn/C/com.apple.Xcode.501/SharedPrecompiledHeaders/phoenix-Prefix-fqprrrgetufhsxatdotibykxtwwn/phoenix-Prefix.pch.gch
 xphoenix/phoenix-Prefix.pch
 xnormal
 xx86_64
 xc
 xcom.apple.compilers.llvmgcc42
-lSLF05#21%IDEActivityLogSection1@2#32"com.apple.dt.IDE.BuildLogSection37"Precompile phoenix/phoenix-Prefix.pchbb64f8ba84d0b741^865500bb84d0b741^---0#0#0#-19%DVTDocumentLocation2@69"file://localhost/Users/haaner/Apps/phoenix/phoenix/phoenix-Prefix.pch0000000000000000^2244"ProcessPCH /var/folders/7k/jcl_zywn4rbbhp09qdl1wc1m0000gn/C/com.apple.Xcode.501/SharedPrecompiledHeaders/phoenix-Prefix-cdoxysryrimxpcgwvsooqbegptma/phoenix-Prefix.pch.gch phoenix/phoenix-Prefix.pch normal x86_64 c com.apple.compilers.llvmgcc42    cd /Users/haaner/Apps/phoenix    setenv LANG en_US.US-ASCII    /Applications/Xcode.app/Contents/Developer/usr/bin/llvm-gcc-4.2 -x c-header -arch x86_64 -fmessage-length=0 -pipe -nostdinc -std=gnu99 -fno-builtin -Wno-trigraphs -force_cpusubtype_ALL -msoft-float -Os -fno-common -mkernel -finline -fno-keep-inline-functions -Wreturn-type -Wunused-variable -Wshorten-64-to-32 -DKERNEL -DKERNEL_PRIVATE -DDRIVER_PRIVATE -DAPPLE -DNeXT -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk -fasm-blocks -mmacosx-version-min=10.8 -gdwarf-2 -iquote /Users/haaner/Apps/phoenix/build/phoenix.build/Release/phoenix.build/phoenix-generated-files.hmap -I/Users/haaner/Apps/phoenix/build/phoenix.build/Release/phoenix.build/phoenix-own-target-headers.hmap -I/Users/haaner/Apps/phoenix/build/phoenix.build/Release/phoenix.build/phoenix-all-target-headers.hmap -iquote /Users/haaner/Apps/phoenix/build/phoenix.build/Release/phoenix.build/phoenix-project-headers.hmap -I/Users/haaner/Apps/phoenix/build/Release/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -I/System/Library/Frameworks/Kernel.framework/PrivateHeaders -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk/System/Library/Frameworks/Kernel.framework/Headers -I/Users/haaner/Apps/phoenix/build/phoenix.build/Release/phoenix.build/DerivedSources/x86_64 -I/Users/haaner/Apps/phoenix/build/phoenix.build/Release/phoenix.build/DerivedSources -F/Users/haaner/Apps/phoenix/build/Release -c /Users/haaner/Apps/phoenix/phoenix/phoenix-Prefix.pch -o /var/folders/7k/jcl_zywn4rbbhp09qdl1wc1m0000gn/C/com.apple.Xcode.501/SharedPrecompiledHeaders/phoenix-Prefix-cdoxysryrimxpcgwvsooqbegptma/phoenix-Prefix.pch.gch36"200F2436-45FF-4912-85A0-710A915F914A-
+lSLF05#21%IDEActivityLogSection1@2#32"com.apple.dt.IDE.BuildLogSection37"Precompile phoenix/phoenix-Prefix.pch9e3f5908e5d5b741^1a6c6e08e5d5b741^---0#0#0#-19%DVTDocumentLocation2@80"file://localhost/Users/haaner/Apps/coding/osx/phoenix/phoenix/phoenix-Prefix.pch0000000000000000^2354"ProcessPCH /var/folders/7k/jcl_zywn4rbbhp09qdl1wc1m0000gn/C/com.apple.Xcode.501/SharedPrecompiledHeaders/phoenix-Prefix-fqprrrgetufhsxatdotibykxtwwn/phoenix-Prefix.pch.gch phoenix/phoenix-Prefix.pch normal x86_64 c com.apple.compilers.llvmgcc42    cd /Users/haaner/Apps/coding/osx/phoenix    setenv LANG en_US.US-ASCII    /Applications/Xcode.app/Contents/Developer/usr/bin/llvm-gcc-4.2 -x c-header -arch x86_64 -fmessage-length=0 -pipe -nostdinc -std=gnu99 -fno-builtin -Wno-trigraphs -force_cpusubtype_ALL -msoft-float -Os -fno-common -mkernel -finline -fno-keep-inline-functions -Wreturn-type -Wunused-variable -Wshorten-64-to-32 -DKERNEL -DKERNEL_PRIVATE -DDRIVER_PRIVATE -DAPPLE -DNeXT -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk -fasm-blocks -mmacosx-version-min=10.8 -gdwarf-2 -iquote /Users/haaner/Apps/coding/osx/phoenix/build/phoenix.build/Release/phoenix.build/phoenix-generated-files.hmap -I/Users/haaner/Apps/coding/osx/phoenix/build/phoenix.build/Release/phoenix.build/phoenix-own-target-headers.hmap -I/Users/haaner/Apps/coding/osx/phoenix/build/phoenix.build/Release/phoenix.build/phoenix-all-target-headers.hmap -iquote /Users/haaner/Apps/coding/osx/phoenix/build/phoenix.build/Release/phoenix.build/phoenix-project-headers.hmap -I/Users/haaner/Apps/coding/osx/phoenix/build/Release/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -I/System/Library/Frameworks/Kernel.framework/PrivateHeaders -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk/System/Library/Frameworks/Kernel.framework/Headers -I/Users/haaner/Apps/coding/osx/phoenix/build/phoenix.build/Release/phoenix.build/DerivedSources/x86_64 -I/Users/haaner/Apps/coding/osx/phoenix/build/phoenix.build/Release/phoenix.build/DerivedSources -F/Users/haaner/Apps/coding/osx/phoenix/build/Release -c /Users/haaner/Apps/coding/osx/phoenix/phoenix/phoenix-Prefix.pch -o /var/folders/7k/jcl_zywn4rbbhp09qdl1wc1m0000gn/C/com.apple.Xcode.501/SharedPrecompiledHeaders/phoenix-Prefix-fqprrrgetufhsxatdotibykxtwwn/phoenix-Prefix.pch.gch36"1EE071F3-71CA-4F42-A1D7-66E853FF9C7E-
 
-CTouch /Users/haaner/Apps/phoenix/build/Release/phoenix.kext
-s399541435.139622
-e399541435.144673
+CTouch /Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext
+s399893768.761165
+e399893768.766038
 r1
 xTouch
-x/Users/haaner/Apps/phoenix/build/Release/phoenix.kext
-lSLF05#21%IDEActivityLogSection1@2#32"com.apple.dt.IDE.BuildLogSection59"Touch /Users/haaner/Apps/phoenix/build/Release/phoenix.kext2ecb23bb84d0b741^6c0925bb84d0b741^---0#0#0#--143"Touch build/Release/phoenix.kext    cd /Users/haaner/Apps/phoenix    /usr/bin/touch -c /Users/haaner/Apps/phoenix/build/Release/phoenix.kext36"64403CF1-FE7D-478E-8DE5-20D474ECE2D3-
+x/Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext
+lSLF05#21%IDEActivityLogSection1@2#32"com.apple.dt.IDE.BuildLogSection70"Touch /Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext47e9c208e5d5b741^001bc408e5d5b741^---0#0#0#--165"Touch build/Release/phoenix.kext    cd /Users/haaner/Apps/coding/osx/phoenix    /usr/bin/touch -c /Users/haaner/Apps/coding/osx/phoenix/build/Release/phoenix.kext36"5B04A2D2-2F51-42CA-B04A-E0E5982A2BA1-
 

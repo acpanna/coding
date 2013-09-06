@@ -1,5 +1,7 @@
 #!/bin/sh
 
-cd ~haaner/Apps/phoenix && xcodebuild clean && xcodebuild
+PHOENIX_DIR=$(pwd -P)
 
-sudo -u root sh -c 'cd /Users/haaner/Apps/phoenix/build/Release/ && chown -R root:wheel phoenix.kext/ && kextload phoenix.kext && (kextstat | grep "phoenix") && kextunload phoenix.kext && rm -rf phoenix.kext* && (dmesg | tail -n10)'
+cd ${PHOENIX_DIR} && xcodebuild clean && xcodebuild
+
+sudo -u root sh -c "cd ${PHOENIX_DIR}/build/Release/ && chown -R root:wheel phoenix.kext/ && kextload phoenix.kext && (kextstat | grep 'phoenix') && kextunload phoenix.kext && rm -rf phoenix.kext* && (dmesg | tail -n10)"
