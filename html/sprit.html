@@ -1,0 +1,108 @@
+<html>
+	<head>
+
+		<style type="text/css">
+
+			label {
+				border-radius: 5px;
+				background-color: red;
+				padding: 8px;
+			}
+
+			div#result {
+				border-radius: 15px;
+				border: solid black 1px;
+				width: 80%;
+				padding: 5px;
+				background-color: yellow;
+			}
+
+		</style>
+
+		<script type="text/javascript">
+
+			function id(id) {
+				return document.getElementById(id);
+			}
+
+function calcVolumen() {
+	var bl_diesel, bl_e5, bl_plus, br_diesel, br_e5, br_plus, v, ap, d, x_diesel, x_e5, x_plus;
+
+	bl_diesel = parseFloat(id("bl_diesel").value);
+	bl_e5 = parseFloat(id("bl_e5").value);
+	bl_plus = parseFloat(id("bl_plus").value);
+	br_diesel = parseFloat(id("br_diesel").value);
+	br_e5 = parseFloat(id("br_e5").value);
+	br_plus = parseFloat(id("br_plus").value);
+
+	v = parseFloat(id("v").value);
+	ap = parseFloat(id("ap").value);
+	d = parseFloat(id("d").value);
+
+	x_diesel = ((2*ap*d) + ((d*v)/100) * (br_diesel + bl_diesel)) / (bl_diesel - br_diesel);
+	x_e5 = ((2*ap*d) + ((d*v)/100) * (br_e5 + bl_e5)) / (bl_e5 - br_e5);
+	x_plus = ((2*ap*d) + ((d*v)/100) * (br_plus + bl_plus)) / (bl_plus - br_plus);
+
+	id("x_diesel").innerHTML = x_diesel.toFixed(2);
+	id("x_e5").innerHTML = x_e5.toFixed(2);
+	id("x_plus").innerHTML = x_plus.toFixed(2);
+}
+
+</script>
+	</head>
+
+	<body>
+		<center>
+			<table>
+				<tr><th></th><th>Diesel</th><th>E5</th><th>Super+</th></tr>
+				<tr>
+					<td>Lokaler Benzinpreis (in €)</td>
+					<td><input onkeyup="calcVolumen();" id="bl_diesel" type="text" value="1.509"></td>
+					<td><input onkeyup="calcVolumen();" id="bl_e5" type="text" value="1.639"></td>
+					<td><input onkeyup="calcVolumen();" id="bl_plus" type="text" value="1.679"></td>
+				</tr>
+
+				<tr>
+					<td>Entfernter Benzinpreis (in €)</td>
+					<td><input onkeyup="calcVolumen();" id="br_diesel" type="text" value="1.349"></td>
+					<td><input onkeyup="calcVolumen();" id="br_e5" type="text" value="1.369"></td>
+					<td><input onkeyup="calcVolumen();" id="br_plus" type="text" value="1.449"></td>
+				</tr>
+			</table>
+
+			<br>
+
+			<div id="result">
+				<table width="75%">
+					<tr align="center"><th colspan="3">Benötigtes minimales Tankvolumen in Liter:</th></tr>
+					<tr><td colspan="3">&nbsp;</td></tr>
+					<tr align="center">
+						<td>Diesel: <label id="x_diesel"></label></td>
+						<td>E5: <label id="x_e5"></label></td>
+						<td>Super+: <label id="x_plus"></label></td>
+					</tr>
+					<tr><td colspan="3">&nbsp;</td></tr>
+				</table>
+			</div>
+
+			<br>
+
+			<table>
+				<tr><td>Verbrauch (in L / 100 Km)</td><td><input onkeyup="calcVolumen();" id="v" value="6.5"></td></tr>
+				<tr><td>Abnutzungspauschale (in € / Km)</td><td><input onkeyup="calcVolumen();" id="ap" value="0.01"></td></tr>
+				<tr><td>Distanz (in Km)</td><td><input onkeyup="calcVolumen();" id="d" value="67"></td></tr>
+			</table>
+
+			<br><br>
+			<!--
+			<button onclick="calcVolumen();">Berechne Volumina</button>
+			-->
+		</center>
+
+		<script type="text/javascript">
+			calcVolumen();
+			</script>
+
+		</body>
+
+	</html>
