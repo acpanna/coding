@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>2C0B59CA-F204-4421-8DDE-013D7DD9F2A8</string>
+	<key>IDESourceControlProjectName</key>
+	<string>sketchometry</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>C1387D59-37B3-40C5-BBA9-B9AD7062B75B</key>
+		<string>svn://btmdx1.mat.uni-bayreuth.de/jsxgui/iOS_App/sketchometry</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>sketchometry.xcodeproj/project.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>C1387D59-37B3-40C5-BBA9-B9AD7062B75B</key>
+		<string>../..</string>
+	</dict>
+	<key>IDESourceControlProjectRepositoryRootDictionary</key>
+	<dict>
+		<key>C1387D59-37B3-40C5-BBA9-B9AD7062B75B</key>
+		<string>svn://btmdx1.mat.uni-bayreuth.de/jsxgui</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>svn://btmdx1.mat.uni-bayreuth.de/jsxgui/iOS_App/sketchometry/sketchometry.xcodeproj</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>C1387D59-37B3-40C5-BBA9-B9AD7062B75B</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.subversion</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>C1387D59-37B3-40C5-BBA9-B9AD7062B75B</string>
+			<key>IDESourceControlWCCName</key>
+			<string>sketchometry</string>
+		</dict>
+	</array>
+</dict>
+</plist>

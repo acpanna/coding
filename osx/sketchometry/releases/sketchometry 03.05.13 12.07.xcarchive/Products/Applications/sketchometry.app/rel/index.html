@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html manifest="cache.manifest"> <!-- debug="true" enables Firebug Lite Live View -->
+<!--<html manifest="cache.manifest">-->
+<head>
+<title>Sketchometry :: Home</title>
+
+<link rel="apple-touch-icon" href="pics/icon-logo.png">
+
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+
+<style type="text/css">
+    #splash {
+        background: #89A;
+        width: 100%;
+        height: 100%;
+    }
+
+    #splash-hint {
+        overflow: hidden;
+        position: absolute;
+        width: 100%;
+        text-align: center;
+        top: 50%;
+        height: 150px;
+        margin-top: -150px;
+        padding: 20px;
+        background-color: #89A;
+        color: white;
+    }
+</style>
+
+<link type="text/css" rel="stylesheet" href="css/gui.css"/>
+<link type="text/css" rel="stylesheet" href="css/gui-icons.css" />
+<link type="text/css" rel="stylesheet" href="css/gallery-general.css" />
+<!--
+<link rel="stylesheet/less" type="text/css" href="gallery/gallery.less" />
+-->
+<!-- High pixel density displays -->
+<link rel="stylesheet" href="css/gui-icons-hd.css" media="only screen and (-moz-min-device-pixel-ratio: 2), only screen and (-o-min-device-pixel-ratio: 2/1), only screen and (-webkit-min-device-pixel-ratio: 2), only screen and (min-device-pixel-ratio: 2)" />
+<link rel="stylesheet" href="css/gallery-ip3.css" media="only screen and (-moz-min-device-pixel-ratio: 2), only screen and (-o-min-device-pixel-ratio: 2/1), only screen and (-webkit-min-device-pixel-ratio: 2), only screen and (min-device-pixel-ratio: 2)" />
+<!--
+<link type="text/css" rel="stylesheet" media="screen and (min-height: 900px)" href="gallery/gallery-big.css" />
+-->
+<link rel="stylesheet" href="css/gallery-small.css" media="screen and (max-height: 600px)" />
+
+<!--
+<script src="3dparty/less/less-1.3.0.js" type="text/javascript"></script>
+-->
+<script type="text/javascript" src="js/ext_ecma.js"></script>
+<script type="text/javascript" src="3dparty/jQuery/jquery-1.7.1.min.js"></script>
+<script type="text/javascript" src="3dparty/jQuery/jquery.jsonp.js"></script>
+<script type="text/javascript" src="js/ext_jquery.js"></script>
+
+<!-- App-Caching -->
+<script type="text/javascript" src="js/cache.js"></script>
+
+<script type="text/javascript" src="3dparty/jszip/jszip.min.js"></script>
+<script type="text/javascript" src="3dparty/jszip/jszip-deflate.min.js"></script>
+
+<script type="text/javascript" src="js/sk.js"></script>
+
+<script type="text/javascript" src="js/jsxgraph.js"></script>
+<script type="text/javascript" src="js/gui.js"></script>
+
+<script type="text/javascript" src="js/GeonextReader.js"></script>
+<script type="text/javascript" src="js/SketchReader.js"></script>
+
+<!--
+<script type="text/javascript" src="http://JSXGraph.uni-bayreuth.de/distrib/jsxgraphcore.js"></script>
+-->
+
+<script type="text/javascript" src="js/sketch.js"></script>
+
+<script type="text/javascript">
+
+    var l, hasLangDev;
+
+    hasLangDev = document.location && document.location.href.indexOf('?') > -1;
+
+    if (hasLangDev) {
+        l = document.location.href.split('?')[1];
+        l = l.split('=');
+
+        // is the first parameter's id equal to 'dev'?
+        if (l[0] === 'dev')
+            document.write('<script type="text/javascript" src="http://jsxgraph.uni-bayreuth.de/skm-localisation/lang-dev.js"><\/script>');
+    }
+
+</script>
+
+<!-- <script type="text/javascript" src="https://getfirebug.com/firebug-lite.js"></script> -->
+
+<!-- Animation -->
+<!--
+<script type="text/javascript" src="animate/jquery.simulate.js"></script>
+<script type="text/javascript" src="animate/sketchodrone.js"></script>
+-->
+
+<!-- Some Templates -->
+<script type="text/html-template" id="gallery-item-template">
+    <div id="item-%id%" class="xyzBackgroundColorL xyzRoundedBorderM item itemwidth padding">
+        <input type="text" id="item-edit-name-%id%" class="xyzBackgroundColorL item-edit padding" value="%name%" disabled="disabled"/>
+        <div id="item-export-%id%-group" class="item-button-group">
+            <div id="item-export-%id%" class="item-export item-button"></div>
+            <div id="item-export-%id%-caption" class="item-export-caption item-caption buttonLabel"></div>
+        </div>
+        <div id="item-clone-%id%-group" class="item-button-group">
+            <div id="item-clone-%id%" class="item-clone item-button"></div>
+            <div id="item-clone-%id%-caption" class="item-clone-caption item-caption buttonLabel"></div>
+        </div>
+        <div id="item-delete-%id%-group" class="item-button-group nofloat">
+            <div id="item-delete-%id%" class="item-delete item-button"></div>
+            <div id="item-delete-%id%-caption" class="item-delete-caption item-caption buttonLabel"></div>
+        </div>
+
+        <div id="item-preview-%id%" class="xyzRoundedBorderM item-preview itemwidth"></div>
+    </div>
+</script>
+
+<!-- TODO Win8 -->
+<script type="text/html-template" id="gallery-list-item-template">
+    <li id="gallery-list-item-%i%" data-fid="%id%">
+        <div class="gallery-list-item">
+            %name%
+            <div class="gallery-list-date">%date%</div>
+        </div>
+    </li>
+</script>
+
+<script type="text/html-template" id="gallery-list-header-template">
+    <li class="gallery-list-header">%last%</li>
+</script>
+
+<script type="text/html-template" id="gallery-auth-status-template">
+    %L-loggedinas% %name% <button id="gallery-export-logout-%what%" class="button-selected">%L-logout%</button>
+</script>
+
+<!-- Authentication process templates -->
+<script type="text/html-template" id="gallery-auth-provider-template">
+    <div id="gallery-modal-storage-select-%provider%" class="gallery-modal-storage-select-item">
+        <div id="gallery-modal-storage-logo-%provider%" class="gallery-modal-storage-logo" title="Save to %display%"></div>
+        <div id="gallery-status-%provider%" class="gallery-export-status">%L-connecting%...</div>
+    </div>
+</script>
+
+<script type="text/html-template" id="gallery-auth-choose-provider-template">
+    <div id="gallery-modal-storage-select" class="gallery-modal-storage-select"></div>
+</script>
+
+<script type="text/html-template" id="gallery-auth-connect-template">
+    <div class="gallery-export-connect-status">%L-connecting%...</div>
+</script>
+
+<script type="text/html-template" id="gallery-auth-login-template">
+    <div class="gallery-export-connect-status"><a href="" id="gallery-auth-login-link" target="_blank">%L-login%</a></div>
+</script>
+
+<script type="text/html-template" id="gallery-auth-finish-template">
+    <div class="gallery-export-connect-status"><button id="gallery-auth-continue-link" class="button-selected">%L-finishauth%</button></div>
+</script>
+
+<script type="text/html=template" id="gallery-auth-password-login-form">
+    <div id="gallery-auth-password-login">
+        Hostname:<br />
+        <input type="text" id="gallery-auth-password-login-host" /><br />
+        Username:<br />
+        <input type="text" id="gallery-auth-password-login-name" /><br />
+        Password:<br />
+        <input type="password" id="gallery-auth-password-login-pass" /><br />
+        <button id="gallery-auth-password-login-continue" class="button-selected fright">%L-continue%</button>
+    </div>
+</script>
+
+<script type="text/html-template" id="gallery-auth-error-template">
+    An error has occurred. The server returned: <strong>%message%</strong>.<br/><button id="gallery-auth-error-restart" class="button-selected">(re-)start the authentication process</button>.
+</script>
+
+<!-- Gallery file browser for import & export -->
+<script type="text/html-template" id="gallery-browser-breadcrumbs-item-template">
+    <span id="gallery-browser-breadcrumbs-item-%id%" class="link">%name%</span>
+</script>
+
+<script type="text/html-template" id="gallery-browser-folder-template">
+    <li id="gallery-browser-folder-%id%" class="gallery-browser-folder">
+        <div class="gallery-browser-icon"></div>
+        %name%
+    </li>
+</script>
+
+<script type="text/html-template" id="gallery-browser-file-template">
+    <li id="gallery-browser-file-%id%" class="gallery-browser-file">
+        <div class="gallery-browser-icon"></div>
+        %name%
+    </li>
+</script>
+
+<script type="text/html-template" id="gallery-browser-empty-template">
+    <li class="gallery-browser-folder"><em>%L-emptyfolder%</em></li>
+</script>
+
+<script type="text/html-template" id="gallery-browser-template">
+    <div id="gallery-browser">
+        <div id="gallery-browser-current-folder"><span id="gallery-browser-current-folder-status"></span></div>
+        <ul id="gallery-browser-listview" class="gallery-modal-list xyzRoundedBorderM"></ul>
+    </div>
+</script>
+
+<!-- Settings dialog -->
+<script type="text/html-template" id="gallery-settings-item">
+    <li id="gallery-options-item-%id%" class="">
+        <div class="gallery-options-label">%label%</div>
+        %action%
+    </li>
+</script>
+
+<script type="text/html-template" id="gallery-settings-action-bool">
+    <div id="gallery-options-%id%-action" class="gallery-options-action gallery-options-action-bool-%status%"></div>
+</script>
+
+<script type="text/html-template" id="gallery-settings-list-item">
+    <li id="gallery-settings-list-item-%id%" class="">
+        <span class="gallery-options-list-emph-%emph%">%label%</span>
+    </li>
+</script>
+
+<script type="text/html-template" id="gallery-settings-action-list">
+    %value% <div id="gallery-options-%id%-action" class="gallery-options-action gallery-options-action-list"></div>
+</script>
+
+<script type="text/html-template" id="gallery-settings-action-action">
+    <div id="gallery-options-%id%-action" class="gallery-options-action gallery-options-action-action"></div>
+</script>
+
+<script type="text/html-template" id="gallery-settings-action-volume">
+    <div id="gallery-options-%id%-action" class="gallery-options-action gallery-options-action-volume">
+        <div id="gallery-options-%id%-up" class="gallery-options-action gallery-options-volume-up"></div>
+        <div id="gallery-options-%id%-status" class="gallery-options-volume-status gallery-options-action-volume-%value%"></div>
+        <div id="gallery-options-%id%-down" class="gallery-options-action gallery-options-volume-down"></div>
+    </div>
+</script>
+<!-- end of templates -->
+</head>
+
+<body id="gui">
+
+<!-- Splash screen -->
+<div id="splash">
+    <div id="splash-hint">
+        <img src="pics/sketchometry.png" style="width: 500px"/>
+        <h3>Loading...</h3>
+    </div>
+</div>
+
+<!-- Gallery -->
+<div id="gallery">
+    <div data-role="content" id="gallerycontent">
+        <div id="gallery-container">
+            <div id="debug-bar">
+                <div id="toolbar-button-close" class="toolbar-button xyzRoundedBorderM xyzButtonFlat">Close Debug Toolbar</div>
+            </div>
+
+            <div id="gallery-header">
+                <a href="http://www.sketchometry.com/">
+                    <img src="pics/sketchometry.png" id="gallery-header-watermark" alt="Sketchometry"/>
+                </a>
+            </div>
+
+            <div id="flow-container" class="yzBackgroundColorM itemheight">
+
+                <div id="carousel" class="yzBackgroundColorM itemheight">
+                    <div class="itemlist yzBackgroundColorM">
+                        <!-- filled by the onReady listener below -->
+                    </div>
+                </div>
+                <div id="carousel-eventcapture-left" class="carousel-eventcapture"></div>
+                <div id="carousel-eventcapture-right" class="carousel-eventcapture"></div>
+                <div id="carousel-eventcapture" class="carousel-eventcapture"></div>
+            </div>
+
+            <div id="toolbar-container">
+                <div id="toolbar-spacer"></div>
+
+                <!-- bg-selected class -->
+                <div id="toolbar-group-import" class="toolbar-group xyzBackgroundColorM xyzRoundedBorderM">
+                    <div id="toolbar-button-import" class="toolbar-button xyzRoundedBorderM xyzButtonFlat"></div>
+                    <div id="toolbar-button-import-caption" class="toolbar-button-caption buttonLabel"></div>
+                </div>
+
+                <!-- bg-selected class -->
+                <div id="toolbar-group-new" class="toolbar-group xyzBackgroundColorM xyzRoundedBorderM">
+                    <div id="toolbar-button-new" class="toolbar-button xyzRoundedBorderM xyzButtonFlat"></div>
+                    <div id="toolbar-button-new-caption" class="toolbar-button-caption buttonLabel"></div>
+                </div>
+            </div>
+
+            <div id="gallery-disabled-layer" class="xyzBackgroundColorS">
+                <div id="gallery-css-indicator"></div>
+            </div>
+
+            <div id="gallery-list-bg" class="gallery-modal-bg">
+                <div id="gallery-list-container"
+                     class="gallery-modal-container padding xyzRoundedBorderM xyzBackgroundColorL">
+                    <div id="gallery-list-toolbar"
+                         class="gallery-modal-toolbar-group xyzBackgroundColorL xyzRoundedBorderM">
+                        <div id="gallery-list-icon" class="gallery-modal-button sui-spacer"></div>
+                        <div id="gallery-list-button-sort-name"
+                             class="gallery-modal-button sui-spacer sui-button color-button"></div>
+                        <div id="gallery-list-button-sort-date"
+                             class="gallery-modal-button sui-spacer sui-button color-button"></div>
+                        <input type="text" id="gallery-list-edit-search" class="xyzRoundedBorderM sui-spacer" value=""/>
+
+                        <div id="gallery-list-button-close" class="gallery-modal-button sui-button color-button"></div>
+                    </div>
+
+                    <div id="gallery-list" class="gallery-modal xyzRoundedBorderM">
+                        <ul class="gallery-modal-list xyzRoundedBorderM"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <div id="gallery-export-bg" class="gallery-modal-bg">
+                <div id="gallery-export-container"
+                     class="gallery-modal-container padding xyzRoundedBorderM xyzBackgroundColorL">
+                    <div id="gallery-export-toolbar"
+                         class="gallery-modal-toolbar-group xyzBackgroundColorL xyzRoundedBorderM">
+                        <div id="gallery-export-icon" class="gallery-modal-button sui-spacer"><img id="gallery-export-icon-anim" src="pics/wait-animation.gif" alt="Animation"/></div>
+                        <div id="gallery-export-button-newfolder" class="gallery-modal-button sui-spacer sui-button color-button"></div>
+                        <input type="text" id="gallery-export-edit" class="xyzRoundedBorderM sui-spacer" value=""/>
+
+                        <div id="gallery-export-button-close" class="gallery-modal-button sui-button color-button"></div>
+                        <div id="gallery-export-button-upload" class="gallery-modal-button sui-button color-button sui-spacer"></div>
+                        <!--div id="gallery-export-button-format" class="gallery-modal-button sui-button color-button sui-spacer"></div-->
+                    </div>
+                    <div id="gallery-export" class="gallery-modal xyzRoundedBorderM">
+                    </div>
+                </div>
+            </div>
+
+            <div id="gallery-export-formats" class="xyzBackgroundColorL xyzRoundedBorderM">
+                <div id="gallery-export-format-label" class="buttonLabel">File formats</div>
+                <div id="gallery-export-format-buttons">
+                    <div id="gallery-export-format-sketch" class="gallery-modal-button sui-button color-button button-selected"></div>
+                    <div id="gallery-export-format-jc" class="gallery-modal-button sui-button color-button"></div>
+                    <div id="gallery-export-format-html" class="gallery-modal-button sui-button color-button"></div>
+                </div>
+            </div>
+
+            <div id="gallery-options-bg" class="gallery-modal-bg">
+                <div id="gallery-options-container" class="gallery-modal-container padding xyzRoundedBorderM xyzBackgroundColorL">
+                    <div id="gallery-options-toolbar" class="gallery-modal-toolbar-group xyzBackgroundColorL xyzRoundedBorderM">
+                        <div id="gallery-options-icon" class="gallery-modal-button sui-spacer"></div>
+                        <div id="gallery-options-button-close" class="gallery-modal-button sui-button color-button"></div>
+                    </div>
+
+                    <div id="gallery-options" class="gallery-modal xyzRoundedBorderM">
+                        <ul id="gallery-options-list" class="gallery-modal-list xyzRoundedBorderM">
+                        </ul>
+
+                    </div>
+
+                </div>
+            </div>
+
+            <div id="gallery-footnote-copy" class="gallery-footnote">
+                <span id="gallery-copyright" style="">&copy; 2012 All rights reserved</span>
+                <a href="http://www.sketchometry.com/" target="_blank">Sketchometry Dev-Team</a>&nbsp;&dash;&nbsp;
+                <span id="gallery-version"></span>
+            </div>
+
+            <div id="gallery-footnote-group-left" class="xyzBackgroundColorM xyzRoundedBorderM gallery-footnote">
+                <div id="gallery-footnote-settings" class="footnote-button xyzRoundedBorderM xyzBackgroundColorM xyzButtonFlat"></div>
+                <div id="gallery-footnote-settings-caption" class="buttonLabel"></div>
+            </div>
+            <div id="gallery-footnote-group-right" class="xyzBackgroundColorM xyzRoundedBorderM gallery-footnote">
+                <a href="http://www.sketchometry.com/help/" target="_blank">
+                    <div id="gallery-footnote-help" class="footnote-button xyzRoundedBorderM xyzBackgroundColorM xyzButtonFlat"></div>
+                    <div id="gallery-footnote-help-caption" class="buttonLabel"></div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- mainWindow -->
+<div id="mainWindow" class="hidden">
+
+<div id="toolbar" class="tbHeight-big centered sui-toolbar color-toolbar">
+
+    <div id="menu">
+        <div id="control-unredo-group" class="fleft">
+            <div class="hspacer-small"></div>
+            <div class="fleft center sui-button-box" id="control-undo-box">
+                <div class="button color-button" id="control-undo"></div>
+                <div class="buttonLabel" id="control-undo-label"></div>
+            </div>
+            <div class="hspacer-small"></div>
+            <div class="fleft center sui-button-box" id="control-redo-box">
+                <div class="button color-button" id="control-redo"></div>
+                <div class="buttonLabel" id="control-redo-label"></div>
+            </div>
+
+            <div class="hspacer-small"></div>
+            <div class="hspacer-small"></div>
+
+        </div>
+
+        <!-- ------------------------- Start of "Toolbar Overflow Area" ------------------------- -->
+
+        <div id="toolbar-overflow" class="fleft">
+            <div id="toolbar-panel">
+
+                <div id="control-mode">
+                    <div class="fleft center sui-button-box" id="control-drag-box">
+                        <div class="button color-button" id="control-drag"></div>
+                        <div class="buttonLabel" id="control-drag-label"></div>
+                    </div>
+                    <div class="hspacer-small"></div>
+                    <div class="fleft center sui-button-box" id="control-construct-box">
+                        <div class="button color-button" id="control-construct"></div>
+                        <div class="buttonLabel" id="control-construct-label"></div>
+                    </div>
+
+                    <div class="hspacer-small"></div>
+                    <div class="hspacer-small"></div>
+                </div>
+
+                <div id="control-toolactions">
+                    <div class="fleft center sui-button-box tools" id="control-actions-function-box">
+                        <div class="button color-button tools" id="control-actions-function"></div>
+                        <div class="buttonLabel" id="control-actions-function-label"></div>
+                    </div>
+                    <div class="hspacer-small"></div>
+                    <div class="fleft center sui-button-box tools" id="control-tools-box">
+                        <div class="button color-button tools" id="control-tools"></div>
+                        <div class="buttonLabel" id="control-tools-label"></div>
+                    </div>
+                </div>
+
+                <div class="not-displayed" id="caption-tools">
+                    <div class="hspacer-small"></div>
+                    <div class="fleft center sui-button-box tools" id="tools-anglesector-box">
+                        <div class="button color-button sui-spacer tools" id="tools-anglesector"></div>
+                        <div class="buttonLabel" id="tools-anglesector-label"></div>
+                    </div>
+                    <div class="hspacer-small"></div>
+                    <div class="fleft center sui-button-box tools" id="tools-circlesector-box">
+                        <div class="button color-button sui-spacer tools" id="tools-circlesector"></div>
+                        <div class="buttonLabel" id="tools-circlesector-label"></div>
+                    </div>
+                    <div class="hspacer-small"></div>
+                    <div class="fleft center sui-button-box tools" id="tools-regpolygon-box">
+                        <div class="button color-button sui-spacer tools" id="tools-regpolygon"></div>
+                        <div class="buttonLabel" id="tools-regpolygon-label"></div>
+                    </div>
+                    <!-- Temporarily remove slider, until we have an icon
+                    <div class="hspacer-small"></div>
+                    <div class="fleft center sui-button-box tools" id="tools-slider-box">
+                        <div class="button color-button sui-spacer tools" id="tools-slider"></div>
+                        <div class="buttonLabel" id="tools-slider-label"></div>
+                    </div>
+                    //-->
+                    <div class="hspacer-small"></div>
+                    <div class="fleft center sui-button-box tools" id="tools-ruler-box">
+                        <div class="button color-button sui-spacer tools" id="tools-ruler"></div>
+                        <div class="buttonLabel" id="tools-ruler-label"></div>
+                    </div>
+                    <div class="hspacer-small"></div>
+                    <div class="fleft center sui-button-box tools" id="tools-text-box">
+                        <div class="button color-button tools" id="tools-text"></div>
+                        <div class="buttonLabel" id="tools-text-label"></div>
+                    </div>
+                    <div class="hspacer-small"></div>
+                </div>
+
+                <div id="control-actions-group" class="fright">
+
+                    <div class="hspacer-small"></div>
+                    <div class="hspacer-small"></div>
+
+                    <div id="control-subgroup" class="fleft">
+                        <div class="fleft center sui-button-box" id="control-actions-hide-box">
+                            <div class="button color-button" id="control-actions-hide"></div>
+                            <div class="buttonLabel" id="control-actions-hide-label"></div>
+                        </div>
+                        <div class="hspacer-small"></div>
+                        <div class="fleft center sui-button-box" id="control-actions-del-box">
+                            <div class="button color-button" id="control-actions-del"></div>
+                            <div class="buttonLabel" id="control-actions-del-label"></div>
+                        </div>
+                        <div class="hspacer-small"></div>
+                        <div class="fleft center sui-button-box" id="control-boardprop-box">
+                            <div class="button color-button" id="control-boardprop"></div>
+                            <div class="buttonLabel" id="control-boardprop-label"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ------------------------- End of "Toolbar Overflow Area" ------------------------- -->
+
+        <div id="control-gallery-group" class="fright">
+
+            <div class="hspacer-small"></div>
+            <div class="hspacer-small"></div>
+
+            <div class="fleft center sui-button-box" id="control-gallery-box">
+                <div class="button color-button" id="control-gallery"></div>
+                <div class="buttonLabel" id="control-gallery-label"></div>
+            </div>
+            <div class="hspacer-small"></div>
+        </div>
+    </div>
+
+    <table id="tool-stage" class="centered not-displayed">
+        <tr valign="middle">
+            <td id="toolex" class="color-button center"></td>
+        </tr>
+    </table>
+
+</div>
+
+<div id="status-box" class="not-displayed">
+    <div id="status" class="sui-button-box buttonLabel">
+        <div id="recognition_line"></div>
+        <div id="recognition_segment"></div>
+        <div id="recognition_ray"></div>
+        <div id="recognition_quadrilateral"></div>
+        <div id="recognition_midpoint"></div>
+        <div id="recognition_circle"></div>
+        <div id="recognition_circle2points"></div>
+        <div id="recognition_triangle"></div>
+        <div id="recognition_normal"></div>
+        <div id="recognition_reflection"></div>
+        <div id="recognition_bisector"></div>
+        <div id="recognition_perpendicularBisector"></div>
+        <div id="recognition_tangent"></div>
+        <div id="recognition_parallel"></div>
+        <div id="recognition_polygon"></div>
+        <div id="recognition_sector"></div>
+
+        <div id="action_message"></div>
+    </div>
+</div>
+
+<!--<div id="dialog-arrow" class="clear sui-arrow-up not-displayed"></div>-->
+
+<div data-role="content" id="content">
+    <div id="jxgbox"></div>
+</div>
+
+<div id="plot_panel" class="not-displayed">
+    <div id="keyboard-panel" class="color-specific">
+
+        <div id="kb-top-panel" class="color-board sui-bottom-spacer">
+
+            <div id="kb-input-panel" class="fleft center sui-item sui-item-top sui-item-bottom sui-spacer">
+                <div id="kb-fx-input" class="fleft sui-spacer sui-top-spacer sui-bottom-spacer">
+                    <nobr><label class="sui-keyboard-text">f(x) = </label><input type="text" size="30" id="fx-input" value="" x-webkit-speech /></nobr>
+                    <script type="text/javascript">
+                        document.getElementById('fx-input').onwebkitspeechchange = function(e) { GUI.Plot.parse(e); };
+                    </script>
+                </div>
+            </div>
+
+            <div class="hspacer-small"></div>
+
+            <table class="fleft" width="10">
+                <tr>
+                    <td>
+                        <div id="key-left" class="sui-button color-button sui-spacer sui-bottom-spacer sui-keyboard-text">&lt;--</div>
+                    </td>
+                    <td>
+                        <div id="key-right" class="sui-button color-button sui-bottom-spacer sui-keyboard-text">--&gt;</div>
+                    </td>
+                </tr>
+            </table>
+
+            <div class="hspacer-small"></div>
+            <div class="hspacer-small"></div>
+
+            <div id="kb-key-panel" class="fright sui-item-top sui-item-bottom color-item">
+                <div id="key-nix" class="sui-top-spacer"></div>
+                <div id="key-go" class="sui-button color-button sui-spacer sui-bottom-spacer fleft sui-keyboard-text">&#x2714;</div>
+                <div id="key-backspace" class="sui-button color-button sui-spacer sui-bottom-spacer fleft sui-keyboard-text">&#x232b;</div>
+                <div id="key-clear" class="sui-button color-button sui-keyboard-text">&#x2327;</div>
+            </div>
+        </div>
+
+        <div id="kb-function-panel" class="color-board sui-spacer">
+            <div id="kb-function-inner-panel" class="sui-item sui-item-top sui-item-bottom color-item">
+                <div id="key-sin" class="sui-button color-button sui-spacer sui-bottom-spacer fleft sui-keyboard-text">sin</div>
+                <div id="key-cos" class="sui-button color-button sui-spacer sui-bottom-spacer fleft sui-keyboard-text">cos</div>
+                <div id="key-tan" class="sui-button color-button sui-bottom-spacer sui-keyboard-text">tan</div>
+
+                <div id="key-sqrt" class="sui-button color-button sui-spacer sui-bottom-spacer fleft sui-keyboard-text">sqrt</div>
+                <div id="key-exp" class="sui-button color-button sui-spacer sui-bottom-spacer fleft sui-keyboard-text">exp</div>
+                <div id="key-log" class="sui-button color-button sui-bottom-spacer sui-keyboard-text">log</div>
+
+                <div id="key-pow" class="sui-button color-button sui-spacer sui-bottom-spacer fleft sui-keyboard-text">pow</div>
+                <div id="key-abs" class="sui-button color-button sui-spacer sui-bottom-spacer fleft sui-keyboard-text">abs</div>
+                <div id="key-pi"  class="sui-button color-button sui-bottom-spacer sui-keyboard-text">&pi;</div>
+
+                <div id="key-X" class="sui-button color-button sui-spacer fleft sui-keyboard-text">X</div>
+                <div id="key-Y" class="sui-button color-button sui-spacer fleft sui-keyboard-text">Y</div>
+                <div id="key-e" class="sui-button color-button sui-keyboard-text">e</div>
+            </div>
+        </div>
+
+        <div id="kb-num-panel" class="color-board sui-spacer">
+            <div id="kb-num-inner-panel" class="sui-item sui-item-top sui-item-bottom color-item">
+                <div id="key-7" class="sui-button color-button sui-spacer sui-bottom-spacer fleft sui-keyboard-text">7</div>
+                <div id="key-8" class="sui-button color-button sui-spacer sui-bottom-spacer fleft sui-keyboard-text">8</div>
+                <div id="key-9" class="sui-button color-button sui-bottom-spacer sui-keyboard-text">9</div>
+
+                <div id="key-4" class="sui-button color-button sui-spacer sui-bottom-spacer fleft sui-keyboard-text">4</div>
+                <div id="key-5" class="sui-button color-button sui-spacer sui-bottom-spacer fleft sui-keyboard-text">5</div>
+                <div id="key-6" class="sui-button color-button sui-bottom-spacer sui-keyboard-text">6</div>
+
+                <div id="key-1" class="sui-button color-button sui-spacer sui-bottom-spacer fleft sui-keyboard-text">1</div>
+                <div id="key-2" class="sui-button color-button sui-spacer sui-bottom-spacer fleft sui-keyboard-text">2</div>
+                <div id="key-3" class="sui-button color-button sui-bottom-spacer fleft sui-keyboard-text">3</div>
+                <div id="key-0" class="sui-button color-button sui-spacer fleft sui-keyboard-text">0</div>
+                <div id="key-dot" class="sui-button color-button sui-keyboard-text">.</div>
+            </div>
+        </div>
+
+        <div id="kb-operator-panel" class="color-board">
+            <div id="kb-operator-inner-panel" class="sui-item sui-item-top sui-item-bottom color-item">
+                <div id="key-div" class="sui-button color-button sui-spacer sui-bottom-spacer fleft sui-keyboard-text">/</div>
+                <div id="key-mult" class="sui-button color-button sui-spacer sui-bottom-spacer fleft sui-keyboard-text">*</div>
+                <div id="key-circ" class="sui-button color-button sui-bottom-spacer sui-keyboard-text">^</div>
+
+                <div id="key-plus" class="sui-button color-button sui-spacer sui-bottom-spacer fleft sui-keyboard-text">+</div>
+                <div id="key-minus" class="sui-button color-button sui-spacer sui-bottom-spacer fleft sui-keyboard-text">-</div>
+                <div id="key-percent" class="sui-button color-button sui-bottom-spacer sui-keyboard-text">%</div>
+
+                <div id="key-left-bracket" class="sui-button color-button sui-spacer fleft sui-keyboard-text">(</div>
+                <div id="key-comma" class="sui-button color-button sui-spacer fleft sui-keyboard-text">,</div>
+                <div id="key-right-bracket" class="sui-button color-button sui-bottom-spacer sui-keyboard-text">)</div>
+
+                <div id="key-xx" class="sui-button color-button sui-spacer sui-keyboard-text">x</div>
+            </div>
+        </div>
+
+        <!-- temporarily  hidden
+        <div id="kb-display-panel" class="sui-top-spacer sui-bottom-spacer">
+            <div id="key-list" class="sui-button-wide color-button sui-spacer fleft sui-keyboard-text">Graphs</div>
+            <div id="key-slide" class="sui-button-wide color-button sui-spacer fleft sui-keyboard-text">Sliders</div>
+
+            <div class="hspacer-small"></div>
+
+            <div id="key-diff" class="sui-button color-button sui-spacer fleft sui-keyboard-text">Diff</div>
+            <div id="key-int" class="sui-button color-button sui-spacer fleft sui-keyboard-text">Int</div>
+        </div>
+        -->
+    </div>  <!-- end keyboard-panel -->
+
+    <input type="hidden" id="editPlot" value="false">
+
+</div>
+
+<div id="ctx_panel" class="center">
+
+<div id="ctx_board">
+    <div class="sui-group color-board" id="property-grid">
+        <div class="sui-item sui-item-top sui-item-bottom color-item" id="grid-group">
+            <!-- Grid -->
+            <table class="centered">
+                <tr>
+                    <td>
+                        <div id="grid-visible-box" class="fleft center sui-button-box-narrow">
+                            <div class="button color-button" id="grid-visible"></div>
+                            <div class="buttonLabel" id="grid-visible-label"></div>
+                        </div>
+                    </td>
+                    <td colspan="2">
+                        <div class="fleft center">
+                            <div id="grid-scale-group">
+                                <input id="grid-scale-x"  data-role="none" type="text" size="2" maxlength="10" value="" class="sui-text-field color-text-field sui-spacer-small" disabled />
+                                <input id="grid-scale-y"  data-role="none" type="text" size="2" maxlength="10" value="" class="sui-text-field color-text-field" disabled />
+                            </div>
+                            <div class="buttonLabel" id="grid-scale-group-label"></div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+
+            <table class="centered">
+                <tr>
+                    <td>
+                        <div id="grid-snap-to-grid-box" class="fleft center sui-button-box-narrow">
+                            <div class="button color-button" id="grid-snap-to-grid"></div>
+                            <div class="buttonLabel" id="grid-snap-to-grid-label"></div>
+                        </div>
+                    </td>
+                    <td>
+                        <div id="grid-snap-to-point-box" class="fleft center sui-button-box-narrow">
+                            <div class="button color-button" id="grid-snap-to-point"></div>
+                            <div class="buttonLabel" id="grid-snap-to-point-label"></div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+
+            <!-- Axes -->
+            <table class="centered">
+                <tr>
+                    <td>
+                        <div id="board-axis-visible-box" class="fleft center sui-button-box-narrow">
+                            <div class="button color-button" id="board-axis-visible"></div>
+                            <div class="buttonLabel" id="board-axis-visible-label"></div>
+                        </div>
+                    </td>
+                    <td colspan="2">
+                        <div class="fleft center">
+                            <div id="axis-scale-group">
+                                <input id="axis-scale-x"  data-role="none" type="text" size="2" maxlength="10" value="" class="sui-text-field color-text-field sui-spacer-small" disabled />
+                                <input id="axis-scale-y"  data-role="none" type="text" size="2" maxlength="10" value="" class="sui-text-field color-text-field" disabled />
+                            </div>
+                            <div class="buttonLabel" id="axis-scale-group-label"></div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="sui-group color-board">
+        <div class="center sui-item sui-item-top sui-item-bottom color-item">
+            <table class="centered">
+                <tr>
+                    <td><div id="board-clear-all-box" class="fleft center sui-button-box-narrow">
+                        <div class="button color-button" id="board-clear-all"></div>
+                        <div class="buttonLabel" id="board-clear-all-label"></div>
+                    </div></td>
+                    <td><div id="board-clear-traces-box" class="fleft center sui-button-box-narrow">
+                        <div class="button color-button" id="board-clear-traces"></div>
+                        <div class="buttonLabel" id="board-clear-traces-label"></div>
+                    </div></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div id="property-board">
+        <div class="sui-group color-board" id="property-navigation">
+            <div class="center sui-item-top sui-item-bottom color-item">
+                <table class="centered">
+                    <tr>
+                        <td><div class="fleft button border-s color-button" id="nav-zoom-out"></div></td>
+                        <td><div class="hspacer-small"></div></td>
+                        <td><div class="fleft button border-s color-button" id="nav-zoom-100"></div></td>
+                        <td><div class="hspacer-small"></div></td>
+                        <td><div class="button border-s color-button" id="nav-zoom-in"></div></td>
+                    </tr>
+                </table>
+            </div>
+            <div class="clear bspacer"></div>
+            <div class="center sui-item-top sui-item-bottom color-item" id="navigation-group">
+                <div class="bspacer"></div>
+                <div class="centered button border-s color-button" id="nav-up"></div>
+                <div class="bspacer"></div>
+                <table class="centered">
+                    <tr>
+                        <td><div class="button border-s color-button" id="nav-left"></div></td>
+                        <td><div class="hspacer-mini"></div></td>
+                        <td><div class="button border-s color-button" id="nav-center"></div></td>
+                        <td><div class="hspacer-mini"></div></td>
+                        <td><div class="button border-s color-button" id="nav-right"></div></td>
+                    </tr>
+                </table>
+                <div class="bspacer"></div>
+                <div class="centered button border-s color-button" id="nav-down"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="ctx_props" class="center">
+<input id="id" type="hidden" value="">
+<div id="object-label-group" class="sui-item-top color-item">
+    <div class="hspacer-mini"></div>
+    <div class="fleft">
+        <input id="input-text" data-role="none" class="sui-text-field-large color-text-field" value="A" type="text">
+        <div class="buttonLabel" id="input-text-label"></div>
+    </div>
+    <div class="hspacer-mini"></div>
+    <div class="fleft">
+        <div id="label-visible" class="border-s sui-button-small color-button"></div>
+    </div>
+</div>
+
+<div id="color-group" class="sui-item color-item">
+    <div class="hspacer-mini"></div>
+    <div class="fleft center">
+        <div id="color-tab-stroke" class="centered border-s button color-button sui-button-tab button-selected"></div>
+    </div>
+    <div class="fillObjects">
+        <div class="hspacer-mini"></div>
+        <div class="fleft center">
+            <div id="color-tab-fill" class="centered border-s button color-button sui-button-tab button-disabled"></div>
+        </div>
+    </div>
+    <div class="labeledObjects">
+        <div class="hspacer-mini"></div>
+        <div class="fleft center">
+            <div id="color-tab-label" class="centered border-s button color-button sui-button-tab button-disabled"></div>
+        </div>
+    </div>
+
+    <div id="color-panel" class="center border-s fleft button color-button">
+        <div class="bspacer"></div>
+        <div class="hspacer-mini"></div>
+        <div class="fleft border-s button color-palette-c03 color-button"></div>
+        <div class="hspacer-mini"></div>
+        <div class="fleft border-s button color-palette-c02 color-button"></div>
+        <div class="hspacer-mini"></div>
+        <div class="fleft border-s button color-palette-c01 color-button"></div>
+        <div class="hspacer-mini"></div>
+        <div class="fleft border-s button color-palette-c00 color-button" id="color-palette-none"></div>
+        <div class="clear"></div>
+        <div class="bspacer"></div>
+        <div class="hspacer-mini"></div>
+        <div class="fleft border-s button color-palette-c04 color-button"></div>
+        <div class="hspacer-mini"></div>
+        <div class="fleft border-s button color-palette-c05 color-button"></div>
+        <div class="hspacer-mini"></div>
+        <div class="fleft border-s button color-palette-c06 color-button"></div>
+        <div class="hspacer-mini"></div>
+        <div class="fleft border-s button color-palette-c07 color-button"></div>
+        <div class="clear"></div>
+        <div class="bspacer"></div>
+        <div class="hspacer-mini"></div>
+        <div class="fleft border-s button color-palette-c08 color-button"></div>
+        <div class="hspacer-mini"></div>
+        <div class="fleft border-s button color-palette-c09 color-button"></div>
+        <div class="hspacer-mini"></div>
+        <div class="fleft border-s button color-palette-c10 color-button"></div>
+        <div class="hspacer-mini"></div>
+        <div class="fleft border-s button color-palette-c11 color-button"></div>
+        <div class="clear"></div>
+        <div class="bspacer"></div>
+
+        <div id="color-field-group" class="centered">
+            <table>
+                <tr>
+                    <td class="bottom" ><div id="color-field-label" class="sui-label color-label"></div></td>
+                    <td class="bottom">
+                        <table>
+                            <tr>
+                                <td class="middle"><div id="color-field-minus" class="sui-button-mini color-button"></div></td>
+                                <td class="middle"><input type="text" data-role="none" size="3" maxlength="3" value="50" id="color-field" class="sui-text-field color-text-field"></td>
+                                <td class="middle"><div id="color-field-plus" class="sui-button-mini color-button"></div></td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="status-group" class="sui-item-bottom color-item">
+    <div class="hspacer-mini"></div>
+    <div id="status-fix-box" class="fleft sui-button-box-narrow">
+        <div id="status-fix" class="border-s button color-button"></div>
+        <div class="buttonLabel" id="status-fix-label"></div>
+    </div>
+    <div class="hspacer-mini"></div>
+    <div id="status-trace-box" class="fleft sui-button-box-narrow">
+        <div id="status-trace" class="border-s button color-button"></div>
+        <div class="buttonLabel" id="status-trace-label"></div>
+    </div>
+</div>
+
+<div id="property-specific">
+    <div id="property-point">
+        <div id="point-specific" class="sui-group color-specific">
+            <div id="point-size" class="sui-item color-item">
+                <table>
+                    <tr>
+                        <td class="bottom" ><div id="point-size-label" class="sui-label color-label"></div></td>
+                        <td class="bottom">
+                            <table>
+                                <tr>
+                                    <td class="middle"><div id="point-size-minus" class="border-s sui-button-mini color-button"></div></td>
+                                    <td class="middle"><input type="text" data-role="none" size="3" maxlength="3" value="50" id="point-size-field" class="sui-text-field color-text-field"></td>
+                                    <td class="middle"><div id="point-size-plus" class="border-s sui-button-mini color-button"></div></td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr><td colspan="2"><div class="buttonLabel" id="point-size-field-label"></div></td></tr>
+                </table>
+            </div>
+            <div id="point-style" class="center sui-item color-item">
+                <table class="centered border-s color-group">
+                    <tr>
+                        <td><div id="point-style-button-circle" class="sui-radio-button color-button"></div></td>
+                        <td><div id="point-style-button-square" class="sui-radio-button color-button"></div></td>
+                        <td><div id="point-style-button-cross" class="sui-radio-button color-button"></div></td>
+                        <td><div id="point-style-button-plus" class="sui-radio-button color-button"></div></td>
+                    </tr>
+                </table>
+                <div class="buttonLabel" id="point-style-label"></div>
+            </div>
+            <div id="point-coord" class="sui-item-bottom color-item">
+                <table class="centered">
+                    <tr>
+                        <td class="bottom"><div id="point-coord-x-label" class="sui-keyboard-text color-label">x</div></td>
+                        <td class="middle"><input type="text" data-role="none" size="3" maxlength="100" value="50" id="point-coord-x-field" class="sui-text-field color-text-field"></td>
+                        <td>&nbsp;</td>
+                        <td class="bottom"><div id="point-coord-y-label" class="sui-keyboard-text color-label">y</div></td>
+                        <td class="middle"><input type="text" data-role="none" size="3" maxlength="100" value="50" id="point-coord-y-field" class="sui-text-field color-text-field"></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="property-line">
+        <div id="line-specific" class="center sui-group color-specific">
+            <div id="line-decoration" class="center sui-item-top sui-item-bottom color-item">
+                <div class="fleft">
+                    <div id="line-button-first" class="fleft border-s button color-button"></div>
+                    <div id="line-button-last" class="fleft border-s button color-button"></div>
+                    <div class="buttonLabel" id="line-button-label"></div>
+                </div>
+                <div class="hspacer-small"></div>
+                <div class="fleft">
+                    <div id="line-button-arrow-first" class="fleft border-s button color-button"></div>
+                    <div id="line-button-arrow-last" class="fleft border-s button color-button"></div>
+                    <div class="buttonLabel" id="line-button-arrow-label"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="property-circle">
+        <div id="circle-specific" class="sui-group color-specific">
+            <div id="circle-radius" class="sui-item-top sui-item-bottom color-item">
+                <div class="fleft center">
+                    <div id="circle-radius-group" class="fleft">
+                        <input id="circle-radius-field" data-role="none" type="text" size="5" maxlength="10" value="2" class="sui-text-field color-text-field" />
+                    </div>
+                    <div class="buttonLabel" id="circle-radius-field-label"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="property-angle">
+        <div id="angle-specific" class="sui-group color-specific">
+            <div id="angle-radius" class="sui-item-top sui-item-bottom color-item">
+                <div id="angle-button-rightangle-box" class="fleft sui-button-box-narrow">
+                    <div id="angle-button-rightangle" class="sui-button color-button"></div>
+                    <div class="buttonLabel" id="angle-button-rightangle-label"></div>
+                </div>
+                <div class="hspacer-small"></div>
+                <div class="fleft center">
+                    <div id="angle-radius-group" class="fleft">
+                        <input id="angle-radius-field" data-role="none" type="text" size="5" maxlength="10" value="2" class="sui-text-field color-text-field sui-spacer" />
+                    </div>
+                    <div class="buttonLabel" id="angle-radius-field-label"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="measure-specific" class="sui-group color-related">
+        <div class="sui-item-top sui-item-bottom color-item">
+            <div id="measure-box" class="sui-button-box-xxl">
+                <div class="line-related-measure fleft sui-button color-button"></div>
+                <div class="angle-related-measure fleft sui-button color-button"></div>
+                <div class="sector-related-measure fleft sui-button color-button"></div>
+                <div class="buttonLabel" id="measure-label"></div>
+            </div>
+            <div id="angle-related-measure-box" class="fleft sui-button-box">
+                <div id="angle-related-measure" class="sui-button color-button sui-spacer"></div>
+                <div class="buttonLabel" id="angle-related-measure-label"></div>
+            </div>
+            <div id="sector-related-measure-box" class="fleft sui-button-box">
+                <div id="sector-related-measure" class="sui-button color-button"></div>
+                <div class="buttonLabel" id="sector-related-measure-label"></div>
+            </div>
+            <div id="line-related-measure-box" class="fleft sui-button-box">
+                <div id="line-related-measure" class="sui-button color-button"></div>
+                <div class="buttonLabel" id="line-related-measure-label"></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+</div>
+
+<div id="ctx_objects" class=""></div>
+<div id="ctx_objects_extra" class=""></div>
+
+</div>
+
+<div id="ctx_textbox" class="not-displayed">
+    <textarea id="input-textbox"></textarea>
+</div>
+
+<canvas id="magnifier" class="not-displayed"></canvas>
+
+</div>
+
+<!-- modalWindow -->
+<div id="modalWindow" class="center centered not-displayed"></div>
+
+<!-- Handling of Back-Button Actions / URL-Changes -->
+<script type="text/javascript" src="js/url.js"></script>
+
+<audio id="audio-dummy"></audio>
+<audio id="audio-click"></audio>
+<audio id="audio-bubble"></audio>
+<audio id="audio-plastic"></audio>
+
+<!-- Initializing Audio -->
+<script type="text/javascript" src="js/audio.js"></script>
+
+<!-- page tracking -->
+<!--script type="text/javascript" src="http://fibonacci.uni-bayreuth.de/stats/piwik.js"></script>
+<noscript><p><img src="http://fibonacci.uni-bayreuth.de/stats/piwik.php?idsite=2"/></p></noscript-->
+
+</body>
+</html>

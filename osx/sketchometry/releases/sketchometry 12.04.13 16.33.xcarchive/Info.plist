@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>ApplicationProperties</key>
+	<dict>
+		<key>ApplicationPath</key>
+		<string>Applications/sketchometry.app</string>
+		<key>CFBundleIdentifier</key>
+		<string>UBT.sketchometry</string>
+		<key>CFBundleShortVersionString</key>
+		<string>1.0</string>
+		<key>CFBundleVersion</key>
+		<string>1.0</string>
+		<key>IconPaths</key>
+		<array>
+			<string>Applications/sketchometry.app/logo-72.png</string>
+			<string>Applications/sketchometry.app/logo-144.png</string>
+			<string>Applications/sketchometry.app/logo-114.png</string>
+			<string>Applications/sketchometry.app/logo-57.png</string>
+		</array>
+		<key>SigningIdentity</key>
+		<string>iPhone Developer: Alfred Wassermann (7XES248YE6)</string>
+	</dict>
+	<key>ArchiveVersion</key>
+	<integer>2</integer>
+	<key>CreationDate</key>
+	<date>2013-04-12T14:33:58Z</date>
+	<key>Name</key>
+	<string>sketchometry</string>
+	<key>SchemeName</key>
+	<string>sketchometry</string>
+	<key>Status</key>
+	<string>Passed Validation</string>
+</dict>
+</plist>
