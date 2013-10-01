@@ -1,0 +1,69 @@
+a.menu {
+	font-family: Arial;
+	text-decoration: none;
+	border: 1px solid black; 
+	border-radius: 5px; 
+	padding: 15px;
+	margin-left: 3px;
+	margin-right: 2px;
+	color: black;
+}
+
+a.menu:active, a.menu:hover {
+	background-color: #ffffcc;
+	text-decoration: underline;
+}
+
+body {
+	font-family: Arial;
+}
+
+div {
+	margin: 10px;
+}
+
+.border {
+	border: 1px solid black;
+}
+
+.small {
+	font-size: 12px;
+}
+
+.centered {
+	margin-left: auto;
+	margin-right: auto;
+	text-align: center;
+}
+
+.pad-lr {
+	padding-left: 20px;
+	padding-right: 20px;
+}
+
+#box {
+	font-size: 13px;
+	padding: 15px;
+}
+
+#logbox {
+	float: right;
+	font-size: 13px;
+	padding: 15px;
+}
+
+#langbox {
+	background-color: yellow;
+}
+
+#subbox {
+	position: fixed; 
+	background-color: #cccccc; 
+	left: 8px; 
+	top: 342px;
+	border-radius: 15px;
+	border: 2px solid green;
+	padding: 12px;
+	padding-left: 22px;
+	padding-right: 22px;
+}
